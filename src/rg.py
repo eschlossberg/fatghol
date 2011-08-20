@@ -2390,7 +2390,7 @@ def MgnGraphsInsertionGenerator(g,n):
 #MgnGraphsInsertionGenerator = persist.PersistedIterator(_MgnGraphsInsertionGenerator)
 
 
-
+@cache_iterator
 def MgnTrivalentGraphsRecursiveGenerator(g, n):
     """Iterate over all connected trivalent fatgraphs having the
     prescribed genus `g` and number of boundary cycles `n`.
