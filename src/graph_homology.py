@@ -102,7 +102,9 @@ class FatgraphComplexSlice(VectorSpace):
             VectorSpace.__init__(self, base)
                 
     def coordinates(self, combo):
-        """Return coordinate vector of linear combination `combo`."""
+        """Return (sparse) coordinate vector of linear combination `combo`.
+        See `VectorSpace.coordinates()` for details.
+        """
         # canonicalize graphs
         for x in xrange(len(combo)):
             graph = combo[x][0]
