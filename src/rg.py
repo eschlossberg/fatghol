@@ -12,36 +12,14 @@ from itertools import *
 import operator
 
 
-def vertex_valences_for_given_g_and_n(g,n):
-    """
-    Examples::
-      >>> vertex_valences_for_given_g_and_n(0,3)
-      set([(3, 3), (4,)])
-    """
-    # with 1 vertex only, there are this many edges:
-    L = 2*g + n - 1
-    K = 1
-    result = set()
-    while True:
-        ps = partitions(2*L, K)
-        if len(ps) == 0:
-            break
-        for p in ps:
-            p.sort()
-            result.add(tuple(p))
-        K += 1
-        L = 2*g + n + K - 2
-    return result
-
-
 class VertexCache(object):
+    """A caching factory of `Vertex` objects.
+    """
     __slots__ = ('cache',)
     def __init__(self):
         self.cache = {}
-    def __call__(self, edge_seq, start=0, end=None):
-        if end is None:
-            end = len(edge_seq)
-        key = tuple(edge_seq[start:end])
+    def __call__(self, edge_seq):
+        key = tuple(edge_seq)
         if not self.cache.has_key(key):
             self.cache[key] = Vertex(key)
         return self.cache[key]
@@ -102,6 +80,7 @@ class Graph(object):
     can be accessed.
     """
     __slots__ = (
+        '_edge_seq',
         '_num_boundary_components',
         '_num_edges',
         '_num_vertices',
@@ -131,6 +110,9 @@ class Graph(object):
                "Graph.__init__: parameter `edge_seq` must be sequence of integers, "\
                "but got '%s' instead" % edge_seq
 
+        # record this for fast comparison and contractions
+        self._edge_seq = tuple(edge_seq)
+        
         # Break up `edge_seq` into smaller sequences corresponding to vertices.
         self.vertices = []
         # `self.endpoints` is the adjacency list of this graph.  For
@@ -143,13 +125,12 @@ class Graph(object):
             # FIXME: this results in `edge_seq` being copied into smaller
             # subsequences; can we avoid this by defining a list-like object
             # "vertex" as a "view" on a portion of an existing list?
-            self.vertices.append(vertex_factory(edge_seq, base, base+VLEN))
+            self.vertices.append(vertex_factory(edge_seq[base:base+VLEN]))
             base += VLEN
 
             # build adjacency list as we go along
             for edge in self.vertices[current_vertex_index]:
                 self.endpoints[edge].append(current_vertex_index)
-
 
     def __getitem__(self, index):
         return self.vertices[index]
@@ -201,8 +182,8 @@ class Graph(object):
                 if valence[i] != valence[j]:
                     continue
                 # if repetition patterns don't match, skip to next vertex in list
-                if not (rp[i] == rp[j]):
-                    continue
+                if not (rp[i] == rp[j]): 
+                   continue
                 # append `(destination vertex, rotation shift)` to
                 # candidate destinations list
                 for delta in self.vertices[i].all_shifts_for_linear_eq(self.vertices[j]):
@@ -589,8 +570,9 @@ class MorphismIteratorFactory(object):
         return (vertex_to_vertex_mappings, vertex_to_vertex_mapping_domain)
 
 
-def all_connected_graphs(vertex_valences):
-    """Return all graphs having vertices of the given valences.
+class ConnectedGraphsIterator(object):
+    """Iterate over all connected graphs having vertices of the
+    prescribed valences.
 
     Examples::
       >>> all_connected_graphs([4])
@@ -601,41 +583,70 @@ def all_connected_graphs(vertex_valences):
        Graph([3, 3], [[2, 1, 0], [2, 0, 1]]),
        Graph([3, 3], [[2, 1, 1], [2, 0, 0]])]
     """
-    assert is_sequence_of_integers(vertex_valences), \
-           "all_connected_graphs: parameter `vertex_valences` must be a sequence of integers, "\
-           "but got %s" % vertex_valences
-    assert 0 == sum(vertex_valences) % 2, \
-           "all_connected_graphs: sum of vertex valences must be divisible by 2"
 
-    total_edges = sum(vertex_valences) / 2
-    vertex_factory=VertexCache()
+    __slots__ = (
+        'graphs',
+        '_edge_seq_iterator',
+        '_morphism_factory',
+        '_vertex_factory',
+        '_vertex_valences',
+        )
 
-    graphs = []
-    for edge_seq in all_edge_seq(total_edges):
-        current = Graph(vertex_valences, edge_seq, vertex_factory)
-        if not (current.is_canonical() and current.is_connected()):
-            continue
-        
-        # the valence spectrum is the same for all graphs in the list,
-        # so only compute it once
-        if len(graphs) == 0:
-            morphisms = MorphismIteratorFactory(current.valence_spectrum())
+    def __init__(self, vertex_valences, vertex_factory=VertexCache()):
+        assert is_sequence_of_integers(vertex_valences), \
+               "ConnectedGraphsIterator: parameter `vertex_valences` must be a sequence of integers, "\
+               "but got %s" % vertex_valences
+        assert 0 == sum(vertex_valences) % 2, \
+               "ConnectedGraphsIterator: sum of vertex valences must be divisible by 2"
 
-        # now walk down the list and remove isomorphs
-        current_is_isomorphic_to_already_found = False
-        for candidate in graphs:
-            for isomorphism in morphisms(candidate, current):
-                # if there is any isomorphism, then reject current
-                current_is_isomorphic_to_already_found = True
-                break
-            if current_is_isomorphic_to_already_found:
-                break
-        if not current_is_isomorphic_to_already_found:
-            # add current to graph list
-            graphs.append(current)
+        self._morphism_factory = None
+        self._vertex_factory = vertex_factory
+        self._vertex_valences = vertex_valences
+        self.graphs = []
 
-    # return list of non-isomorphic graphs
-    return graphs
+        # build list [0,0,1,1,...,n-1,n-1]
+        starting_edge_seq=[]
+        for l in xrange(0, sum(vertex_valences)/2):
+            starting_edge_seq += [l,l]
+        self._edge_seq_iterator = InplacePermutationIterator(starting_edge_seq)
+
+    def __iter__(self):
+        return self
+    
+    def next(self):
+        """Iterate over lists representing edges of a ribbon graph.
+
+        Each returned list has length `2*n` and comprises the symbols `{0,...,n-1}`,
+        each of which is repeated exactly twice.
+        """
+        for edge_seq in self._edge_seq_iterator:
+            current = Graph(self._vertex_valences,
+                            edge_seq,
+                            self._vertex_factory)
+            if not (current.is_canonical() and current.is_connected()):
+                continue
+
+            # the valence spectrum is the same for all graphs in the list,
+            # so only compute it once
+            if self._morphism_factory is None:
+                self._morphism_factory = MorphismIteratorFactory(current.valence_spectrum())
+
+            # now walk down the list and remove isomorphs
+            current_is_isomorphic_to_already_found = False
+            for candidate in self.graphs:
+                for isomorphism in self._morphism_factory(candidate, current):
+                    # if there is any isomorphism, then reject current
+                    current_is_isomorphic_to_already_found = True
+                    break
+                if current_is_isomorphic_to_already_found:
+                    break
+            if not current_is_isomorphic_to_already_found:
+                # add current to graph list
+                self.graphs.append(current)
+                return current
+
+        # no more graphs to generate
+        raise StopIteration
 
 
 class InplacePermutationIterator:
@@ -692,22 +703,6 @@ class InplacePermutationIterator:
                     for l in xrange(0, (self.end - 1 - j) / 2):
                         self.seq[j+l],self.seq[-1-l] = self.seq[-1-l],self.seq[j+l]
                 return self.seq
-
-
-def all_edge_seq(n):
-    """Iterate over lists representing edges of a ribbon graph.
-
-    Each returned list has length `2*n` and comprises the symbols `{0,...,n-1}`,
-    each of which is repeated exactly twice.
-    """
-    # build list [0,0,1,1,...,n-1,n-1]
-    edges=[]
-    for l in xrange(0,n):
-        edges += [l,l]
-    # iterate over all its permutations
-    ps = InplacePermutationIterator(edges)
-    for s in ps:
-        yield s
 
 
 class Mapping(dict):
