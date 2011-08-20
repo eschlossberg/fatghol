@@ -110,9 +110,12 @@ def PersistedIterator(factory):
         returned; otherwise, normal class initialization is run.
         """
         # compute backing store name from init args
-        filename = factory.__name__ \
-                   + "-" + str.join(",", [str(x) for x in args]) \
-                   + '.pickle'
+        if len(args) > 0:
+            filename = factory.__name__ \
+                + "-" + str.join(",", [str(x) for x in args]) \
+                + '.pickle'
+        else:
+            filename = factory.__name__ + ".pickle"
         try:
             # try loading it
             store = open(filename, 'r')
