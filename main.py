@@ -232,7 +232,7 @@ resource.setrlimit(resource.RLIMIT_CORE, (0,0))
 
 # parse command-line options
 from optparse import OptionParser
-parser = OptionParser(version="3.9",
+parser = OptionParser(version="3.10",
     usage="""Usage: %prog [options] action [arg ...]
 
 Actions:
@@ -452,7 +452,7 @@ elif 'selftest' == args[0]:
         else:
             logging.error("Computation of M_{%d,%d} homology: FAILED, got %s expected %s"
                           % (g,n,hs,ok))
-            print("FAILED, got %s expected %s" % (g,n,hs,ok))
+            print("FAILED, got %s expected %s" % (hs,ok))
 
     # third, count graphs produced in known good cases
     for (g, n, ok) in [ (0,5, 290),
@@ -466,7 +466,7 @@ elif 'selftest' == args[0]:
         else:
             logging.error("Number of M_{%d,%d} graphs: FAILED, got %s expected %s"
                           % (g,n,qty,ok))
-            print("FAILED, got %s expected %s" % (g,n,qty,ok))
+            print("FAILED, got %s expected %s" % (qty,ok))
         
         
 

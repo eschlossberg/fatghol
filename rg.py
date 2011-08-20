@@ -1577,8 +1577,8 @@ class Fatgraph(EqualIfIsomorphic):
                         for (i1, i2, r) in nexts:
                             m = extend_map(m, g1, i1, r, g2, i2)
                             if __debug__:
-                                for x in g1[i1]:
-                                    assert x in m[2], "Edge `%d` of vertex `%s` (in graph `%s`) not mapped to any edge of graph `%s` (at line 1751, `pe=%s`)" % (x, g1[i1], g1, g2, m[2])
+                                for x in g1.vertices[i1]:
+                                    assert x in m[2], "Edge `%d` of vertex `%s` (in graph `%s`) not mapped to any edge of graph `%s` (at line 1751, `pe=%s`)" % (x, g1.vertices[i1], g1, g2, m[2])
                             neighborhood += neighbors(m, g1, i1, g2, i2)
                         nexts = neighborhood
 
@@ -1934,7 +1934,7 @@ class NumberedFatgraph(Fatgraph):
     def __init__(self, underlying, numbering):
         Fatgraph.__init__(self, underlying)
         self.underlying = underlying
-        assert len(initializer) == self.num_boundary_cycles
+        assert len(numbering) == self.num_boundary_cycles
         self.numbering = dict(numbering)
         if __debug__:
             count = [ 0 for x in xrange(self.num_boundary_cycles) ]
@@ -1960,7 +1960,7 @@ class NumberedFatgraph(Fatgraph):
             assert sum(count) != self.num_boundary_cycles - 1, \
                    "NumberedFatgraph.__init__():" \
                    " Initializer does not exhaust range `0..%d`: %s" \
-                   % (self.num_boundary_cycles - 1, initializer)
+                   % (self.num_boundary_cycles - 1, numbering)
 
 
     def __repr__(self):

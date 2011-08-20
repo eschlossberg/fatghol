@@ -17,7 +17,7 @@ from collections import defaultdict
 
 ## application-local imports
 
-from simplematrix import SimpleMatrix
+from simplematrix import SimpleMatrix, is_null_product
 
 
 ## main
@@ -290,8 +290,12 @@ class DifferentialComplex(list):
         """
         # XXX: check that the differentials form a complex
         if __debug__:
-            for i in xrange(1, len(self) - 1):
-                assert is_null_matrix(matrix_product(self[i-1], self[i]))
+            for i in xrange(1, len(self)-1):
+                assert is_null_product(self[i-1][0], self[i][0]), \
+                       "DifferentialComplex.compute_homology_ranks:" \
+                       " Product of boundary operator matrices D[%d] and D[%d]" \
+                       " is not null!" \
+                       % (i-1, i)
         
         #: ranks of `D[n]` matrices, for 0 <= n < len(self); the differential
         #: `D[0]` is the null map.

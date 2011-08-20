@@ -367,11 +367,12 @@ class Permutation(dict):
             True
           
         """
+        dict.__init__(self, initial)
+        # XXX: this is stuff for DBC's invariants
         if __debug__:
-            for src,dst in initial.iteritems():
+            for src,dst in self.iteritems():
                 assert 0 <= src
                 assert 0 <= dst
-        dict.__init__(self, initial)
             
     def __iter__(self):
         """Iterate over values."""
