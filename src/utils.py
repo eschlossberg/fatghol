@@ -112,7 +112,20 @@ def positive_int(arg):
 
 
 class itranslate:
-    """Perform substitutions on a iterable, just like `str.translate`.
+    """Return items from a sequence, substituting them as specified.
+
+    First c'tor argument `subst` is a dictionary, specifying
+    substitutions to be applied.  If an item matches a key of the
+    `subst` dictionary, the associated dictionary value is returned
+    instead; unless the value is `None`, in which case the item is
+    skipped altogether.
+
+    *Note:* you should use an appropriate `dict`-subclass if you want
+     to translate items which are not immutable.
+    
+    Examples::
+      >>> list(itranslate({0:None, 3:2}, [2,1,0,0,1,3]))
+      [2, 1, 1, 2]
     """
     def __init__(self, subst, iterable):
         self.mappings = subst
@@ -129,55 +142,6 @@ class itranslate:
                 # skip this item
                 continue
             return translated
-
-
-def _tr(elt, t1, t2):
-    """If `elt` equals some element in set `t1`, then return the corresponding element from set `t2`, otherwise return `elt` unchanged.
-    """
-    try:
-        return t2[t1.index(elt)]
-    except ValueError:
-        return elt
-
-def tr(s, t1, t2):
-    """Return a copy of sequence `s` where each occurence of an
-    element of set `t1` has been changed with the corrisponding
-    element of set `t2`.
-
-    Examples::
-      >>> tr([0,1,0,0],[0],[2])
-      [2, 1, 2, 2]
-    """
-    return [_tr(x, t1, t2) for x in s]
-
-
-def itr(s, t1, t2):
-    """Return an iterator over `s` where each occurrence of an element
-    of set `t1` is changed with the corrisponding element of set `t2`.
-
-    Examples::
-      >>> list(itr([0,1,0,0],[0],[2]))
-      [2, 1, 2, 2]
-    """
-    for x in s:
-        yield _tr(x, t1, t2)
-
-def tr_inplace(s, t1, t2):
-    """Change every occurrence of an element of set `t1` in sequence
-    `s` with the corrisponding element of set `t2`.
-
-    Return the altered `s`.
-    
-    Examples::
-      >>> x=[0,1,0,0]
-      >>> tr_inplace(x,[0],[2])
-      [2, 1, 2, 2]
-      >>> x
-      [2, 1, 2, 2]
-    """
-    for i in xrange(len(s)):
-        s[i] = _tr(s[i], t1, t2)
-    return s
 
 
 
