@@ -1416,7 +1416,7 @@ class Fatgraph(EqualIfIsomorphic):
             else:
                 return False
                 
-        def compatible_vertex_mappings(v, g, ixs):
+        def compatible_vertices(v, g, ixs):
             """Iterate over all (indices of) vertices in `g`, which
             `v` *could* be mapped to (that is, the destination vertex
             matches `v` in valence and number of loops.
@@ -1513,9 +1513,9 @@ class Fatgraph(EqualIfIsomorphic):
                 return # StopIteration
 
         (valence, indexes) = starting_vertices(G2)
-        src = vs1[valence][0]
-        v1 = G1.vertices[src]
-        for dst in compatible_vertex_mappings(v1, G2, indexes):
+        v1_index = vs1[valence][0]
+        v1 = G1.vertices[v1_index]
+        for v2_index in compatible_vertices(v1, G2, indexes):
             for rot in xrange(valence):
                 try:
                     # pass 0: init new (pv, rots, pe) triple
@@ -1525,16 +1525,16 @@ class Fatgraph(EqualIfIsomorphic):
 
                     # pass 1: map `v1` to `v2` and build map
                     # of neighboring vertices for next pass
-                    if not pe.extend(v1, G2.vertices[dst][rot:rot+valence]):
+                    if not pe.extend(v1, G2.vertices[v2_index][rot:rot+valence]):
                         continue # to next `rot`
-                    pv[src] = dst
-                    rots[src] = rot
+                    pv[v1_index] = v2_index
+                    rots[v1_index] = rot
                     if __debug__:
                         for x in v1:
                             assert x in pe, "Edge `%d` of vertex `%s` (in graph `%s`) not mapped to any edge of graph `%s` (at line 1740, `pe=%s`)" % (x, v1, G1, G2, pe)
 
                     # pass 2: extend map to neighboring vertices
-                    nexts = neighbors(pv, pe, G1, src, G2, dst)
+                    nexts = neighbors(pv, pe, G1, v1_index, G2, v2_index)
                     while len(pv) < G1.num_vertices:
                         neighborhood = []
                         for (i1, i2, r) in nexts:
