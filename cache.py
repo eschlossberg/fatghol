@@ -135,8 +135,78 @@ def cache_symmetric(func, o1, o2, fcache={}):
         result = func(o1, o2)
         rcache[key] = result
         return result
- 
 
+
+class _IteratorRecorder(object):
+    """Cache results from a given iterator.  Client classes provided
+    by the `replay()` method will then replay the iterator history;
+    multiple players can replay from one recorded source
+    independently.
+
+    **WARNING:** This is not thread-safe!
+    """
+    
+    def __init__(self, iterable):
+        self.iterable = iterable
+        self.history = []
+
+    def advance(self):
+        """Record next item from the source iterator."""
+        self.history.append(self.iterable.next())
+
+    def replay(self):
+        """Return a new player."""
+        return _IteratorReplayer(self)
+    
+
+class _IteratorReplayer(Iterator):
+    """Replay values recorded into a given `_IteratorRecorder` class;
+    multiple players can replay from one recorded source
+    independently.
+
+    **WARNING:** This is not thread-safe!
+    """
+    
+    def __init__(self, master):
+        self.master = master
+        self.pos = -1
+        self.done = False
+
+    def next(self):
+        if self.done:
+            raise StopIteration
+        try:
+            if self.pos == len(self.master.history) - 1:
+                self.master.advance()
+            self.pos += 1
+            return self.master.history[self.pos]
+        except StopIteration:
+            self.done = True
+            raise
+
+
+__cache_iterator = {}
+@decorator
+def cache_iterator(func, obj, *args):
+    """Cache results of a method or function returning an iterator/generator.
+
+    Iterator results cannot be cached like any other object, because
+    they need to return the same set of values each time the
+    generating function is invoked.
+    """
+    rcache = __cache_iterator.setdefault(func.func_name, {})
+    oid = persistent_id(obj)
+    key = (oid, args)
+    if key in rcache:
+        return rcache[key].replay()
+    else:
+        result = _IteratorRecorder(func(obj, *args))
+        rcache[key] = result
+        return result.replay()
+
+
+    
+            
 
 ## main: run tests
 
