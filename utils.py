@@ -24,7 +24,57 @@ def concat(seqs):
       'ab'
     """
     return reduce(operator.add, seqs)
-        
+
+
+class chunks(object):
+    """Lump items from iterable into chunks of specified size.
+
+    Instanciate the iterator passing a sequence of chunk sizes in
+    argument 1 and an iterable to consume in argument 2::
+
+      >>> for c in chunks([1,1,1], xrange(3)): print c
+      [0]
+      [1]
+      [2]
+
+    The list of chunk sizes may be any kind of sequence, for instance
+    a tuple or even a (possibly infinite) iterable::
+    
+      >>> list(chunks((1,2,3), range(6)))
+      [[0], [1, 2], [3, 4, 5]]
+
+    The total size of the chunks may be less than the size of the
+    iterator: remaining items in the iterator are not consumed::
+
+      >>> for c in chunks([1,2], range(6)): print c
+      [0]
+      [1, 2]
+
+    As a special case, if a chunk has size 0, then an empty list is
+    returned in its place and no item from iterable is consumed::
+    
+      >>> for c in chunks([2,0,2], range(4)): print c
+      [0, 1]
+      []
+      [2, 3]
+      
+    """
+    def __init__(self, sizes, iterable):
+        """Constructor, taking sequence of chunk sizes and iterable to
+        consume."""
+        self.current_chunk = -1
+        self.sizes = sizes
+        self.iterable = iter(iterable)
+    def __iter__(self):
+        return self
+    def next(self):
+        """Return next chunk."""
+        self.current_chunk += 1
+        if self.current_chunk >= len(self.sizes):
+            raise StopIteration
+        return [ self.iterable.next()
+                   for x in xrange(self.sizes[self.current_chunk]) ]
+
 
 def deep_cmp(s1,s2):
     """Compare items in `s1` and `s2`, recursing into subsequences.
