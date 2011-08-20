@@ -110,17 +110,13 @@ def do_graphs(g,n):
     `(g,n)`-graphs, and `D` is a list, the `k`-th element of which is
     the list of differentials of graphs with `k` edges.
     """
-    logging.debug("Computing fat graphs for g=%d, n=%d ...", g, n)
-    graphs = FatgraphComplex(g,n)
-    logging.debug("Found %d distinct orientable fat graphs.", len(graphs))
+    logging.info("Stage I: Computing fat graphs for g=%d, n=%d ...", g, n)
+    G = FatgraphComplex(g,n)
     
-    # FIXME: `D` must match the one used in `ChainComplex.compute_homology_rank()`
-    D = [ [ graphs.module[i-1].coordinates(graphs.differential[i](b))
-            for b in graphs.module[i].base ]
-          for i in xrange(1, graphs.length)
-          ]
+    logging.info("Stage II: Computing matrix form of boundary operator ...")
+    D = G.compute_boundary_operators()
 
-    return (graphs, D)
+    return (G, D)
 
     
 def do_homology(g, n):
@@ -128,12 +124,17 @@ def do_homology(g, n):
 
     Return array of homology ranks.
     """
-    graph_complex = FatgraphComplex(g,n)
+    logging.info("Stage I: Computing fat graphs for g=%d, n=%d ...", g, n)
+    G = FatgraphComplex(g,n)
 
-    hs = list(reversed(graph_complex.compute_homology_ranks()))
+    logging.info("Stage II: Computing matrix form of boundary operator ...")
+    D = G.compute_boundary_operators()
+
+    logging.info("Stage III: Computing rank of homology modules ...")
+    hs = list(reversed(D.compute_homology_ranks()))
 
     # compare orbifold Euler characteristics
-    chi = graph_complex.orbifold_euler_characteristics
+    chi = G.orbifold_euler_characteristics
     logging.info("Computed orbifold Euler characteristics: %s" % chi)
     if g==0:
         chi_hz = factorial(n-3) * sign_exp(n-3)
@@ -623,10 +624,8 @@ reverses the associated cell orientation.
                                          graph.num_boundary_cycles,
                                          graph.is_oriented(),
                                          ),))
-    outfile.write("\n")
-    outfile.write("Found %d graphs total.\n" % tot)
-    outfile.write("\n")
     if options.latex:
+        outfile.write("\n")
         outfile.write(r"\end{document}")
         outfile.write("\n")
 
