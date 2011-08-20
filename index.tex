@@ -7,22 +7,25 @@
 %\usepackage[nomsgs]{refcheck}
 \usepackage{color}
 \newcommand{\FIXME}[1]{{\color{red}\footnote{\sffamily #1}}}
-
+\usepackage[T1]{fontenc}
 \usepackage{mdwlist}
 %\usepackage{mdwtab}
 \usepackage[final]{graphicx}
 \usepackage{hyperref}
+\usepackage{listings}
+  \lstloadlanguages{Python}
+  \lstset{language=Python}
+\usepackage[newitem,newenum]{paralist}
+  \setdefaultenum{\slshape (1)}{\slshape (a)}{\slshape (i)}{A.}
+  %\setdefaultitem{\blacktriangleright}{\smalltriangleright}{$\bullet$}{$\circ$}
+  \setdefaultitem{\guillemotright}{\guilsinglright}{$-$}{*}
 \usepackage{url}
 
 \usepackage[debug]{csref}
 
-\usepackage[newitem,newenum]{paralist}
-\setdefaultenum{\slshape 1)}{\slshape a)}{\slshape i)}{A.}
-%\defaultitem{$\triangleright$}{}{}{}
-
 \usepackage[ps,dvips,xdvi,colour,all,arc,knot,poly]{xy}
-\everyxy={/r24pt/:} % scala per i diagrammi
-\def\xyc#1\endxyc{\xy*!LC\xybox{#1}\endxy}
+  \everyxy={/r24pt/:} % scala per i diagrammi
+  \def\xyc#1\endxyc{\xy*!LC\xybox{#1}\endxy}
 
 \usepackage{rg} % vertici e buche di grafi a nastro
 
@@ -161,6 +164,7 @@
 \include{title}
 \include{prelim}
 \include{graphcomplex}
+\include{algorithm}
 \include{gc}
 \include{fd}
 \include{ainfty}
@@ -172,11 +176,13 @@
 \include{btc}
 \include{rt}
 \include{operads}
+\include{python}
 
 %%
 %% Bibliografia
 %%
 \bibliography{math}
+\bibliography{tech}
 \bibliographystyle{halpha}
 
 

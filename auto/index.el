@@ -1,7 +1,8 @@
 (TeX-add-style-hook "index"
  (lambda ()
     (LaTeX-add-bibliographies
-     "math")
+     "math"
+     "tech")
     (LaTeX-add-environments
      "theorem"
      "lemma"
@@ -80,16 +81,19 @@
      "arc"
      "knot"
      "poly"
-     "paralist"
-     "newitem"
-     "newenum"
      "csref"
      "debug"
      "url"
+     "paralist"
+     "newitem"
+     "newenum"
+     "listings"
      "hyperref"
      "graphicx"
      "final"
      "mdwlist"
+     "fontenc"
+     "T1"
      "color"
      "prelim2e"
      "latex2e"
@@ -102,6 +106,7 @@
      "title"
      "prelim"
      "graphcomplex"
+     "algorithm"
      "gc"
      "fd"
      "ainfty"
@@ -110,5 +115,6 @@
      "arrows"
      "btc"
      "rt"
-     "operads")))
+     "operads"
+     "python")))
 

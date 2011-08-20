@@ -1,0 +1,157 @@
+
+\chapter{Python language syntax}
+\label{chap:python}
+
+This chapter features a short introduction to the syntax of the
+programming language Python, and an explanation of the commonly-used
+constructs and idioms that may appear obscure.  This is by no means a
+complete overview of the syntax, nor a formal definition of Python;
+the \href{http://docs.python.org/2.6/}{official Python documentation}
+\cite{python:docs, python:reference} should be consulted for this
+purpose.
+
+According to the
+\href{http://en.wikipedia.org/wiki/Python_(programming_language)}
+{Wikipedia article on Python}, ``Python is a general-purpose
+high-level programming language. Its design philosophy emphasizes code
+readability. Python claims to `\emph{[combine]} remarkable power with
+very clear syntax'. It has a relatively uncluttered visual layout,
+uses English keywords frequently where other languages use
+punctuation, and has notably fewer syntactic constructions than other
+popular structured languages \emph{[...]}\'''.
+
+
+\section{Basics of Python language syntax}
+\label{sec:syntax}
+
+Python is an \emph{imperative} programming language, meaning that
+every Python program is a sequence of statements to be executed by the
+computer.  Each statement is terminated by a newline character, but a
+statement is automatically continued on the following line if there
+are imbalanced parentheses.  In other words, a statement ends at the
+first newline character such that all parentheses are balanced, that
+is, every occurrence of `\verb"("', `\verb"["', or `\verb"{"' has a
+matching occurence of the closing symbol.
+\begin{lstlisting}
+# single-line statement
+print (21*2)
+
+# the following statement is automatically continued
+# until the newline following the last closing parenthesis
+u = (1 + 4*x[2] 
+       + 2*y[1 + n[42] ]
+       + z)
+\end{lstlisting}
+As one can see from the example above, the Python interpreter ignores
+any character following `\verb"#"' until the end of the line.  This
+syntax is used to add explicatory comments to the Python source code.
+The Python interpreter completely ignores comments and blank lines
+while reading a source file; that is, a Python program will have
+\emph{exactly} the same behavior if all the comments and blank lines
+are removed.
+
+A distinctive feature of Python is its use of whitespace to delimit
+program blocks: Python mandates that statements belonging in the same
+sequence are aligned with the same amount of whitespace from column 0.
+The indentation must increase in the block after a flow-control or
+function definition.\footnote{Python syntax also mandates that a colon
+  `\lstinline{:}' is the last non-whitespace character before a new
+  block begins, so an effective rule of thumb is: if a line ends with
+  a colon, the following one must increase indentation.}
+A block ends upon encountering a statement with a lesser indentation
+level (i.e., beginning closer to column 0).
+
+For example, consider the following simple code:
+\begin{lstlisting}
+for x in range(10):
+  # compute the square of x
+  y = x*x
+  # print it
+  print y
+# the following statement dedents, thus ending
+# the body block of the "for" loop.
+print "All done."
+\end{lstlisting}
+The assignment to variable `\lstinline{y}' and the `\lstinline{print}'
+statement belong in the same code block (they body of the
+`\lstinline{for}' cycle), therefore both begin in column 2.  The
+`\lstinline{for}' and the last `\lstinline{print}' statement belong in
+the same sequence and therefore start at column 0. 
+                                                                          
+                                                               
+
+\subsection{Flow-control constructs}
+\label{sec:flow-control}
+
+Python supports the usual flow-control constructs
+\lstinline{if}/\lstinline{else}, \lstinline{for}, \lstinline{while}.
+
+The \lstinline{if}/\lstinline{else} statements are used to select which of two
+blocks of code will be executed.  The \lstinline{else} part is optional and
+can be omitted.  Cascaded \lstinline{if}/\lstinline{else} occurrences (to
+select the execution of a particular block of instructions) are best
+written using the \lstinline{elif} keyword as a shorthand for 
+`\verb"else: if:"'. 
+
+The \lstinline{while} statement repeatedly executes the ensuing code block;
+the expression specified after the `\lstinline{while}' keyword is evaluated
+at the beginning of each execution cycle, if the result is boolean
+false, then execution of the code block is aborted and the program
+flows continues after the block following the \lstinline{while} statement.
+Therefore, if an expression evaluates to false at the first entrance
+in the \lstinline{while} block, the block is never executed.
+
+The \lstinline{for} statement repeatedly executes the ensuing code block,
+each time binding the specified variables to a new value of the
+sequence following the `\lstinline{in}' keyword.
+\begin{lstlisting}
+for x in range(10):
+  print(x)
+\end{lstlisting}
+The `\lstinline{range}' function is provided as a convenience to specify
+numerical integer sequences; by Python convention, the range is always
+half-open: \verb"range(10)" is the sequence of natural numbers $\{0,
+1, \ldots, 9\}$.  More formally, we have:
+\begin{align*}
+  \text{\lstinline{range}($n$,$m$)} &:= \{ x \in \setN : n \leq x < m \},
+  \\
+  \text{\lstinline{range}($n$)} &:= \text{range(0,$n$)}
+\end{align*}
+
+\subsubsection{Exception handling: \lstinline{try}/\lstinline{except}/\lstinline{finally} statements}
+\label{sec:try-except-finally}
+
+Exceptions 
+
+\subsubsection{The `{\lstinline{pass}}' statement}
+\label{sec:pass}
+
+Python syntax does not allow to specify an empty block of code. There
+is thus a special \lstinline{pass} statement that performs no
+computational operation, and is used to define ``no-op'' blocks.
+
+The main use of \lstinline{pass} is in combination with an
+\lstinline{except} statement, to ignore a particular error condition:
+\begin{lstlisting}
+try:
+  print (a[42])
+except KeyError:
+  pass # ignore error if "a" has no item "42"
+\end{lstlisting}
+
+% function definitions
+% - docstrings
+% - nested "def" / lexical closures
+
+
+
+% - "%" formatting
+% - list comprehensions / kludges for dict,set types
+% - decorators
+% - comments and docstrings
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "index"
+%%% End: 
