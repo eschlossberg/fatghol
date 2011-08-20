@@ -197,7 +197,7 @@ class ChainComplex(object):
         """
         ## pass 1: compute boundary operators in matrix form
         #
-        logging.info("Computing matrix form of boundary operator ...")
+        logging.info("Stage II: Computing matrix form of boundary operator ...")
         
         #: Matrix form of boundary operators; the `i`-th differential
         #: `D[i]` is `dim C[i-1]` rows (range) by `dim C[i]` columns
@@ -234,7 +234,7 @@ class ChainComplex(object):
         
         ## pass 2: compute rank and nullity of boundary operators
         #
-        logging.info("Computing ranks of boundary operator matrices ...")
+        logging.info("Stage III: Computing ranks of boundary operator matrices ...")
         
         #: ranks of `D[n]` matrices, for 0 <= n < len(self); the differential
         #: `D[0]` is the null map.
