@@ -21,6 +21,10 @@ def CyclicSequence(base, factory=None):
             else:
                 base.__init__(self, sequence)
 
+        def __repr__(self):
+            return "%s(%s)" % (self.__class__.__name__,
+                               base.__repr__(self))
+
         ## item accessors
         ##        
         def __delitem__(self, i):
@@ -94,7 +98,8 @@ def CyclicSequence(base, factory=None):
         ## equality predicates
         ##
         def __hash__(self):
-            return sum(hash(self[x:x+len(self)]) for x in xrange(len(self)))
+            return sum(hash(self[x:x+len(self)]) for x in xrange(len(self))) \
+                   % SYS_MAXINT
         
         def __eq__(self, other):
             """Return `True` if `self` is linearly equal to `other`
@@ -105,6 +110,12 @@ def CyclicSequence(base, factory=None):
                 return False
             else:
                 return True
+
+        # both `__eq__` and `__ne__` are needed for testing equality of objects;
+        # see `<http://www.voidspace.org.uk/python/articles/comparison.shtml>`
+        def __ne__(self, other):
+            """The opposite of `__eq__` (which see)."""
+            return not self.__eq__(other)
 
         @staticmethod
         def _eq_shifted(first, second, shift):
