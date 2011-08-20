@@ -13,7 +13,7 @@ construction gives birth to a chain complex whose homology is
 isomorphic to the (co)homology of the moduli space of smooth punctured
 curves $\M_{g,n}$.
 
-Here we give a construction of the ribbon graph complex, deriving it
+Here we give a construction of the fatgraph complex, deriving it
 as a relative of Thurston-Harer's arc-system complex \cite{%
   harer;cohomological-dimension,%
   harer;cohomology-of-moduli%
@@ -27,7 +27,7 @@ This ribbon graph complex is the same complex that one gets by
 applying Kontsevich' construction in the associative case; however,
 the proof given here is specific to $\M_{g,n}$ and does not trivially
 extend to other cases.  The route to it is a bit convoluted, as the
-direct approach to constructing a ribbon graph complex by defining
+direct approach to constructing a fatgraph complex by defining
 face operators through contraction of edges does not yield a
 simplicial complex: after a few contractions, loops appear, which
 cannot be contracted any more.  This mirrors the structure of Harer's
@@ -37,7 +37,7 @@ In contrast to the simpler method presented here, the techniques
 devised by Kontsevich are suitable to further generalization to any
 ``modular operad'' \cite{getzler-kapranov}.  A construction of the
 graph complex, closely following Kontsevich' original work, has been
-detailed in \cite{conant-vogtmann;2003}. Very recently, Hamilton and
+detailed in \cite{conant-vogtmann;2003}. Recently, Hamilton and
 Lazarev gave a new proof in \cite{hamilton-lazarev;math.QA/0608395}.
 
 
@@ -56,15 +56,15 @@ surface of genus $g$ and $P = \{ x_1, \ldots, x_n \}$ a set of $n$ points
 in $S$.  
 
 Let $\Diff(S,P)$ be the group of diffeomorphims of $S$ that fix $P$
-pointwise; let $\Diff^0(S,P)$, resp.~$\Diff^+(S,P)$ be the subgroups
+pointwise; let $\Diff^0(S,P)$, resp.~$\Diff^+(S,P)$, be the subgroups
 of diffeomorphisms homotopic to the identity mapping $\id_S$,
 resp.~the subgroup of orientation-preserving diffeomorphisms.
 
-Every set $P$ of marked points can be carried into another chosen one
-$P'$ by a diffeomorphism $\phi$ homotopic to the identity mapping
-$\id_S$.  Therefore, $\Diff^+(S,P)$ and $\Diff^0(S, P)$ depend only on
-$n = \card{P}$ and not on $P$, cf. \cite{krushkal;riemann-surfaces}.
-Summing up:
+Every set $P$ of marked points can be transformed into another chosen
+set $P'$ (of the same cardinality) by a diffeomorphism $\phi$
+homotopic to the identity mapping $\id_S$.  Therefore, $\Diff^+(S,P)$
+and $\Diff^0(S, P)$ depend only on $n = \card{P}$ and not on $P$,
+cf. \cite{krushkal;riemann-surfaces}.  Summing up:
 \begin{definition}\label{dfn:diff}
   $\Diff(S,n)$ is the group of orientation-preserving diffeomorphisms
   that keep the $n$ marked points fixed.
@@ -132,7 +132,7 @@ One may instead consider equivalence classes of $n$-punctured surfaces
 $S$ (i.e., with $n$ points \emph{removed}) by bianalytic mappings that
 do \emph{not} permute the punctures, and repeat the same construction
 of the Teichm\"uller and the moduli space.  By the Riemann extension
-theorem, the two approaches turn out to be the same.
+theorem, the two approaches turn out to yield the same result.
 
 Another approach leads to the construction of $\M_{g,n}$ by
 equivalence classes of triples $(C, x, f)$ where $C$ is a complex
@@ -163,10 +163,13 @@ $g$.
   \end{enumerate}
 \end{definition}
 Equivalently, this last condition can be expressed by saying that:
-\textsl{a)} any rational component of the normalized curve $\tilde C$
-must contain at least 3 special points (that is, marked points or
-singular points); \textsl{b)} any component of genus $1$ must contain
-at least 1 special point.
+\begin{inparaenum}[\sl a)]
+\item any rational component of the normalized curve $\tilde C$
+  must contain at least 3 special points --- i.e., marked points or
+  singular points;
+\item  any component of genus $1$ must contain
+  at least 1 special point.
+\end{inparaenum}
 
 Let $C$ be a stable curve, with $\nu$ irreducible components and $r$
 nodal points. Let $\{C_j\}_{j=1, \dots, \nu}$ be the irreducible
@@ -182,20 +185,21 @@ number of punctures be $n$.
 
 
 
-\section{Ribbon graphs}
-\label{sec:ribbon-graphs}
+\section{Fatgraphs}
+\label{sec:fatgraphs}
 
-Ribbon graphs take their name from being usually depicted as graphs
+``Fatgraphs'' take their name from being usually depicted as graphs
 with thin bands as edges, instead of 1-dimensional lines; they have
-also been called ``fatgraphs'' in the literature.
+also been called ``Ribbon graphs'' in the literature.  The two names
+will be used interchangeably here.
 
 \begin{definition}
-  \label{dfn:ribbon-graphs}
-  A ribbon graph is a finite CW-complex of pure dimension 1, together
+  \label{dfn:fatgraphs}
+  A fatgraph is a finite CW-complex of pure dimension 1, together
   with an assignment, for each vertex $\gamma$, of a cyclic ordering of the
   edges incident at $\gamma$.
 
-  A morphism of ribbon graphs is a cellular map $f:G\to G'$ such that,
+  A morphism of fatgraphs is a cellular map $f:G\to G'$ such that,
   for each vertex $\gamma$ of $G'$, the preimage $f^{-1}(V)$ of a small
   neighbourhood $V$ of $\gamma$ is a small neighbourhood of a tree in $G$
   (i.e., it is a connected graph with no nontrivial homological
@@ -204,16 +208,16 @@ also been called ``fatgraphs'' in the literature.
 Unless otherwise specified, we assume that all vertices of a ribbon
 graph have valence at least 3.
 
-If $G$ is a ribbon graph, denote $\Vertices{G}$, $\Edges{G}$ and
-$\Legs{G}$ the sets of vertices, (unoriented) edges and oriented edges
+If $G$ is a fatgraph, denote $\Vertices{G}$, $\Edges{G}$ and
+$\Legs{G}$ the sets of vertices, unoriented edges and oriented edges
 (at times called ``legs'' or ``half-edges'').
 
 \subsubsection{Morphisms arising from contraction of an edge}
 \label{sec:contractions}
-Let $G$ be a ribbon graph, and $G'$ be the CW-complex obtained by
+Let $G$ be a fatgraph, and $G'$ be the CW-complex obtained by
 contracting an edge $\alpha \in \Edges{G}$ to a point.  If $\alpha$ connects two
 \emph{distinct} vertices, that is, $\alpha$ is not a loop, then $G'$
-inherits a ribbon graph structure from $G$: if $(\alpha < \alpha_1 < \ldots < \alpha_k <
+inherits a fatgraph structure from $G$: if $(\alpha < \alpha_1 < \ldots < \alpha_k <
 \alpha)$ and $(\alpha < \alpha'_1 < ... < \alpha'_h < \alpha)$ are the cyclic orders at
 endpoints of $\alpha$, then the vertex formed by collapsing $\alpha$ is endowed
 with the cyclic order $(\alpha_1 < \ldots < \alpha_k < \alpha'_1 < \ldots < \alpha'_h)$.  The
@@ -222,20 +226,20 @@ graphs.
 
 The following lemma is an immediate consequence of the definition.
 \begin{lemma}\label{lemma:contraction1}
-  Any morphism of ribbon graphs is a composition of isomorphisms and
+  Any morphism of fatgraphs is a composition of isomorphisms and
   contractions of non-loop edges.
 \end{lemma}
 
 
-\subsection{From ribbon graphs to Riemann surfaces, I}
+\subsection{From fatgraphs to Riemann surfaces, I}
 \label{sec:rg-to-surfaces}
 
 There is a functorial construction to build a topological surface
-$S(G)$ from a ribbon graph $G$; this is usually referred to as
+$S(G)$ from a fatgraph $G$; this is usually referred to as
 ``thickening'' or ``fattening'' in the literature.
 
 \begin{lemma}
-  A ribbon graph is uniquely determined by the following data: a
+  A fatgraph is uniquely determined by the following data: a
   finite set $L$ together with bijective maps $\sigma_0, \sigma_1, \sigma_2: L \to L$ such
   that:
   \begin{itemize}
@@ -246,7 +250,7 @@ $S(G)$ from a ribbon graph $G$; this is usually referred to as
 \begin{proof}
   To pass from the topological description to the combinatorial one,
   take $L$ to be the set of \emph{oriented} edges of the CW-complex
-  underlying a ribbon graph.  Define $\sigma_1:L\to L$ as the orientation
+  underlying a fatgraph.  Define $\sigma_1:L\to L$ as the orientation
   reversal on edges.  Define $\sigma_0:L\to L$ by means of the cyclic order
   at vertices: let $L(\gamma)$ be the subset of edges in $L$ that
   \emph{end} at a vertex $\gamma$, the cyclic order on edges incident at
@@ -271,36 +275,41 @@ $\Legs{G}$ is plainly the set $L$.
 
 \begin{lemma}
   \label{lemma:S-functor}
-  \begin{inparaenum}[\textsl (a)]
-  \item There is a functor $S$ that associates to every ribbon graph
+  \begin{inparaenum}
+  \item There is a functor $S$ that associates to every fatgraph
     $G$ a punctured Riemann surface $S(G)$, and to every morphism $f:
     G \to G'$ a continuous map $S(f): S(G) \to S(G')$.
   \item The surface $S(G)$ is naturally endowed with a triangulation
-    indexed by (oriented) edges of $G$.
+    indexed by oriented edges of $G$.
   \end{inparaenum}
 \end{lemma}
 \begin{proof}
-  Let $G = (L; \sigma_0, \sigma_1, \sigma_2)$ be a ribbon graph.  Associate a 0-cell
-  with every $\sigma_0$-orbit in $L$, and a 1-cell with every $\sigma_1$-orbit;
-  attach a 1-cell $\alpha = \{\alpha^+, \alpha^-\}$ to the (possibly not distinct) 0-cells
-  corresponding to the $\sigma_0$-orbits of $\alpha^+$ and $\alpha^-$.  Now glue a
-  punctured 2-cell $B_\beta^\times$ along any $\sigma_2$-orbit $\beta$: if $\{l, \sigma_2(l), \ldots,
-  \sigma_2^k(l)\}$ is a $\sigma_2$-orbit (in the order it is swept by $\sigma_2$) and
+  Let $G = (L; \sigma_0, \sigma_1, \sigma_2)$ be a fatgraph.  Pick a
+  topological 0-cell for each $\sigma_0$-orbit in $L$, and a 1-cell
+  for each $\sigma_1$-orbit; attach the 1-cell $\alpha = \{\alpha^+,
+  \alpha^-\}$ to the (possibly not distinct) 0-cells corresponding to
+  the $\sigma_0$-orbits of $\alpha^+$ and $\alpha^-$.  Now glue a
+  punctured 2-cell $B_\beta^\times$ along any $\sigma_2$-orbit
+  $\beta$: if $\{l, \sigma_2(l), \ldots, \sigma_2^k(l)\}$ is a
+  $\sigma_2$-orbit (in the order it is swept by $\sigma_2$) and
   $\sigma_2^{k+1}(l) = l$, then attach a punctured 2-disk so that its
   oriented border is the 1-cycle formed by the graph edges
   corresponding to $\sigma_2^i(l)$.
 
   To describe the triangulation of $S(G)$, assume at first that $G$
   has no loops.  In the course of the construction of $S(G)$, a
-  punctured disk $B_\beta^\times$ has been glued to each $\sigma_2$-orbit $\beta$; for
-  each oriented edge $\alpha^\pm \in \beta$, let $T_{\alpha^\pm}^{(\beta)}$ be the curvilinear
-  triangle delimited by $\alpha^\pm$ and the radii joining endpoints of $\alpha^\pm$
-  with the center of $B_\beta$.  The collection $\{ T_{\alpha^\pm}^{(\beta)} \}$ is a
-  triangulation of $S(G)$.  When $G$ has a loop $\alpha$, there is a
-  $\sigma_2$-orbit $\beta$ such that $\beta$ is made of $\alpha$ alone, thus $B_\beta$ is
-  bounded by $\alpha$ only.  Split $\alpha$ at the midpoint to form two edges
-  $\alpha'$, $\alpha''$: then $B_\beta$ breaks up into triangles $T_{\alpha'}$ and
-  $T_{\alpha''}$ and we can proceed as before.
+  punctured disk $B_\beta^\times$ has been glued to each
+  $\sigma_2$-orbit $\beta$; for each oriented edge $\alpha^\pm \in
+  \beta$, let $T_{\alpha^\pm}^{(\beta)}$ be the curvilinear triangle
+  delimited by $\alpha^\pm$ and the radii joining endpoints of
+  $\alpha^\pm$ with the center of $B_\beta$.  The collection $\{
+  T_{\alpha^\pm}^{(\beta)} \}$ is a triangulation of $S(G)$.  When $G$
+  has a loop $\alpha$, there is a $\sigma_2$-orbit $\beta$ such that
+  $\beta$ is made of an oriented edge $\alpha^\pm \in \alpha$ alone,
+  thus $B_\beta$ is bounded by $\alpha^\pm$ only.  Split $\alpha^\pm$
+  at the midpoint to form two edges $\alpha'$, $\alpha''$: then
+  $B_\beta$ breaks up into triangles $T_{\alpha'}$ and $T_{\alpha''}$
+  and we can proceed as before.
 
   Finally, for every morphism $f: G \to G'$ build a continuous map
   $S(f): S(G) \to S(G')$ by mapping $T_\alpha$ homeomorphically onto $T_{\alpha'}$
@@ -318,20 +327,20 @@ $\beta$ with the set of edges it is made of, and a vertex $\gamma$ with the set
 of edges incident to it.
 
 
-\subsection{Numbered ribbon graphs}
+\subsection{Numbered fatgraphs}
 \label{sec:numbered-rg}
 
 \begin{definition}
-  A ribbon graph $G$ is \emph{numbered} when it is endowed with a
+  A fatgraph $G$ is \emph{numbered} when it is endowed with a
   bijection $\{1,\ldots, n\} \to \Holes{G}$.
 
-  It is understood that morphisms of numbered ribbon graphs respect the
+  It is understood that morphisms of numbered fatgraphs respect the
   numbering of boundary components.
 \end{definition}
-From this point onwards, \emph{all ribbon graphs are equipped with a
+From this point onwards, \emph{all fatgraphs are equipped with a
   numbering}.
 
-The correspondence between ribbon graphs and Riemann surfaces allows
+The correspondence between fatgraphs and Riemann surfaces allows
 us to give the following.
 \begin{definition}\label{dfn:rg-genus}
   The \emph{puncture number} of a graph $G$ is given by $n =
@@ -343,7 +352,7 @@ us to give the following.
     \label{eq:2}
     \chi(G) = \chi(S(G)) = 2 - 2g - n = 2 - 2g - \card{\Holes{G}},
   \end{equation}
-  so we can define, for any ribbon graph $G$, the \emph{genus} $g$, as
+  so we can define, for any fatgraph $G$, the \emph{genus} $g$, as
   given by the above relation.
 \end{definition}
 It is trivial to check the following.
@@ -351,10 +360,10 @@ It is trivial to check the following.
   If $G'$ is obtained from $G$ by contraction of a non-loop edge,
   then $G$ and $G'$ share the same genus and puncture number.
 \end{lemma}
-Denote by $\RG$ the category of numbered ribbon graphs and their
+Denote by $\RG$ the category of numbered fatgraphs and their
 morphisms.  By lemmas~\ref{lemma:contraction1}
 and~\ref{lemma:contraction2}, $\RG$ decomposes into the disjoint union
-of sub-categories $\RG_{g,n}$ whose objects are ribbon graphs of genus
+of sub-categories $\RG_{g,n}$ whose objects are fatgraphs of genus
 $g$ with $n$ punctures:
 \begin{equation*}
   \RG = \coprod_{g,n} \RG_{g,n}
@@ -363,68 +372,71 @@ No morphism connects an object of $\RG_{g,n}$ with an object of
 $\RG_{g',n'}$.
 
 
-\subsection{Embedded ribbon graphs}
+\subsection{Embedded fatgraphs}
 \label{sec:embedded-rg}
 
 Fix a reference Riemann surface $S = S_{g,n}$ of genus $g$ with $n$
 punctures.
 
-An embedding of a ribbon graph $G$ is a injective continuous map $\iota:G\to
+An embedding of a fatgraph $G$ is a injective continuous map $\iota:G\to
 S$, that is, a homeomorphism of $G$ onto $\iota(G) \subseteq S$, such that the
 orientation on $S$ induces the cyclic order at the vertices of $\iota(G)$.
 
 When confusion is likely to arise, we shall speak of \emph{abstract}
-ribbon graphs, to mean the topological and combinatorial objects
-defined in \csref{dfn:ribbon-graphs}, as opposed to \emph{embedded}
-ribbon graphs as in \csref{dfn:embedded-rg} below.
+fatgraphs, to mean the topological and combinatorial objects
+defined in \csref{dfn:fatgraphs}, as opposed to \emph{embedded}
+fatgraphs as in \csref{dfn:embedded-rg} below.
 
 \begin{definition}\label{dfn:embedded-rg}
-  An embedded ribbon graph is a ribbon graph $G$ endowed with a
+  An embedded fatgraph is a fatgraph $G$ endowed with a
   homeomorphism ${\tilde \iota}$ between $S(G)$ and the ambient
   surface $S$, modulo the action of $\Diff^0(S)$.
 \end{definition}
-Spelling out all details, an embedded ribbon graph is an equivalence
+Spelling out all details, an embedded fatgraph is an equivalence
 class, modulo the action of $\Diff_0(S)$, of triples $[G, \iota,
-\{\psi_i\}_{i=1}^n]$ composed of a numbered ribbon graph $G$, an
+\{\psi_i\}_{i=1}^n]$ composed of a numbered fatgraph $G$, an
 embedding $\iota:G\to S$, and, for each connected component $C_i$ of
 $S - \iota(G)$, a map $\psi_i: {\bar C_i} \to {\bar B}^\times$ such
 that:
-\begin{inparaenum}
+\begin{inparaenum}[\sl (1)]
 \item $\psi_i$ is a homeomorphism of the interior of $C_i$ with the
   punctured open unit disk $B^\times$;
 \item $\psi_i$ restricts to $\iota^{-1}$ on the border $\partial C_i$.
 \end{inparaenum}
 
-A morphism $[f]$ from $[G, \iota, \psi_*]$ to $[G', \iota', \psi'_*]$
-is given by the following data:
+Since a morphism $f:G\to G'$ of abstract fatgraphs induces a morphism
+$S(f):S(G)\to S(G')$, then a morphism of embedded fatgraphs is
+determined by a homotopy connecting ${\tilde \iota}$ and ${\tilde
+  \iota' \circ f}$.  In detail: a morphism $[f]$ from $[G, \iota,
+\psi_*]$ to $[G', \iota', \psi'_*]$ is given by the following data:
 \begin{itemize}
-\item an abstract ribbon graph morphism $f:G\to G'$;
-\item a homotopy $\eta:[0,1] \times S\to S$, such that $\eta(0,-) = \id_S$,
-  transforming $\iota$ into $\iota' \circ f$ and $\psi_i$ into $\psi'_i$.
+\item an abstract fatgraph morphism $f:G\to G'$;
+\item a homotopy $\eta:[0,1] \times S\to S$, such that:
+  \begin{itemize}
+  \item $\eta(0,-) = \id_S$,
+  \item $\eta(1,-)$ transforms $\iota$ into $\iota' \circ f$
+    and $\psi_i$ into $\psi'_i$.
+  \end{itemize}
+
 \end{itemize}
 
-Since a morphism $f:G\to G'$ of abstract ribbon graphs induces
-a morphism $S(f):S(G)\to S(G')$, then a morphism of embedded
-ribbon graphs is determined by a homotopy connecting ${\tilde \iota}$ and
-${\tilde \iota' \circ f}$.
-
-Embedded numbered ribbon graphs with their morphisms form a category
+Embedded numbered fatgraphs with their morphisms form a category
 $\ERG$, which is again the disjoint union of categories $\ERG_{g,n}$.
 There is an obvious forgetful functor from the category of embedded
-ribbon graphs to the category of abstract numbered ribbon graphs,
+fatgraphs to the category of abstract numbered fatgraphs,
 sending $[G, \iota] \mapsto G$ and $[f] \mapsto f$.
 
 The mapping class group $\Gamma_{g,n}$ acts functorially on
-$\ERG_{g,n}$ by changing the embedding: $\phi \in \Gamma_{g,n}$ sends
+$\ERG_{g,n}$ by changing the embedding: $\phi \in \Gamma_{g,n}$ maps
 $[G, \iota, \psi_*]$ into $[G, \iota \circ \phi, \phi \circ \psi_*]$.
 
 \begin{lemma}
   \label{lemma:erg-no-aut}
-  An embedded ribbon graph has no automorphisms other than the identity.
+  An embedded fatgraph has no automorphisms other than the identity.
 \end{lemma}
 \begin{proof}
   Suppose $[f] \in \Aut_{\ERG}[G, \iota, \psi_*]$, then $f:G\to G$ is an abstract
-  ribbon graph automorphism, so it induces a $S(f): S(G) \to S(G)$
+  fatgraph automorphism, so it induces a $S(f): S(G) \to S(G)$
   which is a \emph{homeomorphism}.  By definition, there is a homotopy
   connecting ${\tilde \iota}: S(G) \to S$ and ${\tilde \iota'} \circ {\tilde f}:
   S(G)\to S$, so there is a homotopy connecting ${\tilde \iota'} \circ {\tilde f}
@@ -442,44 +454,55 @@ We can give the topological Riemann surface $S(G)$ a complex analytic
 structure by means of the triangulation in \ref{lemma:S-functor}(b)
 and an analytic atlas.
 
+Recall that in \csref{lemma:S-functor}, a triangulation of the surface
+$S(G)$ was defined, featuring a simplex $T_{\alpha^\pm}$ for each
+non-loop oriented edge, and two distinct simplexes for each oriented
+loop in $G$.
+
 Define an atlas of $S(G)$:
 \begin{itemize}
-\item for any edge $\alpha \in \Edges{G}$, let $V_\alpha := (T_\alpha^+ \cup T_\alpha^-)^\circ$ be
-  the interior of the union of the two triangles having $\alpha$ as an
-  edge;
-\item for any boundary component $\beta \in \Holes{G}$, put $V_\beta := \bigl(
+\item For any non-loop edge $\alpha \in \Edges{G}$, let $V_\alpha :=
+  (T_\alpha^+ \cup T_\alpha^-)^\circ$ be the interior of the union of
+  the two triangles having $\alpha$ as an edge.  Similarly, for each loop edge
+  $\lambda$, construct domains $V_{\lambda'}$, $V_{\lambda''}$ from
+  the two halves $\lambda'$, $\lambda''$ that $\lambda$ is cut into
+  in the construction of \csref{lemma:S-functor}.
+\item For any boundary component $\beta \in \Holes{G}$, put $V_\beta := \bigl(
   \bigcup_{\alpha} T_\alpha^{(\beta)} \bigr)^\circ$, the interior part of the union of triangles
-  bounded by all edges $\alpha$ bounding $\beta$;
-\item for any vertex $\gamma \in \Vertices{G}$, put $V_\gamma := \bigl( \bigcup_\alpha T_a^\pm
+  bounded by all edges $\alpha$ bounding $\beta$.
+\item For any vertex $\gamma \in \Vertices{G}$, put $V_\gamma := \bigl( \bigcup_\alpha T_a^\pm
   \bigr)^\circ$, the interior part of the union of triangles bounded by
   edges $\alpha$ incident to $\gamma$.
 \end{itemize}
 \begin{figure}[btp]
   %% Figura atlas.fig
   \centering\includegraphics[width=\textwidth]{atlas}
-  \caption{The open sets building an atlas of $S(G)$: (a) the
+  \caption{The open sets building an atlas of $S(G)$: \textsl{(a)} the
     triangulation built from a graph $G$: graph edges are drawn as
-    solid lines, and edges of $T_\alpha^{\pm}$ are drawn as dotted lines; (b)
-    the neighborhood $V_\alpha$ of an edge $\alpha$; (c) the neighborhood $V_\beta$
-    of a boundary component $\beta$; (d) the neighborhood $V_\gamma$ of a
+    solid lines, and edges of $T_\alpha^{\pm}$ are drawn as dotted
+    lines; \textsl{(b)} the neighborhood $V_\alpha$ of an edge
+    $\alpha$; \textsl{(c)} the neighborhood $V_\beta$ of a boundary
+    component $\beta$; \textsl{(d)} the neighborhood $V_\gamma$ of a
     vertex $\gamma$.}
   \label{fig:atlas}
 \end{figure}
 
 \begin{definition}
   \label{dfn:metric-ribbon-graphs}
-  A metric $\ell$ on a ribbon graph $G$ is an assignment of a real
+  A metric $\ell$ on a fatgraph $G$ is an assignment of a real
   positive number $\ell_\alpha$ for each edge $\alpha \in \Edges{G}$.
 
-  A metrized ribbon graph $(G, \ell)$ is a ribbon graph $G$ equipped with
+  A metrized fatgraph $(G, \ell)$ is a fatgraph $G$ equipped with
   a metric $\ell$.
 \end{definition}
 
 Given a metric $\ell$ on the graph $G$, define charts on the open sets
 $V_*$ (see Figure~\ref{fig:charts}):
 \begin{itemize}
-\item for any edge $\alpha$, pick a homeomorphism $f_\alpha: V_\alpha \to \{ z \in \setC
-  : 0 < \Re z < \ell_\alpha \}$;
+\item for any non-loop edge $\alpha$, pick a homeomorphism $f_\alpha: V_\alpha \to \{ z \in \setC
+  : 0 < \Re z < \ell_\alpha \}$; for any loop $\lambda$, choose
+  homeomorphisms $f_{\lambda'}, f_{\lambda''}: V_{\lambda'}, V_{\lambda''} \to \{ z \in \setC
+  : 0 < \Re z < 1/2 \cdot \ell_\alpha \}$;
 \item for any boundary component $\beta$, bounded by edges $\alpha_1$, $\alpha_2$
   and $\alpha_3$, pick a homeomorphism $f_\beta: V_\beta \to \{ \abs{z} < \rho \}$, where
   $\rho = (\ell_{\alpha_1} + \ell_{\alpha_2} + \ell_{\alpha_3}) / 2\pi$.
@@ -488,10 +511,10 @@ $V_*$ (see Figure~\ref{fig:charts}):
 \begin{figure}[htbp]
   %% Figura charts.fig
   \centering\includegraphics{charts}
-  \caption{Local charts on the atlas: (a) any open set $V_\alpha$
-    maps to a strip in the complex plane; (b) any open set $V_\beta$
-    maps to a disk; (c) any open set $V_\gamma$ maps to the complex
-    plane itself.}
+  \caption{Local charts on the atlas: \textsl{(a)} any open set
+    $V_\alpha$ maps to a strip in the complex plane; \textsl{(b)} any
+    open set $V_\beta$ maps to a disk; \textsl{(c)} any open set
+    $V_\gamma$ maps to the complex plane itself.}
   \label{fig:charts}
 \end{figure}
 These choices are subject to the condition that transition functions
@@ -517,7 +540,7 @@ surface $S(G)$ endowed with this complex analytic structure.
 
 \begin{remark}
   Note that the above procedure actually equips any metrized ribbon
-  graph $(G, \ell)$ with a structure of embeddded ribbon graph: take the
+  graph $(G, \ell)$ with a structure of embeddded fatgraph: take the
   obvious $\iota:G \to S(G, \ell)$ as embedding of the graph, and maps $f_\beta$ as
   the homeorphisms between $S - \iota(G)$ and punctured disks.
 \end{remark}
@@ -526,7 +549,7 @@ The following statement is an easy corollary of the construction of
 $S(G, \ell)$.
 \begin{lemma}
   \label{lemma:rg-morphism}
-  If $G$, $G'$ are metrized ribbon graphs and $f$ is an isomorphism
+  If $G$, $G'$ are metrized fatgraphs and $f$ is an isomorphism
   preserving edge lengths, then $S(f)$ is a complex analytic mapping.
 \end{lemma}
 \begin{proof}
@@ -545,14 +568,14 @@ graph, however, this graph is not uniquely determined (see
 \begin{figure}[bt]
   %% Figura sphere3.fig
   \centering\includegraphics[width=\textwidth]{sfera3}
-  \caption{A thrice-punctured sphere and two deformation retracts, not
-    isomorphic as graphs.}
+  \caption{A thrice-punctured sphere and two distinct deformation
+    retracts, which are not isomorphic as graphs.}
   \label{fig:sphere-retracts}
 \end{figure}
 We can refine this correspondence: a theorem proved independently by
 J.~A. Jenkins \cite{jenkins;annals} and K.~Strebel
 \cite{strebel;quadratic-differentials;1983} provides the key tool: the
-construction of ribbon graphs from smooth complex curves.
+construction of fatgraphs from smooth complex curves.
 
 \begin{definition}
   A quadratic differential $q$ on a Riemann surface $S$ is a
@@ -599,7 +622,7 @@ critical locus) by $\ud s^2 = \abs{q(z)} \cdot \abs{\ud z}$.
     equals the projective class $[p_1, \ldots, p_n]$.
   \end{itemize}
 \end{theorem}
-The critical graph $G$ inherits a structure of embedded ribbon graph
+The critical graph $G$ inherits a structure of embedded fatgraph
 with metric from the ambient surface $S$: the length of an edge $\alpha$ is
 the one measured in the metric induced by the quadratic differential.
 Furthermore, Jenkins-Strebel's theory states that $G$ has a vertex of
@@ -607,7 +630,7 @@ valence $k+2$ where $q$ has a zero of order $k$, therefore, vertices
 of $G$ have valence $\geq3$. 
 
 Since the markings $x_1, \ldots, x_n$ are \emph{ordered}, $G$ has an
-additional structure of \emph{numbered} graph.
+additional structure of \emph{numbered} fatgraph.
 
 
 
@@ -616,7 +639,7 @@ additional structure of \emph{numbered} graph.
 
 We shall now construct (orbi)cell-complex analogues of the Teichm\"uller
 space and the moduli space of smooth curves, whose cells are indexed
-by ribbon graphs.  They will come equipped with a homotopy
+by fatgraphs.  They will come equipped with a homotopy
 equivalence to $\T_{g,n}$ and $\M_{g,n}$.
 
 References to this construction are scattered in the literature, and
@@ -631,14 +654,14 @@ there are many variants and quirks; see
 \subsection{Construction of $\Tcomb_{g,n}$ and $\Mcomb_{g,n}$}
 \label{sec:mgn-comb-construction}
 
-Let $G$ be a ribbon graph of genus $g$ with $n$ numbered boundary
-components.  A topological simplex is spanned when varying the metric
-data $(\ell_\alpha)_{\alpha \in \Edges{G}}$; gluing these cells one recovers the
-whole $\T_{g,n}$, when using \emph{embedded} ribbon graphs, or
-$\M_{g,n}$, when using \emph{abstract} ribbon graphs. $\M_{g,n}$.  
-A construction of $\Tcomb_{g,n}$ and $\Mcomb_{g,n}$can be found in
-\cite{penner:math.GT/0210326}, although the procedure outlined here
-extends the construction of $\Mcomb_{g,n}$ given in
+Let $G$ be a fatgraph (embedded or abstract) of genus $g$ with $n$
+numbered boundary components.  A topological simplex is spanned when
+varying the metric data $(\ell_\alpha)_{\alpha \in \Edges{G}}$; gluing
+these cells one recovers the whole $\T_{g,n}$ (when using
+\emph{embedded} fatgraphs), or $\M_{g,n}$ (when using \emph{abstract}
+fatgraphs).  A construction of $\Tcomb_{g,n}$ and $\Mcomb_{g,n}$ can
+be found in \cite{penner:math.GT/0210326}, although the procedure
+outlined here extends the construction of $\Mcomb_{g,n}$ given in
 \cite{kontsevich;intersection-theory;1992}.
 
 Call a set $X \subseteq \Edges{G}$ negligible whenever it is \emph{not} the
@@ -646,8 +669,9 @@ support of a non-trivial homological cycle.  For an abstract ribbon
 graph $G$, define a topological simplex $\Delta(G)$:
 \begin{equation*}
   \label{eq:rg-cells-moduli}
-  \Delta(G) := \{ \ell: \Edges{G} \to \setR_{\geq0}, {\textstyle \sum}_{\alpha\in\Edges{G}} \ell_\alpha=1 
-  | \text{the zero set of $\ell$ is negligible} \}.
+  \Delta(G) := \{ \ell: \Edges{G} \to \setR_{\geq0} \,|\,
+  {\textstyle \sum}_{\alpha\in\Edges{G}} \ell_\alpha=1 
+  \text{ and the zero set of $\ell$ is negligible} \}.
 \end{equation*}
 It is a contravariant functor from the category of abstract ribbon
 graphs to the category of topological spaces: if $G'$ is obtained from
@@ -656,9 +680,9 @@ $G$ by contracting the edge $\alpha$, then
   \Delta(G') = \{ \ell \in \Delta(G) | \ell_\alpha = 0 \}.
 \end{equation}
 By composing with the (covariant) forgetful functor $[G, \iota, \psi_*] \mapsto G$
-from embedded ribbon graphs to abstract ribbon graphs, we define a
+from embedded fatgraphs to abstract fatgraphs, we define a
 contravariant functor $T: \ERG_{g,n} \mapsto \category{Top}$ from the
-category of embedded ribbon graphs to the category of topological
+category of embedded fatgraphs to the category of topological
 spaces.
 \begin{equation*}
   \label{eq:rg-cells-teichmueller}
@@ -676,7 +700,7 @@ a direct system in $\category{Top}$, and we can form its direct limit.
     \Tcomb_{g,n} := \varinjlim T[G, \iota, \psi_*],
   \end{equation*}
   where $[G, \iota, \psi_*]$ ranges in the category $\ERG_{g,n}$ of embedded
-  ribbon graphs of genus $g$ with $n$ numbered boundary components.
+  fatgraphs of genus $g$ with $n$ numbered boundary components.
 \end{definition}
 $\Tcomb_{g,n}$ is obtained by gluing topological simplices $\Delta(G)$ alongside
 the boundary: if $[G', \iota', \psi'_*]$ is obtained from $[G, \iota, \psi_*]$ by
@@ -684,13 +708,14 @@ contraction of an edge $\alpha$, then $\Delta(G')$ is identified with the face
 of $\Delta(G)$ where $\ell_\alpha = 0$ by \csref{eq:embedding-cells}.
 
 Points of the topological space $\Tcomb_{g,n}$ are (equivalence
-classes of) metrized embedded ribbon graphs $[G, \iota, \psi_*, \ell]$, where $\ell
+classes of) metrized embedded fatgraphs $[G, \iota, \psi_*, \ell]$, where $\ell
 \in T[G, \iota, \psi_*]$; it is easy to check that any $[G, \iota, \psi_*, \ell] \in
 \Tcomb_{g,n}$ has a unique representative such that $\ell_\alpha > 0$ for all
 $\alpha \in \Edges{G}$.  Perimeter maps $p_\beta: \Tcomb_{g,n} \to \setR_{>0}$ are
 well-defined; write $p_j$ for the perimeter of the $j$-th boundary
 component.
 
+In a similar fashion, we can construct $\Mcomb_{g,n}$.
 \begin{definition}
   The combinatorial moduli space of curves is the direct limit of the
   functor $\Delta$:
@@ -713,7 +738,7 @@ contrafunctor $\overline{M}(G)$ and a topological space:
 \end{equation*}
 $\Mbarcomb_{g,n}$ turns out to be a compactification of the orbifold
 $\Mcomb_{g,n}$, and a quotient of the Deligne-Mumford compactification
-$\Mbar_{g,n} \times \Delta$.
+$\Mbar_{g,n} \times \Delta^n$.
 
 \subsubsection{Homotopy equivalence with moduli spaces}
 \label{sec:homotopy-equiv}
@@ -757,8 +782,8 @@ isomorphisms.
   cellular action of the mapping class group $\Gamma_{g,n}$.
 \end{lemma}
 \begin{proof}
-  If $G \in \RG_{g,n}$ is any abstract ribbon graph, then map $\Delta(G)$ into
-  $\Tcomb_{g,n} / \Gamma_{g,n}$ by the following: pick any representative
+  If $G \in \RG_{g,n}$ is any abstract fatgraph, then map $\Delta(G)$ into
+  $\Tcomb_{g,n} / \Gamma_{g,n}$ by the following procedure: pick any representative
   embedding ${\tilde G} = [G, \iota, \psi_*] \in \ERG_{g,n}$ of $G$ and compose
   the isomorphism $\Delta(G) \cong T(\tilde G)$ with the quotient projection
   $T(\tilde G) \to \Tcomb_{g,n}/\Gamma_{g,n}$.  The mapping is well-defined:
@@ -769,10 +794,10 @@ isomorphisms.
   Therefore, if $\phi := ({\tilde \iota}')^{-1} \circ {\tilde \iota}$, then $[G, \iota,
   \psi_*] = \phi \cdot [G, \iota', \psi'_*]$.
 
-  By definition of direct limit, a map $\Phi$ is induced $\Mcomb_{g,n} \to
-  \Tcomb_{g,n} / \Gamma_{g,n}$.  It is surjective: every point in $\Tcomb /
+  By definition of direct limit, a map $\Phi: \Mcomb_{g,n} \to
+  \Tcomb_{g,n} / \Gamma_{g,n}$ is induced.  It is surjective: every point in $\Tcomb /
   \Gamma$ is a projection of a point $[G, \iota, \psi_*] \in \Tcomb$, therefore it
-  is in the image of $G \in \Mcomb$.  $\Phi$ is injective: if $G$ and $G'$
+  is in the image of $G \in \Mcomb$.  Moreover, $\Phi$ is injective: if $G$ and $G'$
   map to the same point in $\Tcomb / \Gamma$, then there is some $\phi \in \Gamma$
   such that $[G, \iota, \psi_*] = \phi \cdot [G', \iota', \psi'_*] = [G', \phi \circ \iota, \psi'_* \circ
   \phi]$; therefore, there is $\phi' \in \Diff^0$ such that $\phi' \circ \iota = \phi \circ \iota'$.
@@ -784,7 +809,7 @@ isomorphisms.
   \label{lemma:isotropy}
   The isotropy group $\Gamma_{{\tilde G}}$ of the cell $T{\tilde G} \hookrightarrow
   \Tcomb_{g,n}$ is (isomorphic to) the automorphism group $\Aut G$ of
-  the abstract ribbon graph $G$ underlying ${\tilde G}$.
+  the abstract fatgraph $G$ underlying ${\tilde G}$.
 \end{lemma}
 \begin{proof}
   If $a \in \Aut G$, then $S(a, \ell)$ is an automorphism of $S(G, \ell)$ for
@@ -796,9 +821,9 @@ isomorphisms.
   differential inducing the complex analytic structure corresponding
   to the metric $\ell \in T({\tilde G})$, then $\tau^*q$ defines a quadratic
   differential corresponding to a point in $T{\tilde G}$, so it has
-  critical graph ${\tilde G}$.  Yet, since $q$ has critical graph
+  critical graph ${\tilde G}$.  But, since $q$ has critical graph
   ${\tilde G}$, $\tau^*q$ has critical graph $\tau({\tilde G})$. Therefore,
-  $\tau$ restricts to a ribbon graph isomorphism, so a map $\Gamma_{{\tilde
+  $\tau$ restricts to a fatgraph isomorphism, so a map $\Gamma_{{\tilde
       G}} \to \Aut G$ is defined.
 \end{proof}
 Let $M(G)$ be the image in $\Mcomb_{g,n}$ of a simplex $T({\tilde G})$,
@@ -820,13 +845,13 @@ $\Tcomb_{g,n}$ (resp.~$\Mcomb_{g,n}$) with non-void interior.
 
 
 
-\section{The ribbon graph complex}
+\section{The fatgraph complex}
 \label{sec:ribbon-graph-complex}
 
 Harer \cite{harer;cohomological-dimension}, introduced a simplicial
 complex related to the Teichm\"uller space $\T_{g,n}$, which, when
-recast in terms of ribbon graphs, provides the needed link between the
-ribbon graph complex and (co)homology of $\M_{g,n}$.  
+recast in terms of fatgraphs, provides the needed link between the
+fatgraph complex and (co)homology of $\M_{g,n}$.  
 
 
 \subsection{Arc-systems}
@@ -908,13 +933,13 @@ proven to be a homeomorphism \cite{harer;cohomological-dimension,
 \begin{remark}
   \label{rem:approaching-face}
   When the length $\ell_j$ approaches $0$, the point $\Phi(S, b_*)$
-  approaches a point on a face of the simplex $|\langle u_1, \ldots, u_k\rangle|$; this
-  face is identified with the simplex $|\langle u_1, \ldots, \widehat{u_j}, \ldots,
-  u_k\rangle|$.
+  approaches a point on a face of the simplex $|\langle u_1, \ldots,
+  u_j, \ldots, u_k\rangle|$; this face is identified with the simplex
+  $|\langle u_1, \ldots, \widehat{u_j}, \ldots, u_k\rangle|$.
 \end{remark}
 
 
-\subsection{From arc-systems to ribbon graphs}
+\subsection{From arc-systems to fatgraphs}
 \label{sec:arcs-to-rg}
 
 Given a graph $U$ drawn on a Riemann surface $S$, recall that the dual
@@ -925,7 +950,7 @@ that they cross transversely.
 \begin{lemma}
   \label{lemma:arcs-to-rg}
   There's an equivariant bijective correspondence between arc-systems
-  $U \in X - X_\infty$ and embedded ribbon graphs ${\tilde G} \in \ERG_{g,n}$,
+  $U \in X - X_\infty$ and embedded fatgraphs ${\tilde G} \in \ERG_{g,n}$,
   the graph corresponding to an arc-system $U$ being the dual graph to
   $U$ in the ambient surface.
 \end{lemma}
@@ -939,19 +964,24 @@ that they cross transversely.
   = q(u, b_*)$, such that each arc $u_i$ is a regular curve in the
   vertical foliation $F^\perp$ associated to $q$.  Let ${\tilde G}$ be the
   critical graph of $q$; it is endowed with a structure of
-  \emph{embedded} ribbon graph.  By construction, ${\tilde G}$ is the
+  \emph{embedded} fatgraph.  By construction, ${\tilde G}$ is the
   dual graph of $U$.
 
-  Conversely, let ${\tilde G}$ be a ribbon graph embedded in the
-  surface $S_{g,n} = S(G)$.  Break up $S_{g,n}$ into closed triangles
-  $\{ T_\alpha \}$ as in \csref{lemma:S-functor}(b).  Form the dual graph to
-  ${\tilde G}$: for each $\{ T_{\alpha^\pm} \}$, let $u_\alpha^\pm$ be the arc
-  connecting the midpoint of $\alpha \in \Edges{{\tilde G}}$ to the vertex of
-  $T_{\alpha^\pm}$ opposite to $\alpha$, and let $u_\alpha$ be the arc obtained by
-  joining $u_\alpha^\pm$ at their common endpoint.  Then $U = [u_{\alpha_1}, \ldots,
-  u_{\alpha_k}]$ is a filling arc-system: indeed, each connected component
-  of $S_{g,n} - u$ is homeomorphic to one of the open sets $V_\gamma$ (with
-  $\gamma \in \Vertices{G}$), therefore it is a disk.
+  Conversely, suppose initially that $G$ has no loops.  Let ${\tilde
+    G}$ be a fatgraph embedded in the surface $S = S(G)$.  Break up
+  $S$ into closed triangles $\{ T_\alpha \}$ as in
+  \csref{lemma:S-functor}(b).  Form the dual graph to ${\tilde G}$:
+  for each $\{ T_{\alpha^\pm} \}$, let $u_\alpha^\pm$ be the arc
+  connecting the midpoint of $\alpha \in \Edges{{\tilde G}}$ to the
+  vertex of $T_{\alpha^\pm}$ opposite to $\alpha$, and let $u_\alpha$
+  be the arc obtained by joining $u_\alpha^\pm$ at their common
+  endpoint.  Then $U = [u_{\alpha_1}, \ldots, u_{\alpha_k}]$ is a
+  filling arc-system: indeed, each connected component of $S - U$ is
+  homeomorphic to one of the open sets $V_\gamma$ (with $\gamma \in
+  \Vertices{G}$), therefore it is a disk.
+  If $G$ has any loops, the same construction can be repeated, but
+  only one of the two halves $\lambda'$, $\lambda''$ of a loop
+  $\lambda$ should be  considered for defining the arc $u_\lambda$.
 
   This correspondence is equivariant: if $\tau \in \Gamma_{g,n}$ then point
   $b_*$ in $|\tau u|$ corresponds to analytic structure induced by the
@@ -964,44 +994,26 @@ then an order of the edges of ${\tilde G}$ is induced.
 
 \begin{lemma}
   \label{lemma:erg-loop}
-  Embedded ribbon graphs with a loop correspond to arc-system simplices
-  in $X$ with a face on $X_\infty$; every loop in a ribbon graph ${\tilde G}$
+  Embedded fatgraphs with a loop correspond to arc-system simplices
+  in $X$ with a face on $X_\infty$: every loop in a fatgraph ${\tilde G}$
   corresponds to a face on $X_\infty$ in the dual arc-system.
 \end{lemma}
 \begin{proof}
-  Let ${\tilde G}$ be an embedded ribbon graph.  If no edge of
+  Let ${\tilde G}$ be an embedded fatgraph.  If no edge of
   ${\tilde G}$ is a loop, then any contraction of an edge in ${\tilde
-    G}$ produces an embedded ribbon graph in $\ERG_{g,n}$, which again
+    G}$ produces an embedded fatgraph in $\ERG_{g,n}$, which again
   corresponds to a simplex in $X - X_\infty$.  Therefore, embedded ribbon
   graphs with no loops identify cells in $X$ with no face on $X_\infty$.
 
-  Now let ${\tilde G}$ be an embedded ribbon graph having a loop $\lambda \in
+  Now let ${\tilde G}$ be an embedded fatgraph having a loop $\lambda \in
   \Edges{G}$, and let $U = \langle u_1, \ldots, u_k\rangle$ be the arc-system simplex
   corresponding to ${\tilde G}$ according to \csref{lemma:arcs-to-rg}.
   Contraction of $\lambda$ in ${\tilde G}$ is not admissible, as it would
   change the genus and/or the puncture number of ${\tilde G}$;
   correspondingly, if $U'$ is the face of $U$ obtained by omitting the
   unique arc that intersects $\lambda$, then $U'$ does not fill up the
-  ambient surface.
-
-  Conversely, suppose that $U' \in X_\infty$ is such that adding a single arc
-  $u_0$ to $U'$ determines a simplex belonging to $X - X_\infty$.  Let
-  ${\tilde G}$ be the embedded ribbon graph, dual to $\langle u_0, U'\rangle$.
-  It's simple to see then:
-  \begin{enumerate}
-  \item The arc $u_0$ is entirely contained in a connected component
-    $B$ of $S - u'$, and this $B$ is either a punctured disk or a disk
-    with a slit in the middle.  Indeed, let $B' := B - |u_0| = S - U'
-    - u_0$; since $\langle u_0, U'\rangle$ belongs to $X - X_\infty$, then $B'$ is a
-    topological disk.  The border of $B'$ is union of the arcs $u_i$,
-    where each arc occurs at most two times, and, for those occurring
-    twice, the two copies have equal length in the metric of $S$.  The
-    arc $u_0$ occurs two times on the border of $B'$, and we get $B$
-    by isometrically gluing $B'$ along the two copies of $u_0$.
-  \item The arc $u_0$ connects the puncture or slit in $B$ with the
-    border of $B$.
-  \item The edge $\lambda$ of ${\tilde G}$ corresponding to $u_0$ is a loop.
-  \end{enumerate}
+  ambient surface: two marked points fall in the same connected
+  component of $S - U'$.
 \end{proof}
 
 \begin{lemma}
@@ -1032,22 +1044,22 @@ isomorphisms $|\langle u_*\rangle| \to |G|$ to form a PL isomorphism $|X - X_\in
 
 
 \subsection{Equivariant homology of $\T_{g,n}$ and the complex of
-  ribbon graphs}
+  fatgraphs}
 \label{sec:rg-complex}
 
 \begin{definition}\label{dfn:orientation}
-  An orientation of a ribbon graph $G$ is an orientation of the vector
+  An orientation of a fatgraph $G$ is an orientation of the vector
   space $\setQ\Edges{G}$, that is, the choice of an order of the edges of
   $G$, up to even permutations.
 \end{definition}
 Giving an orientation on $G$ (resp.~${\tilde G}$) is the same as
-orienting the simplex $\Delta(G)$ (resp.~$T({\tilde G}$).
+orienting the simplex $\Delta(G)$ (resp.~$T({\tilde G})$).
 
-If $G$ is a ribbon graph with $p$ edges, let $W_G := \bigwedge^p \setQ\Edges{G}$
+If $G$ is a fatgraph with $p$ edges, let $W_G := \bigwedge^p \setQ\Edges{G}$
 be the 1-dimensional vector space generated by wedge products $\alpha_1 \land \ldots
 \land \alpha_p$ of edges of $G$.  Every $f \in \Aut G$ induces a map $f:
 \Edges{G} \to \Edges{G}$ on the edges and thus a map $f_*: \alpha_1 \land \ldots
-\land \alpha_p \mapsto f(\alpha_1) \land \ldots \land f(\alpha_p)$.  It is trivial to check that $f_*(\alpha_1 \land
+\land \alpha_p \mapsto f(\alpha_1) \land \ldots \land f(\alpha_p)$.  Trivially, $f_*(\alpha_1 \land
 \ldots \land \alpha_p) = \pm \alpha_1 \land \ldots \land \alpha_p$, depending on whether $f$ preserves or
 reverses the orientation of $G$.
 
@@ -1056,31 +1068,34 @@ reverses the orientation of $G$.
   orientation-reversing automorphisms.
 \end{definition}
 
-Form a differential complex of orientable graphs as follows.
+Form a differential complex of orientable fatgraphs as follows.
 \begin{definition}
-  The complex $(W_*, D)$ of orientable ribbon graphs is defined by:
+  The complex $(W_*, D)$ of orientable fatgraphs is defined by:
   \begin{itemize}
-  \item $W_p := \bigoplus_G W_G$, where $G$ runs over orientable ribbon graphs
+  \item $W_p := \bigoplus_G W_G$, where $G$ runs over orientable fatgraphs
     with $(2g + n - 1 + p)$ edges;
-  \item $D: W_p \to W_{p-1}$ is given by $D := \sum_1^p (-1)^i d_i$ where
+  \item $D: W_p \to W_{p-1}$ is given by $D := \sum_1^p (-1)^i d_i$ where:
     \begin{equation*}
-      d_i(\alpha_1 \land \ldots \land \alpha_p) := \alpha_1 \land \ldots \land \widehat{\,\alpha_i\,} \land \ldots \land \alpha_p,
+      d_i(\alpha_1 \land \ldots \land \alpha_p) :=
+        \alpha_1 \land \ldots \land \widehat{\,\alpha_i\,} \land
+        \ldots \land \alpha_p,
     \end{equation*}
-    iff $\alpha_i$ is not a loop and $G/\alpha_i$ is orientable, otherwise set 
+    iff $\alpha_i$ is not a loop and $G/\alpha_i$ is orientable, and
     \begin{equation*}
-      d_i(\alpha_1 \land \ldots \land \alpha_p) := 0.
-    \end{equation*}
+      d_i(\alpha_1 \land \ldots \land \alpha_p) := 0,
+  \end{equation*}
+  otherwise.
   \end{itemize}
 \end{definition}
 
-Call a ribbon graph with one vertex only a \emph{clover}; the number $l$
+Call a fatgraph with one vertex only a \emph{clover}; the number $l$
 of edges of a clover of genus $g$ is readily computed by \eqref{eq:2}:
 \begin{equation}
   \label{eq:9}
   l_{\min} = 1 - \chi(G) = 2g + n - 1.
 \end{equation}
 On the other hand, the number of vertices (and edges too) is maximum
-in a ribbon graph when all vertices are 3-valent; from
+in a fatgraph when all vertices are 3-valent; from
 \begin{equation*}
   3v = 2l, 
   \qquad
@@ -1091,21 +1106,21 @@ we reckon:
   \label{eq:10}
   l_{\max} = 6g + 3n - 6, 
   \qquad 
-  v = 4g + 4n - 4
+  v_{\max} = 4g + 4n - 4
 \end{equation}
 From equations~\eqref{eq:9} and~\eqref{eq:10} we see that $W_*$ is a
 finite complex of length $4g + 2n - 5$, which is already predicted by
 result of Harer on the equivariant spine of $\T_{g,n}$
 \cite{harer;cohomological-dimension}.
 
-Every oriented ribbon graph $(G, \omega)$ defines an element $\omega_G \in W_G$ by
+Every oriented fatgraph $(G, \omega)$ defines an element $\omega_G \in W_G$ by
 taking the wedge product of edges of $G$ in the order given by $\omega$;
 conversely, any $\alpha_1 \land \ldots \land \alpha_p \in W_G$ defines an orientation on $G$ by
 setting $\alpha_1 < \ldots < \alpha_p$.
 
 \begin{theorem}
   The $\Gamma_{g,n}$-equivariant homology of $\T_{g,n}$ with rational
-  coefficients is computed by the complex of oriented ribbon graphs
+  coefficients is computed by the complex of oriented fatgraphs
   $(W_*, D)$, that is, there exists an isomorphism
   \begin{equation*}
     H^{\Gamma_{g,n}}_*(\T_{g,n}, \setQ) \cong H_*(W_*, D)
@@ -1114,7 +1129,9 @@ setting $\alpha_1 < \ldots < \alpha_p$.
 \begin{proof}
   The genus and puncture number will be fixed throughout, so for
   brevity, put $\Gamma := \Gamma_{g,n}$, $\T := \T_{g,n}$ and $\Tcomb :=
-  \Tcomb_{g,n}$.  By \csref{thm:HMT}, we have:
+  \Tcomb_{g,n}$.  
+
+  By \csref{thm:HMT}, we have:
   \begin{equation*}
     H^\Gamma_*(\T, \setQ) = H^\Gamma_*(\Tcomb, \setQ). 
   \end{equation*}
@@ -1125,11 +1142,11 @@ setting $\alpha_1 < \ldots < \alpha_p$.
   \cite[VII.5 and VII.7]{brown}).
 
   The space $\Tcomb_{g,n}$ has, by definition, an equivariant
-  cellularization with cells indexed by embedded ribbon graphs of
+  cellularization with cells indexed by embedded fatgraphs of
   genus $g$ with $n$ numbered boundary components.  Let $R_p$ be a set
   of representatives for the orbits of $p$-cells under the action of
   $\Gamma$.  By \csref{lemma:penner-kontsevich-bridge}, $R_p$ is in
-  bijective correspondence with the set of abstract ribbon graphs
+  bijective correspondence with the set of abstract fatgraphs
   having $p$ edges, and the orientation of a cell translates directly
   to an orientation of the corresponding graph.  For each geometric
   simplex $T{\tilde G} \subseteq \Tcomb$, let $\Gamma_{\tilde G}$ be its
@@ -1145,7 +1162,7 @@ setting $\alpha_1 < \ldots < \alpha_p$.
   $G$.  Therefore, $\setQ{\tilde G}$ and $W_G$ are isomorphic as $\Aut G =
   \Gamma_{T{\tilde G}}$ modules.
 
-  Following \cite[p.~173]{brown}, decompose (as a $\Gamma$-module)
+  Following \cite[p.~173]{brown}, let us decompose (as a $\Gamma$-module)
   \begin{equation*}
     C_*(\Tcomb, \setQ) = \bigoplus_{G \in R_p} W_G;
   \end{equation*}
@@ -1169,7 +1186,7 @@ setting $\alpha_1 < \ldots < \alpha_p$.
           trivially on $W_G$.}}
     \end{cases}
   \end{equation*}
-  Let $R'_p$ be the collection of all orientable ribbon graphs with
+  Let $R'_p$ be the collection of all orientable fatgraphs with
   $p$ edges.  Substituting back into the spectral sequence, we see
   that only one column survives:
   \begin{align}
@@ -1237,7 +1254,7 @@ setting $\alpha_1 < \ldots < \alpha_p$.
   T({\tilde G})$.  Furthermore, $T({\tilde G}')$ is a cell in
   $\partial T({\tilde G})$ iff ${\tilde G}'$ is obtained from ${\tilde G}$ by
   contraction of an edge; but ${\tilde G}'$ is a contraction of
-  ${\tilde G}$ iff the underlying \emph{abstract} ribbon graphs $G'$
+  ${\tilde G}$ iff the underlying \emph{abstract} fatgraphs $G'$
   and $G$ stand in the same relation.  Thus, the $\Gamma$-complexes $(C_*,
   \partial)$ and $(W_*, D)$ are isomorphic by $\theta_*$, so \eqref{eq:13}
   commutes, as was to be proved.
