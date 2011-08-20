@@ -56,6 +56,14 @@ class Vertex(CyclicList):
     A vertex is represented by the cyclically ordered list of its
     (decorated) edges.  The edge colorings may be accessed through a
     (read-only) sequence interface.
+
+    At init time, the number of loops attached to this vertex is
+    computed and stored in the `.num_loops` attribute::
+
+      >>> Vertex([0,1,2]).num_loops
+      0
+      >>> Vertex([1,1,0,0]).num_loops
+      2
     """
     # *Note:* `Vertex` cannot be a `tuple` subclass because:
     #   1) `tuple` has no `index()` method and re-implementing one in
@@ -63,26 +71,14 @@ class Vertex(CyclicList):
     #   2) we could not implement `rotate()` and friends: tuples are
     #      immutable.
 
-    __slots__ = []
+    __slots__ = [ 'num_loops' ]
+
+    def __init__(self, seq):
+        CyclicList.__init__(self, seq)
+        self.num_loops = len(self) - len(set(self))
 
     def __str__(self):
         return repr(self)
-    
-    def num_loops(self):
-        """Return the number of loops attached to this vertex.
-
-        Examples::
-
-          >>> Vertex([0,1,2]).num_loops()
-          0
-          >>> Vertex([0,1,0,1]).num_loops()
-          2
-          >>> Vertex([0,0,1,2,3]).num_loops()
-          1
-          
-        """
-        # no. of loops = (no. of attached edges) - (no. of distinct attached edges)
-        return len(self) - len(set(self))
 
 
 
@@ -136,8 +132,36 @@ class EqualIfIsomorphic(Cacheable):
 class Fatgraph(EqualIfIsomorphic):
     """A fully-decorated ribbon graph.
 
-    Exports a (read-only) sequence interface, through which vertices
-    can be accessed.
+    Several attributes of this object are computed at init time and
+    store characteristics of the fatgraph:
+
+      `.boundary_cycles`
+        List of the boundary components of this `Fatgraph` object.
+        Each boundary component is represented by the list of
+        (colored) edges.
+
+      `.genus`
+        The genus of the Riemann surface this fatgraph lies on.
+      
+      `.num_boundary_cycles`
+        Number of boundary cycles of this `Fatgraph`.
+
+      `.num_edges`
+        The number of edges of this `Fatgraph` object.
+
+      `.num_vertices`
+        Number of vertices of this `Fatgraph` object.
+
+      `.vertices`
+        List of vertices of this `Fatgraph`; each one is an instance
+        of the `Vertex` class; see `Fatgraph.__init__` for examples.
+
+        
+    Examples::
+      >>> Fatgraph([Vertex([2,1,0]), Vertex([2,1,0])]).num_boundary_cycles
+      1
+      >>> Fatgraph([Vertex([2,1,0]), Vertex([2,0,1])]).num_boundary_cycles
+      3
 
     Two `Fatgraph`s compare equal if they are isomorphic::
 
@@ -163,10 +187,13 @@ class Fatgraph(EqualIfIsomorphic):
 
     __slots__ = [
         '__weakref__',
+        'boundary_cycles',
         'edge_numbering',
         'endpoints_i',
         'endpoints_v',
+        'genus',
         'invariants',
+        'num_boundary_cycles',
         'num_edges',
         'num_external_edges',
         'num_vertices',
@@ -213,9 +240,11 @@ class Fatgraph(EqualIfIsomorphic):
         # dispatch based on type of arguments passed
         if isinstance(g_or_vs, Fatgraph):
             # copy-constructor
+            self.boundary_cycles = g_or_vs.boundary_cycles
             self.edge_numbering = g_or_vs.edge_numbering
             self.endpoints_i = g_or_vs.endpoints_i
             self.endpoints_v = g_or_vs.endpoints_v
+            self.num_boundary_cycles = g_or_vs.num_boundary_cycles
             self.num_edges = g_or_vs.num_edges
             self.num_external_edges = g_or_vs.num_external_edges
             self.num_vertices = g_or_vs.num_vertices
@@ -274,6 +303,13 @@ class Fatgraph(EqualIfIsomorphic):
             else:
                 self.edge_numbering = [ x for x in xrange(self.num_edges) ]
 
+            self.boundary_cycles = self.compute_boundary_cycles()
+            self.num_boundary_cycles = len(self.boundary_cycles)
+
+            # by Euler, K-L+n=2-2*g
+            self.genus = (self.num_edges - self.num_vertices
+                          - self.num_boundary_cycles + 2) / 2
+
         # before computing invariants, check that internal data
         # structures are in a consistent state
         assert self._ok()
@@ -282,8 +318,7 @@ class Fatgraph(EqualIfIsomorphic):
         EqualIfIsomorphic.__init__(self, (
             self.num_vertices,
             self.num_edges,
-            self.num_external_edges if self.num_external_edges > 0
-            else self.num_boundary_cycles(),
+            self.num_external_edges if self.num_external_edges > 0 else self.num_boundary_cycles,
             #self.vertex_valences(),
             #self.vertex_valence_distribution(),
             ))
@@ -363,15 +398,6 @@ class Fatgraph(EqualIfIsomorphic):
         return True
 
 
-    def __getitem__(self, index):
-        return self.vertices[index]
-
-
-    def __iter__(self):
-        """Return iterator over vertices."""
-        return iter(self.vertices)
-
-
     def __repr__(self):
         if hasattr(self, 'num_external_edges') and self.num_external_edges > 0:
             return "Fatgraph(%s, num_external_edges=%d)" \
@@ -449,7 +475,7 @@ class Fatgraph(EqualIfIsomorphic):
                 
 
     @maybe(ocache0)
-    def boundary_cycles(self):
+    def compute_boundary_cycles(self):
         """Return a list of boundary cycles of this `Fatgraph` object.
 
         Boundary cycles are represented as a cyclic list of 'corners':
@@ -457,7 +483,7 @@ class Fatgraph(EqualIfIsomorphic):
         two consecutive indices (in the cyclic order, so, either `j ==
         i+1` or `i` and `j` are the starting and ending indices)::
         
-          >>> Fatgraph([Vertex([2,1,0]),Vertex([2,0,1])]).boundary_cycles()
+          >>> Fatgraph([Vertex([2,1,0]),Vertex([2,0,1])]).compute_boundary_cycles()
           [BoundaryCycle([(1, 2, 0), (0, 0, 1)]),
            BoundaryCycle([(0, 1, 2), (1, 1, 2)]),
            BoundaryCycle([(0, 2, 0), (1, 0, 1)])]
@@ -465,7 +491,7 @@ class Fatgraph(EqualIfIsomorphic):
         This verbose representation allows one to distinguish the
         boundary cycles made from the same set of edges::
 
-          >>> Fatgraph([Vertex([0,1,2,0,1,2])]).boundary_cycles()
+          >>> Fatgraph([Vertex([0,1,2,0,1,2])]).compute_boundary_cycles()
           [BoundaryCycle([(0, 2, 3), (0, 4, 5), (0, 0, 1)]),
            BoundaryCycle([(0, 1, 2), (0, 3, 4), (0, 5, 0)])]
         """
@@ -857,9 +883,9 @@ class Fatgraph(EqualIfIsomorphic):
 
     def _cmp_orient(self, other, iso):
         pe = iso[2]
-        image_edge_numbering = Permutation(dict((self.edge_numbering[x],
-                                                 other.edge_numbering[pe[x]])
-                                                for x in xrange(self.num_edges)))
+        image_edge_numbering = Permutation((self.edge_numbering[x],
+                                            other.edge_numbering[pe[x]])
+                                           for x in xrange(self.num_edges))
         return image_edge_numbering.sign()
 
 
@@ -1011,7 +1037,7 @@ class Fatgraph(EqualIfIsomorphic):
                          num_external_edges = self.num_external_edges,
                          orientation = new_edge_numbering,
                          )
-            assert g.num_boundary_cycles() == self.num_boundary_cycles(), \
+            assert g.num_boundary_cycles == self.num_boundary_cycles, \
                    "Fatgraph.contract(%s, %d):" \
                    " Contracted graph `%s` does not have the same number" \
                    " of boundary cycles of parent graph." \
@@ -1111,15 +1137,6 @@ class Fatgraph(EqualIfIsomorphic):
                " Computed orbits `%s` do not exhaust edge pairs set `%s`" \
                " [%s.edge_pair_orbits() -> %s]" % (orbits, edge_pairs, self, orbits)
         return orbits
-
-
-    def genus(self):
-        """Return the genus g of this `Fatgraph` object."""
-        n = self.num_boundary_cycles()
-        K = self.num_vertices
-        L = self.num_edges
-        # by Euler, K-L+n=2-2*g
-        return (L - K - n + 2) / 2
 
 
     def graft(self, G, v):
@@ -1422,7 +1439,7 @@ class Fatgraph(EqualIfIsomorphic):
             (i.e., same valence and number of loops - one *could* be
             mapped onto the other.)
             """
-            if len(v1) == len(v2) and v1.num_loops() == v2.num_loops():
+            if len(v1) == len(v2) and v1.num_loops == v2.num_loops:
                 return True
             else:
                 return False
@@ -1501,7 +1518,7 @@ class Fatgraph(EqualIfIsomorphic):
             XXX: prune vertices that are already mapped by `m`?
             """
             result = []
-            for x in g1[i1]:
+            for x in g1.vertices[i1]:
                     src_endpoints_v = g1.endpoints_v[x]
                     # ignore loops
                     if src_endpoints_v[0] == src_endpoints_v[1]:
@@ -1532,7 +1549,7 @@ class Fatgraph(EqualIfIsomorphic):
 
         (val, vs) = starting_vertices(g1)
         src0 = vs[0]
-        v1 = g1[src0]
+        v1 = g1.vertices[src0]
         for dst0 in admissible_vertex_mappings(v1, g2, vs2[val]):
             for rot0 in xrange(val):
                 try:
@@ -1545,7 +1562,7 @@ class Fatgraph(EqualIfIsomorphic):
                     # of neighboring vertices for next pass
                     pv[src0] = dst0
                     rot[src0] = rot0
-                    if not pe.extend(v1, g2[dst0][rot0:rot0+val]):
+                    if not pe.extend(v1, g2.vertices[dst0][rot0:rot0+val]):
                         continue # to next `rot0`
                     if __debug__:
                         for x in v1:
@@ -1594,21 +1611,6 @@ class Fatgraph(EqualIfIsomorphic):
         return len(list(self.automorphisms()))
     
         
-    def num_boundary_cycles(self):
-        """Return the number of boundary components of this `Fatgraph` object.
-
-        Each boundary component is represented by the list of (colored)
-        edges.
-
-        Examples::
-          >>> Fatgraph([Vertex([2,1,0]), Vertex([2,1,0])]).num_boundary_cycles()
-          1
-          >>> Fatgraph([Vertex([2,1,0]), Vertex([2,0,1])]).num_boundary_cycles()
-          3
-        """
-        return len(self.boundary_cycles())
-
-
     def projection(self, other):
         """Return the component of the projection of `self` on the
         basis vector `other`.  This can be either 0 (if `self` and
@@ -1754,7 +1756,7 @@ def MakeNumberedGraphs(graph):
                         numbering={BoundaryCycle([(0, 3, 0), (0, 2, 3), (0, 1, 2), (0, 0, 1)]): 0})]
       
     """
-    bc = graph.boundary_cycles()
+    bc = graph.boundary_cycles
     n = len(bc) # == graph.num_boundary_cycles()
 
     ## Find out which automorphisms permute the boundary cycles among
@@ -1817,6 +1819,32 @@ class NumberedFatgraph(Fatgraph):
       >>> ng = NumberedFatgraph(ug, \
                  numbering=[(BoundaryCycle([(0,3,0), (0,2,3), (0,1,2), (0,0,1)]), 0)])
 
+    The `numbering` attribute is set to a dictionary mapping the
+    boundary cycle `bcy` to the integer `n`; for this, an initializer
+    is needed, which can be:
+        - either a sequence of tuples `(bcy, n)`, where each `n` is
+          a non-negative integer, and each `bcy` is a
+          `BoundaryCycle` instance,
+        - or a `dict` instance mapping `BoundaryCycle` instances to
+          `int`s.
+    In either case, an assertion is raised if:
+        - the number of pairs in the initializer does not match
+          the number of boundary cycles;
+        - the set of integer keys is not `[0 .. n]`;
+        - there are duplicate boundary cycles or integers
+          in the initializer;
+
+    Examples::
+      >>> ug0 = Fatgraph([Vertex([1,2,0]), Vertex([1,0,2])])
+      >>> bc = ug0.boundary_cycles  # three b.c.'s
+      >>> ng0 = NumberedFatgraph(ug0, [ (bcy,n) for (n,bcy) in enumerate(bc)])
+      >>> ng0.numbering == {
+      ...    Fatgraph.BoundaryCycle([(0,0,1), (1,2,0)]): 0, 
+      ...    Fatgraph.BoundaryCycle([(0,1,2), (1,1,2)]): 1, 
+      ...    Fatgraph.BoundaryCycle([(0,2,0), (1,0,1)]): 2,
+      ... }
+      True
+
     Since `NumberedFatgraphs` are just decorated `Fatgraphs`, they
     only differ in the way two `NumberedFatgraph` instances are deemed
     isomorphic:
@@ -1834,10 +1862,10 @@ class NumberedFatgraph(Fatgraph):
       >>> ng1 == ng2
       False
 
-      Fatgraph instances equipped with a numbering are compared as
-      numbered graphs (that is, the isomorphism should transform the
-      numbering on the source graph onto the numbering of the
-      destination)::
+    Fatgraph instances equipped with a numbering are compared as
+    numbered graphs (that is, the isomorphism should transform the
+    numbering on the source graph onto the numbering of the
+    destination)::
 
         >>> NumberedFatgraph.__eq__(
         ...     NumberedFatgraph(Fatgraph([Vertex([2,0,1]), Vertex([2,1,0])]), 
@@ -1898,14 +1926,40 @@ class NumberedFatgraph(Fatgraph):
         ...                      numbering=[(BoundaryCycle([(0,1,2), (0,4,5)]), 1),
         ...                                 (BoundaryCycle([(0,5,0), (0,3,4), (0,2,3), (0,0,1)]), 0)]) )
         False
-      """
+    """
 
-    __slots__ = [ 'underlying', '_numbering' ]
+    __slots__ = [ 'underlying', 'numbering' ]
     
     def __init__(self, underlying, numbering):
         Fatgraph.__init__(self, underlying)
         self.underlying = underlying
-        self.numbering = numbering
+        assert len(initializer) == self.num_boundary_cycles
+        self.numbering = dict(numbering)
+        if __debug__:
+            count = [ 0 for x in xrange(self.num_boundary_cycles) ]
+            for (bcy,n) in self.numbering.iteritems():
+                assert type(n) is types.IntType, \
+                       "NumberedFatgraph.__init__: 2nd argument has wrong type:" \
+                       " expecting (BoundaryCycle, Int) pair, got `(%s, %s)`." \
+                       " Reversed-order arguments?" \
+                       % (bcy, n)
+                assert isinstance(bcy, Fatgraph.BoundaryCycle), \
+                       "NumberedFatgraph.__init__: 1st argument has wrong type:" \
+                       " expecting (BoundaryCycle, Int) pair, got `(%s, %s)`." \
+                       " Reversed-order arguments?" \
+                       % (bcy, n)
+                assert bcy in self.boundary_cycles, \
+                       "NumberedFatgraph.__init__():" \
+                       " Cycle `%s` is no boundary cycle of graph `%s` " \
+                       % (bcy, self.underlying)
+                count[n] += 1
+                if count[n] > 1:
+                    raise AssertionError("NumberedFatgraph.__init__():" \
+                                         " Duplicate key %d" % n)
+            assert sum(count) != self.num_boundary_cycles - 1, \
+                   "NumberedFatgraph.__init__():" \
+                   " Initializer does not exhaust range `0..%d`: %s" \
+                   % (self.num_boundary_cycles - 1, initializer)
 
 
     def __repr__(self):
@@ -2032,7 +2086,7 @@ class NumberedFatgraph(Fatgraph):
         """
         for (pv, rot, pe) in Fatgraph.isomorphisms(self.underlying, other.underlying):
             pe_does_not_preserve_bc = False
-            for bc1 in self.underlying.boundary_cycles():
+            for bc1 in self.underlying.boundary_cycles:
                 bc2 = bc1.transform((pv, rot, pe))
                 # there are cases (see examples in the
                 # `Fatgraph.__eq__` docstring, in which the
@@ -2051,74 +2105,6 @@ class NumberedFatgraph(Fatgraph):
             yield (pv, rot, pe)
 
 
-    def _numbering_get(self):
-        """Return the numbering previously set on this instance via
-        `._numbering_set()`.
-        """
-        return self._numbering
-
-    def _numbering_set(self, initializer):
-        """Set the `.numbering` attribute from a valid `dict`
-        initializer.
-
-        The initializer can be:
-          - either a sequence of tuples `(bcy, n)`, where each `n` is
-            a non-negative integer, and each `bcy` is a
-            `BoundaryCycle` instance,
-          - or a `dict` instance mapping `BoundaryCycle` instances to
-            `int`s.
-        In either case, an assertion is raised if:
-          - the number of pairs in the initializer does not match
-            the number of boundary cycles;
-          - the set of integer keys is not `[0 .. n]`;
-          - there are duplicate boundary cycles or integers
-            in the initializer;
-
-        The `numbering` attribute is set to a dictionary mapping the
-        boundary cycle `bcy` to the integer `n`::
-
-          >>> ug0 = Fatgraph([Vertex([1,2,0]), Vertex([1,0,2])])
-          >>> bc = ug0.boundary_cycles()  # three b.c.'s
-          >>> ng0 = NumberedFatgraph(ug0, [ (bcy,n) for (n,bcy) in enumerate(bc)])
-          >>> ng0.numbering == {
-          ...    Fatgraph.BoundaryCycle([(0,0,1), (1,2,0)]): 0, 
-          ...    Fatgraph.BoundaryCycle([(0,1,2), (1,1,2)]): 1, 
-          ...    Fatgraph.BoundaryCycle([(0,2,0), (1,0,1)]): 2,
-          ... }
-          True
-        """
-        assert len(initializer) == self.num_boundary_cycles()
-        self._numbering = dict(initializer)
-        if __debug__:
-            count = [ 0 for x in xrange(self.num_boundary_cycles()) ]
-            for (bcy,n) in self._numbering.iteritems():
-                assert type(n) is types.IntType, \
-                       "NumberedFatgraph._numbering_set: 2nd argument has wrong type:" \
-                       " expecting (BoundaryCycle, Int) pair, got `(%s, %s)`." \
-                       " Reversed-order arguments?" \
-                       % (bcy, n)
-                assert isinstance(bcy, Fatgraph.BoundaryCycle), \
-                       "NumberedFatgraph._numbering_set: 1st argument has wrong type:" \
-                       " expecting (BoundaryCycle, Int) pair, got `(%s, %s)`." \
-                       " Reversed-order arguments?" \
-                       % (bcy, n)
-                assert bcy in self.boundary_cycles(), \
-                       "NumberedFatgraph._numbering_set():" \
-                       " Cycle `%s` is no boundary cycle of graph `%s` " \
-                       % (bcy, self.underlying)
-                count[n] += 1
-                if count[n] > 1:
-                    raise AssertionError("NumberedFatgraph._numbering_set():" \
-                                         " Duplicate key %d" % n)
-            assert sum(count) != self.num_boundary_cycles()-1, \
-                   "NumberedFatgraph._numbering_set():" \
-                   " Initializer does not exhaust range `0..%d`: %s" \
-                   % (self.num_boundary_cycles()-1, initializer)
-
-
-    numbering = property(_numbering_get, _numbering_set)
-    
-    
 
 def MgnTrivalentGraphsRecursiveGenerator(g, n):
     """Return a list of all connected trivalent fatgraphs having the
@@ -2210,7 +2196,7 @@ def MgnTrivalentGraphsRecursiveGenerator(g, n):
         discarded = 0
         for G in graphs(g,n):
             # XXX: should this check be done in graphs(g,n)?
-            if (G.genus(), G.num_boundary_cycles()) != (g,n) \
+            if (G.genus, G.num_boundary_cycles) != (g,n) \
                    or (G in unique):
                 discarded += 1
                 continue

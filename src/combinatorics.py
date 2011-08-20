@@ -359,22 +359,19 @@ class Permutation(dict):
             >>> p2 is p1
             False
             
-        Permutation(seq)
-          New permutation mapping element `x` to element `seq[x]`.
+        To create a `Permutation` mapping element `x` to element
+        `seq[x]`, one can use the following incantation::
 
-            >>> p3 = Permutation([1,0,2])
+            >>> p3 = Permutation(enumerate([1,0,2]))
             >>> p3 == p1
             True
           
         """
-        if isinstance(initial, dict):
-            if __debug__:
-                for src,dst in initial.iteritems():
-                    assert 0 <= src
-                    assert 0 <= dst
-            dict.__init__(self, initial)
-        else:
-            dict.__init__(self, enumerate(initial))
+        if __debug__:
+            for src,dst in initial.iteritems():
+                assert 0 <= src
+                assert 0 <= dst
+        dict.__init__(self, initial)
             
     def __iter__(self):
         """Iterate over values."""
@@ -389,14 +386,14 @@ class Permutation(dict):
           >>> p.inverse()
           {0: 2, 1: 0, 2: 1}
 
-          >>> p = Permutation([1, 0])
+          >>> p = Permutation(enumerate([1, 0]))
           >>> p.inverse() == p
           True
           >>> p.inverse() is p
           False
         
         """
-        return Permutation(dict((dst,src) for (src,dst) in self.iteritems()))
+        return Permutation((dst,src) for (src,dst) in self.iteritems())
 
     def is_identity(self):
         """Return `True` if permutation leaves all items fixed."""
@@ -412,7 +409,7 @@ class Permutation(dict):
         Examples::
 
           >>> s = ['a','b','c']
-          >>> p = Permutation([2,0,1])
+          >>> p = Permutation(enumerate([2,0,1]))
           >>> p.rearrange(s)
           ['c', 'a', 'b']
         """
@@ -428,22 +425,22 @@ class Permutation(dict):
 
         Examples::
 
-          >>> Permutation([0,1,2]).sign()
+          >>> Permutation(enumerate([0,1,2])).sign()
           1
-          >>> Permutation([0,2,1]).sign()
+          >>> Permutation(enumerate([0,2,1])).sign()
           -1
-          >>> Permutation([2,0,1]).sign()
+          >>> Permutation(enumerate([2,0,1])).sign()
           1
-          >>> Permutation([3, 2, 0, 1]).sign()
+          >>> Permutation(enumerate([3, 2, 0, 1])).sign()
           -1
 
         The trivial permutations mapping a single element into
         itself and the empty permutation are assigned sign +1::
 
-          >>> Permutation([0]).sign()
+          >>> Permutation(enumerate([0])).sign()
           1
 
-          >>> Permutation([]).sign()
+          >>> Permutation().sign()
           1
 
         This is an adaptation of the `perm_sign` code by John Burkardt
@@ -483,7 +480,7 @@ class Permutation(dict):
         Examples::
 
           >>> s = [1, 0, 2]
-          >>> p = Permutation([0, 2, 1]) # map 0->0, 1->2, 2->1
+          >>> p = Permutation(enumerate([0, 2, 1])) # map 0->0, 1->2, 2->1
           >>> p.translate(s)
           [2, 0, 1]
         """
@@ -506,7 +503,7 @@ class Permutation(dict):
         Examples::
 
           >>> s = [1, 0, 2]
-          >>> p = Permutation([0, 2, 1]) # map 0->0, 1->2, 2->1
+          >>> p = Permutation(enumerate([0, 2, 1])) # map 0->0, 1->2, 2->1
           >>> list(p.itranslate(s))
           [2, 0, 1]
         """
@@ -865,7 +862,7 @@ def SortingPermutation(seq):
                 seq[i], seq[j] = seq[j], seq[i]
                 indices[i], indices[j] = indices[j], indices[i]
                 swap_occurred = True
-    return Permutation(indices)
+    return Permutation(enumerate(indices))
 
 
 

@@ -37,9 +37,9 @@ def graph_to_xypic(graph, g=None, n=None, orientable=None):
 
     # provide default values for arguments
     if g is None:
-        g = graph.genus()
+        g = graph.genus
     if n is None:
-        n = graph.num_boundary_components()
+        n = graph.num_boundary_cycles
     if orientable is None:
         orientable = graph.is_oriented()
 
@@ -231,7 +231,7 @@ resource.setrlimit(resource.RLIMIT_CORE, (0,0))
 
 # parse command-line options
 from optparse import OptionParser
-parser = OptionParser(version="3.7",
+parser = OptionParser(version="3.8",
     usage="""Usage: %prog [options] action [arg ...]
 
 Actions:
@@ -253,7 +253,7 @@ Actions:
     """)
 parser.add_option("-C", "--cache",
                   action="store_true", dest="cache", default=False,
-                  help="""Turn on internal result caching (trade memory for speed).  With '-C', cache graph attributes and equality testing results: this gives a small speedup with a reasonable memory increase.  With '-CC', cache also isomorphism groups: the speedup is nearly double, but the memory usage can be more than doubled.""")
+                  help="""Turn on internal result caching (trade memory for speed).""")
 parser.add_option("-f", "--feature", dest="features", default=None,
                   help="""Enable optional speedup or tracing features:
                   * pydb -- run Python debugger if an error occurs
@@ -556,8 +556,8 @@ reverses the associated cell orientation.
 
                 # draw graph
                 outfile.write(graph_to_xypic(graph,
-                                             graph.genus(),
-                                             graph.num_boundary_components(),
+                                             graph.genus,
+                                             graph.num_boundary_cycles,
                                              graph.is_oriented(),
                                              )+'\n')
 
@@ -619,8 +619,8 @@ reverses the associated cell orientation.
                 outfile.write(r"\vspace{1ex}\hrulefill\vspace{1ex}" + '\n')
             else:
                 outfile.write("%s\n" % ((graph,
-                                         graph.genus(),
-                                         graph.num_boundary_components(),
+                                         graph.genus,
+                                         graph.num_boundary_cycles,
                                          graph.is_oriented(),
                                          ),))
     outfile.write("\n")
