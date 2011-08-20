@@ -243,7 +243,7 @@ FUNCTION {format.title}
 FUNCTION {format.eprint}
 { eprint empty$
     { "" }
-    { eprint }
+    { "\url{" eprint * "}" * }
   if$
 }
 
