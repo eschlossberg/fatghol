@@ -1,0 +1,89 @@
+\RCSID $Id: arrows.tex,v 1.1.1.1 2002/01/10 10:01:51 ri Exp $
+%auto-ignore
+
+
+\chapter{Arrows-only description of Categories}
+\label{cha:arrows-only}
+
+It is convenient to have an arrows-only description of a category: in
+this picture, an object $A \in \A$ is identified with the identity map
+$\id_A \in \A(A, A)$.
+
+According to \cite{lawvere;1965}, a category $\A$ can be described by
+the following data:
+\begin{itemize}
+\item a set $\Hom\A$: the morphisms of $\A$;
+\item a ternary relation $\Gamma(x,y;z)$, to be interpreted as ``$z$ is
+  the composition of $x$ and $y$'';
+\item set-theoretic maps $s,t: \Hom\A \to \Hom\A$ (called \emph{source}
+  and \emph{target}), sending an arrow to its domain or codomain
+  object,
+\end{itemize}
+which are tied by the following relations:
+\begin{enumerate}
+\item $\exists z: \Gamma(x,y;z) \Leftrightarrow s(x) = t(y)$; \label{item:A1}
+\item $\Gamma(x,y;z) \land \Gamma(x,y;z') \Rightarrow z = z'$;
+\suspend{enumerate}
+--- by virtue of this we can adopt the more familiar notation $z = x\circ
+y$ for $\Gamma(x,y; z)$, so that the next axioms look more like the
+familiar properties of the composition product in a category ---
+\resume{enumerate}
+\item $z = x\circ y \Rightarrow s(z) = s(y) \land t(z) = t(x)$;
+\item $(x\circ y) \circ z = x \circ (y \circ z)$;
+\suspend{enumerate}
+and, finally, two relations which are useful in characterizing
+identity arrows:
+\resume{enumerate}
+\item $s \circ t = t \circ t = t$;
+\item $t \circ s = s \circ s = s$.
+\end{enumerate}
+
+We are now ready to introduce objects of $\A$, i.e., identity
+arrows. 
+\begin{definition}\label{dfn:object}
+  $A\in \A$ means that $A$ is a morphism of the category $\A$
+  such that:
+  \begin{enumerate}
+  %\item $\exists x: [A = s(x)] \lor [A = t(x)]$,
+  \item $A = s(A) = t(A)$, \label{item:AO1}
+  \item $\forall x\forall y[ y = x \circ A \Rightarrow x = y] \land \forall x\forall y [
+    x = A \circ y \Rightarrow x = y]$. \label{item:AO2} 
+  \end{enumerate}
+\end{definition}
+Accordingly, we write $A$ for the identity morphism $\id_A$.
+
+It is easy to deduce this characterization from the usual axioms of
+category theory, but one can also assume it as a starting point for a
+purely categorical foundation of set theory --- see
+\cite{lawvere;1965}. 
+
+In this framework, a functor $F: \A \to \category{B}$ is just a map $F:
+\Hom\A \to \Hom\B$ such that
+\begin{inparaenum}
+\item $F(x \circ y) = F(x) \circ F(y)$, and
+\item for any object $A \in \A$, $F(\id_A) = \id_{F(A)}$.
+\end{inparaenum}
+
+\begin{example}\label{xmp:braid-by-arrows}
+  The $\catBraid$ category (\csref{xmp:braids}) is the category whose
+  set of morphisms $\Hom\catBraid$ is the set-theoretic union $\bigcup_n
+  B_n$ of all braid groups; two morphisms $x$ and $y$ compose iff they
+  belong to the same braid group, that is, we can recast \ref{item:A1}
+  into
+  \begin{equation*}
+    \exists z: \Gamma(x,y;z) \Leftrightarrow s(x) = t(y) \Leftrightarrow \exists n: [x, \in B_n \land y \in B_n].
+  \end{equation*}
+  Then, from \ref{item:AO1} of \csref{dfn:object} we get for an object
+  $E \in \catBraid$
+  \begin{equation*}
+    \exists n: E \in B_n,
+  \end{equation*}
+  and \ref{item:AO2} says that $E = E_n$ is the unit of some braid group
+  $B_n$. Therefore, objects of $\catBraid$ are in $1-1$ correspondence
+  with natural numbers.
+\end{example}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "index"
+%%% End: 

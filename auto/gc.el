@@ -1,0 +1,33 @@
+(TeX-add-style-hook "gc"
+ (function
+  (lambda ()
+    (LaTeX-add-labels
+     "cha:gc"
+     "sec:gc-stc"
+     "dfn:gc-graph-piece"
+     "eq:src-comp-otimes"
+     "eq:tgt-comp-otimes"
+     "fig:gc-graph-composition"
+     "fig:gc-graph-otimes"
+     "fig:gc-rrt"
+     "thm:gc1"
+     "eq:S"
+     "thm:gc2"
+     "sec:gc-ribbon-graphs"
+     "dfn:ribbon-graphs"
+     "fig:rt-to-cyclic"
+     "M3"
+     "M4"
+     "dfn:rg-algebra"
+     "eq:passing-up-and-down"
+     "eq:right-rot"
+     "eq:left-rot"
+     "dfn:cyclic-algebra"
+     "thm:gc-cyc"
+     "sec:graph-calc-graphs"
+     "dfn:symmetric-algebra"
+     "dfn:symmetric-graph-category"
+     "dfn:sg-algebra"
+     "thm:gc-sym"
+     "rem:many-sorted-graphs"))))
+

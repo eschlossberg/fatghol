@@ -1,0 +1,323 @@
+\RCSID $Id: prelim.tex,v 1.1.1.1 2002/01/10 10:01:51 ri Exp $
+%auto-ignore
+
+
+\chapter{Preliminaries and Notation}
+
+This chapter deals fixes some notations on differential graded modules
+and miscellaneous categories.\FIXME{Bof!} 
+
+When $\A$ is a category, we shall use Eilenberg's $\A(A, B)$ in place
+of the more verbose $\Hom \A(A, B)$; also, the words ``morphism'',
+``map'' and ``arrow'' will be used interchangeably. By abuse of
+notation, we write $A \in \A$ to mean that ``$A$ is an object of
+$\A$''. Often, the notation $\Hom\A$ will be used for the union of all
+the $\Hom$-sets of the category $\A$, i.e., $\Hom\A := \bigcup_{A,B \in \A}
+\Hom\A(A,B)$.
+
+The symbol $\Perm{k}$ stands for the group of permutations on $k$
+letters.
+
+The degree $i$ component of a graded object $M$ will be denoted
+$M^i$; the grading group will always be $\setZ$. Elements of a graded
+object appearing as exponents to a number will stand for their degree,
+i.e., $(-1)^a = (-1)^{\deg a}$; therefore, $(-1)^{ab} \not=
+(-1)^{\deg (ab)} = (-1)^{\deg a + \deg b}$.
+
+
+\section{Differential graded algebras and modules}
+\label{sec:dg-things}
+
+Let $\fk$ be a fixed field of characteristics $0$; later on, we shall
+assume $\fk = \setC$.
+\begin{definition}
+  A dg-algebra $K$ is the data of a graded vector space $K\#$
+  over $\fk$, a $\fk$-bilinear associative product, and a
+  $\fk$-linear map $\ud: K\to K$ such that:
+  \begin{enumerate}
+  \item $K^i \cdot K^j \subset K^{i+j}$;
+  \item $ab = (-1)^{ab} ba$ (graded commutativity);
+  \item $\ud(K^i) \subset K^{i+1}$;
+  \item $\ud(a\cdot b) = \ud(a)\cdot b + (-1)^a a\cdot\ud(b)$ (graded Leibniz rule).
+  \end{enumerate}
+  Furthermore, we shall always assume that a dg-algebra has a unit
+  $1\in K^0$ such that $1\cdot a = a\cdot 1 = a$ for all $a\in
+  K$.
+\end{definition}
+
+Any dg-algebra is a (graded) associative commutative algebra; write
+$\#$ for the underlying functor that ``forgets the differential''.
+
+\begin{definition}
+  An $K$-dg-module $M$ is a $K$-bimodule such that:
+  \begin{enumerate}
+  \item $K^i M^j \subset M^{i+j}$, $M^i K^j \subset M^{i+j}$;
+  \item $\lambda x = (-1)^{\lambda x} x\lambda$, for all homogeneous
+    $x\in M$, and $\lambda\in K$;
+  \item $\ud(\lambda x) = \ud(\lambda)x + (-1)^\lambda \lambda\ud(x)$.
+  \end{enumerate}
+\end{definition}
+
+There is an obvious underlying functor $\#$ from the category of
+$K$-dg-modules to the category of $K$-modules.
+
+\begin{definition}
+  For every two $K$-dg-modules $M$, $N$ we define the module of
+  degree $p$ morphisms
+  \begin{equation*}
+    \Hom_K^p (M,N) := \Bigl\{ f\in  {\textstyle \prod_i} Hom_\fk (M^i, N^{i+p}) :
+      f(x\lambda) = f(x)\lambda \quad \forall x\in M, \forall \lambda
+      \in R \Bigr\},
+  \end{equation*}
+  and the graded module of morphisms
+  \begin{equation*}
+    \Hom_K^* := \oplus_{p\in\setZ} \Hom_K^p (M,N)[-p],
+  \end{equation*}
+  that is, $\Hom_K^p(M,N)$ is the degree $p$ component of
+  $\Hom_K^*(M,N)$.
+\end{definition}
+
+$\Hom_K^*(M,N)$ is made into a $K$-dg-module by the differential:
+\begin{equation*}
+  \ud f := \ud_N \circ f + (-1)^{p+1} f\circ \ud_M \qquad f\in \Hom_K^p(M,N)
+\end{equation*}
+The term ``morphism'' will denote any element of $\Hom_K^*$, whereas
+``dg-morphism'' will be applied only to those such that $\ud f = 0$.
+
+
+\section{Braided symmetric categories of Modules}
+\label{sec:btc+dg}
+
+Given any commutative dg-algebra $K$, the category $\catMod_K^\setZ$ of
+finitely-generated dg-K-bimodules is in a natural way braided and
+balanced with the structure maps:
+\begin{align}
+  \label{eq:dgm-braiding}
+  \tau_{MN} &: M \otimes N \ni m\otimes n \mapsto (-1)^{mn}n\otimes m \in N \otimes M
+  &&
+  \text{(braiding),}
+  \\
+  \label{eq:dgm-balancing}
+  \theta_M &: M \ni m \mapsto (-1)^mm \in M
+  &&
+  \text{(balancing).}
+\end{align}
+The verification that these maps satisfy the axioms of a balanced
+braided symmetric category is an easy calculation.  The usual
+definition of the dual object $\rdl{M} := \Hom_K(M, K)$ gives an
+obvious evaluation map $\ev_M : M \otimes \rdl{M} \ni m \otimes \rdl{m} \mapsto
+\pairing{m}{\rdl{m}} \in K$, but we cannot guarantee the existence of a
+matching $\coev$ unless $M$ is a free module.
+
+The above structure maps
+\eqref{eq:dgm-braiding}--~\eqref{eq:dgm-balancing} induce a balanced
+symmetric braided category structure on the subcategory $\catMod_K$ of
+degree $0$ $K$-bimodules; note that the braiding on $\catMod_K$ is the
+trivial one: $\tau_{MN}: m\otimes n \mapsto n\otimes m$.
+\begin{remark}
+  In fact, Eilenberg-Kelly \cite{eilenberg-kelly;monoidal-categories}
+  show that there are just two possible braidings on $\catMod_K^\setZ$:
+  the trivial one given by
+  \begin{equation*}
+    \tau_{MN}' : m\otimes n \mapsto n\otimes m,
+  \end{equation*}
+  which is the usual braiding on categories of non-graded modules and
+  vector spaces, and and that of \eqref{eq:dgm-braiding},
+  \begin{equation*}
+    \tau_{MN}'' : m\otimes n \mapsto (-1)^{mn} n\otimes m,
+  \end{equation*}
+  which is the usual one on categories of graded modules.
+\end{remark}
+
+
+\section{Signs and the graded contraction}
+\label{sec:signs}
+
+Recall that the symmetric monoidal category of graded modules has a
+non-trivial (yet involutive) twisting isomorphism
+\begin{equation*}
+\tau_{(12)} = \tau_{M_1M_2} : M_1
+\otimes M_2 \ni x_1\otimes x_2 \mapsto (-1)^{x_1x_2} x_2\otimes x_1
+\in M_2\otimes M_1,
+\end{equation*}
+for all objects $M_1$, $M_2$. For any
+$\sigma\in\Perm{n}$, there's an isomorphism $\tau_\sigma$ between
+$M_1\otimes \dots \otimes M_n$ and $M_{\sigma_1} \otimes \dots
+\otimes M_{\sigma_n}$ made up of twists $T_{(ij)}$; since the
+category of graded modules is \emph{symmetric}, any two such
+compositions are equal, that is, $\tau_\sigma$ depends only on
+$\sigma\in\Perm{n}$.
+
+Now, suppose $M_1 = \dots = M_n = M$, a fixed object: $x_1\otimes
+\dots \otimes x_n$ and $\tau_\sigma(x_1\otimes
+\dots \otimes x_n)$ differ only by the sign; therefore we define
+$\epsilon(\sigma; x_1, \dots, x_n)$ so that the following holds:
+\begin{equation}
+  \label{eq:ksz}
+  \epsilon(\sigma; x_1, \dots, x_n) x_1 \otimes \dots \otimes x_n =
+  \tau_\sigma (x_1 \otimes \dots \otimes x_n), \qquad \sigma\in\Perm{n}.
+\end{equation}
+Also define $\chi(\sigma; x_1, \ldots, x_n)$ by:
+\begin{equation}
+  \label{eq:aksz}
+  \chi(\sigma; x_1, \dots, x_n) x_1 \otimes \dots \otimes x_n =
+  (-1)^\sigma \tau_\sigma (x_1 \otimes \dots \otimes x_n), 
+  \qquad \sigma\in\Perm{n}.
+\end{equation}
+We shall omit $x_1, \dots, x_n$ from the above when it will be clear
+from the context which elements $\epsilon$ or $\chi$ are being
+applied to.
+
+\begin{definition}
+  A map $f: M^{\otimes n} \to N$ is graded symmetric iff
+  \begin{equation*}
+    f(x_1, \dots, x_n) = \epsilon(\sigma) f(x_{\sigma_1}, \dots,
+    x_{\sigma_n}) \qquad \forall x_1, \dots, x_n \in M
+  \end{equation*}
+  It is graded antisymmetric iff
+  \begin{equation*}
+    f(x_1, \dots, x_n) = \chi(\sigma) f(x_{\sigma_1}, \dots,
+    x_{\sigma_n}) \qquad \forall x_1, \dots, x_n \in M
+  \end{equation*}.
+\end{definition}
+
+Since permutation of factors in a tensor product may change the sign,
+the contraction map 
+\begin{equation*}
+c: {\textstyle \bigotimes_i} \Hom(M_i, N_i) \otimes
+ {\textstyle \bigotimes_i} M_i \to  {\textstyle \bigotimes_i} N_i
+\end{equation*}
+is well-defined only up to a sign. In search of a remedy, we fix an
+ordering of the factors which gives ``unsigned'' contraction, and then
+define contraction of any permutation of the factors
+$\left\{\Hom(M_i,N_i), M_i\right\}_{i\in I}$ by first applying a
+twist $\tau_\sigma$ to get the fixed ``standard'' ordering, and then the
+contraction before. Formally, let:
+\begin{enumerate}
+\item $\Hom(M,N) \otimes M \ni f\otimes x \mapsto f(x) \in N$;
+\item $\bigotimes_i (\Hom(M_i, N_i) \otimes M_i) \ni (f_1\otimes x_1)
+  \otimes \dots (f_k\otimes x_k) \mapsto f_1(x_1) \otimes \dots
+  \otimes f_k(x_k) \in \bigotimes N_i$;
+\item let $W_{2i-1} := \Hom(M_i, N_i)$, $W_{2i} := M_i$, for $i =
+  1, \dots, k$; define the contraction
+  \begin{equation*}
+    {\textstyle \bigotimes_{j=1}^{2k}} W_{\sigma_j} \to
+    {\textstyle \bigotimes_{i=1}^k} N_i
+  \end{equation*}
+  by 
+  \begin{equation*}
+    {\textstyle \bigotimes_{j=1}^{2k}} W_{\sigma_j} \to {\textstyle \bigotimes_{j=1}^{2k}} W_j \to
+    {\textstyle \bigotimes_{i=1}^{k}} N_i.
+  \end{equation*}
+\end{enumerate}
+
+Infact, this boils down to the rule: ``change the sign by
+$(-1)^{pq}$ when interchanging objects of degree $p$ and $q$''.
+
+
+\section{Braided symmetric categories of vector spaces}
+\label{sec:btc-vect}
+
+The categories of ($\setZ$-graded) $\fk$-linear spaces, $\catVect[\fk]^\setZ$
+and $\catVect[\fk]$ have natural structures of symmetric braided
+autonomous tortile category: $\catVect[\fk] = \catMod_\fk$ if we
+consider $\fk$ to be a $\fk$-dg-algebra concentrated in degree $0$.
+
+However, every vector space is a free module, so, for any $V \in
+\catVect^\setZ$, pick a base $(v_i)$ and a dual base $(\rdl{v_i})$ of
+$\rdl{V}$ such that $\pairing{v_i}{\rdl{v_j}} = \delta_{ij}$; we can
+define evaluation and coevaluation maps
+\begin{align}
+  \label{eq:vec-evaluation}
+  \ev_V &: v \otimes \rdl{v} \mapsto \pairing{v}{\rdl{v}}, 
+  \\
+  \label{eq:vec-coevaluation}
+  \coev_V &: 1 \mapsto \sum_i \rdl{v_i} \otimes v_i,
+\end{align}
+which make $\catVect^\setZ$ into an autonomous category. The balancing
+map \eqref{eq:dgm-balancing} is compatible with taking duals, so
+$\catVect^\setZ$ is a tortile category.
+\begin{remark}\label{rem:ev-rev}
+  Please note that, although $\rdl{\rdl{V}} \simeq V$, the reverse-order
+  evaluation and coevaluation maps $\ev'_V$, $\coev'_V$ differ from
+  $\ev_{\rdl{V}}$ and $\coev_{\rdl{V}}$ by a sign, because of the
+  non-trivialness of $\tau_{V,\rdl{V}}$; indeed, according to
+  \ref{thm:ev-rev},
+  \begin{align*}
+    \ev'_V = \ev_V \circ \tau_{V,\rdl{V}} &: \rdl{v} \otimes v \mapsto (-1)^{v\rdl{v}}
+    \pairing{v}{\rdl{v}},
+    \\
+    \ev_{\rdl{V}} &: \rdl{v} \otimes v \mapsto \pairing{\rdl{v}}{v},
+  \end{align*}
+  and similarly for $\coev'_V = \pm \coev_{\rdl{V}}$.
+\end{remark}
+
+The category $\catVect$ of degree $0$ vector spaces inherits a
+structure of a tortile autonomous braided symmetric category from
+$\catVect^\setZ$, but the braiding restricts to the trivial one.
+
+
+\subsection{The category of Bosonic states}
+\label{sec:bosonic}
+
+Let $V$ be a $\fk$-vector space equipped with a bilinear
+\emph{symmetric} non-degenerate form $b: V\tp{2} \to \fk$. Let
+$\btpc{V,b}$ be the full subcategory of $\catVect$ which has tensor
+powers $V\tp{p}$ as objects; $\btpc{V,b}$ inherits a balanced
+symmetric tensor structure from $\catVect$. For each $V\tp{p} \in
+\btpc{V,b}$ define maps
+\begin{equation*}
+  \ev_{V\tp{p}}: V\tp{p} \otimes V\tp{p} \ni (v_1, \ldots, v_p) \otimes (v'_1, \ldots, v'_p) \mapsto
+  b(v_1, v'_1) \cdots b(v_p, v'_p) \in \fk \simeq I.
+\end{equation*}
+Since $b$ is non-degenerate and $V$ is finite-dimensional, $\ev^\sharp$ is
+a linear isomorphism, hence a bijection, so $V\tp{p}$ is a self-dual
+object and $\btpc{V,b}$ is an autonomous category.
+
+The category $\btpc{V,b}$ can be used as a base for a graphical
+calculus description of Feynman diagrams associated to Gaussian
+integrals --- see \cite[sec.\
+2.8]{murri-fiorenza;feynman}.\FIXME{Piccolo spazio pubblicit{\`a}\ldots}
+
+
+\subsection{The category of Fermionic states}
+\label{sec:fermionic}
+
+Let $V \in \catVect[\fk]^\setZ$ be equipped with a bilinear \emph{alternating}
+non-degenerate form $a: V\tp{2} \to \fk$. Let $\ftpc{V,b}$ be the full
+subcategory of $\catVect^\setZ$ which has tensor powers $V\tp{p}$ as
+objects; $\ftpc{V,a}$ inherits a balanced symmetric tensor structure
+from $\catVect$. For each $V\tp{p} \in \ftpc{V,a}$ define maps
+\begin{equation*}
+  \ev_{V\tp{p}}: V\tp{p} \otimes V\tp{p} \ni (v_1, \ldots, v_p) \otimes (v'_1, \ldots, v'_p) \mapsto
+  a(v_1, v'_1) \cdots a(v_p, v'_p) \in \fk \simeq I.
+\end{equation*}
+Since $a$ is non-degenerate and alternating, then $V$ has even
+dimension $2n$ and we can find a symplectic basis $(e_i)$  of
+$V$; set $e_i' := e_{i+n}$  and $e_{i+n}' := e_i$ for $i = 1, \ldots, n$
+so that $a(e_i, e_j')= \delta_{ij}$. Define a map
+\begin{equation*}
+  \coev_V : \fk \ni 1 \mapsto \sum_i e_i' \otimes e_i \in V \otimes V.
+\end{equation*}
+Then, for any $v = \sum v^i e_i$,
+\begin{multline*}
+  (\ev_V \otimes \id_V) \circ (\id_V \otimes \coev_V) (v) 
+  = (\ev_V \otimes \id_V) \bigl(v \otimes ( {\textstyle \sum_i} e_i' \otimes e_i) \bigr)
+  \\
+  = \sum_{ji} v^j \cdot \ev_V \otimes \id_V (e_j \otimes e_i' \otimes e_i)
+  = \sum_{ji} v^j \cdot a(e_j, e_i') e_i
+  = \sum_i v^i e_i = v  ,
+\end{multline*}
+so $V\tp{p}$ is a self-dual object; likewise any $V\tp{p} \in
+\ftpc{V,a}$ is, so $\ftpc{V,a}$ is an autonomous category.
+
+Note that, according to \csref{rem:ev-rev}, the left- and
+right-duality maps $\ev$ and $\ev'$ differ by a sign.
+
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "index"
+%%% x-symbol-8bits: nil
+%%% End: 

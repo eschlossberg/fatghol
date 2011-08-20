@@ -1,0 +1,623 @@
+%% 
+%% Carica l'estensione XY-Pic e definisce le macro necessarie per i
+%% disegni di DFIZ.
+%%
+%\usepackage[ps,dvips,xdvi,frame,curve,poly,all]{xy}
+
+\newcommand{\savexyscale}{\let\savedeveryxy=\everyxy}
+\newcommand{\restorexyscale}{\let\everyxy=\savedeveryxy}
+\newcommand{\xyscale}[1]{\everyxy={\POS#1;0,}}
+
+%%
+%% Dimensioni di default
+%%
+\xyscale{0;/r7mm/:0,}
+\let\objectstyle=\scriptstyle
+
+
+%% 
+%% Alcune costanti che controllano l'aspetto di *tutti* i disegni
+%%
+%% Le costanti \rg...scalei, \rg...scaleii e \rg...scaleiii
+%% controllano la distanza dei tre tre cerchi di vertici ausiliari:
+%% il cerchio "AUXi*" ha raggio \rg...scalei, il cerchio "AUXii*" ha
+%% raggio \rg...scaleii*\rg...scalei, ed il cerchio "AUXiii*" ha
+%% raggio \rg...scaleiii*\rg...scaleii*\rg...scalei.
+%%
+\providecommand{\rgholescalei}{1.2}
+\providecommand{\rgholescaleii}{1.8}
+\providecommand{\rgholescaleiii}{1.9}
+
+\providecommand{\rgvertexscalei}{1.25}
+\providecommand{\rgvertexscaleii}{1.7}
+\providecommand{\rgvertexscaleiii}{1.9}
+
+%% Il comando \rgvertexmark produce il contrassegno standard per i
+%% vertici .
+%%
+\providecommand{\rgvertexmark}{\ensuremath\bullet}
+
+%% 
+%% \rghole{NUMERO_DI_VERTICI} 
+%% 
+%% Disegna una buca col numero di vertici specificato. 
+%% Il centro della buca {\`e} nella posizione XY-Pic "CENTER". 
+%% Inoltre, crea tre ordini concentrici di posizioni XY-Pic: 
+%% "VERTEX<num>" il vertice <num> 
+%% "AUXi<num>" un punto esterno sulla direttrice 
+%% centro-vertice 
+%% "AUXii<num>" un punto ancora pi{\`u} esterno sulla direttrice 
+%% centro-vertice 
+%% Se NUMERO_DI_VERTICI = -1, disegna un vertice 1-valente con
+%% l'orientazione opposta (gamba verso l'alto).
+%%
+\newcommand{\rghole}[2][]{% 
+\POS{0*+{#1}="CENTER"},% 
+\ifnum #2=-1% 
+\rgholeoneup% 
+\else\ifnum #2=1% 
+\rgholeone% 
+\else\ifnum #2=2% 
+\rgholetwo% 
+\else% 
+\rgholepoly #2% 
+\fi\fi\fi% 
+} 
+
+\newcommand{\rgholeone}{% 
+        \POS{"CENTER"*\cir(1,0){}}%
+        \POS{DC*{\rgvertexmark}}="VERTEX1";%
+        \POS{"CENTER";"VERTEX1"**\dir{}?(\rgholescalei)}="AUXi1";%
+        \POS{"CENTER";"AUXi1"**\dir{}?(\rgholescaleii)}="AUXii1";%
+        \POS{"CENTER";"AUXii1"**\dir{}?(\rgholescaleiii)}="AUXiii1";%
+}
+
+\newcommand{\rgholeoneup}{% 
+        \POS{"CENTER"*\cir(1,0){}}%
+        \POS{UC*{\rgvertexmark}}="VERTEX1";%
+        \POS{"CENTER";"VERTEX1"**\dir{}?(\rgholescalei)}="AUXi1";%
+        \POS{"CENTER";"AUXi1"**\dir{}?(\rgholescaleii)}="AUXii1";%
+        \POS{"CENTER";"AUXii1"**\dir{}?(\rgholescaleiii)}="AUXiii1";%
+}
+
+\newcommand{\rgholetwo}{% 
+        \POS{"CENTER"*\cir(1,0){}}="@o",%
+        \POS{"@o",UC*{\rgvertexmark}}="VERTEX1",%
+        \POS{"@o",DC*{\rgvertexmark}}="VERTEX2",%
+        \POS{"CENTER";"VERTEX1"**\dir{}?(\rgholescalei)}="AUXi1";%
+        \POS{"CENTER";"AUXi1"**\dir{}?(\rgholescaleii)}="AUXii1";%
+        \POS{"CENTER";"AUXii1"**\dir{}?(\rgholescaleiii)}="AUXiii1";%
+        \POS{"CENTER";"VERTEX2"**\dir{}?(\rgholescalei)}="AUXi2";%
+        \POS{"CENTER";"AUXi2"**\dir{}?(\rgholescaleii)}="AUXii2";%
+        \POS{"CENTER";"AUXii2"**\dir{}?(\rgholescaleiii)}="AUXiii2";%
+}
+
+\newcommand{\rgholepoly}[1]{% 
+        \POS{\xypolygon#1"VERTEX"{% 
+        ~>{-}% linee singole per i lati 
+        \rgvertexmark 
+        }}="CENTER"; 
+        \POS{\xypolygon#1"AUXi"{% 
+        ~:{(\rgholescalei,0):}% ingrandisce 
+        ~>{}% lati vuoti 
+        }}; 
+        \POS{\xypolygon#1"AUXii"{% 
+        ~:{(\rgholescaleii,0):}% ingrandisce 
+        ~>{}% lati vuoti 
+        }}; 
+%        \POS{\xypolygon#1"AUXiii"{% 
+%        ~:{(\rgholescaleiii,0):}% ingrandisce 
+%        ~>{}% lati vuoti 
+%        }} 
+}
+
+
+%%
+%% \rgvertex[DECOR]{VALENZA}
+%%
+%% Disegna un vertice della valenza indicata. Il centro viene decorato
+%% con un pallino nero (\rgvertexmark) oppure con DECOR (se
+%% specificato). Intorno al vertice ci sono, invisibili, due ordini di
+%% posizioni ausiliarie per il disegno dei lati: AUXi e AUXii.
+%% Cf. \loose, \fork e \fence per l'uso di queste. Il raggio
+%% dei tre cerchi di posizioni si controlla con le variabili
+%% \rgvertexscale*.
+%%
+%%
+\newcommand{\rgvertex}[2][\relax]{%
+\ifx#1\relax%
+        \POS*{\displaystyle\rgvertexmark}="CENTER",%
+\else%
+        \POS*+{\displaystyle #1}*\cir{}="CENTER",% DECOR nel centro
+\fi%
+\ifnum #2=-1% 
+\rgvertexoneup% 
+\else\ifnum #2=1% 
+\rgvertexone% 
+\else\ifnum #2=2% 
+\rgvertextwo% 
+\else% 
+\rgvertexpoly{#2}% 
+\fi\fi\fi% 
+} 
+
+\newcommand{\rgvertexone}{% 
+\POS{DC}="VERTEX1";%
+\POS{"CENTER";"VERTEX1"**\dir{}?(\rgvertexscalei)}="AUXi1";%
+\POS{"CENTER";"AUXi1"**\dir{}?(\rgvertexscaleii)}="AUXii1";%
+\POS{"CENTER";"AUXii1"**\dir{}?(\rgvertexscaleiii)}="AUXiii1";%
+}
+
+\newcommand{\rgvertexoneup}{% 
+\POS{UC}="VERTEX1";%
+\POS{"CENTER";"VERTEX1"**\dir{}?(\rgvertexscalei)}="AUXi1";%
+\POS{"CENTER";"AUXi1"**\dir{}?(\rgvertexscaleii)}="AUXii1";%
+\POS{"CENTER";"AUXii1"**\dir{}?(\rgvertexscaleiii)}="AUXiii1";%
+}
+
+\newcommand{\rgvertextwo}{% 
+\POS{DC}="VERTEX1";%
+\POS{"CENTER";"VERTEX1"**\dir{}?(\rgvertexscalei)}="AUXi1";%
+\POS{"CENTER";"AUXi1"**\dir{}?(\rgvertexscaleii)}="AUXii1";%
+\POS{"CENTER";"AUXii1"**\dir{}?(\rgvertexscaleiii)}="AUXiii1";%
+\POS{"VERTEX1";"CENTER"**\dir{}?(2.0)}="VERTEX2",%
+\POS{"CENTER";"VERTEX2"**\dir{}?(\rgvertexscalei)}="AUXi2";%
+\POS{"CENTER";"AUXi2"**\dir{}?(\rgvertexscaleii)}="AUXii2";%
+\POS{"CENTER";"AUXii2"**\dir{}?(\rgvertexscaleiii)}="AUXiii2";%
+}
+
+\newcommand{\rgvertexpoly}[1]{\POS{% 
+\xypolygon#1"VERTEX"{~:{R:}~<{-}~>{}}%,="CENTER"; 
+\xypolygon#1"AUXi"{%
+~:{(\rgvertexscalei,0):}% ingrandisce
+~>{}% lati vuoti 
+}%;
+\xypolygon#1"AUXii"{% 
+~:{(\rgvertexscaleii,0):}% ingrandisce 
+~>{}% lati vuoti 
+}%, 
+%\POS{\xypolygon#1"AUXiii"{% 
+%~:{(\rgvertexscaleiii,0):}% ingrandisce 
+%~>{}% lati vuoti 
+%}}, 
+}}
+
+%%
+%% \rgdoublevertex{VALENZA_UNO}{VALENZA_DUE}
+%% 
+%% crea due poligoni concentrici di VALENZA_UNO e VALENZA_DUE lati
+%% rispettivamente. 
+%%
+\newcommand{\rgdoublevertex}[2]{\POS{%
+% crea il primo poligono
+\xypolygon#1"VERTEX"{~:{R:}~<{-}~>{}}%,="CENTER";
+\xypolygon#1"AUXiuno"{%
+~:{(\rgvertexscalei,0):}% ingrandisce
+~>{}% lati vuoti
+}%;
+\xypolygon#1"AUXiiuno"{%
+~:{(\rgvertexscaleii,0):}% ingrandisce
+~>{}% lati vuoti
+}%,
+%\POS{\xypolygon#1"AUXiiiuno"{%
+%~:{(\rgvertexscaleiii,0):}% ingrandisce
+%~>{}% lati vuoti
+%}},
+% crea il secondo poligono
+\xypolygon#2"VERTEX"{~:{R:}~<{-}~>{}}%,="CENTER";
+\xypolygon#2"AUXidue"{%
+~:{(\rgvertexscalei,0):}% ingrandisce
+~>{}% lati vuoti
+}%;
+\xypolygon#2"AUXiidue"{%           
+~:{(\rgvertexscaleii,0):}% ingrandisce
+~>{}% lati vuoti  
+}%,
+%\POS{\xypolygon#2"AUXiiidue"{%
+%~:{(\rgvertexscaleiii,0):}% ingrandisce
+%~>{}% lati vuoti   
+%}},
+}}
+%%
+%% \missing[DECOR]{LATO}
+%%
+%% Indica che LATO (specificare il numero d'ordine) manca; se DECOR {\`e}
+%% presente, lo disegna al posto di LATO, nella posizione del primo
+%% vertice ausiliario.
+%%
+\newcommand{\missing}[2][\cdots]{\POS{%
+        0;"AUXi#2"**\dir{}?(.9)*{\displaystyle{#1}}%
+}}
+
+
+%% 
+%% \loose{NUMERO_DEL_VERTICE} 
+%% 
+%% Disegna un lato rettilineo che parte da VERTICE verso l'esterno, 
+%% nella direzione del raggio. 
+%% 
+\newcommand{\loose}[1]{\POS{% 
+% linea continua da VERTICE al secondo vertice ausiliario 
+"VERTEX#1";"AUXii#1"**\dir{-},% 
+}} 
+
+
+%% 
+%% \dotloose{NUMERO_DEL_VERTICE} 
+%% 
+%% Disegna un lato rettilineo che parte da VERTICE verso l'esterno, 
+%% nella direzione del raggio, e termina col tratteggio. 
+%% 
+\newcommand{\dotloose}[1]{\POS{% 
+% linea continua da VERTICE al primo vertice ausiliario 
+"VERTEX#1";"AUXi#1"**\dir{-},% 
+% linea punteggiata dal primo al secondo vertice ausiliario 
+"AUXi#1";"AUXii#1"**\dir{.}% 
+}} 
+
+
+%% 
+%% \fork[DECOR]{VERTICE} 
+%% 
+%% Disegna un lato rettilineo che parte da VERTICE verso l'esterno, 
+%% nella direzione del raggio, e termina ``a zampa di gallina''. Se 
+%% l'argomento facoltativo DECOR {\`e} presente, pone la decorazione 
+%% DECOR sulla biforcazione. 
+%% 
+\newcommand{\fork}[2][\bullet]{\POS{% 
+% linea continua da VERTICE al secondo vertice ausiliario 
+"VERTEX#2";"AUXii#2"**\dir{-},% 
+% DECOR sul secondo vertice ausiliario 
+"AUXii#2"*{#1},% 
+% nuovo sistema ortogonale: il versore delle ascisse ora {\`e} il 
+% vettore che congiunge il secondo vertice ausiliario col primo 
+"AUXii#2";"AUXi#2":% 
+% punteggia i due lati della biforcazione; i loro estremi ed il 
+% primo vertice ausiliario sono i vertici di un triangolo 
+% equilatero di ragggio uguale alla distanza tra il primo ed il 
+% secondo vertice ausiliario (che ora {\`e} la lunghezza unitaria) 
+"AUXii#2";a(125)**\dir{-},% 
+"AUXii#2";a(-125)**\dir{-}% 
+}} 
+
+%% 
+%% \fence{VERTICE}{DECOR_PREV}{DECOR_NEXT} 
+%% 
+%% Disegna un lato rettilineo che parte da VERTICE verso l'esterno, 
+%% nella direzione del raggio, e termina sul secondo vertice 
+%% ausiliario. Gli oggetti DECOR_PREV e DECOR_NEXT vengono posti tra i 
+%% due vertici ausiliari, da una parte e dall'altra rispetto alla 
+%% linea tracciata. 
+%% 
+\newcommand{\fence}[3]{\POS{% 
+ % linea dritta continua da VERTICE al secondo vertice ausiliario 
+"VERTEX#1"\PATH~={**\dir{-}} '"AUXii#1"%
+ % DECOR_PREV al di ``sopra'' della linea (Xy-Pic ruota le posizioni
+ % ``sopra'' e ``sotto'' concordemente col segmento tracciato; per
+ % questo usiamo l'estensione \PATH invece del semplice **\dir)
+^>{#3}%
+ % DECOR_NEXT al di ``sotto'' della linea
+_>{#2}
+}} 
+
+
+%% 
+%% \forkfence[DECOR]{VERTICE}{I1}{J}{I2} 
+%% 
+%% Disegna un lato rettilineo che parte da VERTICE verso l'esterno, 
+%% nella direzione del raggio, e termina ``a zampa di gallina''. Se 
+%% l'argomento facoltativo DECOR {\`e} presente, pone la decorazione 
+%% DECOR sulla biforcazione. Decora con I1, J, J, I2 i lati della
+%% ``zampa di gallina'', nell'ordine antiorario.
+%% 
+\newcommand{\forkfence}[5][\bullet]{\POS{% 
+% linea continua da VERTICE al secondo vertice ausiliario 
+"VERTEX#2";"AUXii#2"**\dir{-},% 
+% DECOR sul secondo vertice ausiliario 
+"AUXii#2"*{#1},% 
+% nuovo sistema ortogonale: il versore delle ascisse ora è il 
+% vettore che congiunge il terzo vertice ausiliario col primo 
+"AUXii#2";"AUXi#2":% 
+% punteggia i due lati della biforcazione; i loro estremi ed il 
+% primo vertice ausiliario sono i vertici di un triangolo 
+% equilatero di ragggio uguale alla distanza tra il primo ed il 
+% secondo vertice ausiliario (che ora è la lunghezza unitaria) 
+"AUXii#2";a(125)**\dir{-},% 
+0+(0.2,0.75)*{#3},% 
+0+(-1.1,.75)*{#4},% 
+"AUXii#2";a(-125)**\dir{-},% 
+0+(-1.1,-.75)*{#4},% 
+0+(0.2,-0.75)*{#5},% 
+}} 
+
+
+%%
+%% \cilia[SIMBOLO]{LATO1}{LATO2}
+%%
+%% Marca con SIMBOLO ('*' in mancanza di indicazioni) la buca tra
+%% LATO1 e LATO2 (indicati col numero d'ordine).
+%% 
+\newcommand{\cilia}[3][\bigstar]{\POS{%
+    "AUXi#2";"AUXi#3"**\dir{}?(.5)="m@",%
+    "CENTER";"m@"**\dir{}?(1.0)*{#1}%
+}}
+
+
+%%
+%% \spike[LUNGHEZZA]{SIMBOLO}{LATO1}{LATO2}
+%%
+%% Marca con SIMBOLO ('*' in mancanza di indicazioni) la buca tra
+%% LATO1 e LATO2 (indicati col numero d'ordine), e traccia un lato
+%% continuo fino a SIMBOLO. SIMBOLO viene cerchiato
+%% 
+\newcommand{\spike}[4][0.25]{\POS{%
+    "AUXi#3";"AUXi#4"**\dir{}?(.5)="m@",%
+    "m@";"CENTER"**\dir{}?(#1)="n@",%
+    "CENTER";"n@"*+<2pt>[o][Fo]{#2}**\dir{-}%
+}}
+
+%%
+%% \spikesenza[LUNGHEZZA]{SIMBOLO}{LATO1}{LATO2}
+%%
+%% Marca con SIMBOLO ('*' in mancanza di indicazioni) la buca tra
+%% LATO1 e LATO2 (indicati col numero d'ordine), e traccia un lato
+%% continuo fino a SIMBOLO. SIMBOLO non viene cerchiato.
+%% 
+\newcommand{\spikesenza}[4][0.25]{\POS{%
+    "AUXi#3";"AUXi#4"**\dir{}?(.5)="m@",%
+    "m@";"CENTER"**\dir{}?(#1)="n@",%
+    "CENTER";"n@"*{#2}**\dir{-}%
+}}
+
+
+%% 
+%% \join{VERTICE1}{VERTICE2} 
+%% 
+%% Unisce i vertici indicati (col numero d'ordine) con un lato. 
+%% 
+\newcommand{\join}[2]{\POS{% 
+% Per prima cosa troviamo il punto medio "m@" del lato V1;V2 
+"AUXi#2";"AUXi#1"**\dir{}?="m@",% 
+% poi, troviamo il simmetrico "c@" del centro rispetto al lato 
+% V1;V2 (il punto sulla retta CENTER;m@ a distanza doppia da 
+% CENTER rispetto ad m@, dalla parte di m@) 
+"CENTER";"m@"**\dir{}?(2.0)="c@",% 
+% infine, tracciamo una curva che passa per "c@" e per 
+% i punti ausiliari creati da \rghole. 
+"VERTEX#2";"VERTEX#1"\curve{~**\dir{-}% 
+  "AUXi#2"&"AUXii#2"&"c@"&"AUXii#1"&"AUXi#1"}%
+}} 
+
+%% 
+%% \dotjoin{VERTICE1}{VERTICE2} 
+%% 
+%% Unisce i vertici indicati (col numero d'ordine) con un lato
+%% a tratto punteggiato.
+%% 
+\newcommand{\dotjoin}[2]{\POS{% 
+% Per prima cosa troviamo il punto medio "m@" del lato V1;V2 
+"AUXi#2";"AUXi#1"**\dir{}?="m@",% 
+% poi, troviamo il simmetrico "c@" del centro rispetto al lato 
+% V1;V2 (il punto sulla retta CENTER;m@ a distanza doppia da 
+% CENTER rispetto ad m@, dalla parte di m@) 
+"CENTER";"m@"**\dir{}?(2.0)="c@",% 
+% infine, tracciamo una curva che passa per "c@" e per 
+% i punti ausiliari creati da \rghole. 
+"VERTEX#2";"VERTEX#1"\curve{~**\dir{.}% 
+  "AUXi#2"&"AUXii#2"&"c@"&"AUXii#1"&"AUXi#1"}%
+}} 
+
+
+%% 
+%% \...spikedjoin[DECOR]{VERTICE1}{VERTICE2} 
+%% 
+%% Unisce i vertici indicati (col numero d'ordine) con un lato. Dal
+%% lato protrude un peduncolo con DECOR ad un estremo. La versione
+%% 'inner' traccia il peduncolo verso l'interno, 'outer' verso l'esterno.
+%% 
+\newcommand{\innerspikedjoin}[3][\rgvertexmark]{\POS{% 
+% Per prima cosa troviamo il punto medio "m@" del lato V1;V2 
+"AUXi#3";"AUXi#2"**\dir{}?="m@",% 
+% poi, troviamo il simmetrico "c@" del centro rispetto al lato 
+% V1;V2 (il punto sulla retta CENTER;m@ a distanza doppia da 
+% CENTER rispetto ad m@, dalla parte di m@) 
+"CENTER";"m@"**\dir{}?(2.0)="c@",% 
+% tracciamo una curva che passa per "c@" e per 
+% i punti ausiliari creati da \rghole, e chiamiamo q@ il 
+% punto medio
+"VERTEX#3";"VERTEX#2"**\crv{~**\dir{-}% 
+  "AUXi#3"&"AUXii#3"&"c@"&"AUXii#2"&"AUXi#2"},?(.5)="q@",%
+% "p@" è l'estremità del peduncolo
+"CENTER";"m@"**\dir{}?(0.75)="p@",%
+% tracciamo il peduncolo
+"q@";"p@"*+[o][Fo]{#1}**\dir{-},%
+}} 
+
+\newcommand{\outerspikedjoin}[3][\rgvertexmark]{\POS{% 
+% Per prima cosa troviamo il punto medio "m@" del lato V1;V2 
+"AUXi#3";"AUXi#2"**\dir{}?="m@",% 
+% poi, troviamo il simmetrico "c@" del centro rispetto al lato 
+% V1;V2 (il punto sulla retta CENTER;m@ a distanza doppia da 
+% CENTER rispetto ad m@, dalla parte di m@) 
+"CENTER";"m@"**\dir{}?(2.0)="c@",% 
+% infine, tracciamo una curva che passa per "c@" e per 
+% i punti ausiliari creati da \rghole, e chiamiamo "q@"
+% il suo punto medio 
+"VERTEX#3";"VERTEX#2"**\crv{~**\dir{-}% 
+  "AUXi#3"&"AUXii#3"&"c@"&"AUXii#2"&"AUXi#2"},?(.5)="q@",%
+% "p@" è l'estremità del peduncolo
+"CENTER";"m@"**\dir{}?(2.5)="p@",%
+% tracciamo il peduncolo
+"q@";"p@"*+[o][Fo]{#1}**\dir{-},%
+}} 
+
+
+%% 
+%% \joinunder{VERTICE_INIZIO}{VERTICE_MEZZO}{VERTICE_FINE} 
+%% 
+%% Unisce i vertici indicati (col numero d'ordine) con un lato, 
+%% che "passa sotto" al vertice VERTICE_MEZZO. 
+%% 
+\newcommand{\joinunder}[3]{\POS{%
+% calcola la linea che congiunge VERTICE_INIZIO col primo vertice 
+% ausiliario di VERTICE_MEZZO... 
+"VERTEX#1";"AUXi#2"**\crv{~**\dir{}"AUXii#1"},% 
+% ...dal punto a 9/10 della lunghezza di questa, traccia una linea 
+% continua (a ritroso) fino a VERTICE_INIZIO. 
+c?(0.95);"VERTEX#1"**\crv{~**\dir{-}"AUXii#1"},% 
+% stesso trucco per l'altro pezzo di linea 
+"AUXi#2";"VERTEX#3"**\crv{~**\dir{}"AUXii#3"},% 
+c?(0.05);"VERTEX#3"**\crv{~**\dir{-}"AUXii#3"}
+}}
+
+%%
+%% \dotjoinunder{VERTICE_INIZIO}{VERTICE_MEZZO}{VERTICE_FINE} 
+%%
+%% Come \joinunder, ma con la linea punteggiata
+%%
+\newcommand{\dotjoinunder}[3]{\POS{%
+% calcola la linea che congiunge VERTICE_INIZIO col primo vertice 
+% ausiliario di VERTICE_MEZZO... 
+"VERTEX#1";"AUXi#2"**\crv{~**\dir{}"AUXii#1"},% 
+% ...dal punto a 9/10 della lunghezza di questa, traccia una linea 
+% continua (a ritroso) fino a VERTICE_INIZIO. 
+c?(0.95);"VERTEX#1"**\crv{~**\dir{.}"AUXii#1"},% 
+% stesso trucco per l'altro pezzo di linea 
+"AUXi#2";"VERTEX#3"**\crv{~**\dir{}"AUXii#3"},% 
+c?(0.05);"VERTEX#3"**\crv{~**\dir{.}"AUXii#3"}
+}}
+
+%% 
+%% \...joinunder[DECOR]{VERTICE_INIZIO}{VERTICE_MEZZO}{VERTICE_FINE} 
+%% 
+%% Unisce i vertici indicati (col numero d'ordine) con un lato, 
+%% che "passa sotto" al vertice VERTICE_MEZZO. Dal
+%% lato protrude un peduncolo con DECOR ad un estremo. La versione
+%% 'inner' traccia il peduncolo verso l'interno, 'outer' verso l'esterno.
+%% 
+\newcommand{\innerspikedjoinunder}[4][\rgvertexmark]{\POS{% 
+% calcola la linea che congiunge VERTICE_INIZIO col primo vertice 
+% ausiliario di VERTICE_MEZZO... 
+"VERTEX#2";"AUXi#3"**\crv{~**\dir{}"AUXii#2"},% 
+% ...dal punto a 9/10 della lunghezza di questa, traccia una linea 
+% continua (a ritroso) fino a VERTICE_INIZIO. Il punto di mezzo di
+% questa linea lo chiamiamo "m@".
+c?(0.95);"VERTEX#2"**\crv{~**\dir{-}"AUXii#2"}?(0.5)="m@",% 
+% stesso trucco per l'altro pezzo di linea 
+"AUXi#3";"VERTEX#4"**\crv{~**\dir{}"AUXii#4"},% 
+c?(0.05);"VERTEX#4"**\crv{~**\dir{-}"AUXii#4"},%
+% "p@" è l'estremità del peduncolo
+"VERTEX#3";"m@"**\dir{}?(0.5)="p@",%
+% tracciamo il peduncolo
+"m@";"p@"*+<2pt>[o][Fo]{#1}**\dir{-}
+}}
+
+\newcommand{\outerspikedjoinunder}[4][\rgvertexmark]{\POS{% 
+% calcola la linea che congiunge VERTICE_INIZIO col primo vertice 
+% ausiliario di VERTICE_MEZZO... 
+"VERTEX#2";"AUXi#3"**\crv{~**\dir{}"AUXii#2"},% 
+% ...dal punto a 9/10 della lunghezza di questa, traccia una linea 
+% continua (a ritroso) fino a VERTICE_INIZIO. Il punto di mezzo di
+% questa linea lo chiamiamo "m@".
+c?(0.95);"VERTEX#2"**\crv{~**\dir{-}"AUXii#2"}?(0.5)="m@",% 
+% stesso trucco per l'altro pezzo di linea 
+"AUXi#3";"VERTEX#4"**\crv{~**\dir{}"AUXii#4"},% 
+c?(0.05);"VERTEX#4"**\crv{~**\dir{-}"AUXii#4"},% 
+% "p@" è l'estremità del peduncolo
+"VERTEX#3";"m@"**\dir{}?(1.5)="p@",%
+% tracciamo il peduncolo
+"m@";"p@"*+<2pt>[o][Fo]{#1}**\dir{-}
+}}
+
+
+%%
+%% \rtriv
+%%
+%% Produce un vertice trivalente con la punta "1" verso destra.
+%%
+\newcommand{\rtriv}{% 
+\POS 0="CENTER", 
+\POS{\xypolygon3"AUXi"{% 
+~={120} 
+~>{}% lati vuoti 
+}}; 
+\POS{\xypolygon3"AUXii"{% 
+~={120} 
+~:{(\rgvertexscalei,0):}
+~>{}% lati vuoti 
+}} 
+%\POS{\xypolygon3"AUXiii"{% 
+%~={120} 
+%~:{(1.3,0):}% ingrandisce 
+%~>{}% lati vuoti 
+%}} 
+\POS{"CENTER"="VERTEX1",} 
+\POS{"CENTER"="VERTEX2",} 
+\POS{"CENTER"="VERTEX3",} 
+} 
+
+%%
+%% \ltriv
+%%
+%% Produce un vertice trivalente con la punta "1" verso sinistra.
+%%
+\newcommand{\ltriv}{% 
+\POS 0="CENTER", 
+\POS{\xypolygon3"AUXi"{% 
+~={-60} 
+~>{}% lati vuoti 
+}}; 
+\POS{\xypolygon3"AUXii"{% 
+~={-60} 
+~:{(\rgvertexscalei,0):}
+~>{}% lati vuoti 
+}} 
+%\POS{\xypolygon3"AUXiii"{% 
+%~={-60} 
+%~:{(1.3,0):}% ingrandisce 
+%~>{}% lati vuoti 
+%}} 
+\POS{"CENTER"="VERTEX1",} 
+\POS{"CENTER"="VERTEX2",} 
+\POS{"CENTER"="VERTEX3",} 
+} 
+
+
+%%
+%% \genericfences[NUM]
+%%
+%% Decora un vertice 6-valente con le gambette per ``un numero
+%% qualunque di lati uscenti; l'ultimo lato porta l'indice i_{NUM}, se
+%% NUM manca, si assume ``n''.
+%%
+\newcommand{\genericfences}[1][n]{%
+\fence{1}{\ldots}{i_{#1}}%
+\fence{2}{i_{#1}}{i_1}%
+\fence{3}{i_1}{i_2}%
+\fence{4}{i_2}{i_3}%
+\fence{5}{i_3}{\ldots}%
+\missing[\cdots]{6}
+}
+
+%%
+%% \genericforkfences[NUM]
+%%
+%% Come \genericfences, ma con \forkfence invece di \fence e si
+%% applica a vertici 5-valenti.
+%%
+\newcommand{\genericforkfences}[1][n]{%
+  \missing[\cdots]{1}%
+  \forkfence{2}{\ldots}{j_{#1}}{i_{#1}}%
+  \forkfence{3}{i_{#1}}{j_1}{i_1}%
+  \forkfence{4}{i_1}{j_2}{i_2}%
+  \forkfence{5}{i_2}{j_3}{\ldots}%
+}
+
+
+%%
+%% Local variables:
+%% mode: latex
+%% TeX-master: "../index"
+%% x-symbol-mode: nil
+%% End:
+%%

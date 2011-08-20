@@ -1,0 +1,179 @@
+%%% index.tex -- Generico contenitore per matematica in lingua inglese.
+%%%
+%%% $Id: index.tex,v 1.1.1.1 2002/01/10 10:01:51 ri Exp $
+%%%
+\documentclass[a4paper,reqno,openany,draft]{amsbook}
+
+%%%
+%%% DEBUG!
+%%%
+\usepackage{debug} % debugging code
+%\usepackage[outline]{draftcopy}
+\usepackage{rcs}
+
+
+%%%
+%%% NOTAZIONI MATEMATICHE
+%%%
+
+%%
+%% Theorems, Lemmas, and the like...
+%%
+\usepackage{amsthm}
+
+\newtheorem{theorem}{Theorem}[chapter]
+\newtheorem*{theorem*}{Theorem}
+\newtheorem{thmsec}{Theorem}[section]
+\newtheorem{lemma}{Lemma}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{claim}{Claim}[chapter]
+\newtheorem{conjecture}{Conjecture}[chapter]
+\newtheorem{corollary}[theorem]{Corollary}
+
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}[section]
+\newtheorem*{ack}{Acknowledgments}
+\newtheorem*{notations}{Notations}
+
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{example}{Example}[chapter]
+
+\numberwithin{equation}{section} % numerazione delle equazioni
+
+%%
+%% Notazioni matematiche di *questo* articolo
+%%
+\usepackage{miscmath} % simboli vari
+
+\renewcommand\k\fk
+\renewcommand\d\ud
+
+\newcommand{\A}{\category{A}}     % generic category A
+\newcommand{\B}{\category{B}}     % generic category B
+\newcommand{\rev}{\sptext{rev}}
+\newcommand{\catN}{\category{N}}        % generic category N
+\newcommand{\Oo}[1][]{\operad{O}_{#1}}  % generic operad O
+\newcommand{\RTD}[1][]{\operad{D}_{#1}} % operad of RT diagrams
+\newcommand{\RTE}[1][]{\operad{D}'_{#1}}% operad of embedded RT graphs
+\newcommand{\RTG}[1][]{\operad{G}_{#1}} % operad of RT graphs
+\newcommand{\RG}[1][]{\operad{R}_{#1}}  % operad of cyclic (Ribbon) graphs
+\newcommand{\SG}[1][]{\operad{S}_{#1}}  % operad of symmetric graphs
+\newcommand{\freemc}[1]{#1^{\otimes}}   % free monoidal category 
+\newcommand{\freemsc}[1]{#1^{\Box}}     % free monoidal signed category 
+\newcommand{\tpc}[1]{\langle #1 \rangle}% tensor powers category
+\newcommand{\btpc}[1]{\langle#1\rangle^+}% (bosonic) tensor powers category
+\newcommand{\ftpc}[1]{\langle#1\rangle^-}% (fermiionic) tensor powers ctg.
+
+\newcommand{\Strebel}[1][]{\mathcal{S}_{#1}}
+\newcommand{\Conf}{\text{\rm Conf}}
+\newcommand{\T}{\mathcal{T}}
+\newcommand{\Lb}{\mathcal{L}}
+\newcommand{\Hn}{\mathcal{H}}
+
+% decomposizione cellulare dei grafi a nastro
+\newcommand{\Vertices}[1]{#1^{(0)}}
+\newcommand{\Edges}[1]{#1^{(1)}}
+\newcommand{\Holes}[1]{#1^{(2)}}
+
+% medie sui grafi
+\newcommand{\vv}[1]{V(#1)}
+\newcommand{\biggint}[2][]{%
+\Biggl\langle\Biggl\langle#2\Biggr\rangle\Biggr\rangle_{#1}}
+\newcommand{\gint}[2][]{%
+  \left\langle\!\left\langle#2\right\rangle\!\right\rangle_{#1}}
+\newcommand{\ginttriv}[2][]{%
+  \left\langle\!\left\langle#2\right\rangle\!\right\rangle_{#1}\triv}
+
+
+%%
+%% `xy' --- grafica
+%%
+\usepackage[ps,dvips,xdvi,colour,all,arc,knot,poly]{xy}
+\everyxy={/r24pt/:} % scala per i diagrammi
+\def\xyc#1\endxyc{\xy*!LC\xybox{#1}\endxy}
+
+\usepackage{rg} % vertici e buche di grafi a nastro
+
+%%
+%% `paralist' -- Miglior supporto per le liste
+%%
+\usepackage[newitem,newenum]{paralist}
+\defaultenum{\slshape 1)}{\slshape a)}{\slshape i)}{A.}
+%\defaultitem{$\triangleright$}{}{}{}
+
+%%
+%% `mdwlist' -- \suspend / \resume list environments
+%%
+\usepackage{mdwlist}
+
+%%
+%% `mdwtab' -- better support for tables
+%%
+\usepackage{mdwtab}
+
+%%
+%% `url' -- Inserimento di URL
+%%
+\usepackage{url}
+
+%%
+%% `hyperref' -- Collegamenti ipertestuali
+%%
+\usepackage{hyperref}
+
+%%
+%% `nomencl' -- Indice delle notazioni
+%%
+\usepackage[refpage]{nomencl} % indice dei simboli
+\let\nx=\nomenclature
+\makeglossary % per l'indice dei simboli
+
+%%
+%% `csref' -- genera automaticamente il nome di un riferimento.
+%%
+\usepackage{csref}
+
+%%
+%% `graphicx' -- inclusione di grafica esterna
+%%
+\usepackage[final]{graphicx}
+
+
+%%%
+%%% Cominciamo...
+%%%
+%\includeonly{fd,kontsevich}
+\begin{document}
+
+\include{title}
+\include{prelim}
+\include{gc}
+\include{fd}
+\include{kontsevich}
+
+\appendix
+\include{arrows}
+\include{btc}
+\include{rt}
+
+%% 
+%% Indice dei simboli
+%%
+\printglossary
+
+
+%%
+%% Bibliografia
+%%
+\bibliography{math}
+\bibliographystyle{halpha}
+
+
+\end{document}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: t
+%%% x-symbol-mode: nil
+%%% End: 

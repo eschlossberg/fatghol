@@ -1,0 +1,202 @@
+%%
+%% Estensioni matematiche AMS
+%%
+\usepackage{amsmath}
+\usepackage{amssymb} % simboli vari
+\usepackage{amsxtra} % varie ed eventuali
+
+%%
+%% Font matematici
+%%
+\usepackage{amsfonts} % \mathcal, \mathbb, \mathfrak
+\usepackage{mathrsfs} % \mathscr
+\usepackage{eucal}    % \mathcal
+
+
+%%
+%% Tipi di oggetti
+%%
+\newcommand{\category}[1]{\mathsf{#1}} % categorie
+\newcommand{\operad}[1]{\mathscr{#1}}  % operad
+\newcommand{\field}[1]{\mathbb{#1}}    % campi numerici
+\newcommand{\sheaf}[1]{\mathcal{#1}}   % fasci
+\newcommand{\lie}[1]{\mathfrak{#1}}    % algebre di Lie
+
+%%
+%% Insiemi notevoli
+%%
+\newcommand{\setC}{\mathbb{C}}
+\newcommand{\setN}{\mathbb{N}}
+\newcommand{\setQ}{\mathbb{Q}}
+\newcommand{\setZ}{\mathbb{Z}}
+\newcommand{\setR}{\mathbb{R}}
+
+%%
+%% Campi numerici
+%%
+\newcommand{\fk}{\Bbbk}\let\k=\fk
+
+
+%%
+%% Algebra lineare
+%%
+\newcommand{\lspan}[1]{\left\langle#1\right\rangle} % span lineare
+\newcommand{\cplx}[1]{#1^{}_\setC} % complessificato
+
+\newcommand{\inner}[3][]{( #2|#3 )_{#1}}   % prodotto scalare
+\newcommand{\ip}[3][]{( #2|#3 )_{#1}}   % prodotto scalare
+\newcommand{\ipsq}[3][]{[ #2|#3 ]_{#1}}   % prodotto scalare
+\newcommand{\ipang}[3][]{\langle #2|#3 \rangle_{#1}}   % prodotto scalare
+
+\newcommand{\pairing}[3][]{\langle #2,#3 \rangle_{#1}} % accoppiamento di dualit{\`a}
+
+\newcommand{\rdl}[1]{{#1}\spcheck}   % duale a dx
+\newcommand{\ldl}[1]{{}\spcheck{#1}} % duale a sn
+
+
+%%
+%% Operatori differenziali
+%%
+\newcommand{\del}{\partial}
+\newcommand{\delbar}{\bar\partial}
+\newcommand{\ud}{\mathrm{d}}
+
+
+%%
+%% Omologia, coomologia, etc.
+%%
+\newcommand{\Htop}{H^{\textrm{top}}}
+
+
+%%
+%% Esponenti
+%%
+\newcommand{\tp}[1]{\sp{\otimes #1}} % tensor power
+\newcommand{\xp}[1]{\sp{\land #1}}   % exterior power
+
+\newcommand{\sptext}[1]{\sp{\text{#1}}}
+\newcommand{\sbtext}[1]{\sb{\text{#1}}}
+
+
+%%
+%% Gruppi
+%%
+\newcommand{\Perm}[1]{\mathfrak{S}_{#1}} % gruppo simmetrico
+\newcommand{\Stab}{\textrm{Stab}}
+
+
+%%
+%% Simboli vari
+%%
+\DeclareMathOperator{\Hom}{Hom} % Hom-set
+\DeclareMathOperator{\End}{End} % Endomorphisms
+\DeclareMathOperator{\Iso}{Iso} % Isomorphisms
+\DeclareMathOperator{\Aut}{Aut} % Automorphisms
+
+\DeclareMathOperator{\Dom}{Dom} % Domain of a map
+\DeclareMathOperator{\Codom}{Codom} % codomain of map
+\DeclareMathOperator{\dom}{dom} % Domain of a map
+\DeclareMathOperator{\codom}{codom} % codomain of map
+
+\DeclareMathOperator{\diag}{diag} %diagonal
+
+\DeclareMathOperator{\id}{id}
+\DeclareMathOperator{\Id}{Id}
+
+\DeclareMathOperator{\tr}{tr}
+\DeclareMathOperator{\Tr}{Tr}
+
+\newcommand{\Diff}{\textrm{Diff}}   % Diffeomorfismi
+\newcommand{\Def}{\textrm{Def}}     % Deformazioni
+\DeclareMathOperator{\Coeff}{Coeff} % coefficiente di Laurent
+
+\DeclareMathOperator{\ev}{ev}       % evaluation map in a rigid category
+\DeclareMathOperator{\coev}{coev}   % coevaluation map
+
+\newcommand{\isoarrow}{\stackrel{\sim}{\to}}       % isomorphism arrow
+\newcommand{\opp}{\sptext{opp}}
+
+\DeclareMathOperator{\Src}{Src}
+\DeclareMathOperator{\Tgt}{Tgt}
+\DeclareMathOperator{\In}{In}
+\DeclareMathOperator{\Out}{Out}
+\DeclareMathOperator{\Leg}{Leg}
+
+\DeclareMathOperator{\sgn}{sgn}
+\DeclareMathOperator{\sign}{sign}
+
+
+%%
+%% Frazioni notevoli
+%%
+\newcommand{\onehalf}{\frac{1}{2}}
+\newcommand{\onethird}{\frac{1}{3}}
+\newcommand{\oneof}[1]{\frac{1}{#1}}
+
+\newcommand{\half}[1]{\frac{#1}{2}}
+\newcommand{\third}[1]{\frac{#1}{3}}
+
+\newcommand{\twothirds}{\frac{2}{3}}
+
+
+%%
+%% Costanti
+%%
+\newcommand{\I}{\mathrm{i}}   % unit{\`a} immaginaria
+\newcommand{\U}{\sqrt{-1}}    % radice di -1
+
+\newcommand{\E}{\mathrm{e}}   % numero di Nepero
+
+\newcommand{\inv}{\sp{-1}}
+
+
+%%
+%% Costruzioni
+%%
+\newcommand{\abs}[1]{\lvert#1\rvert}
+\newcommand{\norm}[1]{\lVert#1\rVert}
+\newcommand{\card}[1]{\lvert#1\rvert}
+
+\newcommand{\correlator}[1]{\langle #1 \rangle} % correlatore di Schwinger
+\newcommand{\avg}[2][V]{\langle #2 \rangle_{#1}^{}} % media
+
+
+%%
+%% Simboli vari
+%%
+\let\geq=\geqslant % come dice Campanato, il segno di '>' sottolineato {\'e}
+\let\leq=\leqslant % stato introdotto solo perch{\`e} i tipografi non
+                   % disponevano del *vero* segno di maggiore-o-uguale...
+
+\newcommand{\oo}{\infty}
+
+
+%%
+%% Categorie
+%%
+\newcommand{\catSet}{\category{Set}}            % category of Sets
+\newcommand{\catVect}[1][]{\category{Vect}_{#1}}% Vector spaces over a field
+\newcommand{\catMod}{\category{Mod}}            % Modules over a ring
+\newcommand{\catBraid}{\category{Braid}}        % category of braids
+
+\newcommand{\EndOp}[1][]{\operad{E}_{#1}} % Endomorphism Operad
+
+
+%%
+%% Spazi notevoli
+%%
+\newcommand{\M}{\mathcal{M}}               % spazio dei moduli di curve lisce
+\newcommand{\Mbar}{\overline{\M}}     % compattificazione
+\newcommand{\Mcomb}{\M\sptext{comb}}       % triangolazione di Mumford-Harer
+\newcommand{\Mbarcomb}{\Mbar\sptext{comb}}
+
+\newcommand{\Hermitian}[1][\relax]
+  {{\mathcal H}\ifx#1\relax\else(#1)\fi}   % spazio delle matrici hermitiane
+
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "index.tex"
+%%% x-symbol-8bits: nil
+%%% End: 
