@@ -192,7 +192,7 @@ class _Count(Iterator):
 Count=persist.PersistedIterator(_Count)
 
 
-class Graph(object):
+class Fatgraph(object):
     """A fully-decorated ribbon graph.
 
     Exports a (read-only) sequence interface, through which vertices
@@ -219,25 +219,25 @@ class Graph(object):
 
     def __init__(self, vertices, vertextype=Vertex,
                  __fasteq_cache={}, __id_factory=Count(), **kwargs):
-        """Construct a `Graph` instance, taking list of vertices.
+        """Construct a `Fatgraph` instance, taking list of vertices.
 
         Argument `vertices` must be a sequence of `Vertex` class
         instances::  
 
-          >>> G1 = Graph([Vertex([2,0,1]), Vertex([2,1,0])])
+          >>> G1 = Fatgraph([Vertex([2,0,1]), Vertex([2,1,0])])
 
         Note that the list of vertices is assigned, *not copied* into
         the instance variable.
 
         """
         assert debug.is_sequence_of_type(Vertex, vertices), \
-               "Graph.__init__: parameter `vertices` must be" \
+               "Fatgraph.__init__: parameter `vertices` must be" \
                " sequence of `Vertex` instances."
 
         #: class-wide cache for `__eq__` results
         self._fasteq_cache = __fasteq_cache
 
-        #: unique numeric id of this `Graph` object; id's of deleted
+        #: unique numeric id of this `Fatgraph` object; id's of deleted
         #: object should *not* be re-used
         self._id = __id_factory.next()
         self._id_factory = __id_factory
@@ -286,7 +286,7 @@ class Graph(object):
                 for (edge_index_in_vertex, edge) \
                         in enumerate(self.vertices[current_vertex_index]):
                     assert edge in range(self.num_edges), \
-                               "Graph.__init__:"\
+                               "Fatgraph.__init__:"\
                                " edge number %d not in range 0..%d" \
                                % (edge, self.num_edges)
                     self.endpoints_v[edge].append(current_vertex_index)
@@ -304,10 +304,10 @@ class Graph(object):
 
     def _ok(self):
         """Perform coherency checks on internal state variables of
-        `Graph` instance and return `True` if they all pass.
+        `Fatgraph` instance and return `True` if they all pass.
         """
         assert self.num_edges > 0, \
-               "Graph `%s` has 0 edges." % (self)
+               "Fatgraph `%s` has 0 edges." % (self)
         # check regular edges endpoints
         for (edge, ep_v, ep_i) in izip(count(),
                                        self.endpoints_v[:self.num_edges],
@@ -322,11 +322,11 @@ class Graph(object):
             assert (0 <= ep_v[1] < self.num_vertices)
             assert (0 <= ep_i[0] < len(self.vertices[ep_v[0]]))
             assert (0 <= ep_i[1] < len(self.vertices[ep_v[1]])), \
-                   "Graph `%s`:"\
+                   "Fatgraph `%s`:"\
                    " invalid attachment indices `%s`" \
                    " for endpoints %s of regular edge %d"\
                    % (self, ep_i, ep_v, edge)
-##                    "Graph `%s` has invalid regular endpoints array `%s/%s`" \
+##                    "Fatgraph `%s` has invalid regular endpoints array `%s/%s`" \
 ##                    " invalid endpoints pair %s/%s for edge %d" \
 ##                    % (self, self.endpoints_v, self.endpoints_i,
 ##                       ep_v, ep_i, edge)
@@ -345,7 +345,7 @@ class Graph(object):
             assert isinstance(ep_i[0], int)
             assert (0 <= ep_v[0] < self.num_vertices)
             assert (0 <= ep_i[0] < len(self.vertices[ep_v[0]]))
-##                    "Graph `%s` has invalid external endpoints array: `%s/%s`" \
+##                    "Fatgraph `%s` has invalid external endpoints array: `%s/%s`" \
 ##                    % (self, self.endpoints_v, self.endpoints_i)
             assert (xedge in self.vertices[ep_v[0]]), \
                    "Invalid endpoints %s for external edge %d of graph `%s`" \
@@ -370,74 +370,74 @@ class Graph(object):
         return True
 
     def __eq__(self, other):
-        """Return `True` if Graphs `self` and `other` are isomorphic.
+        """Return `True` if Fatgraphs `self` and `other` are isomorphic.
 
         Examples::
 
-          >>> Graph([Vertex([1,0,0,1])]) == Graph([Vertex([1,1,0,0])])
+          >>> Fatgraph([Vertex([1,0,0,1])]) == Fatgraph([Vertex([1,1,0,0])])
           True
 
-          >>> Graph([Vertex([2,0,0]), Vertex([2,1,1])]) \
-                == Graph([Vertex([2,2,0]), Vertex([1,1,0])])
+          >>> Fatgraph([Vertex([2,0,0]), Vertex([2,1,1])]) \
+                == Fatgraph([Vertex([2,2,0]), Vertex([1,1,0])])
           True
 
-          >>> Graph([Vertex([2,0,1]), Vertex([2,0,1])]) \
-                == Graph([Vertex([2,1,0]), Vertex([2,0,1])])
+          >>> Fatgraph([Vertex([2,0,1]), Vertex([2,0,1])]) \
+                == Fatgraph([Vertex([2,1,0]), Vertex([2,0,1])])
           False
 
-          >>> Graph([Vertex([2,0,1]), Vertex([2,0,1])]) \
-                == Graph([Vertex([2,0,0]), Vertex([2,1,1])])
+          >>> Fatgraph([Vertex([2,0,1]), Vertex([2,0,1])]) \
+                == Fatgraph([Vertex([2,0,0]), Vertex([2,1,1])])
           False
 
-          >>> Graph([Vertex([2,0,0]), Vertex([2,1,1])]) \
-                == Graph([Vertex([1,1,0,0])])
+          >>> Fatgraph([Vertex([2,0,0]), Vertex([2,1,1])]) \
+                == Fatgraph([Vertex([1,1,0,0])])
           False
 
-        Graph instances equipped with a numbering are compared as
+        Fatgraph instances equipped with a numbering are compared as
         numbered graphs (that is, the isomorphism should transform the
         numbering on the source graph onto the numbering of the
         destination)::
 
-          >>> Graph([Vertex([2,0,1]), Vertex([2,1,0])], \
+          >>> Fatgraph([Vertex([2,0,1]), Vertex([2,1,0])], \
                      numbering=[(0, CyclicTuple((0,1))), \
                                 (1, CyclicTuple((0,2))), \
                                 (2, CyclicTuple((2,1))) ] ) \
-              == Graph([Vertex([2,0,1]), Vertex([2,1,0])], \
+              == Fatgraph([Vertex([2,0,1]), Vertex([2,1,0])], \
                         numbering=[(0, CyclicTuple((1,0))), \
                                    (2, CyclicTuple((0,2))), \
                                    (1, CyclicTuple((2,1))) ])
           True
 
-          >>> Graph([Vertex([1, 0, 0, 2, 2, 1])], \
+          >>> Fatgraph([Vertex([1, 0, 0, 2, 2, 1])], \
                      numbering=[(0, CyclicTuple((2,))), \
                                 (1, CyclicTuple((0,2,1))), \
                                 (3, CyclicTuple((0,))), \
                                 (2, CyclicTuple((1,))) ]) \
-                == Graph([Vertex([2, 2, 1, 1, 0, 0])], \
+                == Fatgraph([Vertex([2, 2, 1, 1, 0, 0])], \
                           numbering=[(0, CyclicTuple((2,))), \
                                      (1, CyclicTuple((0,))), \
                                      (3, CyclicTuple((2,1,0))), \
                                      (2, CyclicTuple((1,))) ])
           False
         
-          >>> Graph([Vertex([1, 0, 0, 2, 2, 1])], \
+          >>> Fatgraph([Vertex([1, 0, 0, 2, 2, 1])], \
                      numbering=[(0, CyclicTuple((2,))), \
                                 (1, CyclicTuple((0,2,1))), \
                                 (3, CyclicTuple((0,))), \
                                 (2, CyclicTuple((1,))) ]) \
-                == Graph([Vertex([2, 2, 1, 1, 0, 0])], \
+                == Fatgraph([Vertex([2, 2, 1, 1, 0, 0])], \
                           numbering=[(3, CyclicTuple((2,))), \
                                      (0, CyclicTuple((0,))), \
                                      (2, CyclicTuple((2,1,0))), \
                                      (1, CyclicTuple((1,))) ])
           False
 
-          >>> Graph([Vertex([3, 2, 2, 0, 1]), Vertex([3, 1, 0])], \
+          >>> Fatgraph([Vertex([3, 2, 2, 0, 1]), Vertex([3, 1, 0])], \
                     numbering=[(0, CyclicTuple((2,))),  \
                                (1, CyclicTuple((0, 1))),  \
                                (2, CyclicTuple((3, 1))),  \
                                (3, CyclicTuple((0, 3, 2))) ]) \
-              == Graph([Vertex([2, 3, 1]), Vertex([2, 1, 3, 0, 0])], \
+              == Fatgraph([Vertex([2, 3, 1]), Vertex([2, 1, 3, 0, 0])], \
                        numbering=[(0, CyclicTuple((0,))), \
                                   (2, CyclicTuple((1, 3))), \
                                   (3, CyclicTuple((3, 0, 2))), \
@@ -446,19 +446,19 @@ class Graph(object):
 
         Examples::
 
-          >>> Graph.__eq__(Graph([Vertex([0, 1, 2, 0, 2, 1])],
+          >>> Fatgraph.__eq__(Fatgraph([Vertex([0, 1, 2, 0, 2, 1])],
           ...                    numbering={CyclicTuple((0,)): 1,
           ...                               CyclicTuple((1, 2, 0, 1, 2)): 0}),
-          ...              Graph([Vertex([0, 1, 2, 0, 2, 1])],
+          ...              Fatgraph([Vertex([0, 1, 2, 0, 2, 1])],
           ...                    numbering={CyclicTuple((0,)): 0,
           ...                               CyclicTuple((1, 2, 0, 1, 2)): 1}))
           False
 
 
         """
-        assert isinstance(other, Graph), \
-               "Graph.__eq__:" \
-               " called with non-Graph argument `other`: %s" % other
+        assert isinstance(other, Fatgraph), \
+               "Fatgraph.__eq__:" \
+               " called with non-Fatgraph argument `other`: %s" % other
         # try cached result first
         args = frozenset([self._id, other._id])
         if args not in self._fasteq_cache:
@@ -513,7 +513,7 @@ class Graph(object):
                      if ((getattr(self, x) is not None)
                          and (not isinstance(getattr(self, x), int)
                               or (getattr(self, x) > 0))))
-        return "Graph(%s%s)" % (repr(self.vertices),
+        return "Fatgraph(%s%s)" % (repr(self.vertices),
                                   "".join((", %s=%s" % (k,v) for k,v
                                              in extra.iteritems())))
     
@@ -521,35 +521,35 @@ class Graph(object):
         return repr(self)
 
     def automorphisms(self):
-        """Enumerate automorphisms of this `Graph` object.
+        """Enumerate automorphisms of this `Fatgraph` object.
 
-        See `.isomorphisms()` for details of how a `Graph`
+        See `.isomorphisms()` for details of how a `Fatgraph`
         isomorphism is represented.
         """
         return self.isomorphisms(self)
 
     @memoize
     def boundary_components(self):
-        """Return the number of boundary components of this `Graph` object.
+        """Return the number of boundary components of this `Fatgraph` object.
 
         Each boundary component is represented by the list of (colored)
         edges::
 
-          >>> Graph([Vertex([2,1,0]),Vertex([2,0,1])]).boundary_components()
+          >>> Fatgraph([Vertex([2,1,0]),Vertex([2,0,1])]).boundary_components()
           [CyclicTuple((2, 0)), CyclicTuple((1, 2)), CyclicTuple((0, 1))]
 
         If both sides of an edge belong to the same boundary
         component, that edge appears twice in the list::
 
-          >>> Graph([Vertex([2,1,1]),Vertex([2,0,0])]).boundary_components()
+          >>> Fatgraph([Vertex([2,1,1]),Vertex([2,0,0])]).boundary_components()
           [CyclicTuple((2, 0, 2, 1)), CyclicTuple((1,)), CyclicTuple((0,))]
           
-          >>> Graph([Vertex([2,1,0]),Vertex([2,1,0])]).boundary_components()
+          >>> Fatgraph([Vertex([2,1,0]),Vertex([2,1,0])]).boundary_components()
           [CyclicTuple((2, 1, 0, 2, 1, 0))]
           
         """
         assert self.num_external_edges == 0, \
-               "Graph.boundary_components: "\
+               "Fatgraph.boundary_components: "\
                " cannot compute boundary components for" \
                " a graph with nonzero external edges: %s" % self
         
@@ -635,7 +635,7 @@ class Graph(object):
                     cnt[edge] += 1
             for x in xrange(len(cnt)):
                 assert cnt[x] == 2, \
-                       "Graph.boundary_components:"\
+                       "Fatgraph.boundary_components:"\
                        " edge %d occurs %d times "\
                        " in boundary components `%s`"\
                        " of graph `%s`"\
@@ -646,7 +646,7 @@ class Graph(object):
         
 
     def clone(self):
-        """Return a new `Graph` instance, sharing all attribute values
+        """Return a new `Fatgraph` instance, sharing all attribute values
         with this one, except for the following ones:
 
           `_id`
@@ -656,7 +656,7 @@ class Graph(object):
             shared among all instances
 
         """
-        return Graph(self.vertices,
+        return Fatgraph(self.vertices,
                      endpoints = (self.endpoints_v, self.endpoints_i),
                      num_edges = self.num_edges,
                      num_vertices = self.num_vertices,
@@ -675,36 +675,36 @@ class Graph(object):
         
 
     def contract(self, edgeno):
-        """Return new `Graph` obtained by contracting the specified edge.
+        """Return new `Fatgraph` obtained by contracting the specified edge.
 
         Examples::
 
-          >>> Graph([Vertex([2,2,0]), Vertex([0,1,1])]).contract(0)
-          Graph([Vertex([1, 1, 0, 0])])
-          >>> Graph([Vertex([2,1,0]), Vertex([2,0,1])]).contract(1)
-          Graph([Vertex([0, 1, 1, 0])])
+          >>> Fatgraph([Vertex([2,2,0]), Vertex([0,1,1])]).contract(0)
+          Fatgraph([Vertex([1, 1, 0, 0])])
+          >>> Fatgraph([Vertex([2,1,0]), Vertex([2,0,1])]).contract(1)
+          Fatgraph([Vertex([0, 1, 1, 0])])
 
         The M_{1,1} trivalent graph yield the same result no matter
         what edge is contracted::
 
-          >>> Graph([Vertex([2,1,0]), Vertex([2,1,0])]).contract(0)
-          Graph([Vertex([1, 0, 1, 0])])
-          >>> Graph([Vertex([2,1,0]), Vertex([2,1,0])]).contract(1)
-          Graph([Vertex([0, 1, 0, 1])])
-          >>> Graph([Vertex([2,1,0]), Vertex([2,1,0])]).contract(2)
-          Graph([Vertex([1, 0, 1, 0])])
+          >>> Fatgraph([Vertex([2,1,0]), Vertex([2,1,0])]).contract(0)
+          Fatgraph([Vertex([1, 0, 1, 0])])
+          >>> Fatgraph([Vertex([2,1,0]), Vertex([2,1,0])]).contract(1)
+          Fatgraph([Vertex([0, 1, 0, 1])])
+          >>> Fatgraph([Vertex([2,1,0]), Vertex([2,1,0])]).contract(2)
+          Fatgraph([Vertex([1, 0, 1, 0])])
 
         If boundary components have already been computed, they are
         adapted and set in the contracted graph too::
 
-          >>> g1 = Graph([Vertex([2,1,1]), Vertex([2,0,0])])
+          >>> g1 = Fatgraph([Vertex([2,1,1]), Vertex([2,0,0])])
           >>> g1.boundary_components() # compute b.c.'s
           [CyclicTuple((2, 0, 2, 1)), CyclicTuple((1,)), CyclicTuple((0,))]
           >>> g2 = g1.contract(2)
           >>> g2.boundary_components()
           [CyclicTuple((0, 1)), CyclicTuple((1,)), CyclicTuple((0,))]
 
-          >>> g1 = Graph([Vertex([2,1,0]), Vertex([2,0,1])])
+          >>> g1 = Fatgraph([Vertex([2,1,0]), Vertex([2,0,1])])
           >>> g1.boundary_components() # compute b.c.'s
           [CyclicTuple((2, 0)), CyclicTuple((1, 2)), CyclicTuple((0, 1))]
           >>> g2 = g1.contract(2)
@@ -717,12 +717,12 @@ class Graph(object):
         """
         # check that we are not contracting a loop or an external edge
         assert self.endpoints_v[edgeno][0] != self.endpoints_v[edgeno][1], \
-               "Graph.contract: cannot contract a loop."
+               "Fatgraph.contract: cannot contract a loop."
         assert (self.endpoints_v[edgeno][0] is not None) \
                and (self.endpoints_v[edgeno][1] is not None), \
-               "Graph.contract: cannot contract an external edge."
+               "Fatgraph.contract: cannot contract an external edge."
         assert (edgeno >= 0) and (edgeno < self.num_edges), \
-               "Graph.contract: invalid edge number (%d):"\
+               "Fatgraph.contract: invalid edge number (%d):"\
                " must be in range 0..%d" \
                % (edgeno, self.num_edges)
 
@@ -734,7 +734,7 @@ class Graph(object):
         # orientation goes from `v1` to `v2`
         #
         # FIXME: this piece of code must be kept in sync with
-        # `Graph._cmp_orient`.
+        # `Fatgraph._cmp_orient`.
         (v1, v2) = self.endpoints_v[edgeno]
         (pos1, pos2) = self.endpoints_i[edgeno]
         if v1 > v2:
@@ -849,7 +849,7 @@ class Graph(object):
             assert len(new_edge_numbering) == self.num_edges - 1
             for x in xrange(self.num_edges - 1):
                 assert 0 <= new_edge_numbering[x] < self.num_edges - 1
-            g = Graph(new_vertices,
+            g = Fatgraph(new_vertices,
                  vertextype = self._vertextype,
                  endpoints = (new_endpoints_v, new_endpoints_i),
                  num_edges = self.num_edges - 1,
@@ -861,7 +861,7 @@ class Graph(object):
                        == set(g.boundary_components())
 
         # build new graph 
-        return Graph(new_vertices,
+        return Fatgraph(new_vertices,
                      vertextype = self._vertextype,
                      endpoints = (new_endpoints_v, new_endpoints_i),
                      num_edges = self.num_edges - 1,
@@ -873,7 +873,7 @@ class Graph(object):
 
     @memoize
     def genus(self):
-        """Return the genus g of this `Graph` object."""
+        """Return the genus g of this `Fatgraph` object."""
         n = self.num_boundary_components()
         K = self.num_vertices
         L = self.num_edges
@@ -882,12 +882,12 @@ class Graph(object):
 
 
     def graft(self, G, v):
-        """Return new `Graph` formed by grafting graph `G` into vertex
+        """Return new `Fatgraph` formed by grafting graph `G` into vertex
         with index `v`.  The number of"external" edges in `G` must match the
         valence of `v`.
         """
         assert G.num_external_edges == len(self.vertices[v]), \
-               "Graph.graft:" \
+               "Fatgraph.graft:" \
                " attempt to graft %d-legged graph `%s`"\
                " into %d-valent vertex `%s`" \
                % (G.num_external_edges, G,
@@ -917,13 +917,13 @@ class Graph(object):
                         + [ vertextype(itranslate(renumber_g_edges, gv))
                             for gv in G.vertices ])
 
-        return Graph(new_vertices, vertextype=vertextype,
+        return Fatgraph(new_vertices, vertextype=vertextype,
                      num_edges = self.num_edges + G.num_edges,
                      num_external_edges = self.num_external_edges)
 
 
     def is_canonical(self):
-        """Return `True` if this `Graph` object is canonical.
+        """Return `True` if this `Fatgraph` object is canonical.
 
         A graph is canonical iff:
         1) Each vertex is represented by the maximal sequence, among all
@@ -931,13 +931,13 @@ class Graph(object):
         2) Vertices are sorted in lexicographic order.
 
         Examples::
-          >>> Graph([Vertex([2,1,0]), Vertex([2,1,0])]).is_canonical()
+          >>> Fatgraph([Vertex([2,1,0]), Vertex([2,1,0])]).is_canonical()
           True             
-          >>> Graph([Vertex([2,1,0]), Vertex([2,0,1])]).is_canonical()
+          >>> Fatgraph([Vertex([2,1,0]), Vertex([2,0,1])]).is_canonical()
           True             
-          >>> Graph([Vertex([2,0,1]), Vertex([2,1,0])]).is_canonical()
+          >>> Fatgraph([Vertex([2,0,1]), Vertex([2,1,0])]).is_canonical()
           False
-          >>> Graph([Vertex([0,1,2]), Vertex([2,1,0])]).is_canonical()
+          >>> Fatgraph([Vertex([0,1,2]), Vertex([2,1,0])]).is_canonical()
           False 
         """
         previous_vertex = None
@@ -962,9 +962,9 @@ class Graph(object):
           http://brpreiss.com/books/opus4/html/page561.html#SECTION0017341000000000000000
           
         Examples::
-          >>> Graph([Vertex([3, 3, 0, 0]), Vertex([2, 2, 1, 1])]).is_connected()
+          >>> Fatgraph([Vertex([3, 3, 0, 0]), Vertex([2, 2, 1, 1])]).is_connected()
           False
-          >>> Graph([Vertex([3, 1, 2, 0]), Vertex([3, 0, 2, 1])]).is_connected()
+          >>> Fatgraph([Vertex([3, 1, 2, 0]), Vertex([3, 0, 2, 1])]).is_connected()
           True
         """
         endpoints_v = self.endpoints_v
@@ -997,12 +997,12 @@ class Graph(object):
 
     def is_orientation_reversing(self, automorphism):
         """Return `True` if `automorphism` reverses orientation of
-        this `Graph` instance."""
-        return (-1 == Graph._cmp_orient(self, self, automorphism))
+        this `Fatgraph` instance."""
+        return (-1 == Fatgraph._cmp_orient(self, self, automorphism))
 
 
     def is_oriented(self):
-        """Return `True` if `Graph` is orientable.
+        """Return `True` if `Fatgraph` is orientable.
 
         A ribbon graph is orientable iff it has no
         orientation-reversing automorphism.
@@ -1012,26 +1012,26 @@ class Graph(object):
 
         Examples::
 
-          >>> Graph([Vertex([1,0,1,0])]).is_oriented()
+          >>> Fatgraph([Vertex([1,0,1,0])]).is_oriented()
           True
 
-          >>> Graph([Vertex([2, 0, 1]), Vertex([2, 0, 1])]).is_oriented()
+          >>> Fatgraph([Vertex([2, 0, 1]), Vertex([2, 0, 1])]).is_oriented()
           True
           
-          >>> Graph([Vertex([2, 1, 0]), Vertex([2, 0, 1])]).is_oriented()
+          >>> Fatgraph([Vertex([2, 1, 0]), Vertex([2, 0, 1])]).is_oriented()
           True
           
-          >>> Graph([Vertex([2, 1, 1]), Vertex([2, 0, 0])]).is_oriented()
+          >>> Fatgraph([Vertex([2, 1, 1]), Vertex([2, 0, 0])]).is_oriented()
           True
 
-          >>> Graph([Vertex([3, 2, 2, 0, 1]), Vertex([3, 1, 0])], \
+          >>> Fatgraph([Vertex([3, 2, 2, 0, 1]), Vertex([3, 1, 0])], \
                     numbering=[(0, CyclicTuple((2,))),  \
                                (1, CyclicTuple((0, 1))),  \
                                (2, CyclicTuple((3, 1))),  \
                                (3, CyclicTuple((0, 3, 2))) ]) \
                                .is_oriented()
           True
-          >>> Graph([Vertex([2, 3, 1]), Vertex([2, 1, 3, 0, 0])], \
+          >>> Fatgraph([Vertex([2, 3, 1]), Vertex([2, 1, 3, 0, 0])], \
                        numbering=[(0, CyclicTuple((0,))),  \
                                   (2, CyclicTuple((1, 3))),  \
                                   (3, CyclicTuple((3, 0, 2))),  \
@@ -1061,14 +1061,14 @@ class Graph(object):
         This method can iterate over the automorphism group of a
         graph::
 
-          >>> g1 = Graph([Vertex([2, 1, 1]), Vertex([2, 0, 0])])
+          >>> g1 = Fatgraph([Vertex([2, 1, 1]), Vertex([2, 0, 0])])
           >>> for f in g1.isomorphisms(g1): print f
           ({0: 0, 1: 1}, [0, 0], {0: 0, 1: 1, 2: 2})
           ({0: 1, 1: 0}, [0, 0], {0: 1, 1: 0, 2: 2})
 
         Or it can find the isomorphisms between two given graphs::
 
-          >>> g2 = Graph([Vertex([2, 2, 0]), Vertex([1, 1, 0])])
+          >>> g2 = Fatgraph([Vertex([2, 2, 0]), Vertex([1, 1, 0])])
           >>> for f in g1.isomorphisms(g2): print f
           ({0: 0, 1: 1}, [2, 2], {0: 1, 1: 2, 2: 0})
           ({0: 1, 1: 0}, [2, 2], {0: 2, 1: 1, 2: 0})
@@ -1076,7 +1076,7 @@ class Graph(object):
         If there are no isomorphisms connecting the two graphs, then no
         item is returned by the iterator::
 
-          >>> g3 = Graph([Vertex([2, 1, 0]), Vertex([2, 0, 1])])
+          >>> g3 = Fatgraph([Vertex([2, 1, 0]), Vertex([2, 0, 1])])
           >>> list(g1.isomorphisms(g3))
           []
 
@@ -1094,12 +1094,12 @@ class Graph(object):
         vsk = vs1.keys()
 
         assert set(vsk) == set(vs2.keys()), \
-               "Graph.isomorphisms: "\
+               "Fatgraph.isomorphisms: "\
                " graphs `%s` and `%s` differ in vertex valences: `%s` vs `%s`" \
                % (self, other, vsk, vs2.keys())
         assert dict((val, len(vs1[val])) for val in vsk) \
                == dict((val, len(vs2[val])) for val in vsk), \
-               "Graph.isomorphisms: graphs `%s` and `%s`" \
+               "Fatgraph.isomorphisms: graphs `%s` and `%s`" \
                " have unequal vertex distribution by valence: `%s` vs `%s`" \
                % (self, other, vs1, vs2)
 
@@ -1181,13 +1181,13 @@ class Graph(object):
                         continue # to next `rot`
                     if self.numbering is not None:
                         assert other.numbering is not None, \
-                               "Graph.isomorphisms: " \
+                               "Fatgraph.isomorphisms: " \
                                "Numbered and un-numbered graphs mixed in arguments."
                         pe_does_not_preserve_bc = False
                         for bc1 in self.boundary_components():
                             bc2 = CyclicTuple(pe.itranslate(bc1))
                             # there are cases (see examples in the
-                            # `Graph.__eq__` docstring, in which the
+                            # `Fatgraph.__eq__` docstring, in which the
                             # above algorithm may find a valid
                             # mapping, changing from `g1` to an
                             # *alternate* representation of `g2` -
@@ -1215,7 +1215,7 @@ class Graph(object):
         The numbering attribute is set to a dictionary mapping the
         boundary cycle `bcy` to the integer `n`::
 
-          >>> g0 = Graph([Vertex([1,2,0]), Vertex([1,0,2])])
+          >>> g0 = Fatgraph([Vertex([1,2,0]), Vertex([1,0,2])])
           >>> bc = g0.boundary_components()  # three b.c.'s
           >>> g0.numbering_set(enumerate(bc))
           >>> g0.numbering_get()             \
@@ -1228,7 +1228,7 @@ class Graph(object):
         cycle, that edge cycle is mapped to a `frozenset` instance
         containing the (distinct) indices assigned to it::
         
-          >>> g1 = Graph([Vertex([1,2,0,1,2,0])])
+          >>> g1 = Fatgraph([Vertex([1,2,0,1,2,0])])
           >>> bc = g1.boundary_components()  # two b.c.'s
           >>> g1.numbering_set([(0, bc[1]), (1, bc[0])])
           >>> g1.numbering_get() \
@@ -1257,15 +1257,15 @@ class Graph(object):
     numbering = property(numbering_get, numbering_set)
     
     def num_boundary_components(self):
-        """Return the number of boundary components of this `Graph` object.
+        """Return the number of boundary components of this `Fatgraph` object.
 
         Each boundary component is represented by the list of (colored)
         edges.
 
         Examples::
-          >>> Graph([Vertex([2,1,0]), Vertex([2,1,0])]).num_boundary_components()
+          >>> Fatgraph([Vertex([2,1,0]), Vertex([2,1,0])]).num_boundary_components()
           1
-          >>> Graph([Vertex([2,1,0]), Vertex([2,0,1])]).num_boundary_components()
+          >>> Fatgraph([Vertex([2,1,0]), Vertex([2,0,1])]).num_boundary_components()
           3
         """
         return len(self.boundary_components())
@@ -1280,34 +1280,34 @@ class Graph(object):
 
         If the two graphs are not isomorphic, then the result is 0::
 
-          >>> g1 = Graph([Vertex([0,1,2]), Vertex([0,2,1])])
-          >>> g2 = Graph([Vertex([0,1,2]), Vertex([0,1,2])])
-          >>> Graph.projection(g1, g2)
+          >>> g1 = Fatgraph([Vertex([0,1,2]), Vertex([0,2,1])])
+          >>> g2 = Fatgraph([Vertex([0,1,2]), Vertex([0,1,2])])
+          >>> Fatgraph.projection(g1, g2)
           0
 
         Any graph obviously projects onto itself with coefficient `1`::
 
-          >>> Graph.projection(g1, g1)
+          >>> Fatgraph.projection(g1, g1)
           1
 
         Flipping the orientation on an edge reverses the coefficient
         sign::
 
           >>> g2 = g1.clone()
-          >>> Graph.projection(g1, g2)
+          >>> Fatgraph.projection(g1, g2)
           1
           >>> g2.edge_numbering[0], g2.edge_numbering[1] = \
               g2.edge_numbering[1], g2.edge_numbering[0]
-          >>> Graph.projection(g1, g2)
+          >>> Fatgraph.projection(g1, g2)
           -1
           
         """
-        assert isinstance(other, Graph), \
-               "Graph.__eq__:" \
-               " called with non-Graph argument `other`: %s" % other
+        assert isinstance(other, Fatgraph), \
+               "Fatgraph.__eq__:" \
+               " called with non-Fatgraph argument `other`: %s" % other
         try:
             iso = self.isomorphisms(other).next()
-            return Graph._cmp_orient(self, other, iso)
+            return Fatgraph._cmp_orient(self, other, iso)
         except StopIteration:
             # list of morphisms is empty, graphs are not equal.
             return 0
@@ -1318,13 +1318,13 @@ class Graph(object):
 
         Examples::
 
-           >>> Graph([Vertex([1,1,0,0])]).valence_spectrum()
+           >>> Fatgraph([Vertex([1,1,0,0])]).valence_spectrum()
            {4: [0]}
 
-           >>> Graph([Vertex([1,1,0]), Vertex([2,2,0])]).valence_spectrum()
+           >>> Fatgraph([Vertex([1,1,0]), Vertex([2,2,0])]).valence_spectrum()
            {3: [0, 1]}
 
-           >>> Graph([Vertex([3, 1, 0, 1]), \
+           >>> Fatgraph([Vertex([3, 1, 0, 1]), \
                       Vertex([4, 4, 0]), Vertex([3, 2, 2])]).valence_spectrum()
            {3: [1, 2], 4: [0]}
         """
@@ -1337,13 +1337,13 @@ class Graph(object):
                 result[l] = [index]
         # consistency checks
         assert set(result.keys()) == set(self._vertex_valences), \
-               "Graph.valence_spectrum:" \
+               "Fatgraph.valence_spectrum:" \
                "Computed valence spectrum `%s` does not exhaust all " \
                " vertex valences %s" \
                % (result, self._vertex_valences)
         assert set(concat(result.values())) \
                == set(range(self.num_vertices)), \
-               "Graph.valence_spectrum:" \
+               "Fatgraph.valence_spectrum:" \
                "Computed valence spectrum `%s` does not exhaust all " \
                " %d vertex indices" % (result, self.num_vertices)
         return result
@@ -1355,17 +1355,17 @@ def MakeNumberedGraphs(graph):
 
     Examples::
 
-      >>> g1 = Graph([Vertex([2,0,0]), Vertex([2,1,1])])
+      >>> g1 = Fatgraph([Vertex([2,0,0]), Vertex([2,1,1])])
       >>> for g in MakeNumberedGraphs(g1): print g
-      Graph([Vertex([2, 0, 0]), Vertex([2, 1, 1])],    
+      Fatgraph([Vertex([2, 0, 0]), Vertex([2, 1, 1])],    
             numbering={CyclicTuple((2, 1, 2, 0)): 0,   
                        CyclicTuple((0,)): 2,           
                        CyclicTuple((1,)): 1})
-      Graph([Vertex([2, 0, 0]), Vertex([2, 1, 1])],    
+      Fatgraph([Vertex([2, 0, 0]), Vertex([2, 1, 1])],    
             numbering={CyclicTuple((2, 1, 2, 0)): 1,   
                        CyclicTuple((0,)): 0,           
                        CyclicTuple((1,)): 2})        
-      Graph([Vertex([2, 0, 0]), Vertex([2, 1, 1])],    
+      Fatgraph([Vertex([2, 0, 0]), Vertex([2, 1, 1])],    
              numbering={CyclicTuple((2, 1, 2, 0)): 2,  
                         CyclicTuple((0,)): 0,          
                         CyclicTuple((1,)): 1})
@@ -1375,9 +1375,9 @@ def MakeNumberedGraphs(graph):
     the trivial one (it is actually the first permutation of 0..n
     returned by `InplacePermutationIterator`)::
       
-      >>> g2 = Graph([Vertex([2,1,0]), Vertex([2,0,1])])
+      >>> g2 = Fatgraph([Vertex([2,1,0]), Vertex([2,0,1])])
       >>> MakeNumberedGraphs(g2)
-      [Graph([Vertex([2, 1, 0]), Vertex([2, 0, 1])], 
+      [Fatgraph([Vertex([2, 1, 0]), Vertex([2, 0, 1])], 
               numbering={CyclicTuple((0, 1)): 1,     
                          CyclicTuple((1, 2)): 2,     
                          CyclicTuple((2, 0)): 0})]
@@ -1385,9 +1385,9 @@ def MakeNumberedGraphs(graph):
     When the graph has only one boundary component, there is only one
     possible numbering, which is actually returned::
     
-      >>> g3 = Graph([Vertex([1,0,1,0])])
+      >>> g3 = Fatgraph([Vertex([1,0,1,0])])
       >>> MakeNumberedGraphs(g3)
-      [Graph([Vertex([1, 0, 1, 0])], 
+      [Fatgraph([Vertex([1, 0, 1, 0])], 
               numbering={CyclicTuple((1, 0, 1, 0)): 0})]
       
     """
@@ -1415,37 +1415,37 @@ class _ConnectedGraphsIterator(BufferingIterator):
     Examples::
 
       >>> for g in ConnectedGraphsIterator([4]): print g
-      Graph([Vertex([1, 0, 1, 0])],                       
+      Fatgraph([Vertex([1, 0, 1, 0])],                       
              numbering={CyclicTuple((1, 0, 1, 0)): 0})
-      Graph([Vertex([1, 1, 0, 0])],                       
+      Fatgraph([Vertex([1, 1, 0, 0])],                       
             numbering={CyclicTuple((0,)): 1,              
                        CyclicTuple((1, 0)): 0,
                        CyclicTuple((1,)): 2})    
-      Graph([Vertex([1, 1, 0, 0])],                       
+      Fatgraph([Vertex([1, 1, 0, 0])],                       
             numbering={CyclicTuple((0,)): 2,              
                        CyclicTuple((1, 0)): 1,            
                        CyclicTuple((1,)): 0})
-      Graph([Vertex([1, 1, 0, 0])],                       
+      Fatgraph([Vertex([1, 1, 0, 0])],                       
             numbering={CyclicTuple((0,)): 1,              
                        CyclicTuple((1, 0)): 2,            
                        CyclicTuple((1,)): 0})
 
       >>> for g in ConnectedGraphsIterator([3,3]): print g
-      Graph([Vertex([2, 0, 1]), Vertex([2, 0, 1])],          
+      Fatgraph([Vertex([2, 0, 1]), Vertex([2, 0, 1])],          
             numbering={CyclicTuple((2, 0, 1, 2, 0, 1)): 0}) 
-      Graph([Vertex([2, 1, 0]), Vertex([2, 0, 1])],          
+      Fatgraph([Vertex([2, 1, 0]), Vertex([2, 0, 1])],          
             numbering={CyclicTuple((0, 1)): 1,               
                        CyclicTuple((1, 2)): 2,
                        CyclicTuple((2, 0)): 0})  
-      Graph([Vertex([2, 1, 1]), Vertex([2, 0, 0])],          
+      Fatgraph([Vertex([2, 1, 1]), Vertex([2, 0, 0])],          
             numbering={CyclicTuple((2, 0, 2, 1)): 0,         
                        CyclicTuple((0,)): 1,                 
                        CyclicTuple((1,)): 2})              
-      Graph([Vertex([2, 1, 1]), Vertex([2, 0, 0])],          
+      Fatgraph([Vertex([2, 1, 1]), Vertex([2, 0, 0])],          
             numbering={CyclicTuple((2, 0, 2, 1)): 1,         
                        CyclicTuple((0,)): 2,                 
                        CyclicTuple((1,)): 0})               
-      Graph([Vertex([2, 1, 1]), Vertex([2, 0, 0])],          
+      Fatgraph([Vertex([2, 1, 1]), Vertex([2, 0, 0])],          
             numbering={CyclicTuple((2, 0, 2, 1)): 2,         
                        CyclicTuple((0,)): 1,                 
                        CyclicTuple((1,)): 0})
@@ -1458,7 +1458,7 @@ class _ConnectedGraphsIterator(BufferingIterator):
 
       2) Pick such a list `L` and break it into smaller pieces of
          length `v_1`, ..., `v_n`, each one corresponding to a vertex
-         (this is actually done in the `Graph` class constructor),
+         (this is actually done in the `Fatgraph` class constructor),
          effectively building a graph `G`.
 
       3) Test the graph `G` for connectedness: if it's not connected,
@@ -1501,13 +1501,13 @@ class _GivenValenceGraphsIterator(object):
     Examples::
 
       >>> for g in GivenValenceGraphsIterator([4]): print g
-      Graph([Vertex([1, 0, 1, 0])])
-      Graph([Vertex([1, 1, 0, 0])])
+      Fatgraph([Vertex([1, 0, 1, 0])])
+      Fatgraph([Vertex([1, 1, 0, 0])])
 
       >>> for g in GivenValenceGraphsIterator([3,3]): print g
-      Graph([Vertex([2, 0, 1]), Vertex([2, 0, 1])])
-      Graph([Vertex([2, 1, 0]), Vertex([2, 0, 1])])
-      Graph([Vertex([2, 1, 1]), Vertex([2, 0, 0])])
+      Fatgraph([Vertex([2, 0, 1]), Vertex([2, 0, 1])])
+      Fatgraph([Vertex([2, 1, 0]), Vertex([2, 0, 1])])
+      Fatgraph([Vertex([2, 1, 1]), Vertex([2, 0, 0])])
 
     Generation of all graphs with prescribed vertex valences `(v_1,
     v_2, ..., v_n)` proceeds this way:
@@ -1517,7 +1517,7 @@ class _GivenValenceGraphsIterator(object):
 
       2) Pick such a list `L` and break it into smaller pieces of
          length `v_1`, ..., `v_n`, each one corresponding to a vertex
-         (this is actually done in the `Graph` class constructor),
+         (this is actually done in the `Fatgraph` class constructor),
          effectively building a graph `G`.
 
       3) Test the graph `G` for connectedness: if it's not connected,
@@ -1571,7 +1571,7 @@ class _GivenValenceGraphsIterator(object):
                 vertices.append(self.vertextype(edge_seq[base:base+VLEN]))
                 base += VLEN
 
-            current = Graph(vertices,
+            current = Fatgraph(vertices,
                             vertextype=self.vertextype,)
             if not (current.is_canonical() and current.is_connected()):
                 continue
@@ -1632,7 +1632,7 @@ def AlgorithmB(n):
         r[j] = y
 
 
-def Tree(nodeseq=[], vertextype=Vertex):
+def Tree(nodeseq=[], vertextype=VertexCache()):
     """Construct a tree fatgraph from sequence of internal nodes.
 
     Items in `nodeseq` are sequences `(c[0], c[1], ..., c[n])` where
@@ -1653,7 +1653,7 @@ def Tree(nodeseq=[], vertextype=Vertex):
     `num_edges` attribute.
 
       >>> Tree([(1, 2), (None, None), (3, None), (None, None)])
-      Graph([Vertex([-1, 0, 1]), Vertex([0, -2, -3]),
+      Fatgraph([Vertex([-1, 0, 1]), Vertex([0, -2, -3]),
              Vertex([1, 2, -4]), Vertex([2, -5, -6])],
              num_external_edges=6)
 
@@ -1698,7 +1698,7 @@ def Tree(nodeseq=[], vertextype=Vertex):
         vertices.append(vertextype(edges))
         next_vertex_index += 1
 
-    return Graph(vertices,
+    return Fatgraph(vertices,
                  endpoints = (internal_edge_endpoints_v +
                                 list(reversed(external_edge_endpoints_v)),
                               internal_edge_endpoints_i +
@@ -1741,39 +1741,39 @@ class _MgnGraphsIterator(BufferingIterator):
     Examples::
 
       >>> for g in MgnGraphsIterator(0,3): print g
-      Graph([Vertex([1, 2, 1]), Vertex([2, 0, 0])],    
+      Fatgraph([Vertex([1, 2, 1]), Vertex([2, 0, 0])],    
             numbering={CyclicTuple((2, 0, 2, 1)): 2,   
                        CyclicTuple((0,)): 1,   
                        CyclicTuple((1,)): 0})
-      Graph([Vertex([1, 2, 1]), Vertex([2, 0, 0])],    
+      Fatgraph([Vertex([1, 2, 1]), Vertex([2, 0, 0])],    
             numbering={CyclicTuple((2, 0, 2, 1)): 0,   
                        CyclicTuple((0,)): 2,
                        CyclicTuple((1,)): 1})
-      Graph([Vertex([1, 2, 1]), Vertex([2, 0, 0])],    
+      Fatgraph([Vertex([1, 2, 1]), Vertex([2, 0, 0])],    
             numbering={CyclicTuple((2, 0, 2, 1)): 1, 
                        CyclicTuple((0,)): 0,   
                        CyclicTuple((1,)): 2}) 
-      Graph([Vertex([1, 0, 2]), Vertex([2, 0, 1])],    
+      Fatgraph([Vertex([1, 0, 2]), Vertex([2, 0, 1])],    
             numbering={CyclicTuple((2, 0)): 1,         
                        CyclicTuple((0, 1)): 2,         
                        CyclicTuple((1, 2)): 0})
-      Graph([Vertex([1, 1, 0, 0])],                    
+      Fatgraph([Vertex([1, 1, 0, 0])],                    
             numbering={CyclicTuple((0,)): 1,         
                        CyclicTuple((0, 1)): 2,         
                        CyclicTuple((1,)): 0})      
-      Graph([Vertex([1, 1, 0, 0])],                    
+      Fatgraph([Vertex([1, 1, 0, 0])],                    
             numbering={CyclicTuple((0,)): 2,         
                        CyclicTuple((0, 1)): 0,         
                        CyclicTuple((1,)): 1})       
-      Graph([Vertex([1, 1, 0, 0])],                    
+      Fatgraph([Vertex([1, 1, 0, 0])],                    
             numbering={CyclicTuple((0,)): 0,         
                        CyclicTuple((0, 1)): 1,         
                        CyclicTuple((1,)): 2})
 
       >>> for g in MgnGraphsIterator(1,1): print g
-      Graph([Vertex([1, 0, 2]), Vertex([2, 1, 0])],          
+      Fatgraph([Vertex([1, 0, 2]), Vertex([2, 1, 0])],          
             numbering={CyclicTuple((1, 0, 2, 1, 0, 2)): 0})
-      Graph([Vertex([1, 0, 1, 0])],                          
+      Fatgraph([Vertex([1, 0, 1, 0])],                          
             numbering={CyclicTuple((0, 1, 0, 1)): 0})
 
     """
@@ -1845,7 +1845,8 @@ class _MgnGraphsIterator(BufferingIterator):
             # and any possible rotation
             for places in xrange(max_valence):
                 # need to make a deep copy, because `Vertex` objects are shared
-                rotated_rose = Graph([copy(rose[0])])
+                rotated_rose = Fatgraph([copy(rose[0])])
+                #rotated_rose = rose
                 rotated_rose[0].rotate(places)
                 for tree in trees:
                     graph = rotated_rose.graft(tree, 0)
@@ -1862,7 +1863,7 @@ class _MgnGraphsIterator(BufferingIterator):
         logging.info("Found %d distinct numbered trivalent graphs.",
                      len(graphs))
 
-        #: Graphs to be contracted at next `.refill()` invocation
+        #: Fatgraphs to be contracted at next `.refill()` invocation
         self._batch = trivalent
 
         #: Number of edges of graphs that will be returned by next

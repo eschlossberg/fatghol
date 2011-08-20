@@ -14,7 +14,7 @@ import logging
 
 from graph_homology import FatgraphComplex
 from rg import (
-    Graph,
+    Fatgraph,
     ConnectedGraphsIterator,
     MgnGraphsIterator,
     )
@@ -281,7 +281,7 @@ elif "graphs" == args[0]:
         for num_of_edges in xrange(1, len(graphs)):
             if options.latex and graphs.module[num_of_edges].dimension > 0:
                 outfile.write(r"""
-                \subsection*{Graphs with $%d$ edges}
+                \subsection*{Fatgraphs with $%d$ edges}
                 
                 """ % (num_of_edges+1))
             for (num, graph) in enumerate(graphs.module[num_of_edges]):

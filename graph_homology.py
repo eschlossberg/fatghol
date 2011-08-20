@@ -13,7 +13,7 @@ import logging
 ## application-local imports
 
 from homology import *
-from rg import MgnGraphsIterator, Graph, Vertex
+from rg import MgnGraphsIterator, Fatgraph, Vertex
 from valences import vertex_valences_for_given_g_and_n
 
 
