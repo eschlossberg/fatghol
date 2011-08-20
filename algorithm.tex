@@ -1729,8 +1729,8 @@ Definition~\ref{dfn:fatgraphs}) or even the same fatgraph.  Indeed,
 the procedure for associating a "Fatgraph" instance to a fatgraph (see
 Section~\ref{sec:fatgraphs}) involves labelling all edges, choosing a
 starting edge (cilium) on each vertex and enumerating all vertices in
-a certain order; with different choices, we get different "Fatgraph"
-instances representing the same fatgraph.
+a certain order; for each different choice, we get a different "Fatgraph"
+instance representing the same fatgraph.
 
 \begin{definition}
   An isomorphism of "Fatgraph" objects "G1" and "G2" is a triple 
@@ -1756,15 +1756,24 @@ into the list "G1.vertices" and any valid index "j" into
   \label{eq:fg-iso}
   \text{\protect\Verb'G2.vertices[pv[i]][j+rot[i]] == pe[G1.vertices[i][j]]'}
 \end{equation}
-Formula~\eqref{eq:fg-iso} makes the parallel between "Fatgraph" object
+The above Formula~\eqref{eq:fg-iso} makes the parallel between "Fatgraph" object
 isomorphism and fatgraph maps (in the sense of
 Definition~\ref{dfn:fatgraphs}) explicit.
+
+\begin{definition}
+  Let $v$ be a vertex of a fatgraph $G$.  A neighborhood $U$ of $v$ is
+  \emph{small} iff it is contractible and no other vertex of $G$ lies
+  in $U$.
+\end{definition}
+\emph{Note:} by a slight abuse of language, whenever ``vertex'' is
+mentioned in the following, a small neighborhood of the 0-cell (the
+vertex, proper) is really meant.
 
 \begin{lemma}
   Let $G_1$, $G_2$ be fatgraphs, represented respectively by "G1" and
   "G2". Every isomorphism of fatgraphs $f: G_1 \to G_2$ induces a
   corresponding isomorphism "f = (pv, rot, pe)" on the computer
-  re[resentations, and, conversely, every triple "(pv, rot, pe)"
+  representations, and, conversely, every triple "(pv, rot, pe)"
   representing an isomorphism between the "Fatgraph" instances can be
   lifted to a (possibly trivial) fatgraph isomorphism between $G_1$
   and $G_2$.
@@ -1774,8 +1783,8 @@ Definition~\ref{dfn:fatgraphs}) explicit.
   $f_V: V(G_1) \to V(G_2)$ and $f_E: E(G_1) \to E(G_2)$ on vertices
   and edges.  When vertices are ciliated, $f_V$ determines (and is
   completetely determined by) a permutation on the set of vertices
-  (which vertex maps to which one) and how much the image of the
-  cilium in the source vertex should be displaced with respect to the
+  (which vertex maps to which one) and the set of displacements of the image of the
+  cilium in the source vertex with respect to the
   cilium of the target vertex.  Similarly, $f_E$ determines a
   bijective mapping of edge labels, and is completely determined by
   it.  This is exactly the data collected in the triple "(pv, rots, pe)", 
@@ -1793,6 +1802,26 @@ Definition~\ref{dfn:fatgraphs}) explicit.
   $f_V$ can be glued to a global map $f: G_1 \to G_2$ if and only if
   the adjacency relation is preserved.  This is guaranteed by the
   compatibility condition~\eqref{eq:fg-iso}.
+\end{proof}
+
+The general isomorphism problem for (ordinary) graphs is NP-complete
+one\FIXME{Verificare!! E aggiungere referenza!}  However, the
+situation is much simpler for fatgraphs, because of the following
+property.
+\begin{lemma}[Rigidity Property]\label{lemma:rigidity}
+  Let $G_1$, $G_2$ be \emph{connected} fatgraphs, and $f: G_1 \to G_2$
+  an isomorphism.  For any vertex $v \in V(G_1)$, and any small
+  neighborhood $U$ of $v$, $f$ is uniquely determined (up to an
+  homotopy fixing the vertices of $G$) by its restriction to $V$.
+\end{lemma}
+In particular, an isomorphism of graphs with ciliated vertices is
+completely determined once the image $w=f(v)$ of a vertex $v$ is
+known, and the displacement (relative to the cyclic order at $w$) of
+the image of the cilium of $v$ with respect to the cilium of the image
+vertex $w$.
+\begin{proof}
+  Let $w = f(v)$; then, $W = f(U)$ is a small neighborhood of $w$.
+  It is clear that $V \setminus \{v\}$
 \end{proof}
 
 \begin{lstlisting}
