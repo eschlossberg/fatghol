@@ -1,5 +1,5 @@
-\RCSID $Id: kontsevich.tex,v 1.3 2003/09/09 16:12:30 murri Exp $
-%auto-ignore
+\RCSID $Id: kontsevich.tex,v 1.4 2006/05/12 11:00:59 rmurri Exp $
+% auto-ignore
 
 
 \chapter{Results of Kontsevich}
@@ -20,26 +20,26 @@ curves.
 
 In this form, the conjecture appeared as an infinite hierarchy of
 recursion relations among these intersection numbers; Witten himself
-proved the first cases using well-known techniques of algebraic
-geometry.  Surprisingly, Kontsevich' proof of the full conjecture took
-an entirely different route, steering towards Feynman diagrams and a
+proved the first cases using techniques of algebraic geometry.
+Surprisingly, Kontsevich' proof of the full conjecture took an
+entirely different route, steering towards Feynman diagrams and a
 combinatorial description of the moduli space; what is more, it
 provided a model for 2D quantum gravity, which had not been devised
 before!  The later paper \cite{witten;kontsevich-model} established
 that all three models of 2D quantum gravity are equivalent.
 
-This introductory chapter is an exposition of Kontsevich' Theorem
-relating the generating series of intersection numbers on the moduli
-space of stable curves with the matrix integral that now bears his
-name, as it provides a template for treating intersection theory on
-$A_\infty$-classes. I will focus on those techniques that are needed in
-the sequel and most suitable to generalization.
+This chapter is an exposition of Kontsevich' Theorem relating the
+generating series of intersection numbers on the moduli space of
+stable curves with the matrix integral that now bears his name, as it
+provides a template for treating intersection theory on $A_\infty$-classes.
+I will focus on those techniques that are needed in the sequel and
+most suitable to generalization.
 
-This is by no means a complete overview; I refer the interested reader
-to the survey papers by Looijenga \cite{looijenga;intersection-theory}
-and Dijkgraaf \cite{dijkgraaf;intersection-theory}, which are very
-readable yet complete introductions to the results obtained in this
-field.
+This is by no means a complete overview; I may only refer the
+interested reader to the survey papers by Looijenga
+\cite{looijenga;intersection-theory} and Dijkgraaf
+\cite{dijkgraaf;intersection-theory}, which are very readable yet
+complete introductions to the results obtained in this field.
 
 
 \section{Moduli Spaces of Curves}
@@ -127,10 +127,11 @@ $g$.
     group.
   \end{enumerate}
 \end{definition}
-Equivalently, this last condition can be expressed by saying that: 1)
-any rational component of the normalized curve $\tilde C$ must contain
-at least 3 special points (that is, marked points or singular points);
-2) any component of genus $1$ must contain at least 1 special point.
+Equivalently, this last condition can be expressed by saying that:
+\textsl{a)} any rational component of the normalized curve $\tilde C$
+must contain at least 3 special points (that is, marked points or
+singular points); \textsl{b)} any component of genus $1$ must contain
+at least 1 special point.
 \begin{definition}
   Let $C$ be a stable curve, with $q$ irreducible components and
   $r$ nodal points. Let $\{C_j\}_{j=1, \dots, \nu}$ be the
@@ -157,7 +158,7 @@ number of punctures be $n$.
 These $\Lb_i$'s are bundles in a orbifold sense: their first Chern
 classes are rational cohomology classes.
 \begin{definition}
-  The Witten's classes are the rational cohomology classes $\psi_i :=
+  The Miller classes are the rational cohomology classes $\psi_i :=
   c_1({\Lb}_i)$.
 \end{definition}
 
@@ -269,13 +270,13 @@ The intersection numbers of $\Mbar_{g,n}$ can be computed by choosing
 $N > 3g - 3 + n$; in the limit $N \to \infty$ we retrieve information on
 all moduli spaces. 
 
-%%Kontsevich' proof is a ingenious mix of two main ingredients:
-%%\begin{enumerate}
-%%\item a triangulation of $\M_{g,n}$, whose cells are labeled by ribbon
-%%  graphs;
-%%\item the expansion of the integral \ref{eq:K} in Feynman graphs.
-%%\end{enumerate}
-%%So, these are the topics we are going to discuss next.
+%% Kontsevich' proof is a ingenious mix of two main ingredients:
+%% \begin{enumerate}
+%% \item a triangulation of $\M_{g,n}$, whose cells are labeled by ribbon
+%%   graphs;
+%% \item the expansion of the integral \ref{eq:K} in Feynman graphs.
+%% \end{enumerate}
+%% So, these are the topics we are going to discuss next.
 
 
 \section{A combinatorial model of the moduli space of smooth curves}
@@ -362,7 +363,7 @@ Define an atlas of $S(\Gamma)$:
   for all $\alpha$ incident to $\gamma$.
 \end{itemize}
 \begin{figure}[btp]
-    %% Figura atlas.fig
+  %% Figura atlas.fig
   \centering\includegraphics[width=\textwidth]{atlas}
   \caption{The open sets building an atlas of $S(\Gamma)$: (a) the
     triangulation built from a graph $\Gamma$; (b) the neighborhood
@@ -381,7 +382,7 @@ Define charts on the open sets $V$ (see Figure~\ref{fig:charts}):
 \item for any vertex $\gamma$, pick a homeomorphism $f_\gamma: V_\gamma \to \setC$.
 \end{itemize}
 \begin{figure}[htbp]
-    %% Figura charts.fig
+  %% Figura charts.fig
   \centering\includegraphics{charts}
   \caption{Local charts on the atlas: (a) any open set $V_\alpha$
     maps to a strip in the complex plane; (b) any open set $V_\beta$
@@ -410,8 +411,7 @@ construction of the moduli space $\M_{g,n}$.
 \subsection{The Strebel construction}
 \label{sec:strebel}
 A theorem proved by K. Strebel in the 1960's provides an inverse
-route to the construction of smooth complex curves from ribbon
-graphs. 
+route: the construction of ribbon graphs from smooth complex curves.
 
 \begin{definition}
   A quadratic differential $q$ on a Riemann surface $S$ is a
@@ -419,7 +419,7 @@ graphs.
 \end{definition}
 The set of vectors in $T_zS$ on which $q$ takes real non-negative
 values form a real line in $T_zS$: therefore, they make up a foliation
-on $S$. The non compact leaves together with zeroes of $q$ form the
+on $S$. The non-compact leaves together with zeroes of $q$ form the
 ``critical locus'' of $q$.
 
 Every quadratic differential $q$ induces a metric (away from the
@@ -459,9 +459,10 @@ with a bijection $h: \Holes{\Gamma} \to \{1, \ldots, n\}$.
 
 Let $\Gamma$ be a Strebel graph of genus $g$ with $n$ holes.  A topological
 cell $\Delta_\Gamma \subseteq \M_{g,n}$ is spanned when varying the metric data
-$(\ell_\alpha)_{\alpha \in \Edges{\Gamma}}$; gluing these cells one recovers the
-whole $\M_{g,n}$. We present here a quick construction, apparently due
-to Kontsevich \cite{kontsevich;intersection-theory;1992}.
+$(\ell_\alpha)_{\alpha \in \Edges{\Gamma}}$; gluing these cells one recovers the whole
+$\M_{g,n}$. We show here a quick construction of $\M_{g,n}$,
+apparently due to Kontsevich
+\cite{kontsevich;intersection-theory;1992}.
 
 Call a set $X \subseteq \Edges{\Gamma}$ negligible whenever it is \emph{not} the
 support of a non-trivial homological cycle.  Define
@@ -471,7 +472,7 @@ support of a non-trivial homological cycle.  Define
 \end{equation*}
 It is a contravariant functor from the category of Strebel graphs to
 the category of topological spaces: if $\Gamma'$ is obtained from $\Gamma$ by
-contracting the edge $\alpha_0$, then
+contracting the edge $\alpha$, then
 \begin{equation*}
   M(\Gamma') = \{ \ell \in M(\Gamma) | \ell_\alpha = 0 \}.
 \end{equation*}
@@ -496,8 +497,8 @@ The perimeter maps $p_\beta: \Mcomb_{g,n} \to \setR_{>0}$ are well-defined;
 write $p_j$ for the perimeter of the $j$-th hole.
 
 The construction of $\Mcomb_{g,n}$ can be done with slightly changed
-rules: if we define a set $X \subseteq \Edges{\Gamma}$ to be negligible iff it
-does not contain all edges bounding a hole, then we can define a
+rules: if we define a set $X \subseteq \Edges{\Gamma}$ to be negligible iff it does
+not contain \emph{all} edges bounding a hole, then we can define a
 contrafunctor $\overline{M}(\Gamma)$ and a topological space:
 \begin{equation*}
   \label{eq:kontsevich-4}
@@ -560,9 +561,9 @@ enjoying $l_j > 0$ for all $j$. It is convenient to introduce
 ``barycentric'' coordinates $[p; s_1, \ldots, s_N]$ given by $p := \sum l_j$
 and $s_j := l_j/p$.
 
-Define $U_N := \{ (p; \Theta) | p>0, \ \Theta\subseteq S^1, \card{\Theta} = N\}$; give it
-the subspace topology of $(S^1)^N$. The group $S^1$ acts on every
-$U_N$, and there are surjections $f_\sigma$, for $\sigma \in C_N$:
+Define $U_N := \{ (p; \Theta) | p>0, \ \Theta\subseteq S^1, \card{\Theta} = N\}$; give it the
+subspace topology inherited from $(S^1)^N$. The group $S^1$ acts on
+every $U_N$, and there are surjections $f_\sigma$, for $\sigma \in C_N$:
 \begin{multline*}
   E_N := \{ (p; \theta_1, \ldots, \theta_N) | 0\leq \theta_1 < \ldots < \theta_N < 1\} \ni (p;
   \theta_1, \ldots, \theta_N) 
@@ -598,7 +599,10 @@ $S^1$-bundle on $B$.
     \end{equation*}
   \item $\alpha$  restricts to the angle form on the fibers of $\ell$.
   \item   the differential $\ud\alpha$ relates to the first Chern class of $E$
-    according to $\ud\alpha = -s^*c_1(E)$;
+    according to
+    \begin{equation*}
+      \ud\alpha = -s^*c_1(E);
+    \end{equation*}
   \item the differential $\ud\alpha$ is the pull-back on $E$ of a $1$-form $\omega$
     on $B$, defined by:
     \begin{equation*}
@@ -623,7 +627,7 @@ point $[\ell_{\alpha_1}, \ldots, \ell_{\alpha_N}] \in B_N \subseteq B$.
   isomorphism $\M_{g,n} \times \setR^n \simeq \Mcomb_{g,n}$, extends continuously to
   $\Mbar_{g,n} \times \setR^n$. The inverse image of the bundle $E \to B$ under
   $b_j$ is naturally isomorphic to the $S^1$-bundle associated with
-  dual of the complex line bundle ${\Lb}_j$. The pull-back $\omega_j$ of
+  the dual of the complex line bundle ${\Lb}_j$. The pull-back $\omega_j$ of
   the form $\omega$ (defined in \csref{thm:comb-bundle}) under $b_j$
   represents the class $c_1({\Lb}_j)$.
 \end{theorem}
@@ -662,7 +666,9 @@ conclusion.
   define local coordinates on the orbicell $M(\Gamma)$; it is easy to check
   that the restriction of $\Omega$ to the fibers of $\pi$ is non-degenerate
   and has constant coefficients in the coordinates $\ell_\alpha$. 
-  
+  \FIXME{Omettere la dimostrazione, visto che \`e nell'articolo di
+    Kontsevich?}
+
   Therefore, $\Omega^q$, with $q := 3g -3 + n = \dim \M_{g,n}$, is a
   volume form on the fibers of $\pi$.  The product $\Omega^q/q! \times
   dp_*$ is a volume form on the whole $\Mcomb_{g,n}$ and one can check
@@ -684,7 +690,7 @@ conclusion.
   \end{equation*}
   On the one hand, from formula
   \begin{equation*}
-    \int_{\pi^{-1}(p^\circ_*)} \Omega^q/q! = (1/q!) \cdot \int_{\pi^{-1}(p^\circ_*)} \bigl( p_1^2
+    \int_{\pi^{-1}(p^\circ_*)} \Omega^q/q! = (1/q!) \int_{\pi^{-1}(p^\circ_*)} \bigl( p_1^2
     c_1({\Lb}_1) + \cdots + p_n^2 c_1({\Lb}_n) \bigr)^q,
   \end{equation*}
   and \eqref{eq:kontsevich-6}, one can compute:
@@ -740,8 +746,8 @@ Identity, and substitute $\Lambda_{j_k}$ for $\lambda_k$:
     \lambda_{c(\alpha^-)}}.
 \end{multline}
 So we have expressed $F(t_*(\Lambda))$ as a sum of analytic expressions
-computed from graphs; up to our astonishment, the right-hand side
-comes out to be a Feynman diagrams expansion of a matrix integral.
+computed from graphs; the right-hand side comes out to be a Feynman
+diagrams expansion of a matrix integral.
 
 
 \section{The 't~Hooft-Kontsevich model}
@@ -754,8 +760,8 @@ equation~\eqref{eq:KMI-F} to Hermitian matrix integrals. The
 Kontsevich model embodies the ``standard matrix model'' of 't~Hooft as
 a particular case. 
 
-A cyclic algebra structure is introduced on the vector space
-$\Hermitian[N]$ of $N\times N$ Hermitian matrices; then we can apply the
+A cyclic algebra structure will be introduced on the vector space
+$\Hermitian[N]$ of $N\times N$ Hermitian matrices, so that we can apply the
 general results of \csref{cha:fd} on Feynman diagrams.
 
 Let $V$ be an $N$-dimensional Hilbert space. The space $\End(V)$
@@ -784,9 +790,10 @@ Now, define cyclic tensors
   \tr(X_1X_2\cdots X_k) \in \setC;
 \end{equation*}
 These $T_k$, together with the inner product $\inner[\Lambda]{-}{-}$, define
-a cyclic algebra structure on $\Hermitian[N \otimes \setC \simeq \End(V)$ called the
-Kontsevich model. A graphical calculus $Z$ for the Kontsevich model is
-~defined on the PROP $\RG$ of ribbon graphs.
+a cyclic algebra structure on $\Hermitian[N] \otimes \setC \cong \End(V)$, that we
+shall call the ``\'t~Hooft-kontsevich model''.  A graphical calculus
+$Z$ for the Kontsevich model is defined on the ribbon category $\RG$
+of ribbon graphs.
 
 \begin{lemma}\label{thm:KMI-Z}
   The following formula holds:
@@ -797,17 +804,20 @@ Kontsevich model. A graphical calculus $Z$ for the Kontsevich model is
       \Edges{\Gamma}} \frac{2}{\Lambda_{c(\ell^+)} + \Lambda_{c(\ell^-)}},
     \qquad c\colon\Holes{\Gamma} \to \{1, \dots, N\}
   \end{equation*}
-  where $\Lambda_1, \dots, \Lambda_N$ are the eigenvalues of $\Lambda$, $c$ runs
-  over all colorings of holes of $\Gamma$ in $N$ colors, and $\ell^+$,
-  $\ell^-$ are the two holes bounded by the edges $\ell$ (they are not
-  necessarily distinct).
+  where:
+  \begin{itemize}
+  \item $\Lambda_1, \dots, \Lambda_N$ are the eigenvalues of $\Lambda$;
+  \item $c$ runs over all colorings of holes of $\Gamma$ in $N$ colors;
+  \item $\ell^+$, $\ell^-$ are the two holes bounded by the edges $\ell$ (they
+    are not necessarily distinct).
+  \end{itemize}
 \end{lemma}
 \begin{proof}
-  To evaluate $Z(\Gamma)$ we need an explicit expression for the Casimir
-  element $\coev_{\Hermitian[N],\Lambda}(1)$ of the cyclic algebra $(
-  \Hermitian[N]_\setC, \inner[\Lambda]{-}{-}, T_1, T_2, \dots)$.  Since $\Lambda$
-  is Hermitian positive definite, there exists an orthonormal basis
-  $\{e_i\}$ of $V$ in which
+  To evaluate $Z(\Gamma)$ we need an explicit expression for the
+  Casimir element $\gamma = \coev_{\Hermitian[N],\Lambda}(1)$ of the cyclic
+  algebra $(\Hermitian[N]_\setC, \inner[\Lambda]{-}{-}, T_1, T_2,
+  \dots)$.  Since $\Lambda$ is Hermitian positive definite, there
+  exists an orthonormal basis $\{e_i\}$ of $V$ in which
   \begin{equation*}
     \Lambda=\diag(\Lambda_1,\Lambda_2\dots,\Lambda_N),
   \end{equation*}
@@ -816,14 +826,14 @@ Kontsevich model. A graphical calculus $Z$ for the Kontsevich model is
   of $\End(V)$ with the space $M_N(\setC)$ of $N \times N$ complex
   matrices. Let $\{E_{ij}\}$ be the canonical basis for $M_N(\setC)$:
   \begin{equation*}
-    (E_{ij})_{kl}=\delta_{ik}\delta_{jl}.
+    (E_{ij})_{kl}=\delta_{ik}\delta_{jl}. 
   \end{equation*}
   A basis for $\Hermitian[N]$ is given by matrices
   \begin{equation*}
     e_{ij}=\begin{cases}
       \frac{1}{\sqrt{2}} (E_{ij}+E_{ji}) &\text{if $i<j$,}\\
       E_{ii}                             &\text{if $i=j$,}\\
-      \sqrt{-\onehalf} (E_{ij}-E_{ji})   &\text{if $i>j$.}
+      \sqrt{-\onehalf} (E_{ij}-E_{ji})   &\text{if $i>j$.} 
     \end{cases}
   \end{equation*}
   It is orthonormal with respect to the inner product
@@ -836,23 +846,23 @@ Kontsevich model. A graphical calculus $Z$ for the Kontsevich model is
   basis $\{e_{ij}\}$ is
   \begin{equation*}
     g = \diag\left(\left\{ \frac{\Lambda_i + \Lambda_j}{2}
-      \right\}\right).
+      \right\}\right). 
   \end{equation*}
   So we get the following expression for the Casimir element:
   \begin{equation*}
-    \coev_{\Hermitian[N],\Lambda}(1) = \sum_{i,j}
-    \frac{2}{\Lambda_i+\Lambda_j} e_{ij} \otimes e_{ij}.
+    \gamma = \sum_{i,j} \frac{2}{\Lambda_i+\Lambda_j} e_{ij} \otimes e_{ij}. 
   \end{equation*}
   Rewrite this identity as:
   \begin{align*}
-    \coev_{\Hermitian[N],\Lambda}(1)&=\sum_{i}\frac{1}{{\Lambda_i}}e_{ii}\otimes
-    e_{ii}+\sum_{i<j}\frac{2}{{\Lambda_i+\Lambda_j}}e_{ij}\otimes
-    e_{ij}+\sum_{i>j}\frac{2}{{\Lambda_i+\Lambda_j}}e_{ij}\otimes
-    e_{ij}\\
-    &=\sum_{i}\frac{1}{{\Lambda_i}}e_{ii}\otimes
-    e_{ii}+\sum_{i<j}\frac{2}{{\Lambda_i+\Lambda_j}}(e_{ij}\otimes
-    e_{ij}+e_{ji}\otimes
-    e_{ji}),
+    \gamma &=\sum_{i}\frac{1}{{\Lambda_i}}e_{ii}\otimes
+        e_{ii}+\sum_{i<j}\frac{2}{{\Lambda_i+\Lambda_j}}e_{ij}\otimes
+        e_{ij}+\sum_{i>j}\frac{2}{{\Lambda_i+\Lambda_j}}e_{ij}\otimes
+        e_{ij} 
+        \\
+      &=\sum_{i}\frac{1}{{\Lambda_i}}e_{ii}\otimes
+        e_{ii}+\sum_{i<j}\frac{2}{{\Lambda_i+\Lambda_j}}(e_{ij}\otimes
+        e_{ij}+e_{ji}\otimes
+        e_{ji}),
   \end{align*}
   but, for $i<j$,
   \begin{align*}
@@ -863,14 +873,13 @@ Kontsevich model. A graphical calculus $Z$ for the Kontsevich model is
     &\qquad - \frac{1}{ 2}(E_{ij}\otimes E_{ij} - E_{ij}\otimes E_{ji} -
     E_{ji}\otimes
     E_{ij}+E_{ji}\otimes E_{ji})\\
-    &= E_{ij}\otimes E_{ji} + E_{ji}\otimes E_{ij}.
+    &= E_{ij}\otimes E_{ji} + E_{ji}\otimes E_{ij}. 
   \end{align*}
   So,
   \begin{multline}\label{eq:casimir}
-    \coev_{\Hermitian[N],\Lambda}(1)=
-    \sum_{i}\frac{1}{{\Lambda_i}}E_{ii}\otimes
-    E_{ii}+\sum_{i<j}\frac{2}{{\Lambda_i+\Lambda_j}}(E_{ij}\otimes E_{ji} + E_{ji}\otimes E_{ij})\\
-    = \sum_{i,j}\frac{2}{{\Lambda_i+\Lambda_j}}E_{ij}\otimes E_{ji}.
+    \gamma = \sum_{i}\frac{1}{{\Lambda_i}}E_{ii}\otimes
+        E_{ii}+\sum_{i<j}\frac{2}{{\Lambda_i+\Lambda_j}}(E_{ij}\otimes E_{ji} + E_{ji}\otimes E_{ij})\\
+      = \sum_{i,j}\frac{2}{{\Lambda_i+\Lambda_j}}E_{ij}\otimes E_{ji}.
   \end{multline}
 
   According to  standard graphical calculus rules, evaluation
@@ -883,7 +892,7 @@ Kontsevich model. A graphical calculus $Z$ for the Kontsevich model is
     \qquad
     {\xy\vloop-\endxy}
     \leftrightarrow
-    \coev_{\Hermitian[N],\Lambda}(1).
+    \gamma=\coev_{\Hermitian[N],\Lambda}(1). 
   \end{equation*}
   If we introduce the notation
   \begin{equation*}
@@ -900,31 +909,31 @@ Kontsevich model. A graphical calculus $Z$ for the Kontsevich model is
   \end{equation*}
   which turns $Z(\Gamma)$ into a sum of ribbon graphs equipped with a
   number in $\{1, \dots, N\}$ on each side of every edge, and
-  operators $T_k$ on each $k$-valent vertex.
+  operators $T_k$ on each $k$-valent vertex. 
   
-  %%  The map $T_k$ is the restriction of a map $T_k$ defined on
-  %%  $M_N(\setC)$, namely, the trace of a $k$-fold product. We have
+  %% The map $T_k$ is the restriction of a map $T_k$ defined on
+  %% $M_N(\setC)$, namely, the trace of a $k$-fold product. We have
   Since
   \begin{equation}\label{eq:vertices}
     T_k(E_{i_1j_1}\otimes E_{i_2j_2}\otimes\cdots\otimes
     E_{i_{k}j_k})=\delta_{j_1i_2}\delta_{j_2i_3}\cdots
     \delta_{j_{k-1}i_k}\delta_{j_ki_1},
   \end{equation}
-                                %  Therefore,
+  % Therefore,
   the only graphs that give non-zero contribution to the sum giving
   $Z(\Gamma)$ are the ones whose boundary components have the same index on
   all edges --- that is, we need only account for graphs equipped with
   a map $c\colon\Holes{\Gamma} \to \{1, \dots, N\}$.  An edge whose sides are
   indexed by $i,j$ brings in a factor $2/(\Lambda_i+\Lambda_j)$; combining this
   with \eqref{eq:vertices}, we can conclude the proof.
-\end{proof}
+%\end{proof}
 
 \begin{example}[The standard matrix model]
   Take $\Lambda = I$; formula \eqref{eq:KM} specializes to 
   \begin{equation*}
     Z(\Gamma) = \sum_{c} \prod_{\ell\in \Edges{\Gamma}} \frac{2}{\Lambda_{c(\ell^+)} +
       \Lambda_{c(\ell^-)}}
-    = \sum_c 1 = N^{\card{\Holes{\Gamma}}}.
+    = \sum_c 1 = N^{\card{\Holes{\Gamma}}}. 
   \end{equation*}
   Therefore, according to \csref{thm:FRT},
   \begin{equation}
@@ -932,10 +941,10 @@ Kontsevich model. A graphical calculus $Z$ for the Kontsevich model is
       \frac{\tr X^j}{j}
     \right\} \ud\mu_I(X) = 
     \sum_\Gamma \frac{N^{\card{\Holes{\Gamma}}}} {\card{\Aut
-        \Gamma}}\hbar^{-\card{\Vertices{\Gamma}}}.
+        \Gamma}}\hbar^{-\card{\Vertices{\Gamma}}}. 
   \end{equation}
   This is known as the ``standard matrix model'' in physics
-  literature.
+  literature. 
 \end{example}
 
 \begin{proof}[Proof of \csref{thm:kontsevich}]
@@ -943,14 +952,14 @@ Kontsevich model. A graphical calculus $Z$ for the Kontsevich model is
   \begin{equation*}
     \int_{\Hn} \exp (\I/6 \cdot \tr X^3) \ud\mu_\Lambda(X) \asymp \sum_m
     \frac{\I^m}{2^mm!} \correlator{(\tr
-      X^3/3)^m}.
+      X^3/3)^m}. 
   \end{equation*}
   
   By \csref{thm:feynman}, the $m$-th summand in the right-hand side
   can be expanded into a sum over (possibly non-connected) colored
   ribbon graphs with $m$ trivalent vertices. As $m$ ranges over
   non-negative integers, we get the exponential of the right-hand side
-  of \eqref{eq:KMI-F}, which completely proves \csref{thm:kontsevich}.
+  of \eqref{eq:KMI-F}, which completely proves \csref{thm:kontsevich}. 
 \end{proof}
 
 \everyxy={/r24pt/:} % riportiamo la scala per i diagrammi

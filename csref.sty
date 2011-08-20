@@ -2,11 +2,14 @@
 %%
 %% v0.3 -- 2001-11-28  Riccardo Murri
 %%
-%% $Id: csref.sty,v 1.5 2003/09/09 16:12:30 murri Exp $
+%% $Id: csref.sty,v 1.6 2006/05/12 11:00:59 rmurri Exp $
 %%
-\NeedsTeXFormat{LaTeX2e}
+\def\filename{csref}
+\def\fileversion{0.3}
+\def\filedate{2003/09/09}
+\NeedsTeXFormat{LaTeX2e}[1994/12/01]
 \ProvidesPackage{csref}
-[2001/11/28 Typeset reference basing on environment containing the label]
+[\filedate\space v\fileversion\space Typeset reference basing on environment containing the label]
 %%
 %% Preliminary declarations
 %%
@@ -35,7 +38,7 @@
 %%
 %% First, set up a list |\csr@contexts| of supported environments; the
 %% list is initially empty.
-%% The list-handling code is taken from The TeXBook, p.378
+%% The list-handling code is taken from ``The TeXBook'', p.378
 %%
 \def\csr@leftappend#1#2{%
   \csr@tempa={\@elt{#1}}%
@@ -159,5 +162,11 @@
 \newcsref@ifdefined{table}{\tablename~\csr@ref{#1}}%
 \newcsref@ifdefined{enumerate}{\csr@ref{#1}}%
 \newcsref@ifdefined{itemize}{\csr@ref{#1}}%
+\newcsref@ifdefined{equation}{\eqref{#1}}%
+\newcsref@ifdefined{gather}{\eqref{#1}}%
+\newcsref@ifdefined{align}{\eqref{#1}}%
+\newcsref@ifdefined{equation*}{\eqref{#1}}%
+\newcsref@ifdefined{gather*}{\eqref{#1}}%
+\newcsref@ifdefined{align*}{\eqref{#1}}%
 % \newcsref@ifdefined{app}{Appendix}% <-- FIXME!!
 

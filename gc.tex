@@ -1,4 +1,4 @@
-\RCSID $Id: gc.tex,v 1.3 2003/09/09 16:12:30 murri Exp $
+\RCSID $Id: gc.tex,v 1.4 2006/05/12 11:00:59 rmurri Exp $
 %auto-ignore
 
 
@@ -15,14 +15,14 @@ to Penrose's \cite{penrose;negative-dimensional-tensors}--- could be
 given firm grounds and a well-defined meaning.
 
 This line of research culminated in
-\cite{joyal-street;tensor-calculus}, where it is shown how one can
-parallely enrich the structure of a category beyond the braiding and
-add more decorations on the corresponding graphs, and
-\cite{reshetikhin-turaev;ribbon-graphs}, where the final case of
+\cite{joyal-street;tensor-calculus} ---where it is shown how one can
+parallely enrich the structure of a category and add more decorations
+on the corresponding graphs--- and
+\cite{reshetikhin-turaev;ribbon-graphs} ---where the final case of
 autonomous tortile categories is settled.
 
 I will not attempt here to give proofs of these results, but rather
-derive the needed rather simple instances of graphical calculus as a
+derive the needed instances of graphical calculus as a
 corollary to the most general results of Reshetikhin and Turaev.
 However, proper statement of these requires quite a long preamble of
 category-related material; I would therefore just skim over the
@@ -110,7 +110,7 @@ of the other (see \csref{fig:gc-graph-composition}), if $\Src(\Gamma_1) =
 $\Gamma_2$ in number, color, orientation, and framing. The tensor product
 of two graph pieces $\Gamma_1$ and $\Gamma_2$ is defined by juxtaposition, as
 in \csref{fig:gc-graph-otimes}; note that no compatibility condition
-is required in this case. We have the following
+is required in this case. We have the following:
 \begin{align}
   \label{eq:src-comp-otimes}
   \Src(\Gamma_1 \circ \Gamma_2) &= \Src(\Gamma_2), 
@@ -126,14 +126,14 @@ is required in this case. We have the following
 We give the definition of the category of graphs in the arrows-only
 form (see \csref{cha:arrows}). 
 \begin{definition}
-  The $\A$-colored diagrams category $\RTD[\A]$ is the category whose
-  morphisms are generated from $\A$-colored elementary pieces through
-  the operations of graph composition and tensor product, defined as
-  in figures~\ref{fig:gc-graph-composition}
+  The $\A$-colored \emph{diagrams} category $\RTD[\A]$ is the category
+  whose morphisms are generated from $\A$-colored elementary pieces
+  through the operations of graph composition and tensor product,
+  defined as in figures~\ref{fig:gc-graph-composition}
   and~\ref{fig:gc-graph-otimes}.
   
-  The $\A$-colored graph category $\RTE[\A]$ is the category whose set
-  of morphisms is the quotient of $\Hom\RTD[\A]$ by the
+  The $\A$-colored \emph{graph} category $\RTE[\A]$ is the category
+  whose set of morphisms is the quotient of $\Hom\RTD[\A]$ by the
   Reidmeister-Reshetikhin-Turaev relations of \csref{fig:gc-rrt}.
 \end{definition}
 %% Figura 1
@@ -152,17 +152,17 @@ form (see \csref{cha:arrows}).
 \begin{figure}[p]
   \centering\includegraphics{fig-003}
   \caption{Reidmeister-Reshetikhin-Turaev moves for
-    RT-diagrams. Note that move (RRT2) changes a trivial framing
+    RT-diagrams. Note that (RRT2) changes a trivial framing
     into a non-trivial (degree $1$) one.}
   \label{fig:gc-rrt}
 \end{figure}
 
 Let $\category{B}$ be a tensor category. A tensor functor
-$\RTD[\A]\to{\category{B}}$ is uniquely specified if we define it on
-the generators; it induces a tensor functor $\RTE[\A] \to \category{B}$
-if it is compatible with relations (RRT1)--(RRT8).  In particular,
-taking $\category{B}=\A$ we find the following (see also
-\csref{thm:rt2} in \csref{cha:rt}).
+$\RTD[\A]\to{\category{B}}$ is uniquely specified if we define it on the
+generators; it induces a tensor functor $\RTE[\A] \to \category{B}$ if
+it is compatible with relations (RRT1)--(RRT8) ---see
+\csref{fig:gc-rrt}.  In particular, taking $\category{B}=\A$ we find
+the following (see also \csref{thm:rt2} in \csref{cha:rt}).
 \begin{theorem}[Reshetikhin-Turaev,
   \cite{reshetikhin-turaev;ribbon-graphs}]
   \label{thm:gc1}
@@ -321,7 +321,7 @@ displayed equations.
 \section{Graphical calculus for ribbon graphs}
 \label{sec:gc-ribbon-graphs}
 
-We want now to define a variant of graphical calculus suitable for
+We now want to define a variant of graphical calculus suitable for
 application to ribbon graphs. Such graphs arise both in Feynman
 expansions of Hermitian matrix integrals and in orbifold
 cellularizations of moduli spaces of curves, which is one of the key
@@ -361,7 +361,7 @@ into a compact oriented surface with boundary $S(\Gamma)$.\FIXME{Tutto
 Notice that this fattening procedure actually selects some homological
 $1$-cycles in $\Gamma$, those corresponding to the boundary components
 of $S(\Gamma)$. By abuse of language, we shall call these $1$-cycles
-``boundary components'' or ``holes'', for short.
+``boundary components'', or ``holes'' for short.
 
 Denote $\Vertices{\Gamma}$, $\Edges{\Gamma}$ and $\Holes{\Gamma}$ the
 sets of vertices, edges and holes of a graph $\Gamma$.%
@@ -380,10 +380,7 @@ partitioned into disjoint totally ordered subsets $\In(v)$ and
 $\Out(v)$.  There is a natural forgetful functor $\RTG\to\RG$ which
 forgets orientations on edges and at each vertex $v$ remembers only
 the cyclic order induced by the total order on $\In(v)$ and $\Out(v)$:
-see \csref{fig:rt-to-cyclic}.
-%% Figura 10
-\begin{figure}
-  \begin{equation*}
+\begin{equation*}
     {%
       \xy*!LC\xybox{
         (0,1)*+[F]{\ };%
@@ -402,60 +399,63 @@ see \csref{fig:rt-to-cyclic}.
         ,{\ellipse<>{-}},(0.02,1.3)*{\scriptscriptstyle{\langle}}
         }\endxy
       }
-  \end{equation*}
-  \caption{The cyclic order induced at a vertex of an RT-graph.}
-  \label{fig:rt-to-cyclic}
-\end{figure}
+      %\caption{The cyclic order induced at a vertex of an RT-graph.}
+      %\label{fig:rt-to-cyclic}
+\end{equation*}
+
 \begin{lemma}
   The set of ribbon graphs $\Hom\RG$ is the quotient of the set of
   RT-graphs $\Hom\RTG$ with respect to relations generated by the
   following moves
   \begin{enumerate}[(M1)]%\setcounter{enumi}{2}
   \item \label{M3} reverse orientation on edges;
-  \item \label{M4} the first (resp. the last) edge in $\In(v)$ becomes the
-    first (resp. the last) edge in $\Out(v)$ and vice-versa
-    %% Figura 11
-    \vspace*{4ex}
-    \begin{equation*}
-      {%
-        \xy*!LC\xybox{
-          (0,1)*+[F]{\ };%
-          (-1,0)**\dir{.},(-0.5,0)**\dir{-},%
-          (0,0.5)*+{\ldots},(1,0)**\dir{-},%
-          (-1,2)**\dir{-},(-0.5,2)**\dir{-},%
-          (0,1.5)*+{\ldots},(1,2)**\dir{-},%
-          (-.45,1)*{\uparrow}
-          }\endxy\quad,\quad\xy*!LC\xybox{
-          (0,1)*+[F]{\ };%
-          (-1,0)**\dir{-},(-0.5,0)**\dir{-},%
-          (0,0.5)*+{\ldots},(1,0)**\dir{-},%
-          (-1,2)**\dir{.},(-0.5,2)**\dir{-},%
-          (0,1.5)*+{\ldots},(1,2)**\dir{-},%
-          (-.45,1)*{\downarrow}
-          }\endxy\quad,\quad
-        \xy*!LC\xybox{
-          (0,1)*+[F]{\ };%
-          (-1,0)**\dir{-},(0.5,0)**\dir{-},%
-          (0,0.5)*+{\ldots},(1,0)**\dir{.},%
-          (-1,2)**\dir{-},(0.5,2)**\dir{-},%
-          (0,1.5)*+{\ldots},(1,2)**\dir{-},%
-          (.45,1)*{\uparrow}
-          }\endxy\quad,\quad\xy*!LC\xybox{
-          (0,1)*+[F]{\ };%
-          (-1,0)**\dir{-},(0.5,0)**\dir{-},%
-          (0,0.5)*+{\ldots},(1,0)**\dir{-},%
-          (-1,2)**\dir{-},(0.5,2)**\dir{-},%
-          (0,1.5)*+{\ldots},(1,2)**\dir{.},%
-          (.45,1)*{\downarrow}
-          }\endxy
-        }
-    \end{equation*}
+  \item \label{M4} the first (resp. the last) edge in $\In(v)$ becomes
+    the first (resp. the last) edge in $\Out(v)$ and vice-versa (see
+    \csref{fig:moving-edges-in-out}).
   \end{enumerate}
 \end{lemma} 
+\begin{figure}
+  \begin{equation*}
+    {%
+      \xy*!LC\xybox{
+        (0,1)*+[F]{\ };%
+        (-1,0)**\dir{.},(-0.5,0)**\dir{-},%
+        (0,0.5)*+{\ldots},(1,0)**\dir{-},%
+        (-1,2)**\dir{-},(-0.5,2)**\dir{-},%
+        (0,1.5)*+{\ldots},(1,2)**\dir{-},%
+        \ar @/l1em/ (-.45,1.40);(-.45,0.50)
+      }\endxy\quad,\quad\xy*!LC\xybox{
+        (0,1)*+[F]{\ };%
+        (-1,0)**\dir{-},(-0.5,0)**\dir{-},%
+        (0,0.5)*+{\ldots},(1,0)**\dir{-},%
+        (-1,2)**\dir{.},(-0.5,2)**\dir{-},%
+        (0,1.5)*+{\ldots},(1,2)**\dir{-},%
+        \ar @/l1em/ (-.45,0.40);(-.45,1.50)
+      }\endxy\quad,\quad
+      \xy*!LC\xybox{
+        (0,1)*+[F]{\ };%
+        (-1,0)**\dir{-},(0.5,0)**\dir{-},%
+        (0,0.5)*+{\ldots},(1,0)**\dir{.},%
+        (-1,2)**\dir{-},(0.5,2)**\dir{-},%
+        (0,1.5)*+{\ldots},(1,2)**\dir{-},%
+        \ar @/r1em/ (.45,1.40);(.45,0.50)
+      }\endxy\quad,\quad\xy*!LC\xybox{
+        (0,1)*+[F]{\ };%
+        (-1,0)**\dir{-},(0.5,0)**\dir{-},%
+        (0,0.5)*+{\ldots},(1,0)**\dir{-},%
+        (-1,2)**\dir{-},(0.5,2)**\dir{-},%
+        (0,1.5)*+{\ldots},(1,2)**\dir{.},%
+        \ar @/r1em/ (.45,0.40);(.45,1.50)
+      }\endxy
+    }
+  \end{equation*}
+  \caption{Admissible moves of edges betweenn $\In(v)$ and $\Out(v)$.}
+  \label{fig:moving-edges-in-out}
+\end{figure}
 
 Let $V$ be a vector space over $\fk$ equipped with a symmetric inner
-product $b\colon V\tp{2} \to \fk$. Construct the category $\btpc{V,b}$ (as
-in \csref{sec:bosonic}); it is an autonomous tortile category and any
+product $b\colon V\tp{2} \to \fk$. Construct the category $\btpc{V,b}$ as
+in \csref{sec:bosonic}; it is an autonomous tortile category and
 $V\tp{p}$ is a self-dual object.
 \begin{definition}
   \label{dfn:rg-algebra}
@@ -463,8 +463,8 @@ $V\tp{p}$ is a self-dual object.
   monoidal functor $F:\RG \to \btpc{V,b}$ which is bijective on the set
   of objects.
 \end{definition}
-More generally, one can define a $\category{C}$-algebra structure, for
-an arbitrary tortile braided tensor category $\category{C}$.
+More generally, one can define $\category{C}$-algebra structures, for
+any arbitrary tortile braided tensor category $\category{C}$.
 
 By definition, in any autonomous symmetric tensor category $\A$ there
 are natural isomorphisms (see \csref{sec:duality})
@@ -551,8 +551,8 @@ target is good.
         (0,1)*{\bullet};%
         (-1,0)*+{1^{\textrm{in}}}**\dir{-},(-0.5,0)*+{2^{\textrm{in}}}**\dir{-},%
         (0,0.5)*+{\ldots},(1,0)*+{i^{\textrm{in}}}**\dir{-},%
-        (-1,2)*+{r^{\textrm{in}}}**\dir{-}%
-        ,(-0.5,2)*+{\ \ \ (r-1)^{\textrm{in}}}**\dir{-},%
+        (-1,2)*+{(r+1)^{\textrm{in}}}**\dir{-}%
+        ,(-0.5,2)*+{\ \ \ r^{\textrm{in}}}**\dir{-},%
         (0,1.5)*+{\ldots},(1,2)*+{(i+1)^{\textrm{in}}}**\dir{-},%
         }\endxy\right) 
   \end{align*}
@@ -641,8 +641,8 @@ the other: they should be regarded as generators of a tensor category
 algebra structure.
 \begin{definition}
   \label{dfn:symmetric-graph-category}
-  Denote by $\SG$ the category whose morphisms are (ordinary
-  topological) graphs: $\SG(p,q)$ is the linear span of graphs of type
+  Denote by $\SG$ the category whose morphisms are ordinary
+  topological graphs: $\SG(p,q)$ is the linear span of graphs of type
   $(p,q)$. It is the quotient of $\RG$ by the action of symmetric
   groups on half-edges stemming from any vertex.
 \end{definition}  
@@ -702,7 +702,7 @@ the operator
   \right)\colon V^{\otimes 3}\to\fk
 \end{equation*}
 A realization of the graph $\Gamma$ as an RT-diagram is obtained by
-hanging it by the vertices:
+``hanging it by the vertices'':
 \begin{equation*}
   %% Figura 14
   {\xy*!LC\xybox{

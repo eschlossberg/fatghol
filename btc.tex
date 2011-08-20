@@ -1,4 +1,4 @@
-\RCSID $Id: btc.tex,v 1.2 2003/06/23 17:38:08 murri Exp $
+\RCSID $Id: btc.tex,v 1.3 2006/05/12 11:00:59 rmurri Exp $
 %auto-ignore
 
 
@@ -226,6 +226,7 @@ isomorphisms (resp.\ identities).
 \end{theorem*}
 This theorem has two important consequences:
 \begin{inparaenum}
+\item
   we can replace any diagram of monoidal categories and monoidal
   functors by an equivalent diagram of strict categories and strict
   functors, and 
@@ -325,7 +326,7 @@ chosen braiding $\tau$.
 
 \begin{proposition}[{\cite[Prop.\ 2.1]{joyal-street;btc}}]
   In any braided monoidal category the following diagrams commute: 
-  \begin{eqnarray*}[c:c:c]
+  \begin{eqnarray*}
     \xymatrix{%
       A\otimes I
       &
@@ -358,7 +359,7 @@ chosen braiding $\tau$.
   \end{eqnarray*}
 \end{proposition}
 
-Braided categories take their name from the usual group of braids,
+Braided categories get their name from the usual group of braids,
 which provides the first example of a braided monoidal category.
 \begin{example}\label{xmp:braids}
   Let $B_n$ be Artin's group
@@ -453,7 +454,7 @@ between generators of the braid group on $3$ strings.
 
 Let $\A = (\A, \otimes, I, a, l, r)$ be a monoidal category; define a
 monoidal category $\A\rev = (\A, \boxtimes, I, a, l, r)$ by means of
-$A \boxtimes B := A\otimes B$.  When $\A$ is equipped with a braiding $\tau$,
+$A \boxtimes B := B\otimes A$.  When $\A$ is equipped with a braiding $\tau$,
 then
 \begin{equation*}
   \tau\rev_{AB}: A\boxtimes B := B\otimes A \stackrel{\tau_{BA}}\to A\otimes B =:
@@ -492,7 +493,8 @@ differential modules, and all of them will be symmetric.
   Here and in the sequel, elements of a graded object appearing as
   exponents to a number will stand for their degree, i.e., \((-1)^a =
   (-1)^{\deg a}\); therefore, \((-1)^{ab} \not= (-1)^{\deg (ab)} =
-  (-1)^{\deg a + \deg b}\).
+  (-1)^{\deg a + \deg b} = (-1)^{a+b}\).\FIXME{Ripetizione di una
+    convenzione gi\`a espressa nel primo capitolo.}
 \end{example}
 \FIXME{Non metto esempi di una categoria intrecciata ma non simmetrica
   perch{\'e} non servono nel seguito\ldots}
@@ -517,7 +519,7 @@ Let $\A$ be a monoidal category, and $A,B \in \A$.
       A
       &
       \ar "1,1";"1,3" ^{A\otimes\coev}
-      \ar "1,1";"2,2" _{A}
+      \ar "1,1";"2,2" _{\id_A}
       \ar "1,3";"2,2" ^{\ev\otimes A}
       }
     \qquad
@@ -531,7 +533,7 @@ Let $\A$ be a monoidal category, and $A,B \in \A$.
       B
       &
       \ar "1,1";"1,3" ^{\coev\otimes B}
-      \ar "1,1";"2,2" _{B}
+      \ar "1,1";"2,2" _{\id_B}
       \ar "1,3";"2,2" ^{B\otimes\ev}
       }
   \end{equation*}
@@ -619,7 +621,8 @@ monoidal categories to be autonomous.
   \end{equation*}
   Since $V$ is finite-dimensional, $\ev^\sharp$ is a linear isomorphisms,
   hence a bijection, so $V\tp{p}$ is a self-dual object and
-  $\freemc{V}$ is an autonomous category.
+  $\freemc{V}$ is an autonomous category.\FIXME{Esempio gi\`a dato in
+    uno dei primi capitoli, togliere da qui?}
 \end{example}
 
 

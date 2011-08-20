@@ -1,19 +1,18 @@
-\RCSID $Id: prelim.tex,v 1.3 2003/09/09 16:12:30 murri Exp $
+\RCSID $Id: prelim.tex,v 1.4 2006/05/12 11:00:59 rmurri Exp $
 %auto-ignore
 
 
 \chapter{Preliminaries and Notation}
 
 This chapter fixes some notations on differential graded modules
-and miscellaneous categories.\FIXME{Bof!} 
+and categories.\FIXME{Rimuovere del tutto questo paragrafo?}
 
 When $\A$ is a category, we shall use Eilenberg's $\A(A, B)$ in place
-of the more verbose $\Hom \A(A, B)$; also, the words ``morphism'',
-``map'' and ``arrow'' will be used interchangeably. By abuse of
-notation, we write $A \in \A$ to mean that ``$A$ is an object of
-$\A$''. Often, the notation $\Hom\A$ will be used for the union of all
-the $\Hom$-sets of the category $\A$, i.e., $\Hom\A := \bigcup_{A,B \in \A}
-\A(A,B)$.
+of the more verbose $\Hom \A(A, B)$.  By abuse of notation, we write
+$A \in \A$ to mean that ``$A$ is an object of $\A$''. Often, the
+notation $\Hom\A$ will be used for the union of all the $\Hom$-sets of
+the category $\A$, i.e., $\Hom\A := \bigcup_{A,B \in \A} \A(A,B)$.  The words
+``morphism'', ``map'' and ``arrow'' will be used interchangeably.
 
 The symbol $\Perm{k}$ stands for the group of permutations on $k$
 letters.
@@ -21,8 +20,8 @@ letters.
 The degree $i$ component of a graded object $M^\#$ will be denoted
 $M^i$; the grading group will always be $\setZ$. Elements of a graded
 object appearing as exponents to a number will stand for their degree,
-i.e., $(-1)^a := (-1)^{\deg a}$; therefore, $(-1)^{ab} \not=
-(-1)^{\deg (ab)} = (-1)^{\deg a + \deg b}$.
+i.e., $(-1)^a := (-1)^{\deg a}$; hence, $(-1)^{ab} \not=
+(-1)^{\deg (ab)} = (-1)^{\deg a + \deg b} = (-1)^{a+b}$.
 
 
 \section{Differential graded algebras and modules}
@@ -31,9 +30,9 @@ i.e., $(-1)^a := (-1)^{\deg a}$; therefore, $(-1)^{ab} \not=
 Let $\fk$ be a fixed field of characteristics $0$; later on, we shall
 assume $\fk = \setC$.
 \begin{definition}
-  A dg-algebra $K$ is given by the following data of a graded vector
-  space $K^\#$ over $\fk$, a $\fk$-bilinear associative product, and a
-  $\fk$-linear map $\ud: K\to K$ such that:
+  A dg-algebra $K$ consists of a graded vector space $K^\#$ over $\fk$,
+  a $\fk$-bilinear associative product, and a $\fk$-linear map $\ud:
+  K\to K$ such that:
   \begin{enumerate}
   \item $K^i \cdot K^j \subset K^{i+j}$;
   \item $ab = (-1)^{ab} ba$ (graded commutativity);
@@ -89,7 +88,7 @@ The term ``morphism'' will denote any element of $\Hom_K^*$, whereas
 \label{sec:btc+dg}
 
 Given any commutative dg-algebra $K$, the category $\catMod_K^\setZ$ of
-finitely-generated dg-K-bimodules is in a natural way braided and
+finitely-generated $K$-dg-bimodules is in a natural way braided and
 balanced with the structure maps:
 \begin{align}
   \label{eq:dgm-braiding}
@@ -113,12 +112,12 @@ module.
 The above structure maps
 \eqref{eq:dgm-braiding}--\eqref{eq:dgm-balancing} induce a balanced
 symmetric braided category structure on the subcategory $\catMod_K$ of
-degree $0$ $K$-bimodules; note that the braiding on $\catMod_K$ is the
+degree $0$ $K$-bimodules; the braiding on $\catMod_K$ restricts to the
 trivial one: $\tau_{MN}: m\otimes n \mapsto n\otimes m$.
 \begin{remark}
   In fact, Eilenberg and Kelly \cite{eilenberg-kelly;monoidal-categories}
   show that there are just two possible braidings on $\catMod_K^\setZ$:
-  the trivial one given by
+  the trivial one given by:
   \begin{equation*}
     \tau_{MN}^+ : m\otimes n \mapsto n\otimes m,
   \end{equation*}
@@ -135,30 +134,29 @@ trivial one: $\tau_{MN}: m\otimes n \mapsto n\otimes m$.
 \label{sec:signs}
 
 Recall that the symmetric monoidal category of graded modules has a
-non-trivial (yet involutive) twisting isomorphism
+non-trivial (yet involutive) braiding isomorphism
 \begin{equation*}
 \tau_{(12)} = \tau_{M_1M_2} : M_1
 \otimes M_2 \ni x_1\otimes x_2 \mapsto (-1)^{x_1x_2} x_2\otimes x_1
 \in M_2\otimes M_1,
 \end{equation*}
-for all objects $M_1$, $M_2$. For any
-$\sigma\in\Perm{n}$, there's an isomorphism $\tau_\sigma$ between
-$M_1\otimes \dots \otimes M_n$ and $M_{\sigma_1} \otimes \dots
-\otimes M_{\sigma_n}$ made up of twists $\tau_{(ij)}$; since the
-category of graded modules is \emph{symmetric}, any two such
-compositions are equal, that is, $\tau_\sigma$ depends only on
-$\sigma\in\Perm{n}$.
+for all objects $M_1$, $M_2$.  Any $\sigma\in\Perm{n}$ has a decomposition
+into a product of traspositions $(ij)$; since the category of graded
+modules is sysmmetric, we can define an isomorphism $\tau_\sigma: M_1 \otimes \cdots \otimes
+M_n \to M_{\sigma_1} \otimes \cdots \otimes M_{\sigma_n}$ as the composition of twists $\tau_{(ij)}$;
+$\tau_\sigma$ does not depend on the chosen factorization of $\sigma$ into
+traspositions.
 
-Now, suppose $M_1 = \dots = M_n = M$, a fixed object: $x_1\otimes
-\dots \otimes x_n$ and $\tau_\sigma(x_1\otimes
-\dots \otimes x_n)$ differ only by the sign; therefore we define
-$\epsilon(\sigma; x_1, \dots, x_n)$ so that the following holds:
+Now, suppose $M_1 = \dots = M_n = M$, a fixed object: $x_1\otimes \dots \otimes
+x_n$ and $\tau_\sigma(x_1\otimes \dots \otimes x_n)$ differ only by the sign; therefore we
+define the Koszul sign $\epsilon(\sigma; x_1, \dots, x_n)$ so that the following
+holds:
 \begin{equation}
   \label{eq:ksz}
   \epsilon(\sigma; x_1, \dots, x_n) x_1 \otimes \dots \otimes x_n =
   \tau_\sigma (x_1 \otimes \dots \otimes x_n), \qquad \sigma\in\Perm{n}.
 \end{equation}
-Also define $\chi(\sigma; x_1, \ldots, x_n)$ by:
+Also define the alternating Koszul sign $\chi(\sigma; x_1, \ldots, x_n)$ by:
 \begin{equation}
   \label{eq:aksz}
   \chi(\sigma; x_1, \dots, x_n) x_1 \otimes \dots \otimes x_n =
@@ -191,9 +189,9 @@ c: {\textstyle \bigotimes_i} \Hom(M_i, N_i) \otimes
 is well-defined only up to a sign. In search of a remedy, we fix an
 ordering of the factors which gives ``unsigned'' contraction, and then
 define contraction of any permutation of the factors
-$\left\{\Hom(M_i,N_i), M_i\right\}_{i\in I}$ by first applying a
-twist $\tau_\sigma$ to get the fixed ``standard'' ordering, and then the
-contraction before. Formally:
+$\left\{\Hom(M_i,N_i), M_i\right\}_{i\in I}$ by first applying a twist
+$\tau_\sigma$ to get the fixed ``standard'' ordering, and then the usual
+``unsigned'' contraction. Formally:
 \begin{enumerate}
 \item let $c: \Hom(M,N) \otimes M \ni f\otimes x \mapsto f(x) \in N$;
 \item let $c: \bigotimes_i (\Hom(M_i, N_i) \otimes M_i) \ni (f_1\otimes x_1)
@@ -221,8 +219,8 @@ $(-1)^{pq}$ when interchanging objects of degree $p$ and $q$''.
 
 The categories of ($\setZ$-graded) $\fk$-linear spaces, $\catVect[\fk]^\setZ$
 and $\catVect[\fk]$ have natural structures of symmetric braided
-autonomous tortile category: $\catVect[\fk] = \catMod_\fk$ if we
-consider $\fk$ to be a $\fk$-dg-algebra concentrated in degree $0$.
+autonomous tortile category if we consider $\fk$ to be a
+$\fk$-dg-algebra concentrated in degree $0$.
 
 However, every vector space is a free module, so, for any $V \in
 \catVect^\setZ$, pick a base $(v_i)$ and a dual base $(\rdl{v_i})$ of
@@ -253,7 +251,7 @@ $\catVect^\setZ$ is a tortile category.
     \\
     \ev_{\rdl{V}} &: \rdl{v} \otimes v \mapsto \pairing{\rdl{v}}{v},
   \end{align*}
-  and similarly for $\coev'_V = \pm \coev_{\rdl{V}}$.
+  and similarly $\coev'_V = \pm \coev_{\rdl{V}}$.
 \end{remark}
 
 The category $\catVect$ of degree $0$ vector spaces inherits a
@@ -283,42 +281,6 @@ The category $\btpc{V,b}$ can be used as a base for a graphical
 calculus description of Feynman diagrams associated to Gaussian
 integrals --- see \cite[sec.\
 2.8]{murri-fiorenza;feynman}.\FIXME{Piccolo spazio pubblicit{\`a}\ldots}
-
-
-\subsection{The category of Fermionic states}
-\label{sec:fermionic}
-\nx{\btpc{V,a}}{Category of Fermionic states}
-
-Let $V \in \catVect[\fk]^\setZ$ be equipped with a bilinear \emph{alternating}
-non-degenerate form $a: V\tp{2} \to \fk$. Let $\ftpc{V,a}$ be the full
-subcategory of $\catVect^\setZ$ which has tensor powers $V\tp{p}$ as
-objects; $\ftpc{V,a}$ inherits a balanced symmetric tensor structure
-from $\catVect$. For each $V\tp{p} \in \ftpc{V,a}$ define maps
-\begin{equation*}
-  \ev_{V\tp{p}}: V\tp{p} \otimes V\tp{p} \ni (v_1, \ldots, v_p) \otimes (v'_1, \ldots, v'_p) \mapsto
-  a(v_1, v'_1) \cdots a(v_p, v'_p) \in \fk \simeq I.
-\end{equation*}
-Since $a$ is non-degenerate and alternating, then $V$ has even
-dimension $2n$ and we can find a symplectic basis $(e_i)$  of
-$V$; set $e_i' := e_{i+n}$  and $e_{i+n}' := e_i$ for $i = 1, \ldots, n$
-so that $a(e_i, e_j')= \delta_{ij}$. Define a map
-\begin{equation*}
-  \coev_V : \fk \ni 1 \mapsto \sum_i e_i' \otimes e_i \in V \otimes V.
-\end{equation*}
-Then, for any $v = \sum v^i e_i$,
-\begin{multline*}
-  (\ev_V \otimes \id_V) \circ (\id_V \otimes \coev_V) (v) 
-  = (\ev_V \otimes \id_V) \bigl(v \otimes ( {\textstyle \sum_i} e_i' \otimes e_i) \bigr)
-  \\
-  = \sum_{ji} v^j \cdot \ev_V \otimes \id_V (e_j \otimes e_i' \otimes e_i)
-  = \sum_{ji} v^j \cdot a(e_j, e_i') e_i
-  = \sum_i v^i e_i = v  ,
-\end{multline*}
-so $V\tp{p}$ is a self-dual object; likewise any $V\tp{p} \in
-\ftpc{V,a}$ is, so $\ftpc{V,a}$ is an autonomous category.
-
-Note that, according to \csref{rem:ev-rev}, the left- and
-right-duality maps $\ev$ and $\ev'$ differ by a sign.
 
 
 
