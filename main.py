@@ -98,7 +98,7 @@ def graph_to_xypic(graph, g=None, n=None, orientable=None, name=None):
                   % (k, label[k-1]) \
                   + '%\n'
     for l in xrange(graph.num_edges):
-        (v1,v2) = graph.endpoints(l)
+        ((v1,i1), (v2, i2)) = graph.endpoints_v[l]
         if v1 != v2:
             result += r'"v%d";"v%d"**\crv{"v%dl%d"&"v%dl%d"}?(.33)*\txt{\sl %d},' \
                       % (v1+1, v2+1, v1+1, 1+graph.vertices[v1].index(l),

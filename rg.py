@@ -183,7 +183,8 @@ class Graph(object):
         '_valence_spectrum',
         '_vertextype',
         '_vertex_valences',
-        'endpoints',
+        'endpoints_v',
+        'endpoints_i',
         'numbering',
         'num_edges',
         'num_external_edges',
@@ -264,45 +265,76 @@ class Graph(object):
 
         if 'endpoints' not in kwargs:
             #: Adjacency list of this graph.  For each edge, store a pair
-            #  `(v1, v2)` where `v1` and `v2` are indices of endpoints.
-            self.endpoints = [ [] for dummy in xrange(self.num_edges) ]
+            #: `(v1, v2)` where `v1` and `v2` are (indices of)
+            #: endpoint vertices of an edge, and a corresponding pair
+            #: `(i1, i2)` where `i1` and `i2` are indices of the given
+            #: edge at vertices `v1` and `v2`.
+            #: Each pair `(v, i)` represents a flag by the endpoint
+            #: vertex and the index of the edge in the vertex.  (The
+            #: vertex index alone is not enough for representing the
+            #: edge arrow for loops.)
+            self.endpoints_v = [ [] for dummy in xrange(self.num_edges) ]
+            self.endpoints_i = [ [] for dummy in xrange(self.num_edges) ]
             for current_vertex_index in xrange(len(self.vertices)):
-                for edge in self.vertices[current_vertex_index]:
+                for (edge_index_in_vertex, edge) \
+                        in enumerate(self.vertices[current_vertex_index]):
                     assert edge in range(self.num_edges), \
-                               "Graph.__init__: edge number %d not in range 0..%d" \
+                               "Graph.__init__:"\
+                               " edge number %d not in range 0..%d" \
                                % (edge, self.num_edges)
-                    self.endpoints[edge].append(current_vertex_index)
+                    self.endpoints_v[edge].append(current_vertex_index)
+                    self.endpoints_i[edge].append(edge_index_in_vertex)
         else:
-            self.endpoints = kwargs.get('endpoints')
+            (self.endpoints_v, self.endpoints_i) = kwargs.get('endpoints')
 
         assert self._ok()
 
     def _ok(self):
-        """Perform coherency checks on `Graph` instance and return `True`
-        if they all pass.
+        """Perform coherency checks on internal state variables of
+        `Graph` instance and return `True` if they all pass.
         """
         assert self.num_edges > 0, \
                "Graph `%s` has 0 edges." % (self)
         # check regular edges endpoints
-        for (edge, ep) in enumerate(self.endpoints[:self.num_edges]):
-            assert isinstance(ep[0], int) and isinstance(ep[1], int) \
-                   and (0 <= ep[0]) and (ep[0] < self.num_vertices) \
-                   and (0 <= ep[1]) and (ep[1] < self.num_vertices), \
-                   "Graph `%s` has invalid regular endpoints array `%s`" \
-                   " invalid endpoints pair %s for edge %d" \
-                   % (self, self.endpoints, ep, edge)
-            assert (edge in self.vertices[ep[0]]) \
-                   and (edge in self.vertices[ep[1]]), \
-                   "Invalid endpoints %s for edge %d of graph `%s`" \
-                   % (ep, edge, self)
+        for (edge, ep_v, ep_i) in izip(count(),
+                                       self.endpoints_v[:self.num_edges],
+                                       self.endpoints_i[:self.num_edges]):
+            assert len(ep_v) == 2
+            assert len(ep_i) == 2
+            assert isinstance(ep_v[0], int)
+            assert isinstance(ep_v[1], int)
+            assert isinstance(ep_i[0], int)
+            assert isinstance(ep_i[1], int)
+            assert (0 <= ep_v[0] < self.num_vertices)
+            assert (0 <= ep_v[1] < self.num_vertices)
+            assert (0 <= ep_i[0] < len(self.vertices[ep_v[0]]))
+            assert (0 <= ep_i[1] < len(self.vertices[ep_v[1]])), \
+                   "Graph `%s`:"\
+                   " invalid attachment indices `%s`" \
+                   " for endpoints %s of regular edge %d"\
+                   % (self, ep_i, ep_v, edge)
+##                    "Graph `%s` has invalid regular endpoints array `%s/%s`" \
+##                    " invalid endpoints pair %s/%s for edge %d" \
+##                    % (self, self.endpoints_v, self.endpoints_i,
+##                       ep_v, ep_i, edge)
+            assert (edge in self.vertices[ep_v[0]])
+            assert (edge in self.vertices[ep_v[1]])
+##                    "Invalid endpoints %s for edge %d of graph `%s`" \
+##                    % (ep_v, edge, self)
         # check external edges endpoints
-        for (edge, ep) in enumerate(self.endpoints[self.num_edges:]):
+        for (edge, ep_v, ep_i) in izip(count(),
+                                       self.endpoints_v[self.num_edges:],
+                                       self.endpoints_i[self.num_edges:]):
             xedge = -self.num_external_edges + edge
-            assert isinstance(ep[0], int) and (ep[1] is None) \
-                   and (0 <= ep[0]) and (ep[0] < self.num_vertices), \
-                   "Graph `%s` has invalid external endpoints array: `%s`" \
-                   % (self, self.endpoints)
-            assert (xedge in self.vertices[ep[0]]), \
+            assert (ep_v[1] is None)
+            assert isinstance(ep_v[0], int)
+            assert (ep_i[1] is None)
+            assert isinstance(ep_i[0], int)
+            assert (0 <= ep_v[0] < self.num_vertices)
+            assert (0 <= ep_i[0] < len(self.vertices[ep_v[0]]))
+##                    "Graph `%s` has invalid external endpoints array: `%s/%s`" \
+##                    % (self, self.endpoints_v, self.endpoints_i)
+            assert (xedge in self.vertices[ep_v[0]]), \
                    "Invalid endpoints %s for external edge %d of graph `%s`" \
                    % (ep, xedge, self)
         # check that each edge occurs exactly two times in vertices
@@ -423,7 +455,8 @@ class Graph(object):
                 or (self._vertex_valences != other._vertex_valences)):
                 self._fasteq_cache[args] = False
             elif (self.vertices == other.vertices) \
-               and (self.endpoints == other.endpoints) \
+               and (self.endpoints_v == other.endpoints_v) \
+               and (self.endpoints_i == other.endpoints_i) \
                and (self.numbering == other.numbering):
                 self._fasteq_cache[args] = True
             else:
@@ -509,7 +542,8 @@ class Graph(object):
         if self._boundary_components is None:
             # micro-optimizations
             L = self.num_edges
-            ends = self.endpoints
+            endpoints_v = self.endpoints_v
+            endpoints_i = self.endpoints_i
 
             # pass1: build a "copy" of `graph`, replacing each edge
             # coloring with a triplet `(other, index, edge)` pointing to
@@ -519,22 +553,21 @@ class Graph(object):
             for (index_of_vertex_in_graph, vertex) in enumerate(self.vertices):
                 replacement = []
                 for (index_of_edge_in_vertex, edge) in enumerate(vertex):
-                    (v1, v2) = ends[edge]
+                    (v1, v2) = endpoints_v[edge]
+                    (i1, i2) = endpoints_i[edge]
                     if v1 != v2:
                         if v1 == index_of_vertex_in_graph:
                             other_end = v2
+                            other_index = i2
                         else:
                             other_end = v1
-                        other_index = self.vertices[other_end].index(edge)
+                            other_index = i1
                     else:
                         other_end = v1 # == v2, that is *this* vertex
-                        # presume `index_of_edge_in_vertex` is *not* the first
-                        # occurrence of edge
-                        other_index = vertex.index(edge)
-                        if other_index == index_of_edge_in_vertex:
-                            # indeed it is, take next occurrence
-                            other_index = vertex.index(edge,
-                                                       index_of_edge_in_vertex+1)
+                        if index_of_edge_in_vertex == i1:
+                            other_index = i2
+                        else:
+                            other_index = i1
                     # replace other_index with index of *next* edge
                     # (in the vertex cyclic order)
                     if other_index == len(self.vertices[other_end])-1:
@@ -613,7 +646,7 @@ class Graph(object):
 
         """
         return Graph(self.vertices,
-                     endpoints = self.endpoints,
+                     endpoints = (self.endpoints_v, self.endpoints_i),
                      num_edges = self.num_edges,
                      num_vertices = self.num_vertices,
                      numbering = self.numbering,
@@ -667,10 +700,10 @@ class Graph(object):
 
         """
         # check that we are not contracting a loop or an external edge
-        assert self.endpoints[edgeno][0] != self.endpoints[edgeno][1], \
+        assert self.endpoints_v[edgeno][0] != self.endpoints_v[edgeno][1], \
                "Graph.contract: cannot contract a loop."
-        assert (self.endpoints[edgeno][0] is not None) \
-               and (self.endpoints[edgeno][1] is not None), \
+        assert (self.endpoints_v[edgeno][0] is not None) \
+               and (self.endpoints_v[edgeno][1] is not None), \
                "Graph.contract: cannot contract an external edge."
         assert (edgeno >= 0) and (edgeno < self.num_edges), \
                "Graph.contract: invalid edge number (%d):"\
@@ -678,18 +711,19 @@ class Graph(object):
                % (edgeno, self.num_edges)
 
         # store endpoints and arrow on the edge-to-be-contracted, and
-        # possibly swap endpoints so that `i1 < i2`
-        i1 = self.endpoints[edgeno][0]
-        i2 = self.endpoints[edgeno][1]
-        if i1 > i2:
+        # possibly swap endpoints so that `v1 < v2`
+        (v1, v2) = self.endpoints_v[edgeno]
+        (pos1, pos2) = self.endpoints_i[edgeno]
+        if v1 > v2:
             arrow = -1
-            i1, i2 = i2, i1
+            v1, v2 = v2, v1
+            pos1, pos2 = pos2, pos1
         else:
             arrow = +1
 
-        # store position of the edge to be contracted at the endpoints
-        pos1 = self.vertices[i1].index(edgeno)
-        pos2 = self.vertices[i2].index(edgeno)
+        # save length of vertices to be contracted
+        l1 = len(self.vertices[v1]) - 1
+        l2 = len(self.vertices[v2]) - 1
 
         # Build new list of vertices, removing the contracted edge and
         # shifting all indices above:
@@ -713,28 +747,70 @@ class Graph(object):
         # 2. Join vertices by concatenating the list of incident
         #    edges;
         # 3. Set new `i1` vertex in place of old first endpoint:
-        new_vertices[i1] = self._vertextype(
-            new_vertices[i1][pos1+1:] + new_vertices[i1][:pos1]
+        new_vertices[v1] = self._vertextype(
+            new_vertices[v1][pos1+1:] + new_vertices[v1][:pos1]
             +
-            new_vertices[i2][pos2+1:] + new_vertices[i2][:pos2]
+            new_vertices[v2][pos2+1:] + new_vertices[v2][:pos2]
             )
         # 4. Remove second endpoint from list of new vertices:
-        del new_vertices[i2]
+        del new_vertices[v2]
 
-        # vertices with index above `i2` are now shifted down one place
+        # vertices with index above `v2` are now shifted down one place
         renumber_vertices = dict((i+1,i)
-                                 for i in xrange(i2, self.num_vertices))
-        # vertex `i2` is mapped to vertex `i1`
-        renumber_vertices[i2] = i1
-        new_endpoints = [ list(itranslate(renumber_vertices, ep))
-                          for ep in  self.endpoints ]
-        del new_endpoints[edgeno]
+                                 for i in xrange(v2, self.num_vertices))
+        # vertex `v2` is mapped to vertex `v1`
+        renumber_vertices[v2] = v1
+        new_endpoints_v = [ list(itranslate(renumber_vertices, ep))
+                          for ep in  self.endpoints_v ]
+        del new_endpoints_v[edgeno]
+
+        new_endpoints_i = [ ep_i[:] for ep_i in self.endpoints_i ]
+        del new_endpoints_i[edgeno]
+        # renumber attachment indices, according to the mating of
+        # vertices `v1` and `v2`:
+        # - on former vertex `v1`:
+        #   * indices (pos1+1)..l1 are mapped to 0..(l1-pos1-1)
+        #     in the mated vertex;
+        #   * index pos1 is deleted;
+        #   * indices 0..pos1-1 are mapped to (l1-pos1)..l1-1;
+        renumber_pos1 = { pos1:None }
+        renumber_pos1.update(dict((pos1+1+x, x)
+                             for x in xrange(l1-pos1)))
+        renumber_pos1.update(dict((x, l1-pos1+x)
+                             for x in xrange(pos1)))
+        for edge in self.vertices[v1]:
+            if edge == edgeno:
+                continue # skip contracted edge
+            if v1 == self.endpoints_v[edge][0]:
+                new_endpoints_i[renumber_edges.get(edge, edge)][0] = renumber_pos1[self.endpoints_i[edge][0]]
+            if v1 == self.endpoints_v[edge][1]:
+                new_endpoints_i[renumber_edges.get(edge, edge)][1] = renumber_pos1[self.endpoints_i[edge][1]]
+        # - on former vertex `v2`:
+        #   * indices (pos2+1)..l2 are mapped to l1..(l1+l2-pos2-1);
+        #   * index pos2 is deleted;
+        #   * indices 0..pos2-1 are mapped to (l1+l2-pos2)..l1+l2-1:
+        renumber_pos2 = { pos2:None }
+        renumber_pos2.update(dict((pos2+1+x, l1+x)
+                                  for x in xrange(l2-pos2)))
+        renumber_pos2.update(dict((x, l1+l2-pos2+x)
+                                  for x in xrange(pos2)))
+        for edge in self.vertices[v2]:
+            if edge == edgeno:
+                continue # skip contracted edge
+            if v2 == self.endpoints_v[edge][0]:
+                new_endpoints_i[renumber_edges.get(edge, edge)][0] = renumber_pos2[self.endpoints_i[edge][0]]
+            if v2 == self.endpoints_v[edge][1]:
+                new_endpoints_i[renumber_edges.get(edge, edge)][1] = renumber_pos2[self.endpoints_i[edge][1]]
+
 
         # if the contracted edge had a negative sign, then swap
         # orientation on the first edge of contracted graph, to
         # compensate
         if arrow == -1:
-            new_endpoints[0] = tuple(new_endpoints[0][1], new_endpoints[0][0])
+            new_endpoints_v[0] = [ new_endpoints_v[0][1],
+                                   new_endpoints_v[0][0] ]
+            new_endpoints_i[0] = [ new_endpoints_i[0][1],
+                                   new_endpoints_i[0][0] ]
 
         numbering = None
         bc = None
@@ -750,10 +826,11 @@ class Graph(object):
 
         # consistency check
         if __debug__:
-            assert len(new_endpoints) == self.num_edges - 1
+            assert len(new_endpoints_v) == self.num_edges - 1
+            assert len(new_endpoints_i) == len(new_endpoints_v)
             g = Graph(new_vertices,
                  vertextype = self._vertextype,
-                 endpoints = new_endpoints,
+                 endpoints = (new_endpoints_v, new_endpoints_i),
                  num_edges = self.num_edges - 1,
                  num_external_edges = self.num_external_edges,
                  )
@@ -765,7 +842,7 @@ class Graph(object):
         # build new graph 
         return Graph(new_vertices,
                      vertextype = self._vertextype,
-                     endpoints = new_endpoints,
+                     endpoints = (new_endpoints_v, new_endpoints_i),
                      num_edges = self.num_edges - 1,
                      num_external_edges = self.num_external_edges,
                      numbering = numbering,
@@ -871,7 +948,8 @@ class Graph(object):
           >>> Graph([Vertex([3, 1, 2, 0]), Vertex([3, 0, 2, 1])]).is_connected()
           True
         """
-        endpoints = self.endpoints
+        endpoints_v = self.endpoints_v
+        endpoints_i = self.endpoints_i
         visited_edges = set()
         visited_vertices = set()
         vertices_to_visit = [0]
@@ -881,10 +959,10 @@ class Graph(object):
             for l in self.vertices[vi]:
                 if l not in visited_edges:
                     # add other endpoint of this edge to the to-visit list
-                    if endpoints[l][0] == vi:
-                        other = endpoints[l][1]
+                    if endpoints_v[l][0] == vi:
+                        other = endpoints_v[l][1]
                     else:
-                        other = endpoints[l][0]
+                        other = endpoints_v[l][0]
                     if other not in visited_vertices:
                         vertices_to_visit.append(other)
                     visited_edges.add(l)
@@ -895,7 +973,7 @@ class Graph(object):
     def is_loop(self, edge):
         """Return `True` if `edge` is a loop (i.e., the two endpoint coincide).
         """
-        return self.endpoints[edge][0] == self.endpoints[edge][1]
+        return self.endpoints_v[edge][0] == self.endpoints_v[edge][1]
         
 
     def is_orientation_reversing(self, automorphism):
@@ -904,17 +982,28 @@ class Graph(object):
         pv = automorphism[0]
         pe = automorphism[2]
         result = pv.sign()
-        def arrow(endpoints):
-            if endpoints[0]>endpoints[1]:
+        def arrow(endpoints_v, endpoints_i):
+            if endpoints_v[0] > endpoints_v[1]:
                 return -1
+            elif endpoints_v[0] == endpoints_v[1]:
+                if endpoints_i[0] > endpoints_i[1]:
+                    return -1
+                else:
+                    return +1
             else:
                 return +1
-        ends = self.endpoints
-        for before_ep, after_ep in izip(ends,
-                                        [ (pv[ends[pe[x]][0]],
-                                           pv[ends[pe[x]][1]])
-                                          for x in xrange(self.num_edges)]):
-            result *= arrow(before_ep)*arrow(after_ep)
+        endpoints_v = self.endpoints_v
+        endpoints_i = self.endpoints_i
+        for before_ep_v, before_ep_i, after_ep_v, after_ep_i \
+                in izip(endpoints_v, endpoints_i,
+                        [ [pv[endpoints_v[pe[x]][0]],
+                           pv[endpoints_v[pe[x]][1]]]
+                          for x in xrange(self.num_edges)],
+                        [ [endpoints_i[pe[x]][0],
+                           endpoints_i[pe[x]][1]]
+                          for x in xrange(self.num_edges) ]):
+            result *= arrow(before_ep_v, before_ep_i) \
+                      * arrow(after_ep_v, after_ep_i)
         return (-1 == result)
 
 
@@ -1091,9 +1180,9 @@ class Graph(object):
                     #     but with the vertex numbering from `other`;
                     #   - elements of the adjacency lists are made into
                     #     `set`s for unordered comparison;
-                    if 0 != cmp([ set(other.endpoints[pe[x]])
+                    if 0 != cmp([ set(other.endpoints_v[pe[x]])
                                   for x in xrange(other.num_edges) ],
-                                [ set(pv.itranslate(self.endpoints[x]))
+                                [ set(pv.itranslate(self.endpoints_v[x]))
                                   for x in xrange(self.num_edges) ]):
                         continue # to next `rot`
                     if self.numbering is not None:
@@ -1234,8 +1323,10 @@ class Graph(object):
           >>> g2 = g1.clone()
           >>> Graph.projection(g1, g2)
           1
-          >>> g2.endpoints = [tuple(reversed(g2.endpoints[0]))] + \
-                             g1.endpoints[1:]
+          >>> g2.endpoints_v = [tuple(reversed(g2.endpoints_v[0]))] \
+                                + g1.endpoints_v[1:]
+          >>> g2.endpoints_i = [tuple(reversed(g2.endpoints_i[0]))] \
+                                + g1.endpoints_i[1:]
           >>> Graph.projection(g1, g2)
           -1
           
@@ -1255,18 +1346,28 @@ class Graph(object):
             pv = iso[0]
             pe = iso[2]
             result = pv.sign()
-            def arrow(endpoints):
-                if endpoints[0] > endpoints[1]:
+            def arrow(endpoints_v, endpoints_i):
+                if endpoints_v[0] > endpoints_v[1]:
                     return -1
+                elif endpoints_v[0] == endpoints_v[1]:
+                    if endpoints_i[0] > endpoints_i[1]:
+                        return -1
+                    else:
+                        return +1
                 else:
                     return +1
-            for other_ep, push_fwd_ep in izip(other.endpoints,
-                                              [ (pv[self.endpoints[pe[x]][0]],
-                                                 pv[self.endpoints[pe[x]][1]])
-                                                for x in xrange(self.num_edges)]):
-                if other_ep[0] == push_fwd_ep[1]:
-                    result = -result
-                    #result *= arrow(other_ep)*arrow(push_fwd_ep)
+            endpoints_v = self.endpoints_v
+            endpoints_i = self.endpoints_i
+            for before_ep_v, before_ep_i, after_ep_v, after_ep_i \
+                    in izip(other.endpoints_v, other.endpoints_i,
+                            [ [pv[endpoints_v[pe[x]][0]],
+                               pv[endpoints_v[pe[x]][1]]]
+                              for x in xrange(self.num_edges)],
+                            [ [endpoints_i[pe[x]][0],
+                               endpoints_i[pe[x]][1]]
+                              for x in xrange(self.num_edges) ]):
+                result *= arrow(before_ep_v, before_ep_i) \
+                          * arrow(after_ep_v, after_ep_i)
             return result
         except StopIteration:
             # list of morphisms is empty, graphs are not equal.
@@ -1620,34 +1721,48 @@ def Tree(nodeseq=[], vertextype=Vertex):
     edge_to_parent = {}
     next_external_edge_label = -2  # grows downwards: -2,-3,...
     next_internal_edge_label = 0   # grows upwards: 1,2,...
-    internal_edge_endpoints = []
-    external_edge_endpoints = [ (0, None) ]
+    internal_edge_endpoints_v = []
+    external_edge_endpoints_v = []
+    internal_edge_endpoints_i = []
+    external_edge_endpoints_i = []
     vertices = []
     next_vertex_index = 0
     for cs in nodeseq:
         # Edges incident to this vertex; for the root vertex, the
         # connection to the parent node is just the first external
         # edge (labeled `-1`)
-        edges = [ edge_to_parent.get(next_vertex_index, -1) ]
+        edgeno = edge_to_parent.get(next_vertex_index, -1)
+        edges = [ edgeno ]
+        if edgeno < 0:
+            # external edge (only happens on first iteration)
+            external_edge_endpoints_v.append([next_vertex_index, None])
+            external_edge_endpoints_i.append([0, None])
+        else:
+            # internal edge, add this vertex as second endpoint
+            internal_edge_endpoints_v[edgeno].append(next_vertex_index)
+            internal_edge_endpoints_i[edgeno].append(0)
         for child in cs:
             if child is None:
                 # terminal node here
                 edges.append(next_external_edge_label)
-                external_edge_endpoints.append((next_vertex_index, None))
+                external_edge_endpoints_v.append([next_vertex_index, None])
+                external_edge_endpoints_i.append([len(edges)-1, None])
                 next_external_edge_label -= 1
             else:
                 # internal node here
                 edges.append(next_internal_edge_label)
                 edge_to_parent[child] = next_internal_edge_label
-                internal_edge_endpoints.append((next_vertex_index,
-                                                child))
+                internal_edge_endpoints_v.append([next_vertex_index])
+                internal_edge_endpoints_i.append([len(edges)-1])
                 next_internal_edge_label += 1
         vertices.append(vertextype(edges))
         next_vertex_index += 1
 
     return Graph(vertices,
-                 endpoints = internal_edge_endpoints +
-                                list(reversed(external_edge_endpoints)),
+                 endpoints = (internal_edge_endpoints_v +
+                                list(reversed(external_edge_endpoints_v)),
+                              internal_edge_endpoints_i +
+                                list(reversed(external_edge_endpoints_i))),
                  num_edges = next_internal_edge_label,
                  num_external_edges = -next_external_edge_label-1,
                  vertextype=vertextype)
@@ -1831,4 +1946,5 @@ class MgnGraphsIterator(BufferingIterator):
 
 if "__main__" == __name__:
     import doctest
-    doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE)
+    doctest.testmod(name='rg',
+                    optionflags=doctest.NORMALIZE_WHITESPACE)
