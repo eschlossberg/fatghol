@@ -4,6 +4,7 @@
 """
 __docformat__ = 'reStructuredText'
 
+import types
 
 ## logging subsystem
 
