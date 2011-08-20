@@ -7,6 +7,11 @@ These were mostly ripped out of `rg.py` for readability.
 __docformat__ = 'reStructuredText' 
 
 
+import operator
+import types
+
+
+
 def deep_cmp(s1,s2):
     """Compare items in `s1` and `s2`, recursing into subsequences.
 
@@ -60,12 +65,76 @@ def enumerate_set_product(p):
                 yield js+[i]
 
 
+def is_sequence_of_type(t, seq):
+    """Return `True` if all items of sequence `s` are of type `t`.
+
+    Examples::
+      >>> is_sequence_of_type(types.IntType, [1,2,3])
+      True
+      >>> is_sequence_of_type(types.IntType, [1,2,"xxx"])
+      False
+      >>> is_sequence_of_type(types.StringType, ["xxx","yyy"])
+      True
+    """
+    def is_type_t(item):
+        return (type(item) is t)
+    return reduce(operator.and_, map(is_type_t, seq), True)
+
+
+def is_sequence_of_integers(seq):
+    """Return `True` if all items of sequence `s` are of type `IntType`.
+
+    Examples::
+      >>> is_sequence_of_integers([1,2,3])
+      True
+      >>> is_sequence_of_integers([1,2,"xxx"])
+      False
+    """
+    return is_sequence_of_type(types.IntType, seq)
+
+
 def other(pair, one):
     """Return the member of `pair` not equal to `one`."""
     if pair[0] == one:
         return pair[1]
     else:
         return pair[0]
+
+
+def partitions(N,K):
+    """Return the list of partitions of a set with `N` elements into at most `K` parts.
+    """
+    if K == 1:
+        if N >= 3:
+            return [[N]]
+        else:
+            return []
+    result = []
+    for k in range(3,N-2):
+        for p in partitions(N-k,K-1):
+            result.append([k]+p)
+    return result
+
+
+def permutations(l, n=None):
+    """Iterate over all possible permutations of `n` symbols in a row of length `l`.
+
+    If `n` is not specified, it is taken to be equal to `l`.
+
+    Examples::
+      >>> list(permutations(1,5))
+      [[1], [2], [3], [4], [5]]
+      >>> list(permutations(2))
+      [[1, 2], [2, 1]]
+    """
+    if n is None:
+        n = l
+    for s0 in range(1,n+1):
+        if 1 == l:
+            yield [s0]
+        else:
+            for s1 in permutations(l-1,n-1):
+                yield [s0] + tr_inplace(s1, [s0], [n])
 
 
 def _tr(elt, t1, t2):
@@ -77,7 +146,9 @@ def _tr(elt, t1, t2):
         return elt
 
 def tr(s, t1, t2):
-    """Change every occurrence (in sequence `s`) of an element of set `t1` with the corrisponding element of set `t2`.
+    """Return a copy of sequence `s` where each occurence of an
+    element of set `t1` has been changed with the corrisponding
+    element of set `t2`.
 
     Examples::
       >>> tr([0,1,0,0],[0],[2])
@@ -87,15 +158,32 @@ def tr(s, t1, t2):
 
 
 def itr(s, t1, t2):
-    """Change every occurrence (in iterable `s`) of an element of set `t1` with the corrisponding element of set `t2`.
+    """Return an iterator over `s` where each occurrence of an element
+    of set `t1` is changed with the corrisponding element of set `t2`.
 
     Examples::
-      >>> list(tr([0,1,0,0],[0],[2]))
+      >>> list(itr([0,1,0,0],[0],[2]))
       [2, 1, 2, 2]
     """
     for x in s:
         yield _tr(x, t1, t2)
 
+def tr_inplace(s, t1, t2):
+    """Change every occurrence of an element of set `t1` in sequence
+    `s` with the corrisponding element of set `t2`.
+
+    Return the altered `s`.
+    
+    Examples::
+      >>> x=[0,1,0,0]
+      >>> tr_inplace(x,[0],[2])
+      [2, 1, 2, 2]
+      >>> x
+      [2, 1, 2, 2]
+    """
+    for i in xrange(len(s)):
+        s[i] = _tr(s[i], t1, t2)
+    return s
 
 
 ## main: run tests
