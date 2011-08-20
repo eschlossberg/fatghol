@@ -215,6 +215,9 @@ class Graph(object):
         
         #: Order on the boundary cycles, or `None`.
         self.numbering = kwargs.get('numbering', None)
+        # XXX: should correct docstrings, and remove `isinstance()` check below
+        if self.numbering is not None and not isinstance(self.numbering, dict):
+            self.numbering_set(self.numbering)
 
         # the following values will be computed on-demand
 
@@ -435,7 +438,12 @@ class Graph(object):
         return not self.__eq__(other)
 
     def __repr__(self):
-        extra = dict((x,getattr(self, x))
+        # the hairy if-clause down here prints an attribute iff:
+        #   - it is not `None` (which may happen for both `.numbering`
+        #     and `.num_external_edges`), and
+        #   - if it is an integer, it is not 0 (which may happen
+        #     for `.num_external_edges`.
+        extra = dict((x, getattr(self, x))
                      for x in ['numbering', 'num_external_edges']
                      if ((getattr(self, x) is not None)
                          and (not isinstance(getattr(self, x), int)
@@ -686,16 +694,16 @@ class Graph(object):
 
             numbering = None
             if self.numbering is not None:
-                numbering = dict((CyclicTuple(itranslate(renumber_edges, c)), n)
-                                 for (c,n) in self.numbering.iteritems())
+                numbering = [ (n, CyclicTuple(itranslate(renumber_edges, bcy)))
+                              for (bcy, n) in self.numbering.itertiems() ]
 
             bc = None
             if self._boundary_components is not None:
                 if numbering is not None:
                     bc = list(numbering.iterkeys())
                 else:
-                    bc = list(CyclicTuple(itranslate(renumber_edges, c))
-                              for c in self._boundary_components)
+                    bc = [ CyclicTuple(itranslate(renumber_edges, bcy))
+                           for bcy in self._boundary_components ]
 
             # build new graph 
             self._contractions[edgeno] = \
@@ -719,14 +727,15 @@ class Graph(object):
                                   for i in xrange(edgeno, self.num_edges))
             renumber_edges[edgeno] = None  
             self._contractions[edgeno]._parent = (self, edgeno)
-            self._contractions[edgeno].numbering = \
-                                                 dict((CyclicTuple(itranslate(renumber_edges, c)), n)
-                                                      for (c,n) in self.numbering.iteritems())
+            self._contractions[edgeno].numbering_set(
+                (n, CyclicTuple(itranslate(renumber_edges, bcy)))
+                for (bcy, n) in self.numbering.iteritems()
+                )
             
             assert set(self._contractions[edgeno]._boundary_components) == \
                    set(self._contractions[edgeno].numbering.iterkeys()), \
                    "Graph.contract:" \
-                   " numbering keys after contraction differs"\
+                   " numbered b.c.'s after contraction differ"\
                    " from boundary components computed from"\
                    " non-numbered sibling graph"
             if __debug__:
@@ -1066,9 +1075,6 @@ class Graph(object):
                         assert other.numbering is not None, \
                                "Graph.isomorphisms_to: " \
                                "Numbered and un-numbered graphs mixed in arguments."
-                        assert len(self.numbering) == len(other.numbering), \
-                               "Graph.isomorphisms_to: " \
-                               "Arguments differ in number of boundary components."
                         pe_does_not_preserve_bc = False
                         for bc in self.boundary_components():
                             if self.numbering[bc] != \
@@ -1079,6 +1085,71 @@ class Graph(object):
                             continue # to next `pvrot`
                     rots = tuple(t[1]-t[3] for t in pvrot)
                     yield (pv, rots, pe)
+
+    def numbering_get(self):
+        """Return the numbering previously set on this instance via
+        `.set_numbering()`.
+        """
+        return self.numbering
+        
+    def numbering_set(self, tuples):
+        """Set the `.numbering` attribute from a sequence of tuples
+        `(n, bcy)`.  Each `n` is a non-negative integer, and each
+        `bcy` is an edge cycle representing a boundary component.
+
+        The numbering attribute is set to a dictionary mapping the
+        boundary cycle `bcy` to the integer `n`::
+
+          >>> g0 = Graph([Vertex([1,2,0]), Vertex([1,0,2])])
+          >>> bc = g0.boundary_components()  # three b.c.'s
+          >>> g0.numbering_set(enumerate(bc))
+          >>> g0.numbering_get()           \
+              == { CyclicTuple((0, 2)): 2, \
+                   CyclicTuple((1, 0)): 0, \
+                   CyclicTuple((2, 1)): 1  }
+          True
+
+        When two boundary components are represented by the same edge
+        cycle, that edge cycle is mapped to a `frozenset` instance
+        containing the (distinct) indices assigned to it::
+        
+          >>> g1 = Graph([Vertex([1,2,0,1,2,0])])
+          >>> bc = g1.boundary_components()  # two b.c.'s
+          >>> g1.numbering_set([(0, bc[1]), (1, bc[0])])
+          >>> g1.numbering_get() \
+              == {CyclicTuple((1, 2, 0)): frozenset([0, 1])}
+          True
+          
+        By definition of a fatgraph, *at most* two boundary components
+        may be represented by the same boundary cycle.
+
+        """
+        numbering = {}
+        for (n,bcy) in tuples:
+            if bcy in numbering:
+                # a single boundary cycle can represent at most *two*
+                # boundary components
+                numbering[bcy] = frozenset((n, numbering[bcy]))
+            else:
+                numbering[bcy] = n
+        self.numbering = numbering
+        if __debug__:
+            if self._boundary_components is not None:
+                assert set(self._boundary_components) \
+                       == set(self.numbering), \
+                       "Graph.numbering_set:"\
+                       " Not all boundary components were numbered"
+                indices = set()
+                for n in self.numbering.itervalues():
+                    if isinstance(n, frozenset):
+                        indices = set.union(indices, n)
+                    else: # `n` is integer
+                        indices.add(n)
+                assert indices == set(range(len(self._boundary_components))), \
+                       "Graph.numbering_set:"\
+                       " Numbering indices `%s` are not a permutation"\
+                       " of the range 0..%d (no. of boundary components)"\
+                       % (self.numbering.values(), len(self.numbering),)
     
     def num_boundary_components(self):
         """Return the number of boundary components of this `Graph` object.
@@ -1209,7 +1280,7 @@ def MakeNumberedGraphs(graph):
     for numbering in InplacePermutationIterator(range(n)):
         # make a copy of `graph` with the given numbering
         g = copy(graph)
-        g.numbering = dict((bc[x], numbering[x]) for x in xrange(n))
+        g.numbering_set((numbering[x], bc[x]) for x in xrange(n))
 
         # only add `g` to list if it is *not* isomorphic to a graph
         # already in the list
@@ -1418,8 +1489,8 @@ class GivenValenceGraphsIterator(object):
 
 def AlgorithmB(n):
     """Iterate over all binary trees with `n+1` internal nodes in
-    pre-order.  Equivalently, iterate over all full binary trees with
-    `n+2` leaves.
+    pre-order.  Or, equivalently, iterate over all full binary trees
+    with `n+2` leaves.
 
     Returns a pair `(l,r)` of list, where `l[j]` and `r[j]` are the
     left and right child nodes of node `j`.  A `None` in `l[j]`
@@ -1430,7 +1501,8 @@ def AlgorithmB(n):
       >>> [ len(list(AlgorithmB(n))) for n in xrange(6) ]
       [1, 2, 5, 14, 42, 132]
 
-    This is "Algorithm B" in Knuth's Volume 4, fasc. 4, section 7.2.1.6
+    This is "Algorithm B" in Knuth's Volume 4, fasc. 4, section 7.2.1.6,
+    with the only difference that node indices start from 0 here.
     """
     # B1 -- Initialize
     l = [ k+1 for k in xrange(n) ] + [None]
@@ -1586,7 +1658,7 @@ class MgnGraphsIterator(BufferingIterator):
                            CyclicTuple((1,)):   0})       ])
       True
 
-      >>> set(MgnGraphsIterator(1,1))                   == set([ \
+      >>> set(MgnGraphsIterator(1,1))                    == set([\
           Graph([Vertex([1, 0, 2]), Vertex([2, 1, 0])],          \
                 numbering={CyclicTuple((1, 0, 2, 1, 0, 2)): 0}), \
           Graph([Vertex([1, 0, 1, 0])],                          \
