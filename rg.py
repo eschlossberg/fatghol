@@ -567,19 +567,24 @@ class Fatgraph(EqualIfIsomorphic):
                       for i in xrange(len(self.vertices[v])) ]
                     for v in xrange(self.num_vertices) ]
 
+        def first_not_none(lst):
+            for index, item in enumerate(lst):
+                if item is not None:
+                    return index
+            return None
+        
         result = []
         while True:
             # fast-forward to the first unused corner
             for v in xrange(self.num_vertices):
-                for i in xrange(len(self.vertices[v])):
-                    if corners[v][i] is not None:
-                        break
-                if corners[v][i] is not None:
+                i = first_not_none(corners[v])
+                if i is not None:
                     break
             # if all corners were browsed and all of them are `None`:
             # we're done
-            if corners[v][i] is None:
+            if v == len(corners)-1 and i is None:
                 break
+            assert i is not None
 
             # build a list of corners comprising the same boundary
             # cycle: start with one corner, follow the edge starting
