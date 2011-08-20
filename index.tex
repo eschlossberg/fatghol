@@ -91,7 +91,7 @@
 \newcommand{\RTE}[1][]{\operad{D}'_{#1}}% operad of embedded RT graphs
 \newcommand{\RTG}[1][]{\operad{G}_{#1}} % operad of RT graphs
 \newcommand{\RG}[1][]{\operad{R}_{#1}}  % operad of cyclic (Ribbon) graphs
-\newcommand{\ERG}[1][]{\operad{T}_{#1}} % operad of embedded Ribbon graphs
+\newcommand{\ERG}[1][]{\operad{\widetilde R}_{#1}} % operad of embedded Ribbon graphs
 \newcommand{\SG}[1][]{\operad{S}_{#1}}  % operad of symmetric graphs
 
 \newcommand{\Strebel}[1][]{\mathcal{S}_{#1}}
@@ -111,7 +111,17 @@
 
 \newcommand{\comb}{\sptext{comb}}
 \newcommand{\T}{\mathcal{T}}
-\newcommand{\Tcomb}[1][]{\T\comb_{#1}}
+\newcommand{\Tcomb}{\T\comb}
+\newcommand{\M}{\mathcal{M}}       % spazio dei moduli di curve lisce
+\newcommand{\Mbar}{\overline{\M}}  % compattificazione
+\newcommand{\Mcomb}{\M\comb}       % triangolazione di Mumford-Harer
+\newcommand{\Mbarcomb}{\Mbar\comb}
+
+\newcommand{\Hermitian}[1][\relax]
+  {\mathcal{H}}   % spazio delle matrici hermitiane
+%  {{\mathcal{H}\ifx#1\relax\else(#1)\fi}}   % spazio delle matrici hermitiane
+
+
 
 % medie sui grafi
 \newcommand{\vv}[1]{V(#1)}
