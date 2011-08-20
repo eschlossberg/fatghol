@@ -156,8 +156,13 @@ class Graph(object):
     # all instance attribute names.
     __slots__ = [
         '_boundary_components',
+        '_contractions',
+        '_contraction_coefficients',
         '_genus',
         '_num_boundary_components',
+        '_parent',
+        '_seqnr',
+        '_siblings',
         '_valence_spectrum',
         '_vertex_factory',
         '_vertex_valences',
@@ -210,27 +215,43 @@ class Graph(object):
         #: Number of vertices
         self.num_vertices = kwargs.get('num_vertices', len(self.vertices))
         
-        # these values will be computed on-demand
+        #: Order on the boundary cycles, or `None`.
+        self.numbering = kwargs.get('numbering', None)
+
+        # the following values will be computed on-demand
 
         #: Cached boundary cycles of this graph; see
         #  `.boundary_components()` for an explanation of the
         #  format. This is initially `None` and is actually computed on
         #  first invocation of the `.boundary_components()` method.
         self._boundary_components = kwargs.get('_boundary_components', None)
+
+        #: Graphs obtained by contraction of edges.  (The children
+        #  obtained by contracting edge `l` is at list position `[l]`)
+        self._contractions = kwargs.get('_contractions',
+                                        [None] * self.num_edges)
         
-        #: Cached number of boundary cycles of this graph; this is
+        #: Orientation of graphs resulting from contraction of edges;
+        #: starts as `+1` and might be changed in `MgnGraphsIterator`
+        #: if a contraction : is replaced by another (canonical)
+        #: representative.
+        self._contraction_coefficients = kwargs.get('_contraction_coefficients',
+                                                    [1] * self.num_edges)
+        
+        #: Cached genus; initially `None`, and actually computed on
+        #  first invocation of the `.genus()` method.
+        self._genus = kwargs.get('_genus', None)
+
+        #: cached number of boundary cycles of this graph; this is
         #  initially `None` and is actually computed on first invocation
         #  of the `.num_boundary_components()` method.
         self._num_boundary_components = kwargs.get('_num_boundary_components',
                                                    None)
 
-        #: Order on the boundary cycles, or `None`.
-        self.numbering = kwargs.get('numbering', None)
-
-        #: Cached genus; initially `None`, and actually computed on
-        #  first invocation of the `.genus()` method.
-        self._genus = kwargs.get('_genus', None)
-
+        #: For un-numbered graphs, the list of numbered variants
+        #  produced by `MakeNumberedGraphs` is recorded here.
+        self._siblings = kwargs.get('_siblings', None)
+        
         #: Valence spectrum; initially `None`, and actually computed on
         #  first invocation of the `.valence_spectrum()` method.
         self._valence_spectrum = kwargs.get('_valence_spectrum', None)
@@ -596,81 +617,101 @@ class Graph(object):
                " must be in range 0..%d" \
                % (edgeno, self.num_edges)
 
-        # store position of the edge to be contracted at the endpoints
-        i1 = min(self.endpoints[edgeno])
-        i2 = max(self.endpoints[edgeno])
-        pos1 = self.vertices[i1].index(edgeno)
-        pos2 = self.vertices[i2].index(edgeno)
+        if self._contractions[edgeno] is None:
+            # store position of the edge to be contracted at the endpoints
+            i1 = min(self.endpoints[edgeno])
+            i2 = max(self.endpoints[edgeno])
+            pos1 = self.vertices[i1].index(edgeno)
+            pos2 = self.vertices[i2].index(edgeno)
 
-        # Build new list of vertices, removing the contracted edge and
-        # shifting all indices above:
-        #   - edges numbered 0..edgeno-1 are unchanged;
-        #   - edges numbered `edgeno+1`.. are renumbered, 
-        #     shifting the number down one position.
-        renumber_edges = dict((i+1,i)
-                              for i in xrange(edgeno, self.num_edges))
-        #   - edge `edgeno` is removed (subst with `None`)
-        renumber_edges[edgeno] = None  
-        # See `itranslate` in utils.py for how this prescription is
-        # encoded in the `renumber_edges` mapping.
-        new_vertices = [ self._vertex_factory(itranslate(renumber_edges, v))
-                         for v in self.vertices ]
+            # Build new list of vertices, removing the contracted edge and
+            # shifting all indices above:
+            #   - edges numbered 0..edgeno-1 are unchanged;
+            #   - edges numbered `edgeno+1`.. are renumbered, 
+            #     shifting the number down one position.
+            renumber_edges = dict((i+1,i)
+                                  for i in xrange(edgeno, self.num_edges))
+            #   - edge `edgeno` is removed (subst with `None`)
+            renumber_edges[edgeno] = None  
+            # See `itranslate` in utils.py for how this prescription is
+            # encoded in the `renumber_edges` mapping.
+            new_vertices = [ self._vertex_factory(itranslate(renumber_edges, v))
+                             for v in self.vertices ]
 
-        # Mate endpoints of contracted edge:
-        # 0. make copies of vertices `v1`, `v2` so that subsequent
-        #    operations do not alter the (possibly) shared `Vertex`
-        #    object.
-        v1 = copy(new_vertices[i1])
-        v2 = copy(new_vertices[i2])
-        # 1. Rotate endpoints `v1`, `v2` so that the given edge
-        #    appears *last* in `v1` and *first* in `v2` (*Note:*
-        #    the contracted edge has already been deleted from
-        #    `v1` and `v2`, so index positions need to be adjusted):
-        if (0 < pos1) and (pos1 < len(v1)):
-            v1.rotate(pos1)
-        if (0 < pos2) and (pos2 < len(v2)):
-            v2.rotate(pos2)
-        # 2. Join vertices by concatenating the list of incident
-        # edges:
-        v1.extend(v2)
+            # Mate endpoints of contracted edge:
+            # 0. make copies of vertices `v1`, `v2` so that subsequent
+            #    operations do not alter the (possibly) shared `Vertex`
+            #    object.
+            v1 = copy(new_vertices[i1])
+            v2 = copy(new_vertices[i2])
+            # 1. Rotate endpoints `v1`, `v2` so that the given edge
+            #    appears *last* in `v1` and *first* in `v2` (*Note:*
+            #    the contracted edge has already been deleted from
+            #    `v1` and `v2`, so index positions need to be adjusted):
+            if (0 < pos1) and (pos1 < len(v1)):
+                v1.rotate(pos1)
+            if (0 < pos2) and (pos2 < len(v2)):
+                v2.rotate(pos2)
+            # 2. Join vertices by concatenating the list of incident
+            # edges:
+            v1.extend(v2)
 
-        # set new `v1` vertex in place of old first endpoint, 
-        new_vertices[i1] = v1
-        # and remove second endpoint from list of new vertices
-        del new_vertices[i2]
+            # set new `v1` vertex in place of old first endpoint, 
+            new_vertices[i1] = v1
+            # and remove second endpoint from list of new vertices
+            del new_vertices[i2]
 
-        # vertices with index above `i2` are now shifted down one place
-        renumber_vertices = dict((i+1,i)
-                                 for i in xrange(i2, self.num_vertices))
-        # vertex `i2` is mapped to vertex `i1`
-        renumber_vertices[i2] = i1
-        new_endpoints = [ tuple(itranslate(renumber_vertices, ep))
-                          for ep in  self.endpoints ]
-        del new_endpoints[edgeno]
-        
-        numbering = None
-        if self.numbering is not None:
-            numbering = dict((CyclicTuple(itranslate(renumber_edges, c)), n)
-                             for (c,n) in self.numbering.iteritems())
-        
-        bc = None
-        if self._boundary_components is not None:
-            if numbering is not None:
-                bc = set(numbering.iterkeys())
-            else:
-                bc = set(CyclicTuple(itranslate(renumber_edges, c))
-                         for c in self._boundary_components)
-        
-        # build new graph in canonical form
-        #return Graph([ v.make_canonical() for v in new_vertices ],
-        return Graph(new_vertices,
-                     vertex_factory=self._vertex_factory,
-                     endpoints = new_endpoints,
-                     num_edges = self.num_edges - 1,
-                     num_external_edges = self.num_external_edges,
-                     numbering = numbering,
-                     _boundary_components = bc)
+            # vertices with index above `i2` are now shifted down one place
+            renumber_vertices = dict((i+1,i)
+                                     for i in xrange(i2, self.num_vertices))
+            # vertex `i2` is mapped to vertex `i1`
+            renumber_vertices[i2] = i1
+            new_endpoints = [ tuple(itranslate(renumber_vertices, ep))
+                              for ep in  self.endpoints ]
+            del new_endpoints[edgeno]
 
+            numbering = None
+            if self.numbering is not None:
+                numbering = dict((CyclicTuple(itranslate(renumber_edges, c)), n)
+                                 for (c,n) in self.numbering.iteritems())
+
+            bc = None
+            if self._boundary_components is not None:
+                if numbering is not None:
+                    bc = set(numbering.iterkeys())
+                else:
+                    bc = set(CyclicTuple(itranslate(renumber_edges, c))
+                             for c in self._boundary_components)
+
+            # build new graph 
+            self._contractions[edgeno] = \
+                                       Graph(new_vertices,
+                                             vertex_factory=self._vertex_factory,
+                                             endpoints = new_endpoints,
+                                             num_edges = self.num_edges - 1,
+                                             num_external_edges = self.num_external_edges,
+                                             numbering = numbering,
+                                             _boundary_components = bc,
+                                             _parent = (self, edgeno))
+            
+        elif (self.numbering is not None) \
+             and (self._contractions[edgeno].numbering is None):
+            # see above for the meaning of `renumber_edges`
+            renumber_edges = dict((i+1,i)
+                                  for i in xrange(edgeno, self.num_edges))
+            renumber_edges[edgeno] = None  
+            self._contractions[edgeno].numbering = \
+                                                 dict((CyclicTuple(itranslate(renumber_edges, c)), n)
+                                                      for (c,n) in self.numbering.iteritems())
+            
+            assert set(self._contractions[edgeno]._boundary_components) == \
+                   set(self._contractions[edgeno].numbering.iterkeys()), \
+                   "Graph.contract:" \
+                   " numbering keys after contraction differs"\
+                   " from boundary components computed from"\
+                   " non-numbered sibling graph"
+                   
+        return self._contractions[edgeno]
         
     def edges(self):
         """Iterate over edge colorings."""
@@ -937,7 +978,7 @@ class Graph(object):
         # it's easier to compute vertex-preserving permutations
         # starting from the order vertices are given in the valence
         # spectrum; will rearrange them later.
-        domain = Permutation(concat([ vs1[val] for val in valences ]))
+        domain = Permutation(concat([ vs1[val] for val in valences ])).inverse()
         codomain = Permutation()
         codomain.update(dict(concat(zip(vs1[val],vs2[val]) for val in valences)))
         permutations_of_vertices_of_same_valence = [
@@ -1156,6 +1197,10 @@ def MakeNumberedGraphs(graph):
         # already in the list
         if g not in graphs:
             graphs.append(g)
+
+    # set the `._siblings` attribute on the given graph,
+    # pointing to the numbered decorated versions
+    graph._siblings = graphs
 
     return graphs
 
