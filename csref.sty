@@ -1,0 +1,162 @@
+%% LaTeX2e style file for `context-sensitive' labels.
+%%
+%% v0.3 -- 2001-11-28  Riccardo Murri
+%%
+%% $Id: csref.sty,v 1.3 2003/06/23 17:34:43 murri Exp $
+%%
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{csref}
+[2001/11/28 Typeset reference basing on environment containing the label]
+%%
+%% Preliminary declarations
+%%
+\let\csr@ref=\ref% just to provide a default; may be overridden by options
+%%
+%% Options
+%%
+\DeclareOption{varioref}{%
+  \RequirePackage{varioref}%
+  \let\csr@ref=\vref%
+}%
+\DeclareOption{fancyref}{%
+  \RequirePackage{fancyref}%
+  \let\csr@ref=\fref%
+}%
+\DeclareOption{prettyref}{%
+  \RequirePackage{prettyref}%
+  \let\csr@ref=\prettyref%
+}%
+\ProcessOptions\relax%
+%% 
+%% The token lists are needed for handling |\csr@contexts| and for
+%% writing labels to the .aux file.
+%%
+\newtoks\csr@tempa \newtoks\csr@tempb%
+%%
+%% First, set up a list |\csr@contexts| of supported environments; the
+%% list is initially empty.
+%% The list-handling code is taken from The TeXBook, p.378
+%%
+\def\csr@leftappend#1#2{%
+  \csr@tempa={\@elt{#1}}%
+  \csr@tempb=\expandafter{#2}%
+  \xdef#2{\the\csr@tempa\the\csr@tempb}%
+}
+\def\csr@addtocontexts#1{\csr@leftappend#1\csr@contexts}%
+\def\csr@contexts{}%
+%%
+%% \newcsref{ENV}{REF-CODE}
+%%
+%% The |\newcsref| macro takes an environment name ENV as first
+%% argument, and defines all |\label| commands occuring within
+%% environments of type ENV to use REF-CODE when referred to using
+%% |\csref|. 
+%%
+%% The actual implementation defines: 1) a command \csr@ENV@label
+%% (taking one argument: LABEL, the label to be defined)
+%% which is used to for all labels occuring within ENV; 2) a command
+%% \csr@ENV@refcmd which holds REF-CODE. 
+%% 
+%% The command \csr@ENV@label{LABEL}, in turn, defines a
+%% \csr@LABEL@ref which expands to the properly-formatted reference
+%% using REF-CODE.
+%%
+\newcommand\newcsref[1]{%
+  \expandafter\csr@addtocontexts\csname #1\endcsname%
+  \@namedef{csr@#1@label}##1{%
+    \csr@tempa={\expandafter\gdef\csname csr@##1@ref\endcsname{%
+        \csname csr@#1@refcmd\endcsname{##1}}}%
+    \the\csr@tempa%
+    \immediate\write\@auxout{\the\csr@tempa}%
+    }%
+  \@namedef{csr@#1@refcmd}##1%
+  }%
+\newcommand*\renewcsref[1]{%
+  \@ifundefined{csr@#1@label}{%
+    \PackageError{csref}{Environment `#1' not previously defined.}%
+    {The command \protect\renewcsref\space can be used only after\MessageBreak%
+      a \protect\newcsref\space has been issued for the same
+      environment.\MessageBreak% 
+      Perhaps you meant\MessageBreak to use \protect\newcsref\space%
+      instead?}%
+    }{%
+    \@namedef{csr@#1@label}##1{%
+      \expandafter\global\@namedef{csr@##1@ref}{%
+        \csname csr@#1@refcmd\endcsname{##1}}%
+      }%
+    \@namedef{csr@#1@refcmd}##1%
+    }%
+  }%
+%% The |\ifcsr@contextnotfound| is needed to take a default action if
+%% a environment-name is not found in the list |\csr@contexts|.
+\newif\ifcsr@contextnotfound%
+\csr@contextnotfoundtrue% pessimistic default
+\def\csr@read@context{%
+  \xdef\csr@current{\expandafter\noexpand\csname\@currenvir\endcsname}%
+}%
+\def\csr@context@check#1{%
+  \csr@read@context% 
+  \expandafter\ifx\csr@current#1%
+    \csr@contextnotfoundfalse% pheeew!
+    \expandafter\aftergroup%
+      \csname csr@\expandafter\@gobble\string#1@label\endcsname%
+  \fi%
+}%
+\DeclareRobustCommand*\cslabel[1]{%
+  \@bsphack%
+  \begingroup%
+    \let\@elt=\csr@context@check%
+    \csr@contexts%
+    \ifcsr@contextnotfound%
+      \PackageWarning{csref}{Environment `\@currenvir' unknown;\space%
+        using default reference format}%
+      \aftergroup\csr@default@label%
+    \fi%
+  \endgroup{#1}%
+  \@esphack% matches \@bsphack
+  \csr@saved@label{#1}%
+}%
+\DeclareRobustCommand*\csref[1]{%
+  \@ifundefined{csr@#1@ref}{%
+      \PackageInfo{csref}{Cross-reference label #1 undefined}%
+    }{%
+      \csname csr@#1@ref\endcsname%
+    }%
+  }%
+%
+\AtBeginDocument{% we need to do this *after* hyperref, refcheck,
+                 % etc., do we?
+  \let\csr@saved@label=\label%
+  \let\label=\cslabel%
+}%
+%
+%
+%
+\newcsref{default}{\csr@ref{#1}}%
+\providecommand\refsectionname{Section}%
+\ifx\sectionname\@empty% hack for AMS document classes
+  \newcsref{document}{\refsectionname~\csr@ref{#1}}%
+\else%
+  \newcsref{document}{\sectionname~\csr@ref{#1}}%
+\fi%
+%
+\def\newcsref@ifdefined#1{%
+  \@ifundefined{#1}
+    {\@gobble}% eat up second argument
+    {\newcsref{#1}}% define a new \csref
+}%
+\newcsref@ifdefined{theorem}{\theoremname~\csr@ref{#1}}%
+\newcsref@ifdefined{lemma}{Lemma~\csr@ref{#1}}%
+\newcsref@ifdefined{proposition}{Proposition~\csr@ref{#1}}%
+\newcsref@ifdefined{claim}{Claim~\csr@ref{#1}}%
+\newcsref@ifdefined{conjecture}{Conjecture~\csr@ref{#1}}%
+\newcsref@ifdefined{example}{Example~\csr@ref{#1}}%
+\newcsref@ifdefined{definition}{Definition~\csr@ref{#1}}%
+\newcsref@ifdefined{corollary}{Corollary~\csr@ref{#1}}%
+\newcsref@ifdefined{remark}{Remark~\csr@ref{#1}}%
+\newcsref@ifdefined{figure}{\figurename~\csr@ref{#1}}%
+\newcsref@ifdefined{table}{\tablename~\csr@ref{#1}}%
+\newcsref@ifdefined{enumerate}{\csr@ref{#1}}%
+\newcsref@ifdefined{itemize}{\csr@ref{#1}}%
+% \newcsref@ifdefined{app}{Appendix}% <-- FIXME!!
+
