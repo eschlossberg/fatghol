@@ -980,15 +980,15 @@ class Graph(object):
 
           >>> g1 = Graph([Vertex([2, 1, 1]), Vertex([2, 0, 0])])
           >>> for f in g1.isomorphisms(g1): print f
-          ({0: 1, 1: 0}, [0, 0], {0: 1, 1: 0, 2: 2})
           ({0: 0, 1: 1}, [0, 0], {0: 0, 1: 1, 2: 2})
+          ({0: 1, 1: 0}, [0, 0], {0: 1, 1: 0, 2: 2})
 
         Or it can find the isomorphisms between two given graphs::
 
           >>> g2 = Graph([Vertex([2, 2, 0]), Vertex([1, 1, 0])])
           >>> for f in g1.isomorphisms(g2): print f
-          ({0: 1, 1: 0}, [2, 2], {0: 2, 1: 1, 2: 0})
           ({0: 0, 1: 1}, [2, 2], {0: 1, 1: 2, 2: 0})
+          ({0: 1, 1: 0}, [2, 2], {0: 2, 1: 1, 2: 0})
 
         If there are no isomorphisms connecting the two graphs, then no
         item is returned by the iterator::
@@ -1022,7 +1022,7 @@ class Graph(object):
 
         src_indices = concat([ vs1[val] for val in vsk ])
         permutations_of_vertices_of_same_valence = [
-            [ p[:] for p in InplacePermutationIterator(vs2[val]) ]
+            list(reversed([ p[:] for p in InplacePermutationIterator(vs2[val]) ]))
             for val in vsk
             ]
         dst_index_permutations = [
@@ -1211,7 +1211,41 @@ class Graph(object):
 
     def projection(self, other):
         """Return the component of the projection of `self` on the
-        basis vector `other`.
+        basis vector `other`.  This can be either 0 (if `self` and
+        `other` are not isomorphic), or +1/-1 depending on comparison
+        of the orientation of `self` with the pull-back orientation on
+        `other`.
+
+        If the two graphs are not isomorphic, then the result is 0::
+
+          >>> g1 = Graph([Vertex([0,1,2]), Vertex([0,2,1])])
+          >>> g2 = Graph([Vertex([0,1,2]), Vertex([0,1,2])])
+          >>> Graph.projection(g1, g2)
+          0
+
+        Any graph obviously projects onto itself with coefficient `1`::
+
+          >>> Graph.projection(g1, g1)
+          1
+
+        Flipping the orientation on an edge reverses the coefficient
+        sign::
+
+          >>> g2 = g1.clone()
+          >>> Graph.projection(g1, g2)
+          1
+          >>> g2.endpoints = [tuple(reversed(g2.endpoints[0]))] + \
+                             g1.endpoints[1:]
+          >>> Graph.projection(g1, g2)
+          -1
+          
+        The same happens if vertex order is changed by an odd
+        permutation::
+        
+          >>> g2 = Graph(list(reversed(g1.vertices)))
+          >>> Graph.projection(g1, g2)
+          -1
+
         """
         assert isinstance(other, Graph), \
                "Graph.__eq__:" \
@@ -1230,13 +1264,14 @@ class Graph(object):
                                               [ (pv[self.endpoints[pe[x]][0]],
                                                  pv[self.endpoints[pe[x]][1]])
                                                 for x in xrange(self.num_edges)]):
-                result *= arrow(other_ep)*arrow(push_fwd_ep)
+                if other_ep[0] == push_fwd_ep[1]:
+                    result = -result
+                    #result *= arrow(other_ep)*arrow(push_fwd_ep)
             return result
         except StopIteration:
             # list of morphisms is empty, graphs are not equal.
             return 0
-
-
+    
     def valence_spectrum(self):
         """Return a dictionary mapping valences into vertex indices.
 
