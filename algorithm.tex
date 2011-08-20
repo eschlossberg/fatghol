@@ -2723,16 +2723,8 @@ the only missing piece for the generic homology framework:
 The "compute_boundary_operators" function returns a list of
 "SimpleMatrix" instances.  
 
-The "SimpleMatrix" class is just an interface to the matrix storage
-provided by the C++ library LinBox\FIXME{reference!}.  LinBox provides
-a optimized function library for linear algebra on matrices with
-entries in $\setZ$, $\setQ$ or a finite field.  Since computation of
-the rank is the most time-consuming part of the whole algorithm, and
-linear algebra algorithms have been extensively
-studied,\FIXME{reference!} we shall not present the implementation of
-"SimpleMatrix" here, nor discuss in detail how the functionality of
-LinBox is used.  
-
+The "SimpleMatrix" class is just an interface to an algorithm for
+computing matrix rank, which is detailed in Chapter~\ref{chap:rheinfall}.
 It suffices to describe the methods of "SimpleMatrix" that are
 actually used:
 \begin{itemize}
