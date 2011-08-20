@@ -7,9 +7,9 @@ __docformat__ = 'reStructuredText'
 ## stdlib imports
 
 import sys
-# require Python 2.5
-if sys.version < '2.5.0':
-    sys.stderr.write("Program %s requires Python at least version 2.5,"
+# require Python 2.6 (for the "fractions" module)
+if sys.version < '2.6.0':
+    sys.stderr.write("Program %s requires Python at least version 2.6,"
                      " but this Python interpreter is version %s. Aborting."
                      % (sys.argv[0], sys.version.split()[0]))
     sys.exit(1)
@@ -21,8 +21,8 @@ import resource
 
 ## application-local imports
 
+from fractions import Fraction
 from combinatorics import (
-    Rational,
     bernoulli,
     factorial,
     minus_one_exp,
@@ -139,7 +139,7 @@ def do_homology(g, n):
     if g==0:
         chi_hz = factorial(n-3) * minus_one_exp(n-3)
     elif g==1:
-        chi_hz = Rational(minus_one_exp(n), 12) * factorial(n-1)
+        chi_hz = Fraction(minus_one_exp(n), 12) * factorial(n-1)
     else: # g > 1
         chi_hz = bernoulli(2*g) * factorial(2*g+n-3) / (factorial(2*g-2) * 2*g) * minus_one_exp(n)
     logging.info("  Expected orbifold Euler characteristics (according to Harer): %s", chi_hz)
@@ -157,14 +157,14 @@ def do_homology(g, n):
         elif g==1:
             # according to Bini-Gaiffi-Polito, p. 15
             if n>4:
-                return factorial(n-1)*Rational(minus_one_exp(n-1),12)
+                return factorial(n-1)*Fraction(minus_one_exp(n-1),12)
             else:
                 es = [1,1,0,0]
                 return es[n-1] # no n==0 computed in [BGP]
         elif g==2:
             # according to Bini-Gaiffi-Polito, p. 14
             if n>6:
-                return factorial(n+1)*Rational(minus_one_exp(n+1),240)
+                return factorial(n+1)*Fraction(minus_one_exp(n+1),240)
             else:
                 es = [1,2,2,0,-4,0,-24]
                 return es[n]

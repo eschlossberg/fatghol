@@ -449,7 +449,7 @@ class Fatgraph(EqualIfIsomorphic):
             """
             # use a weakref so not to create a reference cycle and ease GC
             self.graph = weakref.proxy(graph) if graph else None
-            frozenset.__init__(self, triples)
+            frozenset.__init__(self)
             if __debug__:
                 if graph is not None:
                     for (v, i, j) in self:
@@ -2036,7 +2036,6 @@ class NumberedFatgraph(Fatgraph):
         # underlying graph is altered during contraction.
         contracted = self.underlying.contract(edgeno)
         new_numbering = {}
-        contracted = self.underlying.contract(edgeno)
         for (bcy, n) in self.numbering.iteritems():
             new_cy = bcy.contract((v1,pos1), (v2,pos2), contracted)
             new_numbering[Fatgraph.BoundaryCycle(new_cy)] = n

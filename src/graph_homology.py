@@ -23,6 +23,7 @@ from combinatorics import (
     InplacePermutationIterator,
     )
 from copy import copy
+from fractions import Fraction
 from homology import *
 from iterators import IndexedIterator
 from rg import (
@@ -31,7 +32,6 @@ from rg import (
     NumberedFatgraph,
     Vertex, # for the doctests
     )
-from rational import Rational
 from valences import vertex_valences_for_given_g_and_n
 
 
@@ -62,12 +62,12 @@ def FatgraphComplex(g, n):
     C = MgnChainComplex(top_dimension)
 
     # gather graphs
-    chi = Rational(0)
+    chi = Fraction(0)
     for graph in MgnGraphsIterator(g,n):
         grade = graph.num_edges - 1
         pool = NumberedFatgraphPool(graph)
         # compute orbifold Euler characteristics (needs to include *all* graphs)
-        chi += Rational(minus_one_exp(grade-min_edges)*len(pool), pool.num_automorphisms)
+        chi += Fraction(minus_one_exp(grade-min_edges)*len(pool), pool.num_automorphisms)
         # discard non-orientable graphs
         if not pool.is_orientable:
             continue
@@ -77,23 +77,6 @@ def FatgraphComplex(g, n):
     for i in xrange(top_dimension):
         logging.debug("  Initialized grade %d chain module (with dimension %d)",
                      i, len(C[i]))
-
-    ## if __debug__:
-    ##     outputs = [ None ]
-    ##     for i in xrange(1, top_dimension):
-    ##         output = file("M%d,%d-D%d.txt" % (g,n,i), 'w')
-    ##         outputs.append(output)
-    ##         # write out row vectors
-    ##         for (seq, G) in enumerate(C.module[i-1].itervalues()):
-    ##             output.write("R %04d %s\n" % (seq, repr(G)))
-    ##         # dump column vectors
-    ##         for (seq, G) in enumerate(C.module[i].itervalues()):
-    ##             output.write("C %04d %s\n" % (seq, repr(G)))
-    ##         # dump matrix
-    ##     D = C.compute_boundary_operators(outputs)
-    ##     for i in xrange(1, top_dimension):
-    ##         if outputs[i]:
-    ##             outputs[i].close()
         
     return C
 
