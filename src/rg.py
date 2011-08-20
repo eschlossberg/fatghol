@@ -49,9 +49,6 @@ from utils import (
 class VertexCache(object):
     """A caching factory of `Vertex` objects.
     """
-##     __slots__ = [
-##         'cache',
-##         ]
     def __init__(self):
         self.cache = {}
     def __call__(self, edge_seq):
@@ -59,7 +56,6 @@ class VertexCache(object):
         if key not in self.cache:
             self.cache[key] = Vertex(key)
         return self.cache[key]
-    
     def __str__(self):
         # needed to form readable persistent iterators cache
         return "rg.VertexCache"
@@ -116,65 +112,6 @@ class Vertex(PermanentID, CyclicList):
     def __str__(self):
         return repr(self)
     
-    def is_canonical_representative(self):
-        """Return `True` if this `Vertex` object is maximal
-        (w.r.t. lexicographic order) among representatives of the same
-        cyclic sequence.
-        
-        Examples::
-        
-          >>> Vertex([3,2,1]).is_canonical_representative()
-          True
-          >>> Vertex([2,1,3]).is_canonical_representative()
-          False
-          >>> Vertex([1,1]).is_canonical_representative()
-          True
-          >>> Vertex([1]).is_canonical_representative()
-          True
-        """
-        L = len(self)
-        for i in xrange(1,L):
-            for j in xrange(0,L):
-                # k := (i+j) mod L
-                k = i+j
-                if k >= L:
-                    k -= L
-                if self[k] < self[j]:
-                    # continue with next i
-                    break
-                elif self[k] > self[j]:
-                    return False
-                # else, continue comparing
-        return True
-
-    def make_canonical(self):
-        """Alter `Vertex` *in place* so that it is represented by a
-        canonical sequence.  Return modified sequence for convenience.
-        
-        Examples::
-          >>> Vertex([3,2,1]).make_canonical()
-          Vertex([3, 2, 1])
-          >>> Vertex([2,1,3]).make_canonical()
-          Vertex([3, 2, 1])
-        """
-        L = len(self)
-        r = 0
-        for i in xrange(1,L):
-            for j in xrange(0,L):
-                # k := (i+j) mod L
-                k = i+j
-                if k >= L:
-                    k -= L
-                if self[k] < self[j]:
-                    # continue with next i
-                    break
-                elif self[k] > self[j]:
-                    r = i
-                # else, continue comparing
-        if r > 0:
-            self.rotate(r)
-        return self
-
     @cache1
     def num_loops(self):
         """Return the number of loops attached to this vertex."""
@@ -253,20 +190,6 @@ class Fatgraph(EqualIfIsomorphic, PermanentID):
             == Fatgraph([Vertex([1,1,0,0])])
       False
     """
-    # the only reason to use `__slots__` here is to keep a record of
-    # all instance attribute names.
-##     __slots__ = [
-##         '_numbering',
-##         '_vertextype',
-##         'endpoints_v',
-##         'endpoints_i',
-##         'numbering',
-##         'num_edges',
-##         'num_external_edges',
-##         'num_vertices',
-##         'edge_numbering',
-##         'vertices',
-##         ]
 
     def __init__(self, g_or_vs, vertextype=Vertex, **kwargs):
         """Construct a `Fatgraph` instance, taking list of vertices.
@@ -1361,34 +1284,6 @@ class Fatgraph(EqualIfIsomorphic, PermanentID):
                      )
     
         
-    def is_canonical(self):
-        """Return `True` if this `Fatgraph` object is canonical.
-
-        A graph is canonical iff:
-        1) Each vertex is represented by the maximal sequence, among all
-           sequences representing the same cyclic order.
-        2) Vertices are sorted in lexicographic order.
-
-        Examples::
-          >>> Fatgraph([Vertex([2,1,0]), Vertex([2,1,0])]).is_canonical()
-          True             
-          >>> Fatgraph([Vertex([2,1,0]), Vertex([2,0,1])]).is_canonical()
-          True             
-          >>> Fatgraph([Vertex([2,0,1]), Vertex([2,1,0])]).is_canonical()
-          False
-          >>> Fatgraph([Vertex([0,1,2]), Vertex([2,1,0])]).is_canonical()
-          False 
-        """
-        previous_vertex = None
-        for vertex in self.vertices:
-            if not vertex.is_canonical_representative():
-                return False
-            if previous_vertex and (previous_vertex < vertex):
-                return False
-            previous_vertex = vertex
-        return True
-
-
     def is_connected(self):
         """Return `True` if graph is connected.
 
@@ -1952,6 +1847,7 @@ def MakeNumberedGraphs(graph):
     return result
 
 
+
 class NumberedFatgraph(Fatgraph):
     """A `Fatgraph` decorated with a numbering of the boundary components.
 
@@ -2049,14 +1945,6 @@ class NumberedFatgraph(Fatgraph):
         ...                                        CyclicTuple((1, 2, 0, 1, 2)): 1}))
         False
       """
-
-##     __slots__ = [
-##         '_numbering',
-##         '_persistent_id',
-##         'numbering',
-##         'underlying',
-##         ]
-
 
     def __init__(self, underlying, numbering, vertextype=Vertex):
         Fatgraph.__init__(self, underlying)
@@ -2221,413 +2109,6 @@ class NumberedFatgraph(Fatgraph):
     
     
 
-class _ConnectedGraphsIterator(BufferingIterator):
-    """Iterate over all connected numbered graphs having vertices of
-    the prescribed valences.
-    
-    Examples::
-
-      >>> for g in ConnectedGraphsIterator([4]): print g
-      NumberedFatgraph(Fatgraph([Vertex([1, 0, 1, 0])]), 
-                       numbering={CyclicTuple((1, 0, 1, 0)): 0})
-      NumberedFatgraph(Fatgraph([Vertex([1, 1, 0, 0])]),
-                       numbering={CyclicTuple((1, 0)): 0,
-                                  CyclicTuple((0,)): 1,
-                                  CyclicTuple((1,)): 2})    
-      NumberedFatgraph(Fatgraph([Vertex([1, 1, 0, 0])]),
-                       numbering={CyclicTuple((1,)): 0,
-                                  CyclicTuple((1, 0)): 1,            
-                                  CyclicTuple((0,)): 2})
-      NumberedFatgraph(Fatgraph([Vertex([1, 1, 0, 0])]),                       
-                       numbering={CyclicTuple((1,)): 0,
-                                  CyclicTuple((0,)): 1,
-                                  CyclicTuple((1, 0)): 2})
-      
-      >>> for g in ConnectedGraphsIterator([3,3]): print g
-      NumberedFatgraph(Fatgraph([Vertex([2, 0, 1]), Vertex([2, 0, 1])]),          
-                       numbering={CyclicTuple((2, 0, 1, 2, 0, 1)): 0}) 
-      NumberedFatgraph(Fatgraph([Vertex([2, 1, 0]), Vertex([2, 0, 1])]), 
-                       numbering={CyclicTuple((2, 0)): 0,
-                                  CyclicTuple((0, 1)): 1,               
-                                  CyclicTuple((1, 2)): 2})  
-      NumberedFatgraph(Fatgraph([Vertex([2, 1, 1]), Vertex([2, 0, 0])]),          
-                       numbering={CyclicTuple((2, 0, 2, 1)): 0,         
-                                  CyclicTuple((0,)): 1,                 
-                                  CyclicTuple((1,)): 2})              
-      NumberedFatgraph(Fatgraph([Vertex([2, 1, 1]), Vertex([2, 0, 0])]), 
-                       numbering={CyclicTuple((1,)): 0,
-                                  CyclicTuple((2, 0, 2, 1)): 1,         
-                                  CyclicTuple((0,)): 2})               
-      NumberedFatgraph(Fatgraph([Vertex([2, 1, 1]), Vertex([2, 0, 0])]),
-                       numbering={CyclicTuple((1,)): 0,
-                                  CyclicTuple((0,)): 1,
-                                  CyclicTuple((2, 0, 2, 1)): 2})
-
-    Generation of all graphs with prescribed vertex valences `(v_1,
-    v_2, ..., v_n)` goes this way:
-    
-      1) Generate all lists `L` of length `2*n` comprising the symbols
-         `{0,...,n-1}`, each of which is repeated exactly twice;
-
-      2) Pick such a list `L` and break it into smaller pieces of
-         length `v_1`, ..., `v_n`, each one corresponding to a vertex
-         (this is actually done in the `Fatgraph` class constructor),
-         effectively building a graph `G`.
-
-      3) Test the graph `G` for connectedness: if it's not connected,
-         then go back to step 2).
-
-      4) Compare `G` with all graphs previously found: if there is a
-         permutation of the edge labels that transforms `G` into an
-         already-found graph, then go back to step 2).
-
-    """
-
-##     __slots__ = [
-##         '_graphs',
-##         ]
-
-    def __init__(self, vertex_valences, vertextype=VertexCache()):
-        assert debug.is_sequence_of_integers(vertex_valences), \
-               "ConnectedGraphsIterator: " \
-               " argument `vertex_valences` must be a sequence of integers,"\
-               " but got %s" % vertex_valences
-        assert 0 == sum(vertex_valences) % 2, \
-               "ConnectedGraphsIterator: " \
-               " sum of vertex valences must be divisible by 2"
-
-        self._graphs = GivenValenceGraphsIterator(vertex_valences,
-                                                  vertextype=vertextype)
-
-        # initialize superclass
-        BufferingIterator.__init__(self)
-
-    def refill(self):
-        return MakeNumberedGraphs(self._graphs.next())
-ConnectedGraphsIterator = persist.PersistedIterator(_ConnectedGraphsIterator)
-
-
-class _GivenValenceGraphsIterator(object):
-    """Iterate over all connected (un-numbered) ribbon graphs having
-    vertices of the prescribed valences.
-    
-    Examples::
-
-      >>> for g in GivenValenceGraphsIterator([4]): print g
-      Fatgraph([Vertex([1, 0, 1, 0])])
-      Fatgraph([Vertex([1, 1, 0, 0])])
-
-      >>> for g in GivenValenceGraphsIterator([3,3]): print g
-      Fatgraph([Vertex([2, 0, 1]), Vertex([2, 0, 1])])
-      Fatgraph([Vertex([2, 1, 0]), Vertex([2, 0, 1])])
-      Fatgraph([Vertex([2, 1, 1]), Vertex([2, 0, 0])])
-
-    Generation of all graphs with prescribed vertex valences `(v_1,
-    v_2, ..., v_n)` proceeds this way:
-    
-      1) Generate all lists `L` of length `2*n` comprising the symbols
-         `{0,...,n-1}`, each of which is repeated exactly twice;
-
-      2) Pick such a list `L` and break it into smaller pieces of
-         length `v_1`, ..., `v_n`, each one corresponding to a vertex
-         (this is actually done in the `Fatgraph` class constructor),
-         effectively building a graph `G`.
-
-      3) Test the graph `G` for connectedness: if it's not connected,
-         then go back to step 2).
-
-      4) Compare `G` with all graphs previously found: if there is a
-         permutation of the edge labels that transforms `G` into an
-         already-found graph, then go back to step 2).
-
-    """
-
-##     __slots__ = [
-##         'graphs',
-##         'vertextype',
-##         '_edge_seq_iterator',
-##         '_morphism_factory',
-##         '_vertex_valences',
-##         ]
-
-    def __init__(self, vertex_valences, vertextype=VertexCache()):
-        assert debug.is_sequence_of_integers(vertex_valences), \
-               "GivenValenceGraphsIterator: " \
-               " argument `vertex_valences` must be a sequence of integers,"\
-               " but got %s" % vertex_valences
-        assert 0 == sum(vertex_valences) % 2, \
-               "GivenValenceGraphsIterator: " \
-               " sum of vertex valences must be divisible by 2"
-
-        self.vertextype = vertextype
-        self.graphs = []
-        self._morphism_factory = None
-        self._vertex_valences = vertex_valences
-
-        # build list [0,0,1,1,...,n-1,n-1]
-        starting_edge_seq=[]
-        for l in xrange(0, sum(vertex_valences)/2):
-            starting_edge_seq += [l,l]
-        self._edge_seq_iterator = InplacePermutationIterator(starting_edge_seq)
-
-    def __iter__(self):
-        return self
-    
-    def next(self):
-        for edge_seq in self._edge_seq_iterator:
-            # Break up `edge_seq` into smaller sequences corresponding
-            # to vertices.
-            vertices = []
-            base = 0
-            for current_vertex_index in xrange(len(self._vertex_valences)):
-                VLEN = self._vertex_valences[current_vertex_index]
-                vertices.append(self.vertextype(edge_seq[base:base+VLEN]))
-                base += VLEN
-
-            current = Fatgraph(vertices,
-                            vertextype=self.vertextype,)
-            if not (current.is_canonical() and current.is_connected()):
-                continue
-            
-            if not current in self.graphs:
-                self.graphs.append(current)
-                return current
-            # otherwise, continue with next `current` graph
-
-        # no more graphs to generate
-        raise StopIteration
-GivenValenceGraphsIterator = persist.PersistedIterator(_GivenValenceGraphsIterator)
-
-
-def AlgorithmB(n):
-    """Iterate over all binary trees with `n+1` internal nodes in
-    pre-order.  Or, equivalently, iterate over all full binary trees
-    with `n+2` leaves.
-
-    Returns a pair `(l,r)` of list, where `l[j]` and `r[j]` are the
-    left and right child nodes of node `j`.  A `None` in `l[j]`
-    (resp. `r[j]`) means that node `j` has no left (resp. right) child.
-
-    The number of such trees is equal to the n-th Catalan number::
-
-      >>> [ len(list(AlgorithmB(n))) for n in xrange(6) ]
-      [1, 2, 5, 14, 42, 132]
-
-    This is "Algorithm B" in Knuth's Volume 4, fasc. 4, section 7.2.1.6,
-    with the only difference that node indices start from 0 here.
-    """
-    # B1 -- Initialize
-    l = [ k+1 for k in xrange(n) ] + [None]
-    r = [ None ] * (n+1)
-    while True:
-        # B2 -- Visit
-        yield (l, r)
-        # B3 -- Find `j`
-        j = 0
-        while l[j] == None:
-            r[j] = None
-            l[j] = j+1
-            j += 1
-            if j >= n:
-                raise StopIteration
-        # B4 -- Find `k` and `y`
-        y = l[j]
-        k = None
-        while r[y] != None:
-            k = y
-            y = r[y]
-        # B5 -- Promote `y`
-        if k is not None:
-            r[k] = None
-        else:
-            l[j] = None
-        r[y] = r[j]
-        r[j] = y
-
-
-def Tree(nodeseq=[], vertextype=VertexCache()):
-    """Construct a tree fatgraph from sequence of internal nodes.
-
-    Items in `nodeseq` are sequences `(c[0], c[1], ..., c[n])` where
-    `c[i]` are the labels (index number) of child nodes; if any
-    `c[i]` is `None`, then a new terminal node is appended as child.
-    The node created from the first item in `nodeseq` gets the label
-    `0`, the second node gets the label `1`, and so on.
-        
-    Each internal node with `n` children is represented as a fatgraph
-    vertex with `n+1` edges; the first one connects the node with its
-    parent, and the other ones with the children, in the order they
-    were given in the constructor.  Terminal nodes (i.e., leaves) are
-    represented as edges with one loose end; that is, terminal nodes
-    are *not* represented as vertices.
-
-    Loose-end edges are given a negative index color, to easily
-    distinguish them from regular edges, and are not counted in the
-    `num_edges` attribute.
-
-      >>> Tree([(1, 2), (None, None), (3, None), (None, None)])
-      Fatgraph([Vertex([-1, 0, 1]), Vertex([0, -2, -3]),
-             Vertex([1, 2, -4]), Vertex([2, -5, -6])],
-             num_external_edges=6)
-
-    """
-    edge_to_parent = {}
-    next_external_edge_label = -2  # grows downwards: -2,-3,...
-    next_internal_edge_label = 0   # grows upwards: 1,2,...
-    internal_edge_endpoints_v = []
-    external_edge_endpoints_v = []
-    internal_edge_endpoints_i = []
-    external_edge_endpoints_i = []
-    vertices = []
-    next_vertex_index = 0
-    for cs in nodeseq:
-        # Edges incident to this vertex; for the root vertex, the
-        # connection to the parent node is just the first external
-        # edge (labeled `-1`)
-        edgeno = edge_to_parent.get(next_vertex_index, -1)
-        edges = [ edgeno ]
-        if edgeno < 0:
-            # external edge (only happens on first iteration)
-            external_edge_endpoints_v.append([next_vertex_index, None])
-            external_edge_endpoints_i.append([0, None])
-        else:
-            # internal edge, add this vertex as second endpoint
-            internal_edge_endpoints_v[edgeno].append(next_vertex_index)
-            internal_edge_endpoints_i[edgeno].append(0)
-        for child in cs:
-            if child is None:
-                # terminal node here
-                edges.append(next_external_edge_label)
-                external_edge_endpoints_v.append([next_vertex_index, None])
-                external_edge_endpoints_i.append([len(edges)-1, None])
-                next_external_edge_label -= 1
-            else:
-                # internal node here
-                edges.append(next_internal_edge_label)
-                edge_to_parent[child] = next_internal_edge_label
-                internal_edge_endpoints_v.append([next_vertex_index])
-                internal_edge_endpoints_i.append([len(edges)-1])
-                next_internal_edge_label += 1
-        vertices.append(vertextype(edges))
-        next_vertex_index += 1
-
-    return Fatgraph(vertices,
-                 endpoints = (internal_edge_endpoints_v +
-                                list(reversed(external_edge_endpoints_v)),
-                              internal_edge_endpoints_i +
-                                list(reversed(external_edge_endpoints_i))),
-                 num_edges = next_internal_edge_label,
-                 num_external_edges = -next_external_edge_label-1,
-                 vertextype=vertextype)
-
-
-class TreeIterator(BufferingIterator):
-    """Iterate over trees with a specified number of leaves.
-
-    Internal nodes are allowed to have any number of children: the
-    iterator is not restricted to binary trees.
-    """
-
-    def __init__(self, num_leaves):
-        self._internal_edges = num_leaves - 2
-
-        self._trees = [ Tree(zip(l,r))
-                        for l,r in AlgorithmB(num_leaves - 2) ]
-
-        BufferingIterator.__init__(self, self._trees)
-
-    def refill(self):
-        if self._internal_edges > 1:
-            self._internal_edges -= 1
-            l = self._internal_edges - 1 # label of edge to contract
-            new_trees = [ t.contract(l) for t in self._trees ]
-            self._trees = new_trees
-            return new_trees
-        else:
-            raise StopIteration
-
-
-def MgnGraphsInsertionGenerator(g,n):
-    """Iterate over all connected trivalent fatgraphs having the
-    prescribed genus `g` and number of boundary cycles `n`.
-    
-    Examples::
-
-      >>> for g in MgnGraphsInsertionGenerator(0,3): print g
-      Fatgraph([Vertex([1, 2, 1]), Vertex([2, 0, 0])]) 
-      Fatgraph([Vertex([1, 0, 2]), Vertex([2, 0, 1])])
-
-      >>> for g in MgnGraphsInsertionGenerator(1,1): print g
-      Fatgraph([Vertex([1, 0, 2]), Vertex([2, 1, 0])])
-
-    """
-
-    assert n > 0, \
-           "MgnGraphsInsertionGenerator: " \
-           " number of boundary cycles `n` must be positive,"\
-           " but got `%s` instead" % n
-    assert (g > 0) or (g == 0 and n >= 3), \
-           "MgnGraphsInsertionGenerator: " \
-           " Invalid (g,n) pair (%d,%d): "\
-           " need either g>0 or g==0 and n>2" \
-           % (g,n)
-
-    #: Unique (up to isomorphism) graphs found so far
-    graphs = []
-
-    #: Minimum number of edges of a (g,n)-graph
-    max_valence = 2 * (2*g + n - 1)
-
-    ## pass 1: Gather all roses.
-    logging.debug("  MgnGraphsInsertionGenerator: Computing roses with %d leaves ...", max_valence/2)
-    roses = []
-    discarded = 0
-    for rose in GivenValenceGraphsIterator((max_valence,)):
-        if (rose.genus() != g) \
-               or (rose.num_boundary_components() != n) \
-               or (rose in roses):
-            discarded += 1
-            continue
-        roses.append(rose)
-        # a rose is a valid fatgraph too
-        #graphs.extend(MakeNumberedGraphs(rose))
-    logging.debug("    MgnGraphsInsertionGenerator: Found %d distinct unique roses; discarded %d.",
-                 len(roses), discarded)
-
-    ## pass 2: Gather all 3-valent graphs.
-    trivalent = []
-    #: Full binary trees
-    logging.debug("  MgnGraphsInsertionGenerator: Computing full binary trees with %d leaves ...",
-                 max_valence - 3)
-    trees = [ Tree(zip(l,r))
-              for l,r in AlgorithmB(max_valence - 3) ]
-
-    logging.debug("  MgnGraphsInsertionGenerator: Computing trivalent fat graphs ...")
-    discarded = 0
-    for rose in roses:
-        # now substitute the unique vertex with any possible tree
-        # and any possible rotation
-        for places in xrange(max_valence):
-            # need to make a deep copy, because `Vertex` objects are shared
-            rotated_rose = Fatgraph([copy(rose[0])])
-            #rotated_rose = rose
-            rotated_rose[0].rotate(places)
-            for tree in trees:
-                graph = rotated_rose.graft(tree, 0)
-                if (graph.genus() != g) \
-                       or (graph.num_boundary_components() != n) \
-                       or (graph in trivalent):
-                    discarded += 1
-                    continue
-                trivalent.append(graph)
-    logging.debug("    MgnGraphsInsertionGenerator: Found %d distinct trivalent graphs, discarded %d.",
-                 len(trivalent), discarded)
-
-    return iter(trivalent)
-
-#MgnGraphsInsertionGenerator = persist.PersistedIterator(_MgnGraphsInsertionGenerator)
-
-
 @cache_iterator
 def MgnTrivalentGraphsRecursiveGenerator(g, n):
     """Iterate over all connected trivalent fatgraphs having the
@@ -2746,15 +2227,6 @@ class MgnGraphsIterator(BufferingIterator):
 
     """
 
-##     __slots__ = [
-##         '_batch',
-##         '_current_edge',
-##         '_num_vertices',
-##         '_vertextype',
-##         'g',
-##         'n',
-##         ]
-
     def __init__(self, g, n, trivalent_graphs_generator=MgnTrivalentGraphsRecursiveGenerator):
         assert n > 0, \
                "MgnGraphsIterator: " \
@@ -2862,7 +2334,6 @@ class MgnNumberedGraphsIterator(BufferingIterator):
     """
 
     def __init__(self, g, n, vertextype=VertexCache()):
-        #self.__naked_graphs_iterator = MgnGraphsIterator(g, n)
         self.__naked_graphs_iterator = MgnGraphsIterator(g, n)
         BufferingIterator.__init__(self)
 

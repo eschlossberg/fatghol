@@ -15,7 +15,6 @@ import logging
 from graph_homology import FatgraphComplex
 from rg import (
     Fatgraph,
-    ConnectedGraphsIterator,
     MgnGraphsIterator,
     )
 from utils import positive_int
@@ -138,14 +137,6 @@ def do_valences(g,n):
     return vertex_valences_for_given_g_and_n(g,n)
 
 
-def do_vertices(valences):
-    """Return all graphs with vertices of prescribed valences."""
-    logging.debug("Computing graphs with vertex valences %s ...", valences)
-    graphs = list(ConnectedGraphsIterator(valences))
-    logging.debug("Found %d distinct graphs.", len(graphs))
-    return graphs
-
-
 
 ## main
 
@@ -160,9 +151,6 @@ parser = OptionParser(usage="""Usage: %prog [options] action [arg ...]
 
       graphs G N
         Print the graphs occurring in M_{g,n}
-
-      vertices V1,V2,...
-        Print the graphs having only vertices of the specified valences.
 
       homology G N
         Print homology ranks of M_{g,n}
@@ -328,7 +316,7 @@ elif 'selftest' == args[0]:
                   % (g,n,hs,ok))
         
 
-# vertices -- show vertices for given g,n
+# valences -- show vertex valences for given g,n
 elif 'valences' == args[0]:
     del args[0]
     if len(args) < 2:
