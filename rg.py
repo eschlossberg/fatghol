@@ -5,14 +5,14 @@
 __docformat__ = 'reStructuredText'
 
 
-import debug
-import pydb, sys
+import debug, pydb, sys
 sys.excepthook = pydb.exception_hook
+
 
 from combinatorics import (
     InplacePermutationIterator,
     SetProductIterator,
-    Permutation
+    Permutation,
     )
 from cyclicseq import CyclicList,CyclicTuple
 from utils import (
@@ -53,8 +53,37 @@ class Vertex(CyclicList):
     #   2) we could not implement `rotate()` and friends: tuples are
     #      immutable.
 
-    def __repr__(self):
-        return "Vertex(%s)" % CyclicList.__repr__(self)
+    def __cmp__(self, other):
+        """Return negative if x<y, zero if x==y, positive if x>y.
+        Unlike standard Python sequence comparison, vertices with
+        lower valence come first, and two vertices are only compared
+        lexicographically if they have the same valence::
+
+          >>> cmp(Vertex([0,1,2]), Vertex([0,1,2,3,4]))
+          -1
+          >>> cmp(Vertex([0,1,2,3,4]), Vertex([0,1,2]))
+          1
+          
+          >>> cmp(Vertex([0,1,2]), Vertex([0,1,2]))
+          0
+          
+          >>> cmp(Vertex([0,1,2,3]), Vertex([0,0,1,1]))
+          1
+          >>> cmp(Vertex([0,0,1,1]), Vertex([0,1,2,3]))
+          -1
+          
+        """
+        result = cmp(len(self), len(other))
+        if 0 == result:
+            if super(Vertex, self).__eq__(other):
+                return 0
+            else:
+                if super(Vertex, self).__lt__(other):
+                    return -1
+                else:
+                    return +1
+        return result
+
     def __str__(self):
         return repr(self)
     
@@ -158,12 +187,13 @@ class Graph(object):
                " sequence of `Vertex` instances."
 
         #: list of vertices 
-        self.vertices = vertices # FIXME: should be tuple?
-
+        self.vertices = vertices
+##         pv = SortingPermutation(self.vertices)
+##         pv[None] = None # needed for graphs with external edges
+        
         #: list of vertex valences 
-        # FIXME: should this be sorted?
-        self._vertex_valences = kwargs.get('_vertex_valences',
-                                           tuple(len(v) for v in vertices))
+        self._vertex_valences = tuple(sorted(kwargs.get('_vertex_valences',
+                                                        (len(v) for v in vertices))))
 
         #: edge sequence from which this is/could be built
         self.edge_seq = kwargs.get('edge_seq',
@@ -220,8 +250,10 @@ class Graph(object):
                                % (edge, self.num_edges)
                     self.endpoints[edge].append(current_vertex_index)
         else:
+##             self.endpoints = [ tuple(pv.itranslate(ep))
+##                                for ep in kwargs.get('endpoints') ]
             self.endpoints = kwargs.get('endpoints')
-
+            
         assert self._ok()
 
     def _ok(self):
@@ -297,18 +329,52 @@ class Graph(object):
         numbering on the source graph onto the numbering of the
         destination)::
 
-          >>> Graph([Vertex([2,0,1]), Vertex([2,1,0])], numbering=[0,1,2]) \
-                == Graph([Vertex([2,0,1]), Vertex([2,1,0])], numbering=[0,2,1])
+          >>> Graph([Vertex([2,0,1]), Vertex([2,1,0])], \
+                     numbering={CyclicTuple((0,1)): 0, \
+                                CyclicTuple((0,2)): 1, \
+                                CyclicTuple((2,1)): 2 } ) \
+              == Graph([Vertex([2,0,1]), Vertex([2,1,0])], \
+                        numbering={CyclicTuple((1,0)): 0, \
+                                   CyclicTuple((0,2)): 2, \
+                                   CyclicTuple((2,1)): 1})
           True
 
-          >>> Graph([Vertex([1, 0, 0, 2, 2, 1])], numbering=[0, 1, 3, 2]) \
-                == Graph([Vertex([2, 2, 1, 1, 0, 0])], numbering=[0, 1, 3, 2])
+          >>> Graph([Vertex([1, 0, 0, 2, 2, 1])], \
+                     numbering={CyclicTuple((2,)):    0, \
+                                CyclicTuple((0,2,1)): 1, \
+                                CyclicTuple((0,)):    3, \
+                                CyclicTuple((1,)):    2 }) \
+                == Graph([Vertex([2, 2, 1, 1, 0, 0])], \
+                          numbering={CyclicTuple((2,)):    0, \
+                                     CyclicTuple((0,)):    1, \
+                                     CyclicTuple((2,1,0)): 3, \
+                                     CyclicTuple((1,)):    2})
           False
         
-          >>> Graph([Vertex([1, 0, 0, 2, 2, 1])], numbering=[0, 1, 3, 2]) \
-                == Graph([Vertex([2, 2, 1, 1, 0, 0])], numbering=[3, 0, 2, 1])
+          >>> Graph([Vertex([1, 0, 0, 2, 2, 1])], \
+                     numbering={CyclicTuple((2,)):    0, \
+                                CyclicTuple((0,2,1)): 1, \
+                                CyclicTuple((0,)):    3, \
+                                CyclicTuple((1,)):    2 }) \
+                == Graph([Vertex([2, 2, 1, 1, 0, 0])], \
+                          numbering={CyclicTuple((2,)):    3, \
+                                     CyclicTuple((0,)):    0, \
+                                     CyclicTuple((2,1,0)): 2, \
+                                     CyclicTuple((1,)):    1 })
+          False
+
+          >>> Graph([Vertex([3, 2, 2, 0, 1]), Vertex([3, 1, 0])], \
+                    numbering={CyclicTuple((2,)):      0,  \
+                               CyclicTuple((0, 1)):    1,  \
+                               CyclicTuple((3, 1)):    2,  \
+                               CyclicTuple((0, 3, 2)): 3}) \
+              == Graph([Vertex([2, 3, 1]), Vertex([2, 1, 3, 0, 0])], \
+                       numbering={CyclicTuple((0,)):      0, \
+                                  CyclicTuple((1, 3)):    2, \
+                                  CyclicTuple((3, 0, 2)): 3, \
+                                  CyclicTuple((2, 1)):    1})
           True
-        
+          
           """
         assert isinstance(other, Graph), \
                "Graph.__eq__:" \
@@ -316,20 +382,18 @@ class Graph(object):
         # shortcuts
         if ((self.num_edges != other.num_edges)
             or (self.num_vertices != other.num_vertices)
-            or (self._vertex_valences != other._vertex_valences)
-##             or (self._boundary_components != other._boundary_components)
-            ):
+            or (self._vertex_valences != other._vertex_valences)):
             return False
         if (self.vertices == other.vertices) \
+           and (self.endpoints == other.endpoints) \
            and (self.numbering == other.numbering):
             return True
 
         # else, go the long way: try to find an explicit isomorphims
         # between graphs `self` and `other`
-        isomorphisms = MorphismIteratorFactory(self.valence_spectrum())
         try:
             # if there is any morphism, then return `True`
-            isomorphisms(self, other).next()
+            self.isomorphisms_to(other).next()
             return True
         except StopIteration:
             # list of morphisms is empty, graphs are not equal.
@@ -344,6 +408,12 @@ class Graph(object):
     def __iter__(self):
         """Return iterator over vertices."""
         return iter(self.vertices)
+
+    # both `__eq__` and `__ne__` are needed for testing equality of objects;
+    # see `<http://www.voidspace.org.uk/python/articles/comparison.shtml>`
+    def __ne__(self, other):
+        """The opposite of `__eq__` (which see)."""
+        return not self.__eq__(other)
 
     def __repr__(self):
         extra = dict((x,getattr(self, x))
@@ -361,10 +431,10 @@ class Graph(object):
     def automorphisms(self):
         """Enumerate automorphisms of this `Graph` object.
 
-        See `MorphismIteratorFactory` for details of how a `Graph`
+        See `.isomorphisms_to()` for details of how a `Graph`
         isomorphism is represented.
         """
-        return MorphismIteratorFactory(self.valence_spectrum())(self, self)
+        return self.isomorphisms_to(self)
 
     
     def boundary_components(self):
@@ -374,16 +444,16 @@ class Graph(object):
         edges::
 
           >>> Graph([Vertex([2,1,0]),Vertex([2,0,1])]).boundary_components()
-          [(2, 0), (1, 2), (0, 1)]
+          set([CyclicTuple((0, 1)), CyclicTuple((1, 2)), CyclicTuple((2, 0))])
 
         If both sides of an edge belong to the same boundary
         component, that edge appears twice in the list::
 
           >>> Graph([Vertex([2,1,1]),Vertex([2,0,0])]).boundary_components()
-          [(2, 0, 2, 1), (1,), (0,)]
+          set([CyclicTuple((2, 0, 2, 1)), CyclicTuple((0,)), CyclicTuple((1,))])
           
           >>> Graph([Vertex([2,1,0]),Vertex([2,1,0])]).boundary_components()
-          [(2, 1, 0, 2, 1, 0)]
+          set([CyclicTuple((2, 1, 0, 2, 1, 0))])
           
         """
         assert self.num_external_edges == 0, \
@@ -482,7 +552,7 @@ class Graph(object):
           >>> Graph([Vertex([2,2,0]), Vertex([0,1,1])]).contract(0)
           Graph([Vertex([1, 1, 0, 0])])
           >>> Graph([Vertex([2,1,0]), Vertex([2,0,1])]).contract(1)
-          Graph([Vertex([1, 0, 0, 1])])
+          Graph([Vertex([0, 1, 1, 0])])
 
         The M_{1,1} trivalent graph yield the same result no matter
         what edge is contracted::
@@ -490,7 +560,7 @@ class Graph(object):
           >>> Graph([Vertex([2,1,0]), Vertex([2,1,0])]).contract(0)
           Graph([Vertex([1, 0, 1, 0])])
           >>> Graph([Vertex([2,1,0]), Vertex([2,1,0])]).contract(1)
-          Graph([Vertex([1, 0, 1, 0])])
+          Graph([Vertex([0, 1, 0, 1])])
           >>> Graph([Vertex([2,1,0]), Vertex([2,1,0])]).contract(2)
           Graph([Vertex([1, 0, 1, 0])])
 
@@ -499,17 +569,17 @@ class Graph(object):
 
           >>> g1 = Graph([Vertex([2,1,1]), Vertex([2,0,0])])
           >>> g1.boundary_components() # compute b.c.'s
-          [(2, 0, 2, 1), (1,), (0,)]
+          set([CyclicTuple((2, 0, 2, 1)), CyclicTuple((0,)), CyclicTuple((1,))])
           >>> g2 = g1.contract(2)
           >>> g2.boundary_components()
-          [(0, 1), (1,), (0,)]
+          set([CyclicTuple((0,)), CyclicTuple((0, 1)), CyclicTuple((1,))])
 
           >>> g1 = Graph([Vertex([2,1,0]), Vertex([2,0,1])])
           >>> g1.boundary_components() # compute b.c.'s
-          [(2, 0), (1, 2), (0, 1)]
+          set([CyclicTuple((0, 1)), CyclicTuple((1, 2)), CyclicTuple((2, 0))])
           >>> g2 = g1.contract(2)
           >>> g2.boundary_components()
-          [(0,), (1,), (0, 1)]
+          set([CyclicTuple((0,)), CyclicTuple((0, 1)), CyclicTuple((1,))])
 
         In the above examples, notice that any reference to edge `2`
         has been removed from the boundary cycles after contraction.
@@ -521,23 +591,24 @@ class Graph(object):
         assert (self.endpoints[edgeno][0] is not None) \
                and (self.endpoints[edgeno][1] is not None), \
                "Graph.contract: cannot contract an external edge."
-        assert edgeno >= 0, \
+        assert (edgeno >= 0) and (edgeno < self.num_edges), \
                "Graph.contract: invalid edge number (%d):"\
                " must be in range 0..%d" \
                % (edgeno, self.num_edges)
+
         # store position of the edge to be contracted at the endpoints
-        i1 = self.endpoints[edgeno][0]
-        i2 = self.endpoints[edgeno][1]
+        i1 = min(self.endpoints[edgeno])
+        i2 = max(self.endpoints[edgeno])
         pos1 = self.vertices[i1].index(edgeno)
         pos2 = self.vertices[i2].index(edgeno)
 
         # Build new list of vertices, removing the contracted edge and
         # shifting all indices above:
         #   - edges numbered 0..edgeno-1 are unchanged;
-        #   - edges numbered `edgeno+1`.. are renumbered, shifting the number
-        #     down one position.
-        renumber_edges = dict((i,i-1)
-                              for i in xrange(edgeno+1, self.num_edges+1))
+        #   - edges numbered `edgeno+1`.. are renumbered, 
+        #     shifting the number down one position.
+        renumber_edges = dict((i+1,i)
+                              for i in xrange(edgeno, self.num_edges))
         #   - edge `edgeno` is removed (subst with `None`)
         renumber_edges[edgeno] = None  
         # See `itranslate` in utils.py for how this prescription is
@@ -569,15 +640,12 @@ class Graph(object):
         del new_vertices[i2]
 
         # vertices with index above `i2` are now shifted down one place
-        renumber_vertices = dict((i,i-1)
-                                 for i in xrange(i2 + 1, self.num_vertices))
+        renumber_vertices = dict((i+1,i)
+                                 for i in xrange(i2, self.num_vertices))
         # vertex `i2` is mapped to vertex `i1`
         renumber_vertices[i2] = i1
-        new_endpoints = [ tuple(itranslate(renumber_vertices, e))
-                          for e in  self.endpoints ]
-        # edges incident to old vertex `i2` are now incident to new vertex `i1`
-        for edge in v2:
-            new_endpoints[edge] = tuple(itranslate({i2:i1}, new_endpoints[edge]))
+        new_endpoints = [ tuple(itranslate(renumber_vertices, ep))
+                          for ep in  self.endpoints ]
         del new_endpoints[edgeno]
         
         numbering = None
@@ -591,10 +659,11 @@ class Graph(object):
                 bc = set(numbering.iterkeys())
             else:
                 bc = set(CyclicTuple(itranslate(renumber_edges, c))
-                          for c in self._boundary_components)
-
+                         for c in self._boundary_components)
+        
         # build new graph in canonical form
-        return Graph([ v.make_canonical() for v in new_vertices ],
+        #return Graph([ v.make_canonical() for v in new_vertices ],
+        return Graph(new_vertices,
                      vertex_factory=self._vertex_factory,
                      endpoints = new_endpoints,
                      num_edges = self.num_edges - 1,
@@ -648,13 +717,12 @@ class Graph(object):
                                 for (n,l) in enumerate(self.vertices[v]))
 
         # the first `v-1` vertices of the new graph are the first
-        # `v-1` vertices of `self`
-        # then come vertices `v+1`,... of `self`
-        # vertices from `G` come last in the new graph
-        new_vertices = self.vertices[:v] \
-                       + self.vertices[v+1:] \
-                       + [ vertextype(itranslate(renumber_g_edges, gv))
-                           for gv in G.vertices ]
+        # `v-1` vertices of `self`; then come vertices `v+1`,... of
+        # `self`; vertices from `G` come last in the new graph
+        new_vertices = (self.vertices[:v] 
+                        + self.vertices[v+1:] 
+                        + [ vertextype(itranslate(renumber_g_edges, gv))
+                            for gv in G.vertices ])
 
 ##         # map each mated edge in `self` with the endpoint of the
 ##         # corresponding external edge in `G`
@@ -676,34 +744,34 @@ class Graph(object):
                      num_edges = self.num_edges + G.num_edges,
                      num_external_edges = self.num_external_edges)
 
-    def is_oriented(self):
-        """Return `True` if `Graph` is orientable.
 
-        A ribbon graph is orientable iff it has no
-        orientation-reversing automorphism.
+    def is_canonical(self):
+        """Return `True` if this `Graph` object is canonical.
 
-        Enumerate all automorphisms of `graph`, end exits with `False`
-        result as soon as one orientation-reversing one is found.
+        A graph is canonical iff:
+        1) Each vertex is represented by the maximal sequence, among all
+           sequences representing the same cyclic order.
+        2) Vertices are sorted in lexicographic order.
 
         Examples::
-
-          >>> Graph([Vertex([1,0,1,0])]).is_oriented()
-          True
-
-          >>> Graph([Vertex([2, 0, 1]), Vertex([2, 0, 1])]).is_oriented()
-          True
-          
-          >>> Graph([Vertex([2, 1, 0]), Vertex([2, 0, 1])]).is_oriented()
-          True
-          
-          >>> Graph([Vertex([2, 1, 1]), Vertex([2, 0, 0])]).is_oriented()
-          True
+          >>> Graph([Vertex([2,1,0]), Vertex([2,1,0])]).is_canonical()
+          True             
+          >>> Graph([Vertex([2,1,0]), Vertex([2,0,1])]).is_canonical()
+          True             
+          >>> Graph([Vertex([2,0,1]), Vertex([2,1,0])]).is_canonical()
+          False
+          >>> Graph([Vertex([0,1,2]), Vertex([2,1,0])]).is_canonical()
+          False 
         """
-        for a in self.automorphisms():
-            if self.is_orientation_reversing(a):
+        previous_vertex = None
+        for vertex in self.vertices:
+            if not vertex.is_canonical_representative():
                 return False
-        # no orientation reversing automorphism found
+            if previous_vertex and (previous_vertex < vertex):
+                return False
+            previous_vertex = vertex
         return True
+
 
     def is_connected(self):
         """Return `True` if graph is connected.
@@ -742,6 +810,7 @@ class Graph(object):
                 visited_vertices.add(vi)
         return (len(visited_vertices) == len(self.vertices))
 
+
     def is_loop(self, edge):
         """Return `True` if `edge` is a loop (i.e., the two endpoint coincide).
         """
@@ -753,39 +822,207 @@ class Graph(object):
         this `Graph` instance."""
         pv = automorphism[0]
         result = pv.sign()
-        for (e0, e1) in [ (pv[e[0]], pv[e[1]])
-                          for e in self.endpoints ]:
-            if e0 > e1:
-               result = -result 
+        def arrow(endpoints):
+            if endpoints[0]>endpoints[1]:
+                return -1
+            else:
+                return +1
+        for before_ep, after_ep in izip(self.endpoints,
+                                        [ (pv[e[0]], pv[e[1]])
+                                          for e in self.endpoints ]):
+            result *= arrow(before_ep)*arrow(after_ep)
         return (-1 == result)
 
-    def is_canonical(self):
-        """Return `True` if this `Graph` object is canonical.
 
-        A graph is canonical iff:
-        1) Each vertex is represented by the maximal sequence, among all
-           sequences representing the same cyclic order.
-        2) Vertices are sorted in lexicographic order.
+    def is_oriented(self):
+        """Return `True` if `Graph` is orientable.
+
+        A ribbon graph is orientable iff it has no
+        orientation-reversing automorphism.
+
+        Enumerate all automorphisms of `graph`, end exits with `False`
+        result as soon as one orientation-reversing one is found.
 
         Examples::
-          >>> Graph([Vertex([2,1,0]), Vertex([2,1,0])]).is_canonical()
-          True             
-          >>> Graph([Vertex([2,1,0]), Vertex([2,0,1])]).is_canonical()
-          True             
-          >>> Graph([Vertex([2,0,1]), Vertex([2,1,0])]).is_canonical()
-          False
-          >>> Graph([Vertex([0,1,2]), Vertex([2,1,0])]).is_canonical()
-          False 
+
+          >>> Graph([Vertex([1,0,1,0])]).is_oriented()
+          True
+
+          >>> Graph([Vertex([2, 0, 1]), Vertex([2, 0, 1])]).is_oriented()
+          True
+          
+          >>> Graph([Vertex([2, 1, 0]), Vertex([2, 0, 1])]).is_oriented()
+          True
+          
+          >>> Graph([Vertex([2, 1, 1]), Vertex([2, 0, 0])]).is_oriented()
+          True
+
+          >>> Graph([Vertex([3, 2, 2, 0, 1]), Vertex([3, 1, 0])], \
+                    numbering={CyclicTuple((2,)):      0,  \
+                               CyclicTuple((0, 1)):    1,  \
+                               CyclicTuple((3, 1)):    2,  \
+                               CyclicTuple((0, 3, 2)): 3}) \
+                               .is_oriented()
+          True
+          >>> Graph([Vertex([2, 3, 1]), Vertex([2, 1, 3, 0, 0])], \
+                       numbering={CyclicTuple((0,)):      0,  \
+                                  CyclicTuple((1, 3)):    2,  \
+                                  CyclicTuple((3, 0, 2)): 3,  \
+                                  CyclicTuple((2, 1)):    1}) \
+                               .is_oriented()
+          True
         """
-        previous_vertex = None
-        for vertex in self.vertices:
-            if not vertex.is_canonical_representative():
+        for a in self.automorphisms():
+            if self.is_orientation_reversing(a):
                 return False
-            if previous_vertex and (previous_vertex < vertex):
-                return False
-            previous_vertex = vertex
+        # no orientation reversing automorphism found
         return True
 
+    def isomorphisms_to(self, other):
+        """Iterate over isomorphisms from `self` to `other`.
+
+        An isomorphism is represented by a tuple `(pv, rot, pe)` where:
+
+          - `pv` is a permutation of ther vertices: the `i`-th vertex
+            of `g1` is sent to the `pv[i]`-th vertex of `g2`, rotated
+            by `rot[i]` places leftwards;
+
+          - `pe` is a permutation of the edge colors: edge `i` in `g1`
+            is mapped to edge `pe[i]` in `g2`.
+
+        This method can iterate over the automorphism group of a
+        graph::
+
+          >>> g1 = Graph([Vertex([2, 1, 1]), Vertex([2, 0, 0])])
+          >>> for f in g1.isomorphisms_to(g1): print f
+          ({0: 1, 1: 0}, (0, 0), {0: 1, 1: 0, 2: 2})
+          ({0: 0, 1: 1}, (0, 0), {0: 0, 1: 1, 2: 2})
+
+        Or it can find the isomorphisms between two given graphs::
+
+          >>> for f in g1.isomorphisms_to(Graph([Vertex([2, 2, 0]), \
+                                                 Vertex([1, 1, 0])])):
+          ...   print f
+          ({0: 1, 1: 0}, (1, 1), {0: 2, 1: 1, 2: 0})
+          ({0: 0, 1: 1}, (1, 1), {0: 1, 1: 2, 2: 0})
+
+        If there are no isomorphisms connecting the two graphs, then no
+        item is returned by the iterator::
+
+          >>> g2 = Graph([Vertex([2, 1, 0]), Vertex([2, 0, 1])])
+          >>> list(g1.isomorphisms_to(g2))
+          []
+
+        """
+        ## Compute all permutations of vertices that preserve valence.
+        ## (A permutation `p` preserves vertex valence if vertices `v`
+        ## and `p[v]` have the same valence.)
+        vs1 = self.valence_spectrum()
+        vs2 = other.valence_spectrum()
+        
+        # save valences as we have no guarantees that keys() method
+        # will always return them in the same order
+        valences = vs1.keys()
+
+        assert set(valences) == set(vs2.keys()), \
+               "Graph.isomorphisms_to: "\
+               " graphs `%s` and `%s` differ in vertex valences: `%s` vs `%s`" \
+               % (self, other, valences, vs2.keys())
+        assert dict((val, len(vs1[val])) for val in valences) \
+               == dict((val, len(vs2[val])) for val in valences), \
+               "Graph.isomorphisms_to: graphs `%s` and `%s`" \
+               " have unequal vertex distribution by valence: `%s` vs `%s`" \
+               % (self, other, vs1, vs2)
+        
+        # it's easier to compute vertex-preserving permutations
+        # starting from the order vertices are given in the valence
+        # spectrum; will rearrange them later.
+        domain = Permutation(concat([ vs1[val] for val in valences ]))
+        codomain = Permutation()
+        codomain.update(dict(concat(zip(vs1[val],vs2[val]) for val in valences)))
+        permutations_of_vertices_of_same_valence = [
+            [ tuple(codomain.itranslate(p))
+              for p in InplacePermutationIterator(vs1[val]) ]
+            for val in valences
+            ]
+
+        #: Permutations of the vertex order that preserve valence.
+        candidate_pvs = [
+            domain.rearrange(concat(ps))
+            for ps
+            in SetProductIterator(permutations_of_vertices_of_same_valence)
+            ]
+
+        # use "repetition patterns" to avoid mapping loop-free
+        # vertices into vertices with loops, and viceversa.
+        # FIXME: as loop-free vertices are much more common than
+        # looped ones, this might turn out to be slower than just
+        # checking all possible rotations.  Maybe just check
+        # the number of loops instead of building the full repetition pattern?
+        rps1 = [ v.repetition_pattern() for v in self.vertices ]
+        rps2 = [ v.repetition_pattern() for v in other.vertices ]
+        for vertex_index_map in candidate_pvs:
+            pvrots = [ [] for x in xrange(len(self.vertices)) ]
+            for (j, (b1, rp1), (b2, rp2)) \
+                    in izip(count(),
+                            rps1,
+                            (rps2[i] for i in vertex_index_map)):
+                # Items in pvrots are lists (of length
+                # `self.num_vertices`), composed of tuples
+                # `(i1,b1+s,i2,b2)`, meaning that vertex at index
+                # `i1` in `self` should be mapped to vertex at index
+                # `i2` in `other` with shift `s` and bases `b1` and `b2`
+                # (that is, `self.vertices[i1][b1+s:b1+s+len]` should be
+                # mapped linearly onto `other.vertices[i2][b2:b2+len]`).
+                # `rp1` is a kind of "derivative" of `v1`; we gather
+                # the displacement `b1+s` for `v1` by summing elements
+                # of rp1 up to -but not including- the `s`-th.
+                pvrots[j].extend([ (j,b1+sum(rp1[:s]),vertex_index_map[j],b2)
+                                   for s
+                                   in rp1.all_shifts_for_linear_eq(rp2) ])
+            for pvrot in SetProductIterator(pvrots):
+                pe = Permutation()
+                pe_is_ok = True  # optimistic default
+                for (i1,b1,i2,b2) in pvrot:
+                    v1 = self.vertices[i1]
+                    v2 = other.vertices[i2]
+                    if not pe.extend(v1[b1:b1+len(v1)],
+                                     v2[b2:b2+len(v2)]):
+                        # cannot extend, proceed to next `pvrot`
+                        pe_is_ok = False
+                        break
+                if pe_is_ok and (len(pe) > 0):
+                    pv = Permutation(t[2] for t in pvrot)
+                    # Check that the combined action of `pv` and `pe`
+                    # preserves the adjacency relation.  Note:
+                    #   - we make list comprehensions of both adjacency lists
+                    #     to avoid inverting `pe`: that is, we compare the
+                    #     the adjacency lists in the order they have in `self`,
+                    #     but with the vertex numbering from `other`;
+                    #   - elements of the adjacency lists are made into
+                    #     `set`s for unordered comparison;
+                    if 0 != cmp([ set(other.endpoints[pe[x]])
+                                  for x in xrange(other.num_edges) ],
+                                [ set(pv.itranslate(self.endpoints[x]))
+                                  for x in xrange(self.num_edges) ]):
+                        continue # to next `pvrot`
+                    if self.numbering is not None:
+                        assert other.numbering is not None, \
+                               "Graph.isomorphisms_to: " \
+                               "Numbered and un-numbered graphs mixed in arguments."
+                        assert len(self.numbering) == len(other.numbering), \
+                               "Graph.isomorphisms_to: " \
+                               "Arguments differ in number of boundary components."
+                        pe_does_not_preserve_bc = False
+                        for bc in self.boundary_components():
+                            if self.numbering[bc] != \
+                                   other.numbering[CyclicTuple(pe.itranslate(bc))]:
+                                pe_does_not_preserve_bc = True
+                                break
+                        if pe_does_not_preserve_bc:
+                            continue # to next `pvrot`
+                    rots = tuple(t[1]-t[3] for t in pvrot)
+                    yield (pv, rots, pe)
     
     def num_boundary_components(self):
         """Return the number of boundary components of this `Graph` object.
@@ -812,10 +1049,9 @@ class Graph(object):
         assert isinstance(other, Graph), \
                "Graph.__eq__:" \
                " called with non-Graph argument `other`: %s" % other
-        isomorphisms = MorphismIteratorFactory(self.valence_spectrum())
         try:
             # if there is any morphism, then return `True`
-            iso = isomorphisms(self, other).next()
+            iso = self.isomorphisms_to(other).next()
             pv = iso[0]
             result = pv.sign()
             for (e0, e1) in [ (pv[e[0]], pv[e[1]])
@@ -851,167 +1087,18 @@ class Graph(object):
                     self._valence_spectrum[l].append(index)
                 else:
                     self._valence_spectrum[l] = [index]
+            # consistency checks
+            assert set(self._valence_spectrum.keys()) == set(self._vertex_valences), \
+                   "Graph.valence_spectrum:" \
+                   "Computed valence spectrum `%s` does not exhaust all " \
+                   " vertex valences %s" \
+                   % (self._valence_spectrum, self._vertex_valences)
+            assert set(concat(self._valence_spectrum.values())) \
+                   == set(range(self.num_vertices)), \
+                   "Graph.valence_spectrum:" \
+                   "Computed valence spectrum `%s` does not exhaust all " \
+                   " %d vertex indices" % (self._valence_spectrum, self.num_vertices)
         return self._valence_spectrum
-        
-
-class MorphismIteratorFactory(object):
-    """Make iterators over isomorphisms of graphs with a given valence
-    spectrum.
-
-    An isomorphism is represented by a tuple `(pv, rot, pe)` where:
-
-      - `pv` is a permutation of ther vertices: the `i`-th vertex
-        of `g1` is sent to the `pv[i]`-th vertex of `g2`, rotated
-        by `rot[i]` places leftwards;
-
-      - `pe` is a permutation of the edge colors: edge `i` in `g1`
-        is mapped to edge `pe[i]` in `g2`.
-
-    Create a `MorphismIteratorFactory` instance with the "valence
-    spectrum" of a graph (see the `.valence_spectrum()` method of the
-    `Graph` class)::
-
-      >>> g1 = Graph([Vertex([2, 1, 1]), Vertex([2, 0, 0])])
-      >>> morphisms=MorphismIteratorFactory(g1.valence_spectrum())
-
-    A `MorphismIteratorFactory` instance can be used to iterate over
-    the automorphism group of a graph::
-    
-      >>> for f in morphisms(g1, g1): print f
-      ({0: 1, 1: 0}, (0, 0), {0: 1, 1: 0, 2: 2})
-      ({0: 0, 1: 1}, (0, 0), {0: 0, 1: 1, 2: 2})
-
-    Or it can find the isomorphisms between two given graphs::
-    
-      >>> for f in morphisms(g1, \
-                             Graph([Vertex([2, 2, 0]), Vertex([1, 1, 0])])):
-      ...   print f
-      ({0: 1, 1: 0}, (1, 1), {0: 2, 1: 1, 2: 0})
-      ({0: 0, 1: 1}, (1, 1), {0: 1, 1: 2, 2: 0})
-
-    Note that you can re-use the same `MorphismIteratorFactory`
-    instance for graphs having the same valence spectrum::
-    
-      >>> g2 = Graph([Vertex([2, 1, 0]), Vertex([2, 0, 1])])
-      >>> for f in morphisms(g2, g2):
-      ...   print f
-      ({0: 1, 1: 0}, (0, 0), {0: 1, 1: 0, 2: 2})
-      ({0: 1, 1: 0}, (2, 1), {0: 2, 1: 1, 2: 0})
-      ({0: 1, 1: 0}, (1, 2), {0: 0, 1: 2, 2: 1})
-      ({0: 0, 1: 1}, (0, 0), {0: 0, 1: 1, 2: 2})
-      ({0: 0, 1: 1}, (2, 1), {0: 2, 1: 0, 2: 1})
-      ({0: 0, 1: 1}, (1, 2), {0: 1, 1: 2, 2: 0})
-
-    If there are no isomorphisms connecting the two graphs, then no
-    item is returned by the iterator::
-
-      >>> list(morphisms(g1, g2))
-      []
-    """
-
-    __slots__ = [
-        '_candidate_pvs',
-        ]
-
-    def __init__(self, valence_spectrum):
-        """Constructor, taking graph valence spectrum.
-        """
-        ## Compute all permutations of vertices that preserve valence.
-        ## (A permutation `p` preserves vertex valence if vertices `v`
-        ## and `p[v]` have the same valence.)
-
-        # save valences as we have no guarantees that keys() method
-        # will always return them in the same order
-        valences = valence_spectrum.keys()
-
-        # it's easier to compute vertex-preserving permutations
-        # starting from the order vertices are given in the valence
-        # spectrum; will rearrange them later.
-        domain = Permutation(concat([ valence_spectrum[v] for v in valences ]))
-        permutations_of_vertices_of_same_valence = [
-            [ copy(p) for p in InplacePermutationIterator(valence_spectrum[v]) ]
-            for v in valences
-            ]
-
-        #: Permutations of the vertex order that preserve valence.
-        self._candidate_pvs = [
-            domain.rearrange(concat(ps))
-            for ps
-            in SetProductIterator(permutations_of_vertices_of_same_valence)
-            ]
-
-    def __call__(self, g1, g2):
-        """Return iterator over all isomorphisms from `g1` to `g2`."""
-        # use "repetition patterns" to avoid mapping loop-free
-        # vertices into vertices with loops, and viceversa.
-        # FIXME: as loop-free vertices are much more common than
-        # looped ones, this might turn out to be slower than just
-        # checking all possible rotations.  Maybe just check
-        # the number of loops instead of building the full repetition pattern?
-        rps1 = [ v.repetition_pattern() for v in g1.vertices ]
-        rps2 = [ v.repetition_pattern() for v in g2.vertices ]
-        for vertex_index_map in self._candidate_pvs:
-            pvrots = [ [] for x in xrange(len(g1.vertices)) ]
-            for (j, (b1, rp1), (b2, rp2)) \
-                    in izip(count(),
-                            rps1,
-                            (rps2[i] for i in vertex_index_map)):
-                # Items in pvrots are lists (of length
-                # `g1.num_vertices`), composed of tuples
-                # `(i1,b1+s,i2,b2)`, meaning that vertex at index
-                # `i1` in `g1` should be mapped to vertex at index
-                # `i2` in `g2` with shift `s` and bases `b1` and `b2`
-                # (that is, `g1.vertices[i1][b1+s:b1+s+len]` should be
-                # mapped linearly onto `g2.vertices[i2][b2:b2+len]`).
-                # `rp1` is a kind of "derivative" of `v1`; we gather
-                # the displacement `b1+s` for `v1` by summing elements
-                # of rp1 up to -but not including- the `s`-th.
-                pvrots[j].extend([ (j,b1+sum(rp1[:s]),vertex_index_map[j],b2)
-                                   for s
-                                   in rp1.all_shifts_for_linear_eq(rp2) ])
-            for pvrot in SetProductIterator(pvrots):
-                pe = Permutation()
-                pe_is_ok = True  # optimistic default
-                for (i1,b1,i2,b2) in pvrot:
-                    v1 = g1.vertices[i1]
-                    v2 = g2.vertices[i2]
-                    if not pe.extend(v1[b1:b1+len(v1)],
-                                     v2[b2:b2+len(v2)]):
-                        # cannot extend, proceed to next `pvrot`
-                        pe_is_ok = False
-                        break
-                if pe_is_ok and (len(pe) > 0):
-                    pv = Permutation(t[2] for t in pvrot)
-                    # Check that the combined action of `pv` and `pe`
-                    # preserves the adjacency relation.  Note:
-                    #   - we make list comprehensions of both adjacency lists
-                    #     to avoid inverting `pe`: that is, we compare the
-                    #     the adjacency lists in the order they have in `g1`,
-                    #     but with the vertex numbering from `g2`;
-                    #   - elements of the adjacency lists are made into
-                    #     `set`s for unordered comparison;
-                    if 0 != cmp([ set(g2.endpoints[pe[x]])
-                                  for x in xrange(g2.num_edges) ],
-                                [ set(pv.itranslate(g1.endpoints[x]))
-                                  for x in xrange(g1.num_edges) ]):
-                        continue # to next `pvrot`
-                    if g1.numbering is not None:
-                        assert g2.numbering is not None, \
-                               "MorphismIteratorFactory: " \
-                               "Numbered and un-numbered graphs mixed in arguments."
-                        assert len(g1.numbering) == len(g2.numbering), \
-                               "MorphismIteratorFactory: " \
-                               "Arguments differ in number of boundary components."
-                        pe_does_not_preserve_bc = False
-                        for bc in g1.boundary_components():
-                            if g1.numbering[bc] != \
-                                   g2.numbering[CyclicTuple(pe.itranslate(bc))]:
-                                pe_does_not_preserve_bc = True
-                                break
-                        if pe_does_not_preserve_bc:
-                            continue # to next `pvrot`
-                    rots = tuple(t[1]-t[3] for t in pvrot)
-                    yield (pv, rots, pe)
 
 
 def MakeNumberedGraphs(graph):
@@ -1022,33 +1109,45 @@ def MakeNumberedGraphs(graph):
 
       >>> g1 = Graph([Vertex([2,0,0]), Vertex([2,1,1])])
       >>> MakeNumberedGraphs(g1)
-      [Graph([Vertex([2, 0, 0]), Vertex([2, 1, 1])], numbering=[0, 2, 1]),
-       Graph([Vertex([2, 0, 0]), Vertex([2, 1, 1])], numbering=[1, 0, 2]),
-       Graph([Vertex([2, 0, 0]), Vertex([2, 1, 1])], numbering=[2, 0, 1])]
+      [Graph([Vertex([2, 0, 0]), Vertex([2, 1, 1])],
+             numbering={CyclicTuple((2, 1, 2, 0)): 0,
+                        CyclicTuple((0,)): 2,
+                        CyclicTuple((1,)): 1}),
+       Graph([Vertex([2, 0, 0]), Vertex([2, 1, 1])],
+             numbering={CyclicTuple((2, 1, 2, 0)): 1,
+                        CyclicTuple((0,)): 0,
+                        CyclicTuple((1,)): 2}),
+       Graph([Vertex([2, 0, 0]), Vertex([2, 1, 1])],
+             numbering={CyclicTuple((2, 1, 2, 0)): 2,
+                        CyclicTuple((0,)): 0,
+                        CyclicTuple((1,)): 1})]
        
     Note that, when only one numbering out of many possible ones is
     returned because of isomorphism, the returned numbering may not be
     the trivial one (it is actually the first permutation of 0..n
     returned by `InplacePermutationIterator`)::
-
+      
       >>> g2 = Graph([Vertex([2,1,0]), Vertex([2,0,1])])
       >>> MakeNumberedGraphs(g2)
-      [Graph([Vertex([2, 1, 0]), Vertex([2, 0, 1])], numbering=[0, 2, 1])]
+      [Graph([Vertex([2, 1, 0]), Vertex([2, 0, 1])],
+              numbering={CyclicTuple((2, 0)): 1,
+                         CyclicTuple((0, 1)): 0,
+                         CyclicTuple((1, 2)): 2})]
 
     When the graph has only one boundary component, there is only one
     possible numbering, which is actually returned::
     
       >>> g3 = Graph([Vertex([1,0,1,0])])
       >>> MakeNumberedGraphs(g3)
-      [Graph([Vertex([1, 0, 1, 0])], numbering=[0])]
+      [Graph([Vertex([1, 0, 1, 0])],
+              numbering={CyclicTuple((1, 0, 1, 0)): 0})]
       
     """
     graphs = []
     bc = list(bcy for bcy in graph.boundary_components())
     n = graph.num_boundary_components()
 
-    for numbering in \
-            InplacePermutationIterator(range(n)):
+    for numbering in InplacePermutationIterator(range(n)):
         # make a copy of `graph` with the given numbering
         g = copy(graph)
         g.numbering = dict((bc[x], numbering[x]) for x in xrange(n))
@@ -1068,17 +1167,39 @@ class ConnectedGraphsIterator(BufferingIterator):
     Examples::
 
       >>> for g in ConnectedGraphsIterator([4]): print g
-      Graph([Vertex([1, 0, 1, 0])], numbering=[0])
-      Graph([Vertex([1, 1, 0, 0])], numbering=[0, 2, 1])
-      Graph([Vertex([1, 1, 0, 0])], numbering=[1, 0, 2])
-      Graph([Vertex([1, 1, 0, 0])], numbering=[2, 0, 1])
+      Graph([Vertex([1, 0, 1, 0])], numbering={CyclicTuple((1, 0, 1, 0)): 0})
+      Graph([Vertex([1, 1, 0, 0])],
+            numbering={CyclicTuple((0,)): 0,
+                       CyclicTuple((1, 0)): 2,
+                       CyclicTuple((1,)): 1})
+      Graph([Vertex([1, 1, 0, 0])],
+            numbering={CyclicTuple((0,)): 1,
+                       CyclicTuple((1, 0)): 0,
+                       CyclicTuple((1,)): 2})
+      Graph([Vertex([1, 1, 0, 0])],
+            numbering={CyclicTuple((0,)): 2,
+                       CyclicTuple((1, 0)): 1,
+                       CyclicTuple((1,)): 0})
 
       >>> for g in ConnectedGraphsIterator([3,3]): print g
-      Graph([Vertex([2, 0, 1]), Vertex([2, 0, 1])], numbering=[0])
-      Graph([Vertex([2, 1, 0]), Vertex([2, 0, 1])], numbering=[0, 2, 1])
-      Graph([Vertex([2, 1, 1]), Vertex([2, 0, 0])], numbering=[0, 2, 1])
-      Graph([Vertex([2, 1, 1]), Vertex([2, 0, 0])], numbering=[1, 0, 2])
-      Graph([Vertex([2, 1, 1]), Vertex([2, 0, 0])], numbering=[2, 0, 1])
+      Graph([Vertex([2, 0, 1]), Vertex([2, 0, 1])],
+            numbering={CyclicTuple((2, 0, 1, 2, 0, 1)): 0})
+      Graph([Vertex([2, 1, 0]), Vertex([2, 0, 1])],
+            numbering={CyclicTuple((2, 0)): 1,
+                       CyclicTuple((0, 1)): 0,
+                       CyclicTuple((1, 2)): 2})
+      Graph([Vertex([2, 1, 1]), Vertex([2, 0, 0])],
+            numbering={CyclicTuple((2, 0, 2, 1)): 0,
+                       CyclicTuple((0,)): 2,
+                       CyclicTuple((1,)): 1})
+      Graph([Vertex([2, 1, 1]), Vertex([2, 0, 0])],
+            numbering={CyclicTuple((2, 0, 2, 1)): 1,
+                       CyclicTuple((0,)): 0,
+                       CyclicTuple((1,)): 2})
+      Graph([Vertex([2, 1, 1]), Vertex([2, 0, 0])],
+            numbering={CyclicTuple((2, 0, 2, 1)): 2,
+                       CyclicTuple((0,)): 0,
+                       CyclicTuple((1,)): 1})
 
     Generation of all graphs with prescribed vertex valences `(v_1,
     v_2, ..., v_n)` goes this way:
@@ -1202,23 +1323,16 @@ class GivenValenceGraphsIterator(object):
 
             current = Graph(vertices,
                             edge_seq=tuple(edge_seq),
-                            vertex_factory=self.vertex_factory,
-                            _vertex_valences=self._vertex_valences,)
+                            vertex_factory=self.vertex_factory,)
             if not (current.is_canonical() and current.is_connected()):
                 continue
             
-            # the valence spectrum is the same for all graphs in the list,
-            # so only compute it once
-            if self._morphism_factory is None:
-                self._morphism_factory = \
-                            MorphismIteratorFactory(current.valence_spectrum())
-
             # now walk down the list and remove isomorphs
             current_is_not_isomorphic_to_already_found = True
             for candidate in self.graphs:
                 # if there is any isomorphism, then reject current
                 try:
-                    self._morphism_factory(candidate, current).next()
+                    candidate.isomorphisms_to(current).next()
                     # if we get here, an isomorphism has been found,
                     # so try again with a new `current` graph
                     current_is_not_isomorphic_to_already_found = False
@@ -1376,30 +1490,50 @@ class MgnGraphsIterator(BufferingIterator):
     Examples::
 
       >>> for g in MgnGraphsIterator(0,3): print g
-      Graph([Vertex([0, 0, 1, 1])], numbering=[0, 2, 1])
-      Graph([Vertex([0, 0, 1, 1])], numbering=[1, 0, 2])
-      Graph([Vertex([0, 0, 1, 1])], numbering=[2, 0, 1])
-      Graph([Vertex([1, 2, 1]), Vertex([2, 0, 0])], numbering=[0, 2, 1])
-      Graph([Vertex([1, 2, 1]), Vertex([2, 0, 0])], numbering=[1, 0, 2])
-      Graph([Vertex([1, 2, 1]), Vertex([2, 0, 0])], numbering=[2, 1, 0])
-      Graph([Vertex([1, 0, 2]), Vertex([2, 0, 1])], numbering=[0, 2, 1])
+      Graph([Vertex([1, 2, 1]), Vertex([2, 0, 0])],
+            numbering={CyclicTuple((2, 0, 2, 1)): 0, 
+                       CyclicTuple((0,)):         2, 
+                       CyclicTuple((1,)):         1})
+      Graph([Vertex([1, 2, 1]), Vertex([2, 0, 0])],
+            numbering={CyclicTuple((2, 0, 2, 1)): 1,
+                       CyclicTuple((0,)):         0,
+                       CyclicTuple((1,)):         2})
+      Graph([Vertex([1, 2, 1]), Vertex([2, 0, 0])],
+            numbering={CyclicTuple((2, 0, 2, 1)): 2,
+                       CyclicTuple((0,)):         0,
+                       CyclicTuple((1,)):         1})
+      Graph([Vertex([1, 0, 2]), Vertex([2, 0, 1])],
+            numbering={CyclicTuple((1, 2)): 1,
+                       CyclicTuple((0, 1)): 2,
+                       CyclicTuple((2, 0)): 0})
+      Graph([Vertex([1, 1, 0, 0])], 
+            numbering={CyclicTuple((0,)):   0,
+                       CyclicTuple((0, 1)): 2,
+                       CyclicTuple((1,)):   1})
+      Graph([Vertex([1, 1, 0, 0])], 
+            numbering={CyclicTuple((0,)):   1,
+                       CyclicTuple((0, 1)): 0,
+                       CyclicTuple((1,)):   2})
+      Graph([Vertex([1, 1, 0, 0])], 
+            numbering={CyclicTuple((0,)):   2,
+                       CyclicTuple((0, 1)): 1,
+                       CyclicTuple((1,)):   0})
 
       >>> for g in MgnGraphsIterator(1,1): print g
-      Graph([Vertex([1, 0, 1, 0])], numbering=[0])
-      Graph([Vertex([1, 0, 2]), Vertex([2, 1, 0])], numbering=[0])
+      Graph([Vertex([1, 0, 2]), Vertex([2, 1, 0])],
+            numbering={CyclicTuple((1, 0, 2, 1, 0, 2)): 0})
+      Graph([Vertex([1, 0, 1, 0])],
+            numbering={CyclicTuple((0, 1, 0, 1)): 0})
 
     """
 
     __slots__ = [
-        '_morphism_factory',
-        '_roses',
+        '_batch',
+        '_current_edge',
+        '_num_vertices',
         '_vertex_factory',
-        'already_found_graphs',
-        'already_found_roses',
         'g',
-        'max_valence',
         'n',
-        'trees',
         ]
 
     def __init__(self, g, n, vertex_factory=VertexCache()):
@@ -1413,65 +1547,86 @@ class MgnGraphsIterator(BufferingIterator):
                " need either g>0 or g==0 and n>2" \
                % (g,n)
 
-        #: Minimum number of edges of a (g,n)-graph
-        self.max_valence = 2 * (2*g + n - 1)
-
         #: Prescribed genus of returned graphs
         self.g = g
 
         #: Prescribed number of boundary components
         self.n = n
         
-        #: Unique (up to isomorphism) graphs found so far
-        self.already_found_graphs = []
-
-        #: Iterator over roses (graphs with 1 vertex only).
-        self._roses = GivenValenceGraphsIterator((self.max_valence,))
-        
-        #: Unique (up to isomorphism) roses found so far.
-        self.already_found_roses = []
-
-        #: List of trees with `self.max_valence` leaves
-        self.trees = tuple(TreeIterator(self.max_valence-1))
-
-        #: Factory method returning iterator over isomorphisms
-        #  of graphs with a given valence spectrum.
-        self._morphism_factory = {}
-
         #: Factory method to build `Vertex` instances from the
         #  incoming edges list.
         self._vertex_factory = vertex_factory
 
-        # initialize superclass
-        BufferingIterator.__init__(self)
-
-    def refill(self):
-        result = []
+        #: Unique (up to isomorphism) graphs found so far
+        graphs = []
         
-        for rose in self._roses:
+        #: Minimum number of edges of a (g,n)-graph
+        max_valence = 2 * (2*g + n - 1)
+
+        ## pass 1: Gather all roses.
+        roses = []
+        for rose in GivenValenceGraphsIterator((max_valence,)):
             if (rose.genus() != self.g) \
                    or (rose.num_boundary_components() != self.n) \
-                   or (rose in self.already_found_roses):
+                   or (rose in roses):
                 continue
-            self.already_found_roses.append(rose)
-
+            roses.append(rose)
             # a rose is a valid fatgraph too
-            result += MakeNumberedGraphs(rose)
+            #graphs.extend(MakeNumberedGraphs(rose))
             
+        ## pass 2: Gather all 3-valent graphs.
+        trivalent = []
+        #: Full binary trees
+        trees = [ Tree(zip(l,r))
+                  for l,r in AlgorithmB(max_valence - 3) ]
+        for rose in roses:
             # now substitute the unique vertex with any possible tree
             # and any possible rotation
-            for places in xrange(self.max_valence):
-                rose[0].rotate(places)
-                for tree in self.trees:
-                    graph = rose.graft(tree, 0)
+            for places in xrange(max_valence):
+                # need to make a deep copy, because `Vertex` objects are shared
+                rotated_rose = Graph([copy(rose[0])])
+                rotated_rose[0].rotate(places)
+                for tree in trees:
+                    graph = rotated_rose.graft(tree, 0)
                     if (graph.genus() != self.g) \
                            or (graph.num_boundary_components() != self.n) \
-                           or (graph in self.already_found_graphs):
+                           or (graph in trivalent):
                         continue
-                    self.already_found_graphs.append(graph)
+                    trivalent.append(graph)
                     # insert decorated graphs into iterator buffer
-                    result += MakeNumberedGraphs(graph)
+                    graphs.extend(MakeNumberedGraphs(graph))
 
+        #: Graphs to be contracted at next `.refill()` invocation
+        self._batch = trivalent
+
+        #: Number of edges of graphs that will be returned by next
+        #  `.refill()` call.  Starts with `6*g + 3*n - 7`, which is the
+        #  highest-numbered edge in trivalent graphs.
+        self._current_edge = 6*g + 3*n - 7
+
+        self._num_vertices = 4*g + 2*n - 4
+        
+        # initialize superclass with list of roses + trivalent graphs
+        BufferingIterator.__init__(self, graphs)
+
+    def refill(self):
+        if self._num_vertices == 0:
+            raise StopIteration
+        
+        result = []
+        next_batch = []
+        for graph in self._batch:
+            # contract all edges
+            for edge in xrange(graph.num_edges):
+                if not graph.is_loop(edge):
+                    dg = graph.contract(edge)
+                    if dg not in next_batch:
+                        # put decorated version into `result`
+                        result.extend(MakeNumberedGraphs(dg))
+                        # put graph back into next batch for processing
+                        next_batch.append(dg)
+        self._batch = next_batch
+        self._num_vertices -= 1
         return result
     
 
