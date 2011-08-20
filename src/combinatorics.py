@@ -118,8 +118,6 @@ def factorial(n):
     """
     assert isinstance(n, (int, long)), \
            "factorial(): argument `%s` is no `int` nor `long`" % n
-    assert n >= 0, \
-           "factorial(): argument should be a non-negative number, but got %d" % n
     if n < 0:
         return sign_exp(n)*factorial(-n)
     if n < 2:
