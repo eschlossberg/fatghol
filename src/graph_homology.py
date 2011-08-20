@@ -33,27 +33,20 @@ def FatgraphComplex(g, n):
     #: list of primitive graphs, graded by number of edges
     generators = [ [] for dummy in xrange(length) ]
 
-    #: list of alias dictionaries, graded by number of edges
-    aliases = [ {} for dummy in xrange(length) ]
-
     # gather graphs
     for val in vertex_valences_for_given_g_and_n(g, n):
         grade = sum(val)/2 - min_edges
         for graph in ConnectedGraphsIterator(val):
-            if isinstance(graph, tuple):
-                # add alias to dictionary
-                aliases[grade][graph[0]] = graph[1]
-            else:
-                # primitive graph, add if correct `g` and `n`
-                if (graph.genus() == g) and \
-                       (graph.num_boundary_components() == n):
-                    generators[grade].append(graph)
+            # add if correct `g` and `n`
+            if (graph.genus() == g) and \
+                   (graph.num_boundary_components() == n):
+                generators[grade].append(graph)
 
     # build chain complex
     C = ChainComplex(length)
     for i in xrange(length):
         # set support module and differential
-        C[i] = (FatgraphComplexSlice(generators[i], aliases[i]),
+        C[i] = (FatgraphComplexSlice(generators[i]),
                 graph_homology_differential)
     return C
 
@@ -74,7 +67,7 @@ def graph_homology_differential(graph):
     for l in xrange(graph.num_edges()):
         if not graph.is_loop(l):
             g = graph.contract(l)
-            if not g.has_orientation_reversing_automorphism():
+            if g.is_oriented():
                 result.append((g, sign1(l)))
     return result
         
@@ -86,41 +79,55 @@ class FatgraphComplexSlice(VectorSpace):
     `coordinates` method will detect different presentations of the
     same fatgraph.
     """
-    def __init__(self, graphs, aliases=None):
-        """Constructor, taking generating graphs and optional aliases dict."""
-        if aliases is None:
-            self.aliases = {}
-        else:
-            self.aliases = aliases
-        VectorSpace.__init__(self,
-                             [ g for g in graphs
-                               if not g.has_orientation_reversing_automorphism()
-                               ])
+    def __init__(self, graphs):
+        """Constructor, taking generating graphs."""
+        base = []
+        self.base_aliases = {}
+        self.discard = set()
+        for graph in graphs:
+            if graph.is_oriented():
+                base.append(graph)
+                for edge_seq in graph.edge_seq_aliases:
+                    self.base_aliases[edge_seq] = graph
+            else:
+                # note unorientable graphs: they will be discarded
+                self.discard.add(graph)
+                self.discard.update(graph.edge_seq_aliases)
+        VectorSpace.__init__(self, base)
 
     def coordinates(self, combo):
         """Return coordinate vector of linear combination `combo`."""
         coordinates = [0] * self.dimension
 
         # canonicalize graphs
-        for (i, (g, coeff)) in enumerate(combo):
-            if g not in self.base:
+        for (i, monomial) in enumerate(combo):
+            graph = monomial[0]
+            if (graph in self.discard) or (graph.edge_seq in self.discard):
+                # discard this monomial and continue with next one
+                del combo[i]
+                continue
+            if graph not in self.base:
                 canonical = None
-                if g.edge_seq in self.aliases:
-                    # replace g with canonical
-                    canonical = self.aliases[g.edge_seq]
+                if graph.edge_seq in self.base_aliases:
+                    # replace graph with canonical
+                    canonical = self.aliases[graph.edge_seq]
                 else:
-                    # try to determine which graph of base `g` is
+                    # try to determine which graph in base `graph` is
                     # isomorphic to.
                     for gg in self.base:
-                        if g == gg:
+                        if graph == gg:
                             canonical = gg
                             break
                 if canonical:
-                    combo[i][0] = canonical
+                    # by modifying `monomial`, the object in the
+                    # `combo` list is modified, because `monomial` is
+                    # a reference.
+                    monomial[0] = canonical
+                    monomial[1] *= graph.projection(canonical)
                 else:
                     raise ValueError, \
                           "Cannot find canonical representative for graph %s" \
-                          % repr(g)
+                          % repr(graph)
 
         # call method from superclass
         return VectorSpace.coordinates(self, combo)

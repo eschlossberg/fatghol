@@ -183,8 +183,7 @@ elif 'graphs' == args[0]:
         outfile = open(options.outfile, 'w')
     # compute graphs matching given vertex sequences
     graphs = []
-    graphs += tuple(ifilter(lambda g: not isinstance(g, tuple),
-                            ConnectedGraphsIterator(valences)))
+    graphs += list(ConnectedGraphsIterator(valences))
 
     # output results
     if not options.silent:
@@ -201,7 +200,7 @@ elif 'graphs' == args[0]:
                 outfile.write("%s\n" % ((graph,
                                          graph.genus(),
                                          graph.num_boundary_components(),
-                                         graph.has_orientation_reversing_automorphism(),
+                                         graph.is_oriented(),
                                          ),))
         outfile.write("\n")
         outfile.write("Found %d graphs.\n" % len(graphs))

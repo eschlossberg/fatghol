@@ -36,17 +36,11 @@ class Vertex(CyclicList):
     (decorated) edges.  The edge colorings may be accessed through a
     (read-only) sequence interface.
     """
-
-##     def __new__(cls, edge_seq, start=0, end=None):
-##         """Create `Vertex` instance by excerpting the slice `[start:end]` in `edge_seq`.
-##         """
-##         if end is None:
-##             end = len(edge_seq)
-##         return CyclicTuple.__new__(cls, edge_seq[start:end])
-##     def __init__(self, *args, **kwargs):
-##         # the following values will be computed when they are first requested
-##         self._repetition_pattern = None
-        
+    # *Note:* `Vertex` cannot be a `tuple` subclass because:
+    #   1) `tuple` has no `index()` method and re-implementing one in
+    #      pure Python would be less efficient;
+    #   2) we could not implement `rotate()` and friends: tuples are
+    #      immutable.
     def is_canonical_representative(self):
         """Return `True` if this `Vertex` object is maximal among
         representatives of the same cyclic sequence.
@@ -111,6 +105,8 @@ class Graph(object):
     Exports a (read-only) sequence interface, through which vertices
     can be accessed.
     """
+    # the only reason to use `__slots__` here is to keep a record of
+    # all instance attribute names.
     __slots__ = (
         '_genus',
         '_num_boundary_components',
@@ -120,14 +116,16 @@ class Graph(object):
         '_vertex_factory',
         '_vertex_valences',
         'edge_seq',
+        'edge_seq_aliases',
         'endpoints',
         'vertices',
         )
+
     ## *Note:* the constructor for this class is overloaded.  We could
     ## move the code making a `Graph` object out of vertex valences
     ## and edge colorings to a separate factory function
     ## `make_graph_from_edge_seq`, but then the constructor would need
-    ## to recompute `self.edge_seq` and `self._vertex_valences`.
+    ## to recompute `self.edge_seq_aliases` and `self._vertex_valences`.
     ## Thus, we favor performance over code elegance and choose to
     ## overload the ctor.
     def __init__(self, vertices, edge_seq=None, vertex_factory=Vertex):
@@ -144,16 +142,33 @@ class Graph(object):
         according to the vertex valences to form the Graph vertices
         (by calling `vertex_factory` on each group of edges).
 
-        Examples::
-          **TO-DO**
+        This constructor is overloaded.  You can build a `Graph`
+        instance either by specifying an explicit list of vertices::
+
+          >>> G1 = Graph([Vertex([2,0,1]), Vertex([2,1,0])])
+
+        Or by passing vertex valences and the flat list representation
+        of the graph (i.e., concatenate all vertex representations in
+        a single list of numbers)::
+
+          >>> G2 = Graph((3,3), (2,0,1,2,1,0))
+
+        Both forms yield the same result::
+        
+          >>> G2 == G1
+          True
+        
         """
         # build graph for explicit vertex list
         if edge_seq is None:
             assert debug.is_sequence_of_type(Vertex, vertices), \
                    "Graph.__init__: parameter `vertices` must be" \
                    " sequence of `Vertex` instances."
-            self.vertices = vertices
-            self._vertex_valences = [ len(v) for v in vertices ]
+            #: list of vertices 
+            self.vertices = vertices # FIXME: should be tuple?
+            #: list of vertex valences 
+            self._vertex_valences = tuple(len(v) for v in vertices) # FIXME: should be sorted?
+            #: edge sequence from which this is/could be built
             self.edge_seq = tuple(chain(*[iter(v) for v in vertices]))
 
         # build graph from linear list and vertex valences
@@ -162,7 +177,8 @@ class Graph(object):
                    "Graph.__init__: parameter `vertices` must be" \
                    " sequence of integers, but got '%s' instead" \
                    % vertices
-            self._vertex_valences = vertices
+            #: list of vertex valences 
+            self._vertex_valences = tuple(vertices)
             assert (sum(vertices) % 2 ) == 0, \
                    "Graph.__init__: invalid parameter `vertices`:"\
                    "sum of vertex valences must be even."
@@ -171,12 +187,17 @@ class Graph(object):
                    "Graph.__init__: parameter `edge_seq` must be sequence of integers, "\
                    "but got '%s' instead" % edge_seq
 
-            # record this for fast comparison and contractions
+            #: edge sequence from which this graph is built
             self.edge_seq = tuple(edge_seq)
+            
+            #: edge sequence(s) identifying this graph; item at
+            #  position 0 is `self.edge_seq`.
+            self.edge_seq_aliases = set(self.edge_seq)
 
+            #: list of vertices 
+            self.vertices = []
             # Break up `edge_seq` into smaller sequences corresponding
             # to vertices.
-            self.vertices = []
             base = 0
             for current_vertex_index in xrange(len(vertices)):
                 VLEN = vertices[current_vertex_index]
@@ -193,6 +214,10 @@ class Graph(object):
         self._valence_spectrum = None
         self._vertex_factory = vertex_factory
         
+        #: edge sequence(s) identifying this graph; `self.edge_seq`
+        #  always counts as an alias.
+        self.edge_seq_aliases = set(self.edge_seq)
+        
         # `self.endpoints` is the adjacency list of this graph.  For
         # each edge, store a pair `(v1, v2)` where `v1` and `v2` are
         # indices of endpoints.
@@ -205,19 +230,23 @@ class Graph(object):
         """Return `True` if Graphs `self` and `other` are isomorphic.
 
         Examples::
+
           >>> Graph([Vertex([1,0,0,1])]) == Graph([Vertex([1,1,0,0])])
           True
         """
         assert isinstance(other, Graph), \
-               "Graph.__eq__ called with non-Graph argument `other`: %s" % other
+               "Graph.__eq__:" \
+               " called with non-Graph argument `other`: %s" % other
         # shortcuts
-        if self.edge_seq == other.edge_seq:
-            return True
-        if tuple(self._vertex_valences) != tuple(other._vertex_valences):
+        if self._vertex_valences != other._vertex_valences:
             return False
+        # if there is any representative edge sequence in common,
+        # then these must be different presentations of the same graph
+        if 0 != len(self.edge_seq_aliases.intersection(other.edge_seq_aliases)):
+            return True
 
-        # go the long way: try to find an explicit isomorphims between
-        # graphs `self` and `other`
+        # else, go the long way: try to find an explicit isomorphims
+        # between graphs `self` and `other`
         morphisms = MorphismIteratorFactory(self.valence_spectrum())
         try:
             # if there is any morphism, then return `True`
@@ -243,6 +272,24 @@ class Graph(object):
     
     def __str__(self):
         return str(self.vertices)
+
+    def add_alias(self, alias):
+        """Add an edge sequence alias.
+        """
+        assert isinstance(alias, tuple), \
+               "Graph.add_alias:" \
+               " first argument `alias` must be tuple," \
+               " but got `%s` instead." % alias
+        assert sum(self._vertex_valences) == len(alias), \
+               "Graph.add_alias:" \
+               " `alias` length (%d) does not match the number of" \
+               " edges in this graph (%d)." \
+               % (sum(self._vertex_valences), len(alias))
+        assert debug.is_sequence_of_integers(alias), \
+               "Graph.add_alias:" \
+               " first argument `alias` must be a sequence of integers," \
+               " but got `%s` instead." % alias
+        self.edge_seq_aliases.add(alias)
 
     def automorphisms(self):
         """Enumerate automorphisms of this `Graph` object.
@@ -400,17 +447,25 @@ class Graph(object):
             self._genus = (L - K - n + 2) / 2
         return self._genus
 
-    def has_orientation_reversing_automorphism(self):
-        """Return `True` if `Graph` has an orientation-reversing automorphism.
+    def is_oriented(self):
+        """Return `True` if `Graph` is orientable.
 
-        Enumerate all automorphisms of `graph`, end exits with `True`
+        A ribbon graph is orientable iff it has no
+        orientation-reversing automorphism.
+
+        Enumerate all automorphisms of `graph`, end exits with `False`
         result as soon as one orientation-reversing one is found.
+
+        Examples::
+          >>> Graph([Vertex([1,0,1,0])]).is_orientable()
+          True
+
         """
         for a in self.automorphisms():
             if self.is_orientation_reversing(a):
-                return True
+                return False
         # no orientation reverersing automorphism found
-        return False
+        return True
 
     def is_connected(self):
         """Return `True` if graph is connected.
@@ -735,32 +790,15 @@ class MorphismIteratorFactory(object):
 
 class ConnectedGraphsIterator(object):
     """Iterate over all connected graphs having vertices of the
-    prescribed valences.  Each step of the iteration returns either a
-    `Graph` object (representing a primitive graph with the given
-    vertex valences), or a tuple `(alias, canonical)` meaning that
-    edge sequence `alias` gives rise to a graph isomorphic to `Graph`
-    instance `canonical`.
+    prescribed valences.
+    
+    Examples::
 
-    A simple example::
       >>> list(ConnectedGraphsIterator([4]))
       [Graph([4], [[1, 0, 1, 0]]),
        Graph([4], [[1, 1, 0, 0]])]
 
-    An example with aliases:
       >>> list(ConnectedGraphsIterator([3,3]))
-      [Graph([3, 3], [[2, 0, 1], [2, 0, 1]]),
-       Graph([3, 3], [[2, 1, 0], [2, 0, 1]]),
-       (Graph([3, 3], [[2, 1, 0], [2, 1, 0]]),
-        Graph([3, 3], [[2, 0, 1], [2, 0, 1]])),
-       Graph([3, 3], [[2, 1, 1], [2, 0, 0]]),
-       (Graph([3, 3], [[2, 2, 0], [1, 1, 0]]),
-        Graph([3, 3], [[2, 1, 1], [2, 0, 0]])),
-       (Graph([3, 3], [[2, 2, 1], [1, 0, 0]]),
-        Graph([3, 3], [[2, 1, 1], [2, 0, 0]]))]
-
-    To iterate over primitve graphs only (i.e., to discard aliases),
-    you need to filter the elements returned by the iterator::
-      >>> filter(lambda _: isinstance(_, Graph), ConnectedGraphsIterator([3,3]))
       [Graph([3, 3], [[2, 0, 1], [2, 0, 1]]),
        Graph([3, 3], [[2, 1, 0], [2, 0, 1]]),
        Graph([3, 3], [[2, 1, 1], [2, 0, 0]])]
@@ -847,8 +885,8 @@ class ConnectedGraphsIterator(object):
                 self.graphs.append(current)
                 return current
             else:
-                # return tuple (current, alias)
-                return (current, candidate)
+                # record `current` as alias of `candidate` and proceed to next graph
+                candidate.add_alias(current.edge_seq)
 
         # no more graphs to generate
         raise StopIteration
