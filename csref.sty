@@ -1,19 +1,20 @@
 %% LaTeX2e style file for `context-sensitive' labels.
 %%
-%% v0.3 -- 2001-11-28  Riccardo Murri
+%% csref.sty -- 2001-11-28  Riccardo Murri
 %%
-%% $Id: csref.sty,v 1.6 2006/05/12 11:00:59 rmurri Exp $
+%% $Id: csref.sty,v 1.7 2006/05/13 00:32:41 rmurri Exp $
 %%
 \def\filename{csref}
-\def\fileversion{0.3}
-\def\filedate{2003/09/09}
+\def\fileversion{0.4}
+\def\filedate{2006/05/12}
 \NeedsTeXFormat{LaTeX2e}[1994/12/01]
 \ProvidesPackage{csref}
 [\filedate\space v\fileversion\space Typeset reference basing on environment containing the label]
 %%
 %% Preliminary declarations
 %%
-%
+\newif\ifcsr@debug%
+\csr@debugfalse%
 %%
 %% Options
 %%
@@ -29,12 +30,16 @@
   \RequirePackage{prettyref}%
   \let\csr@ref=\prettyref%
 }%
+\DeclareOption{debug}{%
+  \csr@debugtrue%
+}%
 \ProcessOptions\relax%
 %% 
-%% The token lists are needed for handling |\csr@contexts| and for
+%% These token lists are needed for handling |\csr@contexts| and for
 %% writing labels to the .aux file.
 %%
-\newtoks\csr@tempa \newtoks\csr@tempb%
+\newtoks\csr@tempa%
+\newtoks\csr@tempb%
 %%
 %% First, set up a list |\csr@contexts| of supported environments; the
 %% list is initially empty.
@@ -64,32 +69,37 @@
 %% \csr@LABEL@ref which expands to the properly-formatted reference
 %% using REF-CODE.
 %%
-\newcommand\newcsref[1]{%
+\newcommand*\defcsref[1]{%
   \expandafter\csr@addtocontexts\csname #1\endcsname%
   \@namedef{csr@#1@label}##1{%
     \csr@tempa={\expandafter\gdef\csname csr@##1@ref\endcsname{%
         \csname csr@#1@refcmd\endcsname{##1}}}%
     \the\csr@tempa%
     \immediate\write\@auxout{\the\csr@tempa}%
-    }%
-  \@namedef{csr@#1@refcmd}##1%
   }%
+  \@namedef{csr@#1@refcmd}##1}%
+\newcommand*\newcsref[1]{%
+  \@ifundefined{csr@#1@label}%
+    {\defcsref{#1}}%
+  {%
+    \PackageError{csref}{Reference name for environment `#1' %
+      already defined.}%
+    {The command \protect\newcsref\space can be used only if no other%
+      \MessageBreak%
+      \protect\newcsref\space has been issued for the same environment.%
+      \MessageBreak% 
+      Perhaps you meant to use \protect\renewcsref\space instead?}%
+  }}%
 \newcommand*\renewcsref[1]{%
-  \@ifundefined{csr@#1@label}{%
-    \PackageError{csref}{Environment `#1' not previously defined.}%
+  \@ifundefined{csr@#1@label}%
+  {\PackageError{csref}{Reference name for environment `#1' %
+      not previously defined.}%
     {The command \protect\renewcsref\space can be used only after%
       \MessageBreak%
       a \protect\newcsref\space has been issued for the same environment.%
       \MessageBreak% 
-      Perhaps you meant to use \protect\newcsref\space instead?}%
-    }{%
-    \@namedef{csr@#1@label}##1{%
-      \expandafter\global\@namedef{csr@##1@ref}{%
-        \csname csr@#1@refcmd\endcsname{##1}}%
-      }%
-    \@namedef{csr@#1@refcmd}##1%
-    }%
-  }%
+      Perhaps you meant to use \protect\newcsref\space instead?}}%
+    {\defcsref{#1}}}%
 %% The |\ifcsr@contextnotfound| is needed to take a default action if
 %% a environment-name is not found in the list |\csr@contexts|.
 \newif\ifcsr@contextnotfound%
@@ -106,6 +116,10 @@
   \fi%
 }%
 \DeclareRobustCommand*\cslabel[1]{%
+  \ifcsr@debug%
+    \PackageInfo{csref}{DEBUG: About to define label `#1' of %
+      environment type `\@currenvir'}%
+  \fi%
   \@bsphack%
   \begingroup%
     \let\@elt=\csr@context@check%
@@ -118,10 +132,12 @@
   \endgroup{#1}%
   \@esphack% matches \@bsphack
   \csr@saved@label{#1}%
-}%
+}% 
 \DeclareRobustCommand*\csref[1]{%
   \@ifundefined{csr@#1@ref}{%
-      \PackageInfo{csref}{Cross-reference label #1 undefined}%
+      \PackageWarning{csref}{No saved environment type for label `#1', %
+        falling back to \protect\ref}%
+      \ref{#1}%
     }{%
       \csname csr@#1@ref\endcsname%
     }%
@@ -132,6 +148,10 @@
   \@ifundefined{csr@ref}{\let\csr@ref=\ref}{}%
   \let\csr@saved@label=\label%
   \let\label=\cslabel%
+  % Package amsmath compatibility
+  \@ifundefined{ltx@label}%
+    {\relax}%
+    {\let\ltx@label\cslabel}%
 }%
 %
 %
@@ -143,13 +163,20 @@
 \else%
   \newcsref{document}{\sectionname~\csr@ref{#1}}%
 \fi%
-%
+%%
+%% If the environment named in the first argument is defined, then
+%% act just like a |\newcsref|; if it is undefined, then this macro is
+%% a no-op.
+%%
 \def\newcsref@ifdefined#1{%
   \@ifundefined{#1}
     {\@gobble}% eat up second argument
     {\newcsref{#1}}% define a new \csref
 }%
-\newcsref@ifdefined{theorem}{\theoremname~\csr@ref{#1}}%
+%%
+%% Provide defaults for common environments.
+%%
+\newcsref@ifdefined{theorem}{Theorem~\csr@ref{#1}}%
 \newcsref@ifdefined{lemma}{Lemma~\csr@ref{#1}}%
 \newcsref@ifdefined{proposition}{Proposition~\csr@ref{#1}}%
 \newcsref@ifdefined{claim}{Claim~\csr@ref{#1}}%
@@ -162,11 +189,14 @@
 \newcsref@ifdefined{table}{\tablename~\csr@ref{#1}}%
 \newcsref@ifdefined{enumerate}{\csr@ref{#1}}%
 \newcsref@ifdefined{itemize}{\csr@ref{#1}}%
+% \newcsref@ifdefined{app}{Appendix}% <-- FIXME!!
+%
+%% environments from 'amsmath' package:
+\newcsref@ifdefined{align}{\eqref{#1}}%
 \newcsref@ifdefined{equation}{\eqref{#1}}%
 \newcsref@ifdefined{gather}{\eqref{#1}}%
-\newcsref@ifdefined{align}{\eqref{#1}}%
+\newcsref@ifdefined{multline}{\eqref{#1}}%
+\newcsref@ifdefined{align*}{\eqref{#1}}%
 \newcsref@ifdefined{equation*}{\eqref{#1}}%
 \newcsref@ifdefined{gather*}{\eqref{#1}}%
-\newcsref@ifdefined{align*}{\eqref{#1}}%
-% \newcsref@ifdefined{app}{Appendix}% <-- FIXME!!
-
+\newcsref@ifdefined{multline*}{\eqref{#1}}%
