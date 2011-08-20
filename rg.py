@@ -29,6 +29,7 @@ from utils import (
     Iterator,
     concat,
     itranslate,
+    memoize,
     sign,
     )
 
@@ -200,14 +201,10 @@ class Graph(object):
     # the only reason to use `__slots__` here is to keep a record of
     # all instance attribute names.
 ##     __slots__ = [
-##         '_boundary_components',
 ##         '_fasteq_cache',
-##         '_genus',
 ##         '_id',
 ##         '_id_factory',
 ##         '_numbering',
-##         '_num_boundary_components',
-##         '_valence_spectrum',
 ##         '_vertextype',
 ##         '_vertex_valences',
 ##         'endpoints_v',
@@ -246,26 +243,6 @@ class Graph(object):
         self._id_factory = __id_factory
         
         # the following values will be computed on-demand
-
-        #: Cached boundary cycles of this graph; see
-        #  `.boundary_components()` for an explanation of the
-        #  format. This is initially `None` and is actually computed on
-        #  first invocation of the `.boundary_components()` method.
-        self._boundary_components = kwargs.get('_boundary_components', None)
-
-        #: Cached genus; initially `None`, and actually computed on
-        #  first invocation of the `.genus()` method.
-        self._genus = kwargs.get('_genus', None)
-
-        #: cached number of boundary cycles of this graph; this is
-        #  initially `None` and is actually computed on first invocation
-        #  of the `.num_boundary_components()` method.
-        self._num_boundary_components = kwargs.get('_num_boundary_components',
-                                                   None)
-
-        #: Valence spectrum; initially `None`, and actually computed on
-        #  first invocation of the `.valence_spectrum()` method.
-        self._valence_spectrum = kwargs.get('_valence_spectrum', None)
 
         #: Factory method to make a `Vertex` instance from a linear
         #  list of incident edge colorings.
@@ -551,7 +528,7 @@ class Graph(object):
         """
         return self.isomorphisms(self)
 
-    
+    @memoize
     def boundary_components(self):
         """Return the number of boundary components of this `Graph` object.
 
@@ -576,101 +553,97 @@ class Graph(object):
                " cannot compute boundary components for" \
                " a graph with nonzero external edges: %s" % self
         
-        # if no cached result, compute it now...
-        if self._boundary_components is None:
-            # micro-optimizations
-            L = self.num_edges
-            endpoints_v = self.endpoints_v
-            endpoints_i = self.endpoints_i
+        # micro-optimizations
+        L = self.num_edges
+        endpoints_v = self.endpoints_v
+        endpoints_i = self.endpoints_i
 
-            # pass1: build a "copy" of `graph`, replacing each edge
-            # coloring with a triplet `(other, index, edge)` pointing to
-            # the other endpoint of that same edge: the element at
-            # position `index` in vertex `other`.
-            pass1 = []
-            for (index_of_vertex_in_graph, vertex) in enumerate(self.vertices):
-                replacement = []
-                for (index_of_edge_in_vertex, edge) in enumerate(vertex):
-                    (v1, v2) = endpoints_v[edge]
-                    (i1, i2) = endpoints_i[edge]
-                    if v1 != v2:
-                        if v1 == index_of_vertex_in_graph:
-                            other_end = v2
-                            other_index = i2
-                        else:
-                            other_end = v1
-                            other_index = i1
+        # pass1: build a "copy" of `graph`, replacing each edge
+        # coloring with a triplet `(other, index, edge)` pointing to
+        # the other endpoint of that same edge: the element at
+        # position `index` in vertex `other`.
+        pass1 = []
+        for (index_of_vertex_in_graph, vertex) in enumerate(self.vertices):
+            replacement = []
+            for (index_of_edge_in_vertex, edge) in enumerate(vertex):
+                (v1, v2) = endpoints_v[edge]
+                (i1, i2) = endpoints_i[edge]
+                if v1 != v2:
+                    if v1 == index_of_vertex_in_graph:
+                        other_end = v2
+                        other_index = i2
                     else:
-                        other_end = v1 # == v2, that is *this* vertex
-                        if index_of_edge_in_vertex == i1:
-                            other_index = i2
-                        else:
-                            other_index = i1
-                    # replace other_index with index of *next* edge
-                    # (in the vertex cyclic order)
-                    if other_index == len(self.vertices[other_end])-1:
-                        other_index = 0
+                        other_end = v1
+                        other_index = i1
+                else:
+                    other_end = v1 # == v2, that is *this* vertex
+                    if index_of_edge_in_vertex == i1:
+                        other_index = i2
                     else:
-                        other_index += 1
-                    replacement.append((other_end, other_index, edge))
-                pass1.append(replacement)
+                        other_index = i1
+                # replace other_index with index of *next* edge
+                # (in the vertex cyclic order)
+                if other_index == len(self.vertices[other_end])-1:
+                    other_index = 0
+                else:
+                    other_index += 1
+                replacement.append((other_end, other_index, edge))
+            pass1.append(replacement)
 
-            # pass2: now build a linear list, each element of the list
-            # corresponding to an half-edge, of triples `(pos, seen,
-            # edge)` where `pos` is the index in this list where the other
-            # endpoint of that edge is located, `seen` is a flag, set to
-            # `False` for half-edges that have not yet been walked
-            # through, and `edge` is the corresponding edge.
-            pass2 = []
-            # build indices to the where each vertex begins in the linear list
-            vi=[0]
-            for vertex in self.vertices:
-                vi.append(vi[-1]+len(vertex))
-            # build list from collapsing the 2-level structure
-            for vertex in pass1:
-                for triplet in vertex:
-                    pass2.append([vi[triplet[0]]+triplet[1], False, triplet[2]])
+        # pass2: now build a linear list, each element of the list
+        # corresponding to an half-edge, of triples `(pos, seen,
+        # edge)` where `pos` is the index in this list where the other
+        # endpoint of that edge is located, `seen` is a flag, set to
+        # `False` for half-edges that have not yet been walked
+        # through, and `edge` is the corresponding edge.
+        pass2 = []
+        # build indices to the where each vertex begins in the linear list
+        vi=[0]
+        for vertex in self.vertices:
+            vi.append(vi[-1]+len(vertex))
+        # build list from collapsing the 2-level structure
+        for vertex in pass1:
+            for triplet in vertex:
+                pass2.append([vi[triplet[0]]+triplet[1], False, triplet[2]])
 
-            # pass3: pick up each element of the linear list, and follow it
-            # until we come to an already marked one.
-            result = []
-            pos = 0
-            while pos < len(pass2):
-                # fast forward to an element that we've not yet seen
-                while (pos < len(pass2)) and (pass2[pos][1] == True):
-                    pos += 1
-                if pos >= len(pass2):
-                    break
-                # walk whole chain of edges
-                i = pos
-                result.append([]) # new boundary component
-                while pass2[i][1] == False:
-                    result[-1].append(pass2[i][2])
-                    pass2[i][1] = True
-                    i = pass2[i][0]
+        # pass3: pick up each element of the linear list, and follow it
+        # until we come to an already marked one.
+        result = []
+        pos = 0
+        while pos < len(pass2):
+            # fast forward to an element that we've not yet seen
+            while (pos < len(pass2)) and (pass2[pos][1] == True):
                 pos += 1
+            if pos >= len(pass2):
+                break
+            # walk whole chain of edges
+            i = pos
+            result.append([]) # new boundary component
+            while pass2[i][1] == False:
+                result[-1].append(pass2[i][2])
+                pass2[i][1] = True
+                i = pass2[i][0]
+            pos += 1
 
-            # consistency check: each edge must occur two times
-            # (either twice in the same b.c., or in two distinct
-            # components)
-            if __debug__:
-                cnt = [0] * self.num_edges
-                for bc in result:
-                    for edge in bc:
-                        cnt[edge] += 1
-                for x in xrange(len(cnt)):
-                    assert cnt[x] == 2, \
-                           "Graph.boundary_components:"\
-                           " edge %d occurs %d times "\
-                           " in boundary components `%s`"\
-                           " of graph `%s`"\
-                           % (x, cnt[x], result, self)
+        # consistency check: each edge must occur two times
+        # (either twice in the same b.c., or in two distinct
+        # components)
+        if __debug__:
+            cnt = [0] * self.num_edges
+            for bc in result:
+                for edge in bc:
+                    cnt[edge] += 1
+            for x in xrange(len(cnt)):
+                assert cnt[x] == 2, \
+                       "Graph.boundary_components:"\
+                       " edge %d occurs %d times "\
+                       " in boundary components `%s`"\
+                       " of graph `%s`"\
+                       % (x, cnt[x], result, self)
 
-            # save result for later reference
-            self._boundary_components = list(CyclicTuple(bc) for bc in result)
-        
         # that's all, folks!
-        return self._boundary_components
+        return list(CyclicTuple(bc) for bc in result)
+        
 
     def clone(self):
         """Return a new `Graph` instance, sharing all attribute values
@@ -690,10 +663,6 @@ class Graph(object):
                      numbering = self.numbering,
                      orientation = self.edge_numbering,
                      vertextype = self._vertextype,
-                     _boundary_components = self._boundary_components,
-                     _genus = self._genus,
-                     _num_boundary_components = self._num_boundary_components,
-                     _valence_spectrum = self._valence_spectrum,
                      _vertex_valences = self._vertex_valences,
                      )
 
@@ -867,16 +836,11 @@ class Graph(object):
                          if x != edgeno ]
         
         numbering = None
-        bc = None
         #   - edge `edgeno` is removed (subst with `None`)
         renumber_edges[edgeno] = None  
         if self.numbering is not None:
             numbering = [ (n, CyclicTuple(itranslate(renumber_edges, bcy)))
                           for (bcy, n) in self.numbering.iteritems() ]
-            bc = [ bcy for (n,bcy) in numbering ]
-        elif self._boundary_components is not None:
-            bc = [ CyclicTuple(itranslate(renumber_edges, bcy))
-                   for bcy in self._boundary_components ]
 
         # consistency check
         if __debug__:
@@ -904,20 +868,17 @@ class Graph(object):
                      num_external_edges = self.num_external_edges,
                      numbering = numbering,
                      orientation = new_edge_numbering,
-                     _boundary_components = bc,
                      )
             
 
+    @memoize
     def genus(self):
         """Return the genus g of this `Graph` object."""
-        # compute value if not already done
-        if (self._genus is None):
-            n = self.num_boundary_components()
-            K = self.num_vertices
-            L = self.num_edges
-            # by Euler, K-L+n=2-2*g
-            self._genus = (L - K - n + 2) / 2
-        return self._genus
+        n = self.num_boundary_components()
+        K = self.num_vertices
+        L = self.num_edges
+        # by Euler, K-L+n=2-2*g
+        return (L - K - n + 2) / 2
 
 
     def graft(self, G, v):
@@ -1293,23 +1254,6 @@ class Graph(object):
             else:
                 numbering[bcy] = n
         self._numbering = numbering
-        if __debug__:
-            if self._boundary_components is not None:
-                assert set(self._boundary_components) \
-                       == set(self.numbering), \
-                       "Graph.numbering_set:"\
-                       " Not all boundary components were numbered"
-                indices = set()
-                for n in self._numbering.itervalues():
-                    if isinstance(n, frozenset):
-                        indices = set.union(indices, n)
-                    else: # `n` is integer
-                        indices.add(n)
-                assert indices == set(range(len(self._boundary_components))), \
-                       "Graph.numbering_set:"\
-                       " Numbering indices `%s` are not a permutation"\
-                       " of the range 0..%d (no. of boundary components)"\
-                       % (self._numbering.values(), len(self._numbering),)
     numbering = property(numbering_get, numbering_set)
     
     def num_boundary_components(self):
@@ -1324,11 +1268,7 @@ class Graph(object):
           >>> Graph([Vertex([2,1,0]), Vertex([2,0,1])]).num_boundary_components()
           3
         """
-        # compute boundary components and cache result
-        if self._num_boundary_components is None:
-            self._num_boundary_components = len(self.boundary_components())
-
-        return self._num_boundary_components
+        return len(self.boundary_components())
 
 
     def projection(self, other):
@@ -1371,7 +1311,8 @@ class Graph(object):
         except StopIteration:
             # list of morphisms is empty, graphs are not equal.
             return 0
-    
+
+    @memoize
     def valence_spectrum(self):
         """Return a dictionary mapping valences into vertex indices.
 
@@ -1387,27 +1328,25 @@ class Graph(object):
                       Vertex([4, 4, 0]), Vertex([3, 2, 2])]).valence_spectrum()
            {3: [1, 2], 4: [0]}
         """
-        # compute spectrum on first invocation
-        if self._valence_spectrum is None:
-            self._valence_spectrum = {}
-            for (index, vertex) in enumerate(self.vertices):
-                l = len(vertex)
-                if l in self._valence_spectrum:
-                    self._valence_spectrum[l].append(index)
-                else:
-                    self._valence_spectrum[l] = [index]
-            # consistency checks
-            assert set(self._valence_spectrum.keys()) == set(self._vertex_valences), \
-                   "Graph.valence_spectrum:" \
-                   "Computed valence spectrum `%s` does not exhaust all " \
-                   " vertex valences %s" \
-                   % (self._valence_spectrum, self._vertex_valences)
-            assert set(concat(self._valence_spectrum.values())) \
-                   == set(range(self.num_vertices)), \
-                   "Graph.valence_spectrum:" \
-                   "Computed valence spectrum `%s` does not exhaust all " \
-                   " %d vertex indices" % (self._valence_spectrum, self.num_vertices)
-        return self._valence_spectrum
+        result = {}
+        for (index, vertex) in enumerate(self.vertices):
+            l = len(vertex)
+            if l in result:
+                result[l].append(index)
+            else:
+                result[l] = [index]
+        # consistency checks
+        assert set(result.keys()) == set(self._vertex_valences), \
+               "Graph.valence_spectrum:" \
+               "Computed valence spectrum `%s` does not exhaust all " \
+               " vertex valences %s" \
+               % (result, self._vertex_valences)
+        assert set(concat(result.values())) \
+               == set(range(self.num_vertices)), \
+               "Graph.valence_spectrum:" \
+               "Computed valence spectrum `%s` does not exhaust all " \
+               " %d vertex indices" % (result, self.num_vertices)
+        return result
 
 
 def MakeNumberedGraphs(graph):
