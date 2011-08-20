@@ -5,6 +5,8 @@ __docformat__ = 'reStructuredText'
 
 
 from rg import all_graphs,vertex_valences_for_given_g_and_n,Graph
+import sys
+from utils import positive_int
 
 
 def graph_to_xypic(graph):
@@ -101,9 +103,9 @@ parser = OptionParser(usage="""Usage: %prog [options] action [arg ...]
         Run internal code tests and report results.
         
     """)
-parser.add_option("-v", "--verbose",
-                  action='store_true', dest='verbose', default=False,
-                  help="Report verbosely on progress.")
+parser.add_option("-n", "--silent",
+                  action='store_true', dest='silent', default=False,
+                  help="No output. (Use mainly for timing the algorithm.)")
 parser.add_option("-L", "--latex",
                   action='store_true', dest='latex', default=False,
                   help="Print Xy-Pic code to draw graphs.")
@@ -113,23 +115,61 @@ parser.add_option("-o", "--output", dest="outfile", default=None,
 
 if 0 == len(args) or 'help' == args[0]:
     parser.print_help()
+    sys.exit(1)
 
 elif 'test' == args[0]:
     import doctest
     doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE)
 
 elif 'vertices' == args[0]:
-    if len(args) < 3:
+    del args[0]
+    if len(args) < 2:
         parser.print_help()
-    g = int(args[1])
-    n = int(args[2])
-    vks = vertex_valences_for_given_g_and_n(g,n)
-    for vk in vks:
-        print vk
+        sys.exit(1)
+    try:
+        g = int(args[0])
+        if g < 0:
+            raise ValueError
+    except ValueError:
+        sys.stderr.write("Bad value '%s' for argument G: " \
+                         "should be positive integer.\n" \
+                         % (args[0],))
+        sys.exit(1)
+    try:
+        n = positive_int(args[1])
+    except ValueError, msg:
+        sys.stderr.write("Bad value '%s' for argument N: " \
+                         "should be non-negative integer.\n" \
+                         % (args[1],))
+        sys.exit(1)
+    vvs = vertex_valences_for_given_g_and_n(g,n)
+    for vv in vvs:
+        print vv
 
 elif 'graphs' == args[0]:
+    # parse command line
     del args[0]
-    import sys
+    if len(args) == 0:
+        parser.print_help()
+        sys.exit(1)
+    valences_list = []
+    for pattern in args:
+        try:
+            valences = [ positive_int(v) for v in pattern.split(',') ]
+        except ValueError, msg:
+            sys.stderr.write("Bad argument '%s': " \
+                             "vertex valences must be a comma-separated " \
+                             "list of positive integers: %s" \
+                             % (pattern, msg))
+            sys.exit(1)
+        if sum(valences) % 2 != 0:
+            sys.stderr.write("Invalid argument '%s': " \
+                             "sum of vertex valences must be an even number. " \
+                             "Aborting." \
+                             % (pattern,))
+            sys.exit(1)
+        valences_list.append(valences)
+
     # open output file
     if options.outfile is None:
         outfile = sys.stdout
@@ -139,26 +179,24 @@ elif 'graphs' == args[0]:
     graphs = []
     for vertex_pattern in args:
         vertex_list = map(int, vertex_pattern.split(','))
-        if options.verbose:
-            sys.stderr.write("Computing graphs with vertex pattern %s\n" \
-                             % vertex_list)
         graphs += all_graphs(vertex_list)
 
-    # print latex code
-    if options.latex:
-        outfile.write(r"""
-\documentclass[a4paper,twocolumn]{article}
-\usepackage[curve,poly,xdvi]{xy}
-\begin{document}
-""")
-    for g in graphs:
+    # output results
+    if not options.silent:
         if options.latex:
-            outfile.write(graph_to_xypic(g)+'\n')
-        else:
-            outfile.write("%s\n" % g)
-    outfile.write("\n")
-    outfile.write("Found %d graphs.\n" % len(graphs))
-    outfile.write("\n")
-    if options.latex:
-        outfile.write(r"\end{document}")
+            outfile.write(r"""
+    \documentclass[a4paper,twocolumn]{article}
+    \usepackage[curve,poly,xdvi]{xy}
+    \begin{document}
+    """)
+        for g in graphs:
+            if options.latex:
+                outfile.write(graph_to_xypic(g)+'\n')
+            else:
+                outfile.write("%s\n" % g)
         outfile.write("\n")
+        outfile.write("Found %d graphs.\n" % len(graphs))
+        outfile.write("\n")
+        if options.latex:
+            outfile.write(r"\end{document}")
+            outfile.write("\n")
