@@ -6,7 +6,7 @@ __docformat__ = 'reStructuredText'
 
 
 from homology import *
-from rg import MgnGraphsIterator, Graph,Vertex
+from rg import MgnGraphsIterator, Graph, Vertex
 from valences import vertex_valences_for_given_g_and_n
 
 
@@ -38,7 +38,6 @@ def FatgraphComplex(g, n):
             continue
         grade = graph.num_edges - 1
         generators[grade].append(graph)
-        graph._seqnr = len(generators[grade]) - 1
         
     # build chain complex
     C = ChainComplex(top_dimension)
@@ -46,16 +45,9 @@ def FatgraphComplex(g, n):
         # set support module and differential
         C[i] = (FatgraphComplexSlice(generators[i]),
                 graph_homology_differential)
-
     return C
 
 
-def sign1(l):
-    if l % 2 == 0:
-        return +1
-    else:
-        return -1
-    
 def graph_homology_differential(graph):
     """The graph homology differential (the same for every grade).
 
@@ -72,7 +64,6 @@ def graph_homology_differential(graph):
                    " un-numbered graph `%s`."\
                    % (graph, l, dg)
             if dg.is_oriented():
-                #result.append((dg, sign1(l)))
                 result.append((dg, 1))
     return result
         
@@ -105,8 +96,7 @@ class FatgraphComplexSlice(VectorSpace):
             # is isomorphic to.
             try:
                 canonical = self.base[self.base.index(graph)]
-##                 i = [ (graph == g) for g in self.base ].index(True)
-##                 canonical = self.base[i]
+                assert canonical == graph and graph == canonical
             except ValueError:
                 raise ValueError, \
                       "Cannot find canonical representative for graph `%s`." \
@@ -117,7 +107,6 @@ class FatgraphComplexSlice(VectorSpace):
 
         # call method from superclass
         return VectorSpace.coordinates(self, combo)
-                        
         
 
 
