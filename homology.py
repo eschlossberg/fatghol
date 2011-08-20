@@ -17,7 +17,7 @@ import types
 
 ## application-local imports
 
-from rational import Rational
+from simplematrix import SimpleMatrix
 
 
 ## main
@@ -32,24 +32,17 @@ class VectorSpace(object):
     the `dimension` of the generated vector space equals the number of
     elements in the base set.
     """
-    def __init__(self, base, typecast=Rational):
-        """Constructor, taking explicit base and coefficient numeric type.
+    def __init__(self, base):
+        """Constructor, taking list of base vectors.
 
         First argument `base` is a sequence of base vectors; no
         requirement is placed on the type of base vectors.  The `base`
         object should support:
           - the `len` operator;
           - the `index` operator (with the same semantics of the `list` one)
-
-        Optional second argument `typecast` is a factory function for
-        the coefficients in the coordinate vectors.  The function
-        `typecast` should accept a single integer argument and return
-        an instance of a type that supports addition (Python operators
-        `__add__` and `__iadd__`).
         """
         self.base = base
         self.dimension = len(base)
-        self._typecast = typecast
 
     def __iter__(self):
         """Iterate over basis vectors."""
@@ -67,8 +60,7 @@ class VectorSpace(object):
         of pairs `(vector, coefficient)`, where `vector` is an item in
         the `base` (specified when constructing this object).
         """
-        coordinates = [ self._typecast(0)
-                        for i in xrange(self.dimension) ]
+        coordinates = [ 0 ] * self.dimension
         for (vector, coefficient) in iter(element):
             coordinates[self.base.index(vector)] += coefficient
         return coordinates
@@ -226,17 +218,23 @@ class ChainComplex(object):
         #
         D = []
         for i in xrange(1, self.length):
-            D.append([ self.module[i-1].coordinates(self.differential[i](b))
-                       for b in self.module[i].base ])
+            d = SimpleMatrix(self.module[i].dimension,
+                             self.module[i-1].dimension)
+            for j in xrange(self.module[i].dimension):
+                # a = self.module[i][j]
+                for (b, c) in self.differential[i](self.module[i].base[j]):
+                    if c != 0:
+                        d.entry(j, self.module[i-1].base.index(b), c)
+            D.append(d)
             logging.debug("  Computed %dx%d matrix D[%d]",
                          len(self.module[i-1].base),
                          len(self.module[i].base),
                          i)
             
-        # check that the differentials form a complex
-        if __debug__:
-            for i in xrange(1, self.length - 1):
-                assert is_null_matrix(matrix_product(D[i-1], D[i]))
+        # XXX: check that the differentials form a complex
+        #if __debug__:
+        #    for i in xrange(1, self.length - 1):
+        #        assert is_null_matrix(matrix_product(D[i-1], D[i]))
 
         
         ## pass 2: compute rank and nullity of boundary operators
@@ -251,7 +249,7 @@ class ChainComplex(object):
         #: `D[0]` is the null map.
         ranks = [ 0 ]
         for A in D:
-            ranks.append(rank_of_matrix(A))
+            ranks.append(A.rank())
 
         ## pass 3: compute homology group ranks from rank and nullity
         ##         of boundary operators.
@@ -268,146 +266,6 @@ class ChainComplex(object):
         return [ (self.module[i].dimension - ranks[i] - ranks[i+1])
                  for i in xrange(self.length) ]
     
-
-def rank_of_matrix(A):
-    """Destructively compute rank of matrix `A`.
-    The rank is computed by performing Gaussian elimination on the
-    matrix `A`, which is therefore altered irreversibly.
-
-    Matrix `A` is represented as a list of vectors; each vector is
-    represented by a Python list of numbers::
-    
-      >>> rank_of_matrix([[1,0,0], [0,0,1]])
-      2
-
-    Since rank by columns equals rank by rows, it does not matter
-    whether the vectors actually represent matrix rows or matrix
-    columns::
-
-      >>> rank_of_matrix([[1,0], [0,0], [0,1]]) \
-          == rank_of_matrix([[1,0,0], [0,0,1]])
-      True
-
-    An empty list represents a 0x0 matrix::
-
-      >>> rank_of_matrix([])
-      0
-
-    Examples::
-
-      >>> rank_of_matrix([[0,0,0,0]])
-      0
-
-      >>> rank_of_matrix([[0,0,0,0], [0,0,0,0]])
-      0
-
-      >>> rank_of_matrix([[1,0,0]])
-      1
-
-    These matrices always have rank 2 for N>1::
-    
-      >>> def m(N): return [ [ float(N*n+k) for k in xrange(1,N+1) ] \
-                             for n in xrange(0, N) ]
-      >>> [ rank_of_matrix(m(N)) for N in xrange(10) ]
-      [0, 1, 2, 2, 2, 2, 2, 2, 2, 2]
-      
-    Vandermonde matrices always have maximal rank::
-    
-      >>> def v(N): return [ [ float(k**n) for k in xrange(1,N+1) ] \
-                             for n in xrange(0, N) ]
-      >>> [ rank_of_matrix(v(N)) for N in xrange(10) ]
-      [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-      
-    """
-    sup_i = len(A)
-    if sup_i == 0:
-        # null matrix
-        return 0
-    sup_j = len(A[0])
-    i = 0
-    j = 0
-    
-    rank = 0  #: computed rank of matrix `A`
-    while (i < sup_i) and (j < sup_j):
-        ## pass 1 : Choose pivot as the first `i` such that `A[i][j]`
-        ## is non-zero.
-        ##
-        ## XXX: Since we are using rational exact arithmentic, we might
-        ## choose the element `A[ii][j] = Rational(p,q)` such that:
-        ##   1) `abs(p) + abs(q) > 0`;
-        ##   2) `abs(p) + abs(q)` is smallest among those satisfying 1).
-        ## This *might* help reduce rationals growth.
-        if A[i][j] == 0:
-            for ii in xrange(i+1, sup_i):
-                if A[ii][j] != 0:
-                    # swap current `i` and `ii`
-                    A[ii], A[i] = A[i], A[ii]
-                    break
-        if A[i][j] == 0:
-            # A[* >= i][j] is always zero, try with next `j`
-            j += 1
-            continue # next iteration of the 'while' loop
-
-        ## pass 2: Collect quotients `q[ii] = A[ii][j] / A[i][j]` for
-        ## `ii != i`; each row/column with index `ii != i` will be
-        ## subtracted a multiple of `A[i]` by `q[ii]`.
-        ##
-        ## Usually implementations store the quotients `q[ii]` into
-        ## `A[ii][j]` (which will be then zeroed by the Gaussian
-        ## elimination in pass 3), but Python has list comprehensions,
-        ## which are apparently both cleaner and faster.
-        ##
-        pivot = A[i][j]  # micro-optimization: avoid lookup
-        q = [ (A[ii][j] / pivot) for ii in xrange(i+1, sup_i) ]
-
-        ## pass 3: Elimination step: set `A[ii] = A[ii] - A[i]*q[ii]`
-        ## for `ii != i`.
-        ##
-        ## Since we are only interested in the rank of `A`, we only
-        ## perform the elimination step above on `A[ii][jj]` for `ii >
-        ## i` and `jj > j`, that is, the part of `A` that would be
-        ## examined by subsequent iterations of steps 1&2.  Matrix `A`
-        ## will not be in proper Echelon form, but we get the rank
-        ## count right nonetheless.
-        ##
-        for jj in xrange(j+1, sup_j):
-            for ii in xrange(i+1, sup_i):
-                A[ii][jj] -= A[i][jj] * q[ii - i - 1]
-        j += 1
-        i += 1
-        rank += 1
-##         if __debug__:
-##             print "DEBUG: At i=%d, j=%d:" % (i,j)
-##             for a in A:
-##                 print "DEBUG: %s" %a
-    return rank
-
-
-def is_null_matrix(A, cast=Rational):
-    """Return `True` if all entries of `A` are zero."""
-    for vector in A:
-        for entry in vector:
-            if entry != cast(0):
-                return False
-    return True
-
-
-def matrix_product(A, B):
-    """Return the matrix product of `A` and `B`."""
-    assert len(B)>0 and len(A) == len(B[0]), \
-           "homology.matrix_product:"\
-           " multiplying (%d x %d)-matrix A with (%d x %d)-matrix B."\
-           % (len(A[0]), len(A), len(B[0]), len(B))
-    if len(A) > 0:
-        # result[i][j] = A[k][j] * B[i][k]
-        return [ [ sum([ A[k][j]*B[i][k] for k in xrange(len(A)) ], Rational(0))
-                   for j in xrange(len(A[0])) ]
-                 for i in xrange(len(B)) ]
-    else:
-        # return null matrix
-        return [ [] for i in xrange(len(B)) ]
-        
-
 
 ## main: run tests
 
