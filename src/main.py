@@ -5,7 +5,11 @@ __docformat__ = 'reStructuredText'
 
 
 from graph_homology import FatgraphComplex
-from rg import Graph,ConnectedGraphsIterator
+from rg import (
+    Graph,
+    ConnectedGraphsIterator,
+    MgnGraphsIterator,
+    )
 from valences import vertex_valences_for_given_g_and_n
 
 import sys
@@ -99,8 +103,14 @@ parser = OptionParser(usage="""Usage: %prog [options] action [arg ...]
       vertices G N
         Print the vertex valences occurring in M_{g,n} graphs
 
-      graphs V1,V2,...
+      graphs G N
+        Print the graphs occurring in M_{g,n}
+
+      graphs-with-valence V1,V2,...
         Print the graphs having only vertices of the specified valences.
+
+      homology G N
+        Print homology ranks of M_{g,n}
 
       test
         Run internal code tests and report results.
@@ -163,8 +173,61 @@ elif 'vertices' == args[0]:
     for vv in vvs:
         outfile.write("%s\n" % str(vv))
 
-# graphs -- list graphs for given vertex valences
-elif 'graphs' == args[0]:
+# graphs -- list graphs from given g,n
+elif "graphs" == args[0]:
+    # parse command line
+    del args[0]
+    if len(args) < 2:
+        parser.print_help()
+        sys.exit(1)
+
+    try:
+        g = int(args[0])
+        if g < 0:
+            raise ValueError
+    except ValueError:
+        sys.stderr.write("Bad value '%s' for argument G: " \
+                         "should be positive integer.\n" \
+                         % (args[0],))
+        sys.exit(1)
+    try:
+        n = positive_int(args[1])
+    except ValueError, msg:
+        sys.stderr.write("Bad value '%s' for argument N: " \
+                         "should be non-negative integer.\n" \
+                         % (args[1],))
+        sys.exit(1)
+
+    # compute graphs matching given g,n
+    graphs = list(MgnGraphsIterator(g,n))
+
+    # output results
+    if not options.silent:
+        if options.latex:
+            outfile.write(r"""
+    \documentclass[a4paper,twocolumn]{article}
+    \usepackage[curve,poly,xdvi]{xy}
+    \begin{document}
+    """)
+        for graph in graphs:
+            if options.latex:
+                outfile.write(graph_to_xypic(graph)+'\n')
+            else:
+                outfile.write("%s\n" % ((graph,
+                                         graph.genus(),
+                                         graph.num_boundary_components(),
+                                         graph.is_oriented(),
+                                         ),))
+        outfile.write("\n")
+        outfile.write("Found %d graphs.\n" % len(graphs))
+        outfile.write("\n")
+        if options.latex:
+            outfile.write(r"\end{document}")
+            outfile.write("\n")
+
+
+# graphs-with-valence -- list graphs for given vertex valences
+elif 'graphs-with-valence' == args[0]:
     # parse command line
     del args[0]
     if len(args) == 0:
@@ -186,8 +249,7 @@ elif 'graphs' == args[0]:
         sys.exit(1)
 
     # compute graphs matching given vertex sequences
-    graphs = []
-    graphs += list(ConnectedGraphsIterator(valences))
+    graphs = list(ConnectedGraphsIterator(valences))
 
     # output results
     if not options.silent:
@@ -246,3 +308,7 @@ elif 'homology' == args[0]:
     if not options.silent:
         for (i, h) in enumerate(hs):
             outfile.write("h_%d(M_{%d,%d}) = %d\n" % (i, g, n, h))
+
+else:
+    sys.stderr.write("Unknown action `%s`, aborting.\n" % args[0])
+    sys.exit(1)

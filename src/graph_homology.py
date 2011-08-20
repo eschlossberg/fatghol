@@ -6,7 +6,7 @@ __docformat__ = 'reStructuredText'
 
 
 from homology import *
-from rg import ConnectedGraphsIterator
+from rg import MgnGraphsIterator
 from valences import vertex_valences_for_given_g_and_n
 
 
@@ -33,13 +33,9 @@ def FatgraphComplex(g, n):
     generators = [ [] for dummy in xrange(top_dimension) ]
 
     # gather graphs
-    for val in vertex_valences_for_given_g_and_n(g, n):
-        grade = sum(val)/2 - 1
-        for graph in ConnectedGraphsIterator(val):
-            # add if correct `g` and `n`
-            if (graph.genus() == g) and \
-                   (graph.num_boundary_components() == n):
-                generators[grade].append(graph)
+    for graph in MgnGraphsIterator(g,n):
+        grade = graph.num_edges - 1
+        generators[grade].append(graph)
 
     # build chain complex
     C = ChainComplex(top_dimension)

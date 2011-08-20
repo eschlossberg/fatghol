@@ -143,26 +143,24 @@ class chunks(object):
                    for x in xrange(self.sizes[self.current_chunk]) ]
 
 
-def positive_int(arg):
-    """Convert a string or number to a positive integer, if possible.
-    Behaves just like the built-in `int` (which see), and additionally
-    raises `ValueError` if the converted integer is less-then or equal
-    to 0.
-    """
-    result = int(arg)
-    if result <= 0:
-        raise ValueError("non-positive integer literal: %d" % result)
-    return result
+class Iterator(object):
+    """Base class for user-defined iterators."""
 
+    def __iter__(self):
+        return self
 
+    def next(self):
+        raise StopIteration
+
+    
 class itranslate:
     """Return items from a sequence, substituting them as specified.
 
-    First c'tor argument `subst` is a dictionary, specifying
-    substitutions to be applied.  If an item matches a key of the
-    `subst` dictionary, the associated dictionary value is returned
-    instead; unless the value is `None`, in which case the item is
-    skipped altogether.
+    First argument `subst` is a dictionary, specifying substitutions
+    to be applied.  If an item matches a key of the `subst`
+    dictionary, the associated dictionary value is returned instead;
+    unless the value is `None`, in which case the item is skipped
+    altogether.
 
     *Note:* you should use an appropriate `dict`-subclass if you want
      to translate items which are not immutable.
@@ -186,6 +184,18 @@ class itranslate:
                 # skip this item
                 continue
             return translated
+
+
+def positive_int(arg):
+    """Convert a string or number to a positive integer, if possible.
+    Behaves just like the built-in `int` (which see), and additionally
+    raises `ValueError` if the converted integer is less-then or equal
+    to 0.
+    """
+    result = int(arg)
+    if result <= 0:
+        raise ValueError("non-positive integer literal: %d" % result)
+    return result
 
 
 
