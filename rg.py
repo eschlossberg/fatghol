@@ -20,10 +20,10 @@ import types
 ## application-local imports
 
 from cache import (
-    cache,
-    cache1,
-    cache_iterator,
-    cache_symmetric,
+    ocache0,
+    ocache_iterator,
+    ocache_symmetric,
+    ocache_weakref,
     Cacheable,
     )
 from combinatorics import (
@@ -113,7 +113,7 @@ class Vertex(Cacheable, CyclicList):
     def __str__(self):
         return repr(self)
     
-    @cache1
+    @ocache0
     def num_loops(self):
         """Return the number of loops attached to this vertex."""
         seen = {}
@@ -131,7 +131,7 @@ class EqualIfIsomorphic(object):
     isomorphism mapping one to the other.
     """
     
-    @cache_symmetric
+    @ocache_symmetric
     def __eq__(self, other):
         """Return `True` if `self` and `other` are isomorphic."""
 
@@ -470,7 +470,7 @@ class Fatgraph(EqualIfIsomorphic, Cacheable):
             return Fatgraph.BoundaryCycle(triples)
                 
 
-    @cache
+    @ocache0
     def boundary_cycles(self):
         """Return a list of boundary cycles of this `Fatgraph` object.
 
@@ -887,7 +887,7 @@ class Fatgraph(EqualIfIsomorphic, Cacheable):
         return image_edge_numbering.sign()
 
 
-    @cache
+    @ocache_weakref
     def contract(self, edgeno):
         """Return new `Fatgraph` obtained by contracting the specified edge.
 
@@ -1056,7 +1056,7 @@ class Fatgraph(EqualIfIsomorphic, Cacheable):
         return xrange(self.num_edges)
 
     
-    @cache
+    @ocache0
     def edge_orbits(self):
         """Compute orbits of the edges under the action of graph
         automorphism group, and a representative for each orbit.
@@ -1095,7 +1095,7 @@ class Fatgraph(EqualIfIsomorphic, Cacheable):
         return orbits
 
 
-    @cache
+    @ocache0
     def edge_pair_orbits(self):
         """Compute orbits of pairs `(edge1, edge2)` under the action
         of graph automorphism group, and a representative for each
@@ -1382,7 +1382,7 @@ class Fatgraph(EqualIfIsomorphic, Cacheable):
         return True
 
 
-    @cache_iterator
+    @ocache_iterator
     def isomorphisms(g1, g2):
         """Iterate over `Fatgraph` isomorphisms from `g1` to `g2`.
 
@@ -1623,7 +1623,6 @@ class Fatgraph(EqualIfIsomorphic, Cacheable):
         return len(self.boundary_cycles())
 
 
-    ##@cache_symmetric -- not important, as comparisons are ever done one-way
     def projection(self, other):
         """Return the component of the projection of `self` on the
         basis vector `other`.  This can be either 0 (if `self` and
@@ -1679,7 +1678,7 @@ class Fatgraph(EqualIfIsomorphic, Cacheable):
             # list of morphisms is empty, graphs are not equal.
             return 0
 
-    @cache1
+    @ocache0
     def valence_spectrum(self):
         """Return a dictionary mapping valences into vertex indices.
 
@@ -1715,11 +1714,11 @@ class Fatgraph(EqualIfIsomorphic, Cacheable):
                " %d vertex indices" % (result, self.num_vertices)
         return result
 
-    @cache1
+    @ocache0
     def vertex_valences(self):
         return frozenset(len(v) for v in self.vertices)
 
-    @cache1
+    @ocache0
     def vertex_valence_distribution(self):
         spec = self.valence_spectrum()
         return dict((v, len(spec[v]))
@@ -1946,7 +1945,7 @@ class NumberedFatgraph(Fatgraph):
                % (repr(self.underlying), canonical)
     
 
-    @cache
+    @ocache_weakref
     def contract(self, edgeno):
         """Return a new `NumberedFatgraph` instance, obtained by
         contracting the specified edge.
@@ -2035,7 +2034,7 @@ class NumberedFatgraph(Fatgraph):
                                 numbering=new_numbering)
         
 
-    @cache_iterator
+    @ocache_iterator
     def isomorphisms(self, other):
         """Iterate over isomorphisms from `self` to `other`.
 
@@ -2132,7 +2131,7 @@ class NumberedFatgraph(Fatgraph):
     
     
 
-@cache_iterator
+#@fcache_iterator
 def MgnTrivalentGraphsRecursiveGenerator(g, n):
     """Iterate over all connected trivalent fatgraphs having the
     prescribed genus `g` and number of boundary cycles `n`.
