@@ -43,9 +43,17 @@
      "T"
      "Lb"
      "Hn"
+<<<<<<< TREE
      "xyc"
      "nx")
+=======
+     "Harmonic"
+     "ad"
+     "rel"
+     "xyc")
+>>>>>>> MERGE-SOURCE
     (TeX-run-style-hooks
+     "csref"
      "graphicx"
      "final"
      "csref"
@@ -81,8 +89,10 @@
      "draft"
      "title"
      "prelim"
+     "graphcomplex"
      "gc"
      "fd"
+     "ainfty"
      "kontsevich"
      "arrows"
      "btc"

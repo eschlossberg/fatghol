@@ -1,5 +1,5 @@
 ;; RefTeX parse info file
-;; File: /home/rmurri/mat/dott/index.tex
+;; File: /home/rmurri/phd/index.tex
 ;; User: rmurri (Riccardo Murri)
 
 (set reftex-docstruct-symbol '(
@@ -11,466 +11,550 @@
 
 (is-multi t)
 
-(bibview-cache)
+(bibview-cache ("strebel;quadratic-differentials;1983" . "Strebel 1984, Quadratic differentials, xii+184") ("harer;cohomology-of-moduli" . "Harer 1988, cohomology moduli space curves, in: Theory moduli (Montecatini Terme, 138") ("harer;cohomological-dimension" . "Harer 1986, virt. cohom. dimens. mapp. class, Invent. Math. 84:157") ("conant-vogtmann;2003" . "Conant & Vogtmann 2003, theorem {K}ontsevich, Algebr. Geom. Topol. 3:1167") ("markl;cyclic" . "Markl 1999, Cyclic operads homology graph complexes, Rend. Circ. Mat. Palermo (2) Suppl. 161") ("getzler-kapranov" . "Getzler & Kapranov 1998, Modular operads, Compositio Math. 110:65") ("\"\\def\\cprime{$'$}" . "") ("kontsevich;feynman" . "Kontsevich 1994, Feynm. diagr. low dimens. topol., in: First European Congress Mathematics, 97"))
 
-(master-dir . "/home/rmurri/mat/dott/")
+(master-dir . "/home/rmurri/phd/")
 
 (label-numbers)
 
-(bof "/home/rmurri/mat/dott/index.tex")
+(bof "/home/rmurri/phd/index.tex")
 
-(bof "/home/rmurri/mat/dott/title.tex")
+(bof "/home/rmurri/phd/title.tex")
 
-(eof "/home/rmurri/mat/dott/title.tex")
+(eof "/home/rmurri/phd/title.tex")
 
-(bof "/home/rmurri/mat/dott/prelim.tex")
+(bof "/home/rmurri/phd/prelim.tex")
 
-(toc "toc" "  1 Preliminaries and Notation" "/home/rmurri/mat/dott/prelim.tex" nil 1 "1" "\\chapter{Preliminaries and Notation}" 28)
+(toc "toc" "  1 Preliminaries and Notation" "/home/rmurri/phd/prelim.tex" nil 1 "1" "\\chapter{Preliminaries and Notation}" 78)
 
-(toc "toc" "    1.1 Differential graded algebras and modules" "/home/rmurri/mat/dott/prelim.tex" nil 2 "1.1" "\\section{Differential graded algebras and modules}" 28)
+("cha:prelim" "s" "When $\\A$ is a category, we shall use Eilenberg's $\\A(A, B)$ to denote the set of arrows from $A$ to" "/home/rmurri/phd/prelim.tex" nil)
 
-("sec:dg-things" "s" "Let $\\fk$ be a fixed field of characteristics $0$; later on, we shall assume $\\fk = \x1dd7$. \\begin{defin" "/home/rmurri/mat/dott/prelim.tex" nil)
+(toc "toc" "    1.1 Differential graded algebras and modules" "/home/rmurri/phd/prelim.tex" nil 2 "1.1" "\\section{Differential graded algebras and modules}" 1000)
 
-(toc "toc" "    1.2 Braided symmetric categories of Modules" "/home/rmurri/mat/dott/prelim.tex" nil 2 "1.2" "\\section{Braided symmetric categories of Modules}" 28)
+("sec:dg-things" "s" "Let $\\fk$ be a fixed field of characteristics $0$; later on, we shall assume $\\fk = \\setC$. \\begin{d" "/home/rmurri/phd/prelim.tex" nil)
 
-("sec:btc+dg" "s" "Given any commutative dg-algebra $K$, the category $\\catMod_K^\x1ddb$ of finitely-generated $K$-dg-bimodu" "/home/rmurri/mat/dott/prelim.tex" nil)
+(toc "toc" "    1.2 Braided symmetric categories of Modules" "/home/rmurri/phd/prelim.tex" nil 2 "1.2" "\\section{Braided symmetric categories of Modules}" 3185)
 
-("eq:dgm-braiding" "e" "\x1c74_{MN} &: M \x1cc4 N \x1c27 m\x1cc4 n \x1d65 (-1)^{mn}n\x1cc4 m \x1cce N \x1cc4 M && \\text{(braiding),} " "/home/rmurri/mat/dott/prelim.tex" nil)
+("sec:btc+dg" "s" "Given any commutative dg-algebra $K$, the category $\\catMod_K^\\setZ$ of finitely-generated $K$-dg-bi" "/home/rmurri/phd/prelim.tex" nil)
 
-("eq:dgm-balancing" "e" "\x1c71_M &: M \x1c27 m \x1d65 (-1)^mm \x1cce M && \\text{(balancing).} " "/home/rmurri/mat/dott/prelim.tex" nil)
+("eq:dgm-braiding" "e" "\\tau_{MN} &: M \\otimes N \\ni m\\otimes n \\mapsto (-1)^{mn}n\\otimes m \\in N \\otimes M && \\text{(braidi" "/home/rmurri/phd/prelim.tex" nil)
 
-(toc "toc" "    1.3 Signs and the graded contraction" "/home/rmurri/mat/dott/prelim.tex" nil 2 "1.3" "\\section{Signs and the graded contraction}" 28)
+("eq:dgm-balancing" "e" "\\theta_M &: M \\ni m \\mapsto (-1)^mm \\in M && \\text{(balancing).} " "/home/rmurri/phd/prelim.tex" nil)
 
-("sec:signs" "s" "Recall that the symmetric monoidal category of graded modules has a non-trivial (yet involutive) bra" "/home/rmurri/mat/dott/prelim.tex" nil)
+(toc "toc" "    1.3 Signs and the graded contraction" "/home/rmurri/phd/prelim.tex" nil 2 "1.3" "\\section{Signs and the graded contraction}" 4974)
 
-("eq:ksz" "e" "\x1c65(\x1c73; x_1, \\dots, x_n) x_1 \x1cc4 \\dots \x1cc4 x_n = \x1c74_\x1c73 (x_1 \x1cc4 \\dots \x1cc4 x_n), \\qquad \x1c73\x1cce\\Perm{n}. " "/home/rmurri/mat/dott/prelim.tex" nil)
+("sec:signs" "s" "Any $\\sigma\\in\\Perm{n}$ has a decomposition into a product of traspositions $(ij)$, so we can define" "/home/rmurri/phd/prelim.tex" nil)
 
-("eq:aksz" "e" "\x1c63(\x1c73; x_1, \\dots, x_n) x_1 \x1cc4 \\dots \x1cc4 x_n = (-1)^\x1c73 \x1d4b(\x1c73; x_1, \x1cbc, x_n) \\qquad \x1c73\x1cce\\Perm{n}. " "/home/rmurri/mat/dott/prelim.tex" nil)
+("eq:ksz" "e" "\\ksz(\\sigma; x_1, \\dots, x_n) x_1 \\otimes \\dots \\otimes x_n = \\tau_\\sigma (x_1 \\otimes \\dots \\otimes" "/home/rmurri/phd/prelim.tex" nil)
 
-("dfn:graded-sym-map" "s" "A map $f: M^{\x1cc4 n} \x1cae N$ is graded symmetric iff \\begin{equation*} f(x_1, \\dots, x_n) = \x1c65(\x1c73) f(x_{\x1c73_1}" "/home/rmurri/mat/dott/prelim.tex" nil)
+("eq:aksz" "e" "\\aksz(\\sigma; x_1, \\dots, x_n) x_1 \\otimes \\dots \\otimes x_n = (-1)^\\sigma \\varepsilon(\\sigma; x_1, " "/home/rmurri/phd/prelim.tex" nil)
 
-(toc "toc" "    1.4 Braided symmetric categories of vector spaces" "/home/rmurri/mat/dott/prelim.tex" nil 2 "1.4" "\\section{Braided symmetric categories of vector spaces}" 28)
+("dfn:graded-sym-map" "s" "A map $f: M^{\\otimes n} \\to N$ is graded symmetric iff \\begin{equation*} f(x_1, \\dots, x_n) = \\ksz(\\" "/home/rmurri/phd/prelim.tex" nil)
 
-("sec:btc-vect" "s" "The categories of ($\x1ddb$-graded) $\\fk$-linear spaces, $\\catVect[\\fk]^\x1ddb$ and $\\catVect[\\fk]$ have natur" "/home/rmurri/mat/dott/prelim.tex" nil)
+(toc "toc" "    1.4 Braided symmetric categories of vector spaces" "/home/rmurri/phd/prelim.tex" nil 2 "1.4" "\\section{Braided symmetric categories of vector spaces}" 8294)
 
-("eq:vec-evaluation" "e" "\\ev_V &: v \x1cc4 \\rdl{v} \x1d65 \\pairing{v}{\\rdl{v}}, " "/home/rmurri/mat/dott/prelim.tex" nil)
+("sec:btc-vect" "s" "The categories of ($\\setZ$-graded) $\\fk$-linear spaces, $\\catVect[\\fk]^\\setZ$ and $\\catVect[\\fk]$ ha" "/home/rmurri/phd/prelim.tex" nil)
 
-("eq:vec-coevaluation" "e" "\\coev_V &: 1 \x1d65 \x1ce5_i \\rdl{v_i} \x1cc4 v_i, " "/home/rmurri/mat/dott/prelim.tex" nil)
+("eq:vec-evaluation" "e" "\\ev_V &: v \\otimes \\rdl{v} \\mapsto \\pairing{v}{\\rdl{v}}, " "/home/rmurri/phd/prelim.tex" nil)
 
-("rem:ev-rev" "s" "\\FIXME{{\x8c8} coerente con la regola dei segni data sopra? Sembra di s{\x8ec}, ma allora non c'{\x8e8} differen" "/home/rmurri/mat/dott/prelim.tex" nil)
+("eq:vec-coevaluation" "e" "\\coev_V &: 1 \\mapsto \\sum_i \\rdl{v_i} \\otimes v_i, " "/home/rmurri/phd/prelim.tex" nil)
 
-(toc "toc" "      1.4.1 The category of Bosonic states" "/home/rmurri/mat/dott/prelim.tex" nil 3 "1.4.1" "\\subsection{The category of Bosonic states}" 28)
+("rem:ev-rev" "s" "\\FIXME{{\\`E} coerente con la regola dei segni data sopra? Sembra di s{\\`\\i}, ma allora non c'{\\`e} d" "/home/rmurri/phd/prelim.tex" nil)
 
-("sec:bosonic" "s" "\\nx{\\btpc{V,b}}{Category of Bosonic states} Let $V$ be a $\\fk$-vector space equipped with a bilinear" "/home/rmurri/mat/dott/prelim.tex" nil)
+(toc "toc" "      1.4.1 The category of Bosonic states" "/home/rmurri/phd/prelim.tex" nil 3 "1.4.1" "\\subsection{The category of Bosonic states}" 10227)
 
-(eof "/home/rmurri/mat/dott/prelim.tex")
+("sec:bosonic" "s" "Let $V$ be a $\\fk$-vector space equipped with a bilinear \\emph{symmetric} non-degenerate form $b: V\\" "/home/rmurri/phd/prelim.tex" nil)
 
-(bof "/home/rmurri/mat/dott/gc.tex")
+(eof "/home/rmurri/phd/prelim.tex")
 
-(toc "toc" "  2 The Graphical Formalism for Symmetric Tensor Categories" "/home/rmurri/mat/dott/gc.tex" nil 1 "2" "\\chapter{The Graphical Formalism for Symmetric Tensor Categories}" 74)
+(bof "/home/rmurri/phd/gc.tex")
 
-("cha:gc" "s" "The graphical formalism for braided tensor categories was developed in the late 1980's, when a categ" "/home/rmurri/mat/dott/gc.tex" nil)
+(toc "toc" "  2 The Graphical Formalism for Symmetric Tensor Categories" "/home/rmurri/phd/gc.tex" nil 1 "2" "\\chapter{The Graphical Formalism for Symmetric Tensor Categories}" 74)
 
-(toc "toc" "    2.1 Graphical formalism for Symmetric Tensor Categories" "/home/rmurri/mat/dott/gc.tex" nil 2 "2.1" "\\section{Graphical formalism for Symmetric Tensor Categories}" 1828)
+("cha:gc" "s" "The graphical formalism for braided tensor categories was developed in the late 1980's, when a categ" "/home/rmurri/phd/gc.tex" nil)
 
-("sec:gc-stc" "s" "\\FIXME{In tutto questo capitolo, gli spazi di morfismi sono in verit{\x8e0} gli span lineari di quelli c" "/home/rmurri/mat/dott/gc.tex" nil)
+(toc "toc" "    2.1 Graphical formalism for Symmetric Tensor Categories" "/home/rmurri/phd/gc.tex" nil 2 "2.1" "\\section{Graphical formalism for Symmetric Tensor Categories}" 1830)
 
-("dfn:gc-graph-piece" "s" "An $\\A$-colored elementary diagram piece is any one of the following: \\begin{center} \\begin{tabular}" "/home/rmurri/mat/dott/gc.tex" nil)
+("sec:gc-stc" "s" "\\FIXME{In tutto questo capitolo, gli spazi di morfismi sono in verit{\\`a} gli span lineari di quelli" "/home/rmurri/phd/gc.tex" nil)
 
-("eq:src-comp-otimes" "e" "\\Src(\x1c47_1 \x1dcc \x1c47_2) &= \\Src(\x1c47_2), &&& \\Src(\x1c47_1 \x1cc4 \x1c47_2) &= \\Src(\x1c47_1) \x1cc4 \\Src(\x1c47_2), " "/home/rmurri/mat/dott/gc.tex" nil)
+("dfn:gc-graph-piece" "s" "An $\\A$-colored elementary diagram piece is any one of the following: \\begin{center} \\begin{tabular}" "/home/rmurri/phd/gc.tex" nil)
 
-("eq:tgt-comp-otimes" "e" "\\Tgt(\x1c47_1 \x1dcc \x1c47_2) &= \\Tgt(\x1c47_1), &&& \\Tgt(\x1c47_1 \x1cc4 \x1c47_2) &= \\Tgt(\x1c47_1) \x1cc4 \\Tgt(\x1c47_2). " "/home/rmurri/mat/dott/gc.tex" nil)
+("eq:src-comp-otimes" "e" "\\Src(\\Gamma_1 \\circ \\Gamma_2) &= \\Src(\\Gamma_2), &&& \\Src(\\Gamma_1 \\otimes \\Gamma_2) &= \\Src(\\Gamma_" "/home/rmurri/phd/gc.tex" nil)
 
-("fig:gc-graph-composition" "f" "Composition product of diagrams." "/home/rmurri/mat/dott/gc.tex" nil)
+("eq:tgt-comp-otimes" "e" "\\Tgt(\\Gamma_1 \\circ \\Gamma_2) &= \\Tgt(\\Gamma_1), &&& \\Tgt(\\Gamma_1 \\otimes \\Gamma_2) &= \\Tgt(\\Gamma_" "/home/rmurri/phd/gc.tex" nil)
 
-("fig:gc-graph-otimes" "f" "Tensor product of diagrams." "/home/rmurri/mat/dott/gc.tex" nil)
+("fig:gc-graph-composition" "f" "Composition product of diagrams." "/home/rmurri/phd/gc.tex" nil)
 
-("fig:gc-rrt" "f" "Reidmeister-Reshetikhin-Turaev moves for RT-diagrams. Note that (RRT2) changes a trivial framing int" "/home/rmurri/mat/dott/gc.tex" nil)
+("fig:gc-graph-otimes" "f" "Tensor product of diagrams." "/home/rmurri/phd/gc.tex" nil)
 
-("thm:gc1" "s" "For any autonomous balanced braided tensor category $\\A$, there is a tensor functor $Z_{\\A}: \\RTD[\\A" "/home/rmurri/mat/dott/gc.tex" nil)
+("fig:gc-rrt" "f" "Reidmeister-Reshetikhin-Turaev moves for RT-diagrams. Note that (RRT2) changes a trivial framing int" "/home/rmurri/phd/gc.tex" nil)
 
-("graph-cross+" "s" "& $\\xy*!LC\\xybox{% \\vcross~{(0,0)*+{B}}{(1,0)*+{A}}{(0,1)*+{A}}{(1,1)*+{B}}}\\endxy \x1d65 \x1c74_{XY}^{-1},$ %" "/home/rmurri/mat/dott/gc.tex" t)
+("thm:gc1" "s" "For any autonomous balanced braided tensor category $\\A$, there is a tensor functor $Z_{\\A}: \\RTD[\\A" "/home/rmurri/phd/gc.tex" nil)
 
-("graph-cross-" "s" "& $\\xy*!LC\\xybox{ (0,1)*+[F]{f};% (-1,0)*+{A_1}**\\dir{-},(-0.5,0)*+{A_2}**\\dir{-},% (0,0.5)*+{\x1cbc},(1," "/home/rmurri/mat/dott/gc.tex" t)
+("graph-cross+" "s" "& $\\xy*!LC\\xybox{% \\vcross~{(0,0)*+{B}}{(1,0)*+{A}}{(0,1)*+{A}}{(1,1)*+{B}}}\\endxy \\mapsto \\tau_{XY}" "/home/rmurri/phd/gc.tex" t)
 
-("graph-morphism" "s" " " "/home/rmurri/mat/dott/gc.tex" t)
+("graph-cross-" "s" "& $\\xy*!LC\\xybox{ (0,1)*+[F]{f};% (-1,0)*+{A_1}**\\dir{-},(-0.5,0)*+{A_2}**\\dir{-},% (0,0.5)*+{\\ldots" "/home/rmurri/phd/gc.tex" t)
 
-("graph-casimir" "s" "& $\\xy*!LC\\xybox{% \\vloop~{(0,0)}{(1,0)}{(0,1)*+{A}}{(1,1)*+{A}}}\\endxy \x1d65 \\coev_{A},$ % &" "/home/rmurri/mat/dott/gc.tex" t)
+("graph-morphism" "s" " " "/home/rmurri/phd/gc.tex" t)
 
-("graph-coupling" "s" "& $\\xy*!LC\\xybox{(0,0)*+{A};(0,1)*+{A}**\\dir{-}}\\endxy \x1d65 \\id_X,$ % " "/home/rmurri/mat/dott/gc.tex" t)
+("graph-casimir" "s" "& $\\xy*!LC\\xybox{% \\vloop~{(0,0)}{(1,0)}{(0,1)*+{A}}{(1,1)*+{A}}}\\endxy \\mapsto \\coev_{A},$ % " "/home/rmurri/phd/gc.tex" t)
 
-("graph-id" "s" " " "/home/rmurri/mat/dott/gc.tex" t)
+("graph-coupling" "s" "& $\\xy*!LC\\xybox{(0,0)*+{A};(0,1)*+{A}**\\dir{-}}\\endxy \\mapsto \\id_X,$ % " "/home/rmurri/phd/gc.tex" t)
 
-("eq:S" "e" "\\tag{S} \\xy*!LC\\xybox{% \\vcross~{(0,1)*+{B}}{(1,1)*+{A}}{(0,0)*+{A}}{(1,0)*+{B}} }\\endxy = \\xy*!LC\\x" "/home/rmurri/mat/dott/gc.tex" nil)
+("graph-id" "s" " " "/home/rmurri/phd/gc.tex" t)
 
-("thm:gc2" "s" "Let $\\A$ be a tortile autonomous symmetric tensor category. Then Reshetikhin-Turaev's graphical calc" "/home/rmurri/mat/dott/gc.tex" nil)
+("eq:S" "e" "\\tag{S} \\xy*!LC\\xybox{% \\vcross~{(0,1)*+{B}}{(1,1)*+{A}}{(0,0)*+{A}}{(1,0)*+{B}} }\\endxy = \\xy*!LC\\x" "/home/rmurri/phd/gc.tex" nil)
 
-(toc "toc" "    2.2 Graphical calculus for ribbon graphs" "/home/rmurri/mat/dott/gc.tex" nil 2 "2.2" "\\section{Graphical calculus for ribbon graphs}" 11602)
+("thm:gc2" "s" "Let $\\A$ be a tortile autonomous symmetric tensor category. Then Reshetikhin-Turaev's graphical calc" "/home/rmurri/phd/gc.tex" nil)
 
-("sec:gc-ribbon-graphs" "s" "We now want to define a variant of graphical calculus suitable for application to ribbon graphs. Suc" "/home/rmurri/mat/dott/gc.tex" nil)
+(toc "toc" "    2.2 Graphical calculus for ribbon graphs" "/home/rmurri/phd/gc.tex" nil 2 "2.2" "\\section{Graphical calculus for ribbon graphs}" 12220)
 
-("dfn:ribbon-graphs" "s" "A \\emph{ribbon graph} of type $(p,q)$ is a purely 1-dimensional CW-complex $\x1c47$ with \\begin{enumerate" "/home/rmurri/mat/dott/gc.tex" nil)
+("sec:gc-ribbon-graphs" "s" "We now want to define a variant of graphical calculus suitable for application to ribbon graphs. Suc" "/home/rmurri/phd/gc.tex" nil)
 
-("fig:rt-to-cyclic" "s" " " "/home/rmurri/mat/dott/gc.tex" t)
+("dfn:ribbon-graphs" "s" "A \\emph{ribbon graph} of type $(p,q)$ is a purely 1-dimensional CW-complex $\\Gamma$ with \\begin{enum" "/home/rmurri/phd/gc.tex" nil)
 
-("M3" "i" "reverse orientation on edges; " "/home/rmurri/mat/dott/gc.tex" nil)
+("fig:rt-to-cyclic" "s" " " "/home/rmurri/phd/gc.tex" t)
 
-("M4" "i" "the first (resp. the last) edge in $\\In(v)$ becomes the first (resp. the last) edge in $\\Out(v)$ and" "/home/rmurri/mat/dott/gc.tex" nil)
+("M3" "i" "reverse orientation on edges; " "/home/rmurri/phd/gc.tex" nil)
 
-("fig:moving-edges-in-out" "f" "Admissible moves of edges betweenn $\\In(v)$ and $\\Out(v)$." "/home/rmurri/mat/dott/gc.tex" nil)
+("M4" "i" "the first (resp. the last) edge in $\\In(v)$ becomes the first (resp. the last) edge in $\\Out(v)$ and" "/home/rmurri/phd/gc.tex" nil)
 
-("dfn:rg-algebra" "s" "An $\\RG$-agebra structure on $V$ is given by a tortile braided monoidal functor $F:\\RG \x1cae \\btpc{V,b}$" "/home/rmurri/mat/dott/gc.tex" nil)
+("fig:moving-edges-in-out" "f" "Admissible moves of edges betweenn $\\In(v)$ and $\\Out(v)$." "/home/rmurri/phd/gc.tex" nil)
 
-("eq:passing-up-and-down" "e" "\\A(X\x1cc4 Y, Z) \x1dd0 \\A(X, Z\x1cc4\\rdl{Y}), \\qquad \\A(X\x1cc4 Y, Z) \x1dd0 \\A(Y, \\ldl{X}\x1cc4 Z), " "/home/rmurri/mat/dott/gc.tex" nil)
+("dfn:rg-algebra" "s" "An $\\RG$-agebra structure on $V$ is given by a tortile braided monoidal functor $F:\\RG \\to \\btpc{V,b" "/home/rmurri/phd/gc.tex" nil)
 
-("eq:right-rot" "e" "\\Hom(V\\tp{p}\x1cc4 V\\tp{q}, V\\tp{r}) \x1dd0 \\Hom(V\\tp{p}, V\\tp{r}\x1cc4 V\\tp{q}),  " "/home/rmurri/mat/dott/gc.tex" nil)
+("eq:passing-up-and-down" "e" "\\A(X\\otimes Y, Z) \\longleftrightarrow \\A(X, Z\\otimes\\rdl{Y}), \\qquad \\A(X\\otimes Y, Z) \\longleftrigh" "/home/rmurri/phd/gc.tex" nil)
 
-("eq:left-rot" "e" "\\Hom(V\\tp{p}\x1cc4 V\\tp{q}, V\\tp{r}) \x1dd0 \\Hom(V\\tp{q}, V\\tp{p}\x1cc4 V\\tp{r}),  " "/home/rmurri/mat/dott/gc.tex" nil)
+("eq:right-rot" "e" "\\Hom(V\\tp{p}\\otimes V\\tp{q}, V\\tp{r}) \\longleftrightarrow \\Hom(V\\tp{p}, V\\tp{r}\\otimes V\\tp{q}),  " "/home/rmurri/phd/gc.tex" nil)
 
-("dfn:cyclic-algebra" "s" "A cyclic algebra structure on $(V, b)$ is a sequence $\x1d3cT_r\x1d3e_{r\x1cce\x1dd8}$ of cyclically invariant linear ma" "/home/rmurri/mat/dott/gc.tex" nil)
+("eq:left-rot" "e" "\\Hom(V\\tp{p}\\otimes V\\tp{q}, V\\tp{r}) \\longleftrightarrow \\Hom(V\\tp{q}, V\\tp{p}\\otimes V\\tp{r}),  " "/home/rmurri/phd/gc.tex" nil)
 
-("thm:gc-cyc" "s" "Let $V$ be a vector space. Then the following data are equivalent: \\begin{enumerate} " "/home/rmurri/mat/dott/gc.tex" nil)
+("dfn:cyclic-algebra" "s" "A cyclic algebra structure on $(V, b)$ is a sequence $\\{T_r\\}_{r\\in\\setN}$ of cyclically invariant l" "/home/rmurri/phd/gc.tex" nil)
 
-(toc "toc" "    2.3 Graphical calculus for ordinary graphs" "/home/rmurri/mat/dott/gc.tex" nil 2 "2.3" "\\section{Graphical calculus for ordinary graphs}" 22705)
+("thm:gc-cyc" "s" "Let $V$ be a vector space. Then the following data are equivalent: \\begin{enumerate} " "/home/rmurri/phd/gc.tex" nil)
 
-("sec:graph-calc-graphs" "s" "It is now easy to adapt constructions above to ordinary graphs. Note that a graph can be obtained fr" "/home/rmurri/mat/dott/gc.tex" nil)
+(toc "toc" "    2.3 Graphical calculus for ordinary graphs" "/home/rmurri/phd/gc.tex" nil 2 "2.3" "\\section{Graphical calculus for ordinary graphs}" 23820)
 
-("dfn:symmetric-algebra" "s" "A symmetric algebra structure on $(V, b)$ is a sequence $\x1d3cS_r\x1d3e$ of linear maps $S_r \x1c3a V\\tp{r} \x1cae \\fk$" "/home/rmurri/mat/dott/gc.tex" nil)
+("sec:graph-calc-graphs" "s" "It is now easy to adapt constructions above to ordinary graphs. Note that a graph can be obtained fr" "/home/rmurri/phd/gc.tex" nil)
 
-("dfn:symmetric-graph-category" "s" "Denote by $\\SG$ the category whose morphisms are ordinary topological graphs: $\\SG(p,q)$ is the line" "/home/rmurri/mat/dott/gc.tex" nil)
+("dfn:symmetric-algebra" "s" "A symmetric algebra structure on $(V, b)$ is a sequence $\\{S_r\\}$ of linear maps $S_r \\colon V\\tp{r}" "/home/rmurri/phd/gc.tex" nil)
 
-("dfn:sg-algebra" "s" "An $\\SG$-agebra structure on $V$ is given by a tortile braided monoidal functor $F:\\SG \x1cae \\freemc{V}$" "/home/rmurri/mat/dott/gc.tex" nil)
+("dfn:symmetric-graph-category" "s" "Denote by $\\SG$ the category whose morphisms are ordinary topological graphs: $\\SG(p,q)$ is the line" "/home/rmurri/phd/gc.tex" nil)
 
-("thm:gc-sym" "s" "Let $V$ be a vector space. Then the following data are equivalent: \\begin{enumerate} " "/home/rmurri/mat/dott/gc.tex" nil)
+("dfn:sg-algebra" "s" "An $\\SG$-agebra structure on $V$ is given by a tortile braided monoidal functor $F:\\SG \\to \\freemc{V" "/home/rmurri/phd/gc.tex" nil)
 
-("rem:many-sorted-graphs" "s" "So far, we have considered cyclic (resp.\\ symmetric) algebras with only one $r$-ary operation for an" "/home/rmurri/mat/dott/gc.tex" nil)
+("thm:gc-sym" "s" "Let $V$ be a vector space. Then the following data are equivalent: \\begin{enumerate} " "/home/rmurri/phd/gc.tex" nil)
 
-(toc "toc" "    2.4 A sample computation" "/home/rmurri/mat/dott/gc.tex" nil 2 "2.4" "\\section{A sample computation}" 25974)
+("rem:many-sorted-graphs" "s" "So far, we have considered cyclic (resp.\\ symmetric) algebras with only one $r$-ary operation for an" "/home/rmurri/phd/gc.tex" nil)
 
-(eof "/home/rmurri/mat/dott/gc.tex")
+(toc "toc" "    2.4 A sample computation" "/home/rmurri/phd/gc.tex" nil 2 "2.4" "\\section{A sample computation}" 27206)
 
-(bof "/home/rmurri/mat/dott/fd.tex")
+(eof "/home/rmurri/phd/gc.tex")
 
-(toc "toc" "  3 Gaussian integrals and Feynman diagrams" "/home/rmurri/mat/dott/fd.tex" nil 1 "3" "\\chapter{Gaussian integrals and Feynman diagrams}" 74)
+(bof "/home/rmurri/phd/fd.tex")
 
-("sec:fd" "s" "\\everyxy={0,<2em,0em>:,(0,0.5),} % scala per i diagrammi This chapter is devoted to showing how a Ga" "/home/rmurri/mat/dott/fd.tex" nil)
+(toc "toc" "  3 Gaussian integrals and Feynman diagrams" "/home/rmurri/phd/fd.tex" nil 1 "3" "\\chapter{Gaussian integrals and Feynman diagrams}" 74)
 
-(toc "toc" "    3.1 Gaussian measures and the Wick's lemma" "/home/rmurri/mat/dott/fd.tex" nil 2 "3.1" "\\section{Gaussian measures and the Wick's lemma}" 856)
+("cha:fd" "s" "\\everyxy={0,<2em,0em>:,(0,0.5),} % scala per i diagrammi This chapter is devoted to showing how a Ga" "/home/rmurri/phd/fd.tex" nil)
 
-("dfn:gaussian-measure" "s" "The probability measure on $V$ defined by \\begin{equation*} \\ud\x1c6d(v) \\joinrel:= \\frac{1}{C} \\E^{-\\one" "/home/rmurri/mat/dott/fd.tex" nil)
+(toc "toc" "    3.1 Gaussian measures and the Wick's lemma" "/home/rmurri/phd/fd.tex" nil 2 "3.1" "\\section{Gaussian measures and the Wick's lemma}" 856)
 
-("eq:avg-x" "s" "\\avg{v\\tp{k}} \\joinrel:= \x1ce5 \\avg{v^{i_1} \x1cd7 \x1d7e \x1cd7 v^{i_k}} e_{i_1} \x1cc4 \x1d7e \x1cc4 e_{i_k}, " "/home/rmurri/mat/dott/fd.tex" nil)
+("dfn:gaussian-measure" "s" "The probability measure on $V$ defined by \\begin{equation*} \\ud\\mu(v) \\joinrel:= c^{-1} \\E^{-\\onehal" "/home/rmurri/phd/fd.tex" nil)
 
-("eq:W1" "e" "\\tag{W1'} \\avg{v\\tp{ 2n+1}} &= 0, " "/home/rmurri/mat/dott/fd.tex" nil)
+("eq:avg-x" "s" "\\avg{v\\tp{k}} \\joinrel:= \\sum \\avg{v^{i_1} \\cdot \\cdots \\cdot v^{i_k}} e_{i_1} \\otimes \\cdots \\otime" "/home/rmurri/phd/fd.tex" nil)
 
-("eq:W2" "e" "\\tag{W2'} \\avg{v\\tp{ 2}} &= \x1ce5_{i,j} g^{ij} e_i \x1cc4 e_j, " "/home/rmurri/mat/dott/fd.tex" nil)
+("eq:W1" "e" "\\tag{W1'} \\avg{v\\tp{ 2n+1}} &= 0, " "/home/rmurri/phd/fd.tex" nil)
 
-("eq:W3" "e" "\\tag{W3'} \\avg{v\\tp{2n}} &= \x1ce5\\limits_{i_1, \\dots, i_{2n}} \x1ce5\\limits_{s\x1cce P} g^{i_{s_1} i_{s_2}} \x1d7e g^{i" "/home/rmurri/mat/dott/fd.tex" nil)
+("eq:W2" "e" "\\tag{W2'} \\avg{v\\tp{ 2}} &= \\sum_{i,j} g^{ij} e_i \\otimes e_j, " "/home/rmurri/phd/fd.tex" nil)
 
-(toc "toc" "    3.2 From Wick's lemma to Feynman diagrams" "/home/rmurri/mat/dott/fd.tex" nil 2 "3.2" "\\section{From Wick's lemma to Feynman diagrams}" 3942)
+("eq:W3" "e" "\\tag{W3'} \\avg{v\\tp{2n}} &= \\sum\\limits_{i_1, \\dots, i_{2n}} \\sum\\limits_{s\\in P} g^{i_{s_1} i_{s_2}" "/home/rmurri/phd/fd.tex" nil)
 
-("sec:wick-to-fd" "s" "The right-hand side of (\\ref{eq:W2}) is the Casimir element of $\x1d3c\\cplx{V}, \\inner{-}{-}\x1d3e$; in Reshet" "/home/rmurri/mat/dott/fd.tex" nil)
+(toc "toc" "    3.2 From Wick's lemma to Feynman diagrams" "/home/rmurri/phd/fd.tex" nil 2 "3.2" "\\section{From Wick's lemma to Feynman diagrams}" 4102)
 
-("eq:avg-to-casimir" "e" "\\begin{split} \\avg{v\\tp{ 4}} &= {% {\\xy\\vloop-,(1.2,0.5),\\vloop-\\endxy} + {\\xy\\vloop-|(.7)\\knothole" "/home/rmurri/mat/dott/fd.tex" nil)
+("sec:wick-to-fd" "s" "The right-hand side of (\\ref{eq:W2}) is the Casimir element of $\\{\\cplx{V}, \\inner{-}{-}\\}$; in Resh" "/home/rmurri/phd/fd.tex" nil)
 
-("thm:feynman-avg-gc" "s" "Any average $\\bigl\x1ce1 T_1(v)^{l_1} T_2(v\\tp{ 2})^{l_2} \x1d7e T_{k}(v\\tp{ k})^{l_k} \\bigr\x1cf1$ is a linear com" "/home/rmurri/mat/dott/fd.tex" nil)
+("eq:avg-to-casimir" "e" "\\begin{split} \\avg{v\\tp{ 4}} &= {% {\\xy\\vloop-,(1.2,0.5),\\vloop-\\endxy} + {\\xy\\vloop-|(.7)\\knothole" "/home/rmurri/phd/fd.tex" nil)
 
-("thm:feynman-avg-coeff" "s" "The coefficient $\x1c61_\x1c47$ appearing in \\csref{thm:feynman-avg-gc} is an integer given by: \\begin{equatio" "/home/rmurri/mat/dott/fd.tex" nil)
+("thm:feynman-avg-gc" "s" "Any average $\\bigl\\langle T_1(v)^{l_1} T_2(v\\tp{ 2})^{l_2} \\cdots T_{k}(v\\tp{ k})^{l_k} \\bigr\\rangle" "/home/rmurri/phd/fd.tex" nil)
 
-("thm:FRT" "s" "Let $Z_{x_*}$ be the graphical calculus for the cyclic algebra $A(x_*) \\joinrel:= (V_{\x1dd7}, \\inner{-}{" "/home/rmurri/mat/dott/fd.tex" nil)
+("thm:feynman-avg-coeff" "s" "The coefficient $\\alpha_\\Gamma$ appearing in \\csref{thm:feynman-avg-gc} is an integer given by: \\beg" "/home/rmurri/phd/fd.tex" nil)
 
-("eq:FRT1" "e" "Z(x_*)\\joinrel:=\x1cf2_V \\exp \\biggl\x1d3c \x1ce5_{k=1}^\x1ca5 x_k \\frac{T_k(v\\tp{k})}{k} \\biggr\x1d3e \\ud\x1c6d(v) = \x1ce5_{\x1c47\x1cce\\RG(0,0" "/home/rmurri/mat/dott/fd.tex" nil)
+("thm:FRT" "s" "Let $Z_{x_*}$ be the graphical calculus for the cyclic algebra $A(x_*) \\joinrel:= (V_{\\setC}, \\inner" "/home/rmurri/phd/fd.tex" nil)
 
-("eq:FRT2" "e" "\x1cf2_V \\frac{T_1(v)^{l_1} T_2(v\\tp{2})^{l_2} \x1d7e T_k(v\\tp{k})^{l_k}} {1^{l_1} l_1! 2^{l_2} l_2! \x1d7e k^{l_k}" "/home/rmurri/mat/dott/fd.tex" nil)
+("eq:FRT1" "e" "Z(x_*)\\joinrel:=\\int_V \\exp \\biggl\\{ \\sum_{k=1}^\\infty x_k \\frac{T_k(v\\tp{k})}{k} \\biggr\\} \\ud\\mu(v)" "/home/rmurri/phd/fd.tex" nil)
 
-("eq:FRTeqbis" "e" "% \x1cf2_V \\exp \\biggl\x1d3c \x1ce5_{k=1}^\x1ca5 x_k %\\frac{T_k(v\\tp{k})}{\\card{\\Aut(T_k)}} % \\biggr\x1d3e \\ud\x1c6d(v) % = \x1ce5_{\x1c47} " "/home/rmurri/mat/dott/fd.tex" t)
+("eq:FRT2" "e" "\\int_V \\frac{T_1(v)^{l_1} T_2(v\\tp{2})^{l_2} \\cdots T_k(v\\tp{k})^{l_k}} {1^{l_1} l_1! 2^{l_2} l_2! \\" "/home/rmurri/phd/fd.tex" nil)
 
-("eq:feynmanturaevduebis" "e" "%  % \x1cf2_V \\frac{T_1(v)^{l_1} T_2(v\\tp{2})^{l_2} \x1d7e % T_k(v\\tp{k})^{l_k}} {\\card{\\Aut(T_1^{\x1cc4 l_1}\x1cc4 %T_2" "/home/rmurri/mat/dott/fd.tex" t)
+("eq:FRTeqbis" "e" "% \\int_V \\exp \\biggl\\{ \\sum_{k=1}^\\infty x_k %\\frac{T_k(v\\tp{k})}{\\card{\\Aut(T_k)}} % \\biggr\\} \\ud\\m" "/home/rmurri/phd/fd.tex" t)
 
-("thm:FRTsym" "s" "Let $Z_{x_*}$ be the graphical calculus for the symmetric algebra $(V_{\x1dd7}, \\inner{-}{-}, x_1S_1, x_2" "/home/rmurri/mat/dott/fd.tex" nil)
+("eq:feynmanturaevduebis" "e" "%  % \\int_V \\frac{T_1(v)^{l_1} T_2(v\\tp{2})^{l_2} \\cdots % T_k(v\\tp{k})^{l_k}} {\\card{\\Aut(T_1^{\\oti" "/home/rmurri/phd/fd.tex" t)
 
-("eq:FRTsymeqbis" "e" "%  % \x1cf2_V \\exp \\biggl\x1d3c \x1ce5_{k=1}^\x1ca5 x_k % \\frac{S_k(v\\tp{k})}{\\card{\\Aut(S_k)}} % \\biggr\x1d3e \\ud\x1c6d(v) % = \x1ce5_" "/home/rmurri/mat/dott/fd.tex" t)
+("thm:FRTsym" "s" "Let $Z_{x_*}$ be the graphical calculus for the symmetric algebra $(V_{\\setC}, \\inner{-}{-}, x_1S_1," "/home/rmurri/phd/fd.tex" nil)
 
-("eq:feynmanturaevsymbis" "e" "%  % \x1cf2_V \\frac{S_1(v)^{l_1} %% S_2(v\\tp{2})^{l_2} % \x1d7e % S_k(v\\tp{k})^{l_k}} {\\ca" "/home/rmurri/mat/dott/fd.tex" t)
+("eq:FRTsymeqbis" "e" "%  % \\int_V \\exp \\biggl\\{ \\sum_{k=1}^\\infty x_k % \\frac{S_k(v\\tp{k})}{\\card{\\Aut(S_k)}} % \\biggr\\} \\" "/home/rmurri/phd/fd.tex" t)
 
-("G1" "i" "a ``braided Leibniz rule'' for derivations: \\[\x1cb6_w\x1dcc m=m\\bigl((\x1cb6_w\x1cc4 \\Id)+\x1c74^{-1}_{K, K}\x1dcc(\x1cb6_w\x1cc4\\Id) \x1dcc \x1c74^{" "/home/rmurri/mat/dott/fd.tex" nil)
+("eq:feynmanturaevsymbis" "e" "%  % \\int_V \\frac{S_1(v)^{l_1} %% S_2(v\\tp{2})^{l_2} % \\cdots % S_k(v\\tp{k})^{l_" "/home/rmurri/phd/fd.tex" t)
 
-("G2" "i" "$\x1cb6_w Q = -g^\x1d2d(w)\x1cd7 Q$, for all $w\x1cce V$; " "/home/rmurri/mat/dott/fd.tex" nil)
+("G1" "i" "a ``braided Leibniz rule'' for derivations: \\[\\partial_w\\circ m=m\\bigl((\\partial_w\\otimes \\Id)+\\tau^" "/home/rmurri/phd/fd.tex" nil)
 
-("G3" "i" "$g^\x1d2d$ is an isomorphism and $\\ev_V\x1dcc(\\Id_V\x1cc4 g^\x1c23)=\\ev_V\x1dcc(\\Id_V\x1cc4 g^\x1c23)\x1dcc\x1c74_{V,V}$; " "/home/rmurri/mat/dott/fd.tex" nil)
+("G2" "i" "$\\partial_w Q = -g^\\sharp(w)\\cdot Q$, for all $w\\in V$; " "/home/rmurri/phd/fd.tex" nil)
 
-("G4" "i" "%there exists an integral $\\displaystyle{\x1cf2 (\x1c66\x1cd7 % Q)\\ud v}$ such that $\\displaystyle{\x1cf2\x1cb6_w(\x1c66\x1cd7 Q)\\ud v=" "/home/rmurri/mat/dott/fd.tex" nil)
+("G3" "i" "$g^\\sharp$ is an isomorphism and $\\ev_V\\circ(\\Id_V\\otimes g^\\#)=\\ev_V\\circ(\\Id_V\\otimes g^\\#)\\circ\\t" "/home/rmurri/phd/fd.tex" nil)
 
-("xmp:getzler-formula" "s" "% We want to show how this machinery can be used to derive a % graph expansion formula cited in the " "/home/rmurri/mat/dott/fd.tex" t)
+("G4" "i" "%there exists an integral $\\displaystyle{\\int (\\phi\\cdot % Q)\\ud v}$ such that $\\displaystyle{\\int\\p" "/home/rmurri/phd/fd.tex" nil)
 
-("eq:FRTeqter" "e" "%  % \x1cf2_V \\exp \\biggl\x1d3c \x1ce5_{k=1}^\x1ca5\x1ce5_{\x1c61_k\x1cce I_k} %x_k{\x8a0}y_{\x1c61_k} % \\frac{S_{k,\x1c61_k}(v\\tp{k})}{k!} % \\biggr\x1d3e" "/home/rmurri/mat/dott/fd.tex" t)
+("xmp:getzler-formula" "s" "% We want to show how this machinery can be used to derive a % graph expansion formula cited in the " "/home/rmurri/phd/fd.tex" t)
 
-("eq:modulargraphs" "e" "% \x1cf2_V \\exp \\biggl\x1d3c\\frac{1}{\x1d4c} %\\left(\x1c7a(v)+\x1ce5_{k=1}^\x1ca5\x1ce5_{g=0}^\x1ca5 %\x1d4c^g %\\frac{S_{k,g}(v\\tp{k})}{k!} % \\ri" "/home/rmurri/mat/dott/fd.tex" t)
+("eq:FRTeqter" "e" "%  % \\int_V \\exp \\biggl\\{ \\sum_{k=1}^\\infty\\sum_{\\alpha_k\\in I_k} %x_k{\\nobreakspace}y_{\\alpha_k} % " "/home/rmurri/phd/fd.tex" t)
 
-(toc "toc" "    3.3 Application: asymptotic expansion of the ``free energy'' functional" "/home/rmurri/mat/dott/fd.tex" nil 2 "3.3" "\\section{Application: asymptotic expansion of the ``free energy'' functional}" 19955)
+("eq:modulargraphs" "e" "% \\int_V \\exp \\biggl\\{\\frac{1}{\\hbar} %\\left(\\zeta(v)+\\sum_{k=1}^\\infty\\sum_{g=0}^\\infty %\\hbar^g %\\" "/home/rmurri/phd/fd.tex" t)
 
-("thm:feynman-of-Z" "s" "The free energy $F(x_*)\\joinrel:= \\log Z(x_*)$ admits a Feynman-Reshetikhin-Turaev expansion in ribb" "/home/rmurri/mat/dott/fd.tex" nil)
+(toc "toc" "    3.3 Application: asymptotic expansion of the ``free energy'' functional" "/home/rmurri/phd/fd.tex" nil 2 "3.3" "\\section{Application: asymptotic expansion of the ``free energy'' functional}" 21505)
 
-("eq:feynman-of-Z" "e" "F(x_*) = \x1ce5_{\x1c47\\text{\\rmfamily\\upshape\\ connected}} \\frac{Z_{x_*}(\x1c47)}{\\card{\\Aut\x1c47}}. " "/home/rmurri/mat/dott/fd.tex" nil)
+("thm:feynman-of-Z" "s" "The free energy $F(x_*)\\joinrel:= \\log Z(x_*)$ admits a Feynman-Reshetikhin-Turaev expansion in ribb" "/home/rmurri/phd/fd.tex" nil)
 
-("eq:logmodulargraphs" "e" "% \\log\x1cf2_V \\exp \\biggl\x1d3c\\frac{1}{\x1d4c} % \\left(\x1c7a(v)+\x1ce5_{k=1}^\x1ca5\x1ce5_{g,n} % \x1d4c^g % \\frac{S_{k,g}(v\\tp{k})}{k!} " "/home/rmurri/mat/dott/fd.tex" t)
+("eq:feynman-of-Z" "e" "F(x_*) = \\sum_{\\Gamma\\text{\\rmfamily\\upshape\\ connected}} \\frac{Z_{x_*}(\\Gamma)}{\\card{\\Aut\\Gamma}}." "/home/rmurri/phd/fd.tex" nil)
 
-(eof "/home/rmurri/mat/dott/fd.tex")
+(eof "/home/rmurri/phd/fd.tex")
 
-(bof "/home/rmurri/mat/dott/kontsevich.tex")
+(bof "/home/rmurri/phd/kontsevich.tex")
 
-(toc "toc" "  4 Results of Kontsevich" "/home/rmurri/mat/dott/kontsevich.tex" nil 1 "4" "\\chapter{Results of Kontsevich}" 83)
+(toc "toc" "  4 Kontsevich' Model of 2D Quantum Gravity" "/home/rmurri/phd/kontsevich.tex" nil 1 "4" "\\chapter{Kontsevich' Model of 2D Quantum Gravity}" 83)
 
-("cha:kontsevich" "s" "In the famous paper \\cite{witten;intersection-theory}, E.~Witten related two models of two-dimension" "/home/rmurri/mat/dott/kontsevich.tex" nil)
+("cha:kontsevich" "s" "In the famous paper \\cite{witten;intersection-theory}, E.~Witten related two models of two-dimension" "/home/rmurri/phd/kontsevich.tex" nil)
 
-(toc "toc" "    4.1 Moduli Spaces of Curves" "/home/rmurri/mat/dott/kontsevich.tex" nil 2 "4.1" "\\section{Moduli Spaces of Curves}" 2094)
+(toc "toc" "    4.1 Moduli Spaces of Curves" "/home/rmurri/phd/kontsevich.tex" nil 2 "4.1" "\\section{Moduli Spaces of Curves}" 1760)
 
-("sec:moduli-spaces" "s" "Let us recap the main points of the construction of the moduli space of smooth algebraic curves; the" "/home/rmurri/mat/dott/kontsevich.tex" nil)
+("sec:moduli-spaces" "s" "Let us recap the main points of the construction of the moduli space of smooth algebraic curves; the" "/home/rmurri/phd/kontsevich.tex" nil)
 
-("dfn:teichmuller" "s" "The \\emph{Teichm{\x8fc}ller space} \\begin{equation*} \\T_{g,n} := \\Conf(S) / \\Diff^0(S, n) " "/home/rmurri/mat/dott/kontsevich.tex" nil)
+("dfn:teichmuller" "s" "The \\emph{Teichm{.AŽü}ller space} \\begin{equation*} \\T_{g,n} := \\Conf(S) / \\Diff^0(S, n) " "/home/rmurri/phd/kontsevich.tex" nil)
 
-("dfn:mapping-class-group" "s" "The \\emph{mapping class group} $\x1c47_{g,n}$ is defined by: \\begin{equation*} \x1c47_{g,n} := \\Diff^+ (S, n) " "/home/rmurri/mat/dott/kontsevich.tex" nil)
+("dfn:mapping-class-group" "s" "The \\emph{mapping class group} $(:G(B_{g,n}$ is the set of connected components of $\\Diff^+(S, n)$, the " "/home/rmurri/phd/kontsevich.tex" nil)
 
-("rem:moduli-punctured" "s" "One may instead consider equivalence classes of $n$-punctured surfaces $S$ (i.e., with $n$ points \\e" "/home/rmurri/mat/dott/kontsevich.tex" nil)
+(toc "toc" "      4.1.1 Moduli space of smooth curves" "/home/rmurri/phd/kontsevich.tex" nil 3 "4.1.1" "\\subsection{Moduli space of smooth curves}" 1760)
 
-("rem:moduli-with-reference" "s" "Conversely, one may want to keep the complex structure on $S$ fixed, while actually moving the point" "/home/rmurri/mat/dott/kontsevich.tex" nil)
+("sec:Mgn" "s" "\\begin{definition} The topological space $\\M_{g,n} := \\T_{g,n} / (:G(B_{g,n}$ is named the moduli space " "/home/rmurri/phd/kontsevich.tex" nil)
 
-(toc "toc" "      4.1.1 Moduli Space of Stable Curves" "/home/rmurri/mat/dott/kontsevich.tex" nil 3 "4.1.1" "\\subsection{Moduli Space of Stable Curves}" 4949)
+(toc "toc" "        4.1.1.1 Alternate descriptions of $M_{g,n}$" "/home/rmurri/phd/kontsevich.tex" nil 4 "4.1.1.1" "\\subsubsection{Alternate descriptions of $M_{g,n}$}" 1760)
 
-("sec:moduli-space-stable" "s" "Deligne and Mumford \\cite{deligne-mumford} showed that $\\M_{g,n}$ has a projective compactification " "/home/rmurri/mat/dott/kontsevich.tex" nil)
+("sec:alternate-Mgn" "s" "One may instead consider equivalence classes of $n$-punctured surfaces $S$ (i.e., with $n$ points \\e" "/home/rmurri/phd/kontsevich.tex" nil)
 
-(toc "toc" "    4.2 Witten's conjecture and Kontsevich' theorem" "/home/rmurri/mat/dott/kontsevich.tex" nil 2 "4.2" "\\section{Witten's conjecture and Kontsevich' theorem}" 6438)
+(toc "toc" "      4.1.2 Moduli Space of Stable Curves" "/home/rmurri/phd/kontsevich.tex" nil 3 "4.1.2" "\\subsection{Moduli Space of Stable Curves}" 1760)
 
-("sec:witten-classes" "s" "\\begin{definition} The line bundle $\\Lb_i \x1cae \\Mbar_{g,n}$ is defined by the requirement that the fibe" "/home/rmurri/mat/dott/kontsevich.tex" nil)
+("sec:moduli-space-stable" "s" "Deligne and Mumford \\cite{deligne-mumford} showed that $\\M_{g,n}$ has a projective compactification " "/home/rmurri/phd/kontsevich.tex" nil)
 
-("eq:intersection-index" "e" "\x1ce1 \x1c74_{\x1c6e_1} \x1d7e \x1c74_{\x1c6e_n} \x1cf1_{g,n} := \x1cf2_{\\Mbar_{g,n}} \x1c79_1^{\x1c6e_1} \x1d7e \x1c79_n^{\x1c6e_n}. " "/home/rmurri/mat/dott/kontsevich.tex" nil)
+(toc "toc" "    4.2 Witten's conjecture and Kontsevich' theorem" "/home/rmurri/phd/kontsevich.tex" nil 2 "4.2" "\\section{Witten's conjecture and Kontsevich' theorem}" 1760)
 
-("eq:positive-intersection" "e" "\x1ce1\x1c74_{\x1c6e_1} \x1d7e \x1c74_{\x1c6e_n}\x1cf1 \x1cb3 0. " "/home/rmurri/mat/dott/kontsevich.tex" nil)
+("sec:witten-classes" "s" "\\begin{definition} The line bundle $\\Lb_i (;.(B \\Mbar_{g,n}$ is defined by the requirement that the fibe" "/home/rmurri/phd/kontsevich.tex" nil)
 
-("dfn:F-and-Z" "s" "The ``free energy'' is the following formal series in an infinite number of indeterminates: \\begin{e" "/home/rmurri/mat/dott/kontsevich.tex" nil)
+("eq:intersection-index" "e" "(;a(B (:t(B_{(:n(B_1} (<~(B (:t(B_{(:n(B_n} (;q(B_{g,n} := (;r(B_{\\Mbar_{g,n}} (:y(B_1^{(:n(B_1} (<~(B (:y(B_n^{(:n(B_n}. " "/home/rmurri/phd/kontsevich.tex" nil)
 
-("eq:F-dfn" "e" "F(t_0, t_1, \x1cbc) := \x1ce5_{g, n, \x1c6e_1, \x1cbc, \x1c6e_n} \x1ce1 \x1c74_{\x1c6e_1} \x1d7e \x1c74_{\x1c6e_n} \x1cf1 t_{\x1c6e_1} \x1d7e t_{\x1c6e_n}. " "/home/rmurri/mat/dott/kontsevich.tex" nil)
+("eq:positive-intersection" "e" "(;a(:t(B_{(:n(B_1} (<~(B (:t(B_{(:n(B_n}(;q(B (;3(B 0. " "/home/rmurri/phd/kontsevich.tex" nil)
 
-("eq:Z-dfn" "e" "Z(t_*) := \\exp F(t_*). " "/home/rmurri/mat/dott/kontsevich.tex" nil)
+("dfn:F-and-Z" "s" "The ``free energy'' is the following formal series in an infinite number of indeterminates: \\begin{e" "/home/rmurri/phd/kontsevich.tex" nil)
 
-("eq:intersection-index-cpt" "e" "\x1ce1\x1c74_0^{d_0} \x1c74_1^{d_1} \x1d7e \x1c74_k^{d_k} \x1cf1 := \x1ce1 \\underbrace{\x1c74_0 \x1d7e \x1c74_0}_{\\text{$d_0$ times}} \x1d7e \\underbrace{\x1c74_" "/home/rmurri/mat/dott/kontsevich.tex" nil)
+("eq:F-dfn" "e" "F(t_0, t_1, (;<(B) := (;e(B_{g, n, (:n(B_1, (;<(B, (:n(B_n} (;a(B (:t(B_{(:n(B_1} (<~(B (:t(B_{(:n(B_n} (;q(B t_{(:n(B_1} (<~(B t_{(:n(B_n}. " "/home/rmurri/phd/kontsevich.tex" nil)
 
-("eq:F-dfn-cpt" "e" "F(t_*) = \x1ce5_{g, d_1, \x1cbc, d_k} \x1ce1 \x1c74_0^{d_0} \x1d7e \x1c74_k^{d_k} \x1cf1 \\frac {t_0^{d_0} \x1d7e t_k^{d_k}} {d_0! \x1d7e d_k!} =:" "/home/rmurri/mat/dott/kontsevich.tex" nil)
+("eq:Z-dfn" "e" "Z(t_*) := \\exp F(t_*). " "/home/rmurri/phd/kontsevich.tex" nil)
 
-("thm:kontsevich" "s" "The formal series $Z(t_0(\x1c4c), t_1(\x1c4c), \x1cbc)$ is an asymptotic expansion of \\begin{equation*}  \x1cf2_{\\Hermit" "/home/rmurri/mat/dott/kontsevich.tex" nil)
+("eq:intersection-index-cpt" "e" "(;a(:t(B_0^{d_0} (:t(B_1^{d_1} (<~(B (:t(B_k^{d_k} (;q(B := (;a(B \\underbrace{(:t(B_0 (<~(B (:t(B_0}_{\\text{$d_0$ times}} (<~(B \\underbrace{(:t(B_" "/home/rmurri/phd/kontsevich.tex" nil)
 
-("eq:K" "s" "\x1cf2_{\\Hermitian[N]} \\exp(\\I/6 \x1cd7 \\tr X^3) \\ud\x1c6d_\x1c4c(X), " "/home/rmurri/mat/dott/kontsevich.tex" nil)
+("eq:F-dfn-cpt" "e" "F(t_*) = (;e(B_{g, d_1, (;<(B, d_k} (;a(B (:t(B_0^{d_0} (<~(B (:t(B_k^{d_k} (;q(B \\frac {t_0^{d_0} (<~(B t_k^{d_k}} {d_0! (<~(B d_k!} =:" "/home/rmurri/phd/kontsevich.tex" nil)
 
-(toc "toc" "    4.3 A combinatorial model of the moduli space of smooth curves" "/home/rmurri/mat/dott/kontsevich.tex" nil 2 "4.3" "\\section{A combinatorial model of the moduli space of smooth curves}" 11419)
+("thm:kontsevich" "s" "The formal series $Z(t_0((:L(B), t_1((:L(B), (;<(B)$ is an asymptotic expansion of \\begin{equation*}  (;r(B_{\\Hermit" "/home/rmurri/phd/kontsevich.tex" nil)
 
-("sec:mgn-comb" "s" "\\FIXME{Questa sezione sta meglio in una appendice? Meglio tagliarla drasticamente?} String field the" "/home/rmurri/mat/dott/kontsevich.tex" nil)
+("eq:K" "s" "(;r(B_{\\Hermitian[N]} \\exp(\\I/6 (;W(B \\tr X^3) \\ud(:m(B_(:L(B(X), " "/home/rmurri/phd/kontsevich.tex" nil)
 
-("fig:sphere-retracts" "f" "A thrice-punctured sphere and two inequivalent deformation retracts." "/home/rmurri/mat/dott/kontsevich.tex" nil)
+(toc "toc" "    4.3 A combinatorial model of the moduli space of smooth curves" "/home/rmurri/phd/kontsevich.tex" nil 2 "4.3" "\\section{A combinatorial model of the moduli space of smooth curves}" 1760)
 
-("dfn:metric-ribbon-graphs" "s" "A metric ribbon graph is the data of a type (0,0) ribbon graph (see \\csref{dfn:ribbon-graphs}) equip" "/home/rmurri/mat/dott/kontsevich.tex" nil)
+("sec:mgn-comb" "s" "String field theory attempts to explain properties of the fundamental particles by treating them lik" "/home/rmurri/phd/kontsevich.tex" nil)
 
-("fig:fattening-edges" "f" "Fattening edges at a vertex with cyclic order." "/home/rmurri/mat/dott/kontsevich.tex" nil)
+("fig:sphere-retracts" "f" "A thrice-punctured sphere and two inequivalent deformation retracts." "/home/rmurri/phd/kontsevich.tex" nil)
 
-(toc "toc" "      4.3.1 A complex structure on $S(\x1c47)$" "/home/rmurri/mat/dott/kontsevich.tex" nil 3 "4.3.1" "\\subsection{A complex structure on $S(\x1c47)$}" 14065)
+("dfn:metric-ribbon-graphs" "s" "A metric ribbon graph is the data of a type (0,0) ribbon graph (see \\csref{dfn:ribbon-graphs}) equip" "/home/rmurri/phd/kontsevich.tex" nil)
 
-("sec:atlas" "s" "Let us give the topological Riemann surface $S(\x1c47)$ a complex structure, by means of a triangulation " "/home/rmurri/mat/dott/kontsevich.tex" nil)
+("fig:fattening-edges" "f" "Fattening edges at a vertex with cyclic order." "/home/rmurri/phd/kontsevich.tex" nil)
 
-("fig:atlas" "f" "The open sets building an atlas of $S(\x1c47)$: (a) the triangulation built from a graph $\x1c47$; (b) the nei" "/home/rmurri/mat/dott/kontsevich.tex" nil)
+(toc "toc" "      4.3.1 A complex structure on $S((:G(B)$" "/home/rmurri/phd/kontsevich.tex" nil 3 "4.3.1" "\\subsection{A complex structure on $S((:G(B)$}" 1760)
 
-("fig:charts" "f" "Local charts on the atlas: (a) any open set $V_\x1c61$ maps to a strip in the complex plane; (b) any open" "/home/rmurri/mat/dott/kontsevich.tex" nil)
+("sec:atlas" "s" "Let us give the topological Riemann surface $S((:G(B)$ a complex structure, by means of a triangulation " "/home/rmurri/phd/kontsevich.tex" nil)
 
-(toc "toc" "      4.3.2 The Strebel construction" "/home/rmurri/mat/dott/kontsevich.tex" nil 3 "4.3.2" "\\subsection{The Strebel construction}" 16771)
+("fig:atlas" "f" "The open sets building an atlas of $S((:G(B)$: (a) the triangulation built from a graph $(:G(B$: graph edges" "/home/rmurri/phd/kontsevich.tex" nil)
 
-("sec:strebel" "s" "A theorem proved by K. Strebel in the 1960's provides an inverse route: the construction of ribbon g" "/home/rmurri/mat/dott/kontsevich.tex" nil)
+("fig:charts" "f" "Local charts on the atlas: (a) any open set $V_(:a(B$ maps to a strip in the complex plane; (b) any open" "/home/rmurri/phd/kontsevich.tex" nil)
 
-("dfn:strebel-graphs" "s" "Define a category $\\Strebel[g,n]$, whose objects are metric numbered ribbon graphs with genus $g$ an" "/home/rmurri/mat/dott/kontsevich.tex" nil)
+(toc "toc" "      4.3.2 The Strebel construction" "/home/rmurri/phd/kontsevich.tex" nil 3 "4.3.2" "\\subsection{The Strebel construction}" 1760)
 
-("eq:kontsevich-3" "s" "M(\x1c47) := \x1d3c \x1d50: \\Edges{\x1c47} \x1cae \x1dda_{>0} | \\text{the zero set of $\x1d50$ is negligible}\x1d3e. " "/home/rmurri/mat/dott/kontsevich.tex" nil)
+("sec:strebel" "s" "A theorem proved by K. Strebel in the 1960's provides an inverse route: the construction of ribbon g" "/home/rmurri/phd/kontsevich.tex" nil)
 
-("eq:kontsevich-4" "s" "\\Mbarcomb_{g,n} := \\varinjlim \\overline{M}(\x1c47). " "/home/rmurri/mat/dott/kontsevich.tex" nil)
+("dfn:strebel-graphs" "s" "Define a category $\\Strebel[g,n]$, whose objects are metric numbered ribbon graphs with genus $g$ an" "/home/rmurri/phd/kontsevich.tex" nil)
 
-(toc "toc" "    4.4 Kontsevich' calculations" "/home/rmurri/mat/dott/kontsevich.tex" nil 2 "4.4" "\\section{Kontsevich' calculations}" 21988)
+("eq:kontsevich-3" "s" "M((:G(B) := (<<(B (<P(B: \\Edges{(:G(B} (;.(B .=ŽÚ_{>0} | \\text{the zero set of $(<P(B$ is negligible}(<>(B. " "/home/rmurri/phd/kontsevich.tex" nil)
 
-("sec:calculation" "s" "Kontsevich' praised calculation provides the bridge between the combinatorial approach to the geomet" "/home/rmurri/mat/dott/kontsevich.tex" nil)
+("eq:kontsevich-4" "s" "\\Mbarcomb_{g,n} := \\varinjlim \\overline{M}((:G(B). " "/home/rmurri/phd/kontsevich.tex" nil)
 
-(toc "toc" "      4.4.1 Combinatorial expression of Witten's classes" "/home/rmurri/mat/dott/kontsevich.tex" nil 3 "4.4.1" "\\subsection{Combinatorial expression of Witten's classes}" 22383)
+(toc "toc" "    4.4 Kontsevich' calculations" "/home/rmurri/phd/kontsevich.tex" nil 2 "4.4" "\\section{Kontsevich' calculations}" 1760)
 
-("sec:wittens-classes-comb" "s" "\\FIXME{Tutta questa sezione pu{\x8f2} ridursi al solo \\csref{thm:comb-bundle}?} Let $C_N$ be the cyclic " "/home/rmurri/mat/dott/kontsevich.tex" nil)
+("sec:calculation" "s" "Kontsevich' praised calculation provides the bridge between the combinatorial approach to the geomet" "/home/rmurri/phd/kontsevich.tex" nil)
 
-("thm:comb-bundle" "s" "There exists a differential $1$-form $\x1c61$ on $E$ such that: \\begin{enumerate} " "/home/rmurri/mat/dott/kontsevich.tex" nil)
+(toc "toc" "      4.4.1 Combinatorial expression of Witten's classes" "/home/rmurri/phd/kontsevich.tex" nil 3 "4.4.1" "\\subsection{Combinatorial expression of Witten's classes}" 1760)
 
-(toc "toc" "      4.4.2 Kontsevich' Main Identity" "/home/rmurri/mat/dott/kontsevich.tex" nil 3 "4.4.2" "\\subsection{Kontsevich' Main Identity}" 26057)
+("sec:wittens-classes-comb" "s" "\\FIXME{Tutta questa sezione pu{.AŽò} ridursi al solo \\csref{thm:comb-bundle}?} Let $C_N$ be the cyclic " "/home/rmurri/phd/kontsevich.tex" nil)
 
-("sec:KMI" "s" "Results from the previous section allow us to write \\begin{equation}  \x1ce1 \x1c74_{\x1c6e_1} \x1d7e \x1c74_{\x1c6e_n} \x1cf1 = \x1cf2_{\x1c70^{" "/home/rmurri/mat/dott/kontsevich.tex" nil)
+("thm:comb-bundle" "s" "There exists a differential $1$-form $(:a(B$ on $E$ such that: \\begin{enumerate} " "/home/rmurri/phd/kontsevich.tex" nil)
 
-("eq:kontsevich-6" "e" "\x1ce1 \x1c74_{\x1c6e_1} \x1d7e \x1c74_{\x1c6e_n} \x1cf1 = \x1cf2_{\x1c70^{-1}(p^\x1dcc_*)} \x1c77_1^{\x1c6e_1} \x1cd9 \x1d7e \x1cd9 \x1c77_j^{\x1c6e_n}, " "/home/rmurri/mat/dott/kontsevich.tex" nil)
+(toc "toc" "      4.4.2 Kontsevich' Main Identity" "/home/rmurri/phd/kontsevich.tex" nil 3 "4.4.2" "\\subsection{Kontsevich' Main Identity}" 1760)
 
-("eq:8" "e" "U = \x1ce5_\x1c6e \x1ce1 \x1c74_{\x1c6e_1} \x1d7e \x1c74_{\x1c6e_n} \x1cf1 \x1cd5_{j=1}^n (2\x1c6e_j)!! \x1c6c_j^{-2\x1c6e_j -1}, \\qquad \x1ce5 \x1c6e_j = q. " "/home/rmurri/mat/dott/kontsevich.tex" nil)
+("sec:KMI" "s" "Results from the previous section allow us to write \\begin{equation}  (;a(B (:t(B_{(:n(B_1} (<~(B (:t(B_{(:n(B_n} (;q(B = (;r(B_{(:p(B^{" "/home/rmurri/phd/kontsevich.tex" nil)
 
-("eq:7" "e" "U = \x1ce5_{\x1c47 \x1cce \\RG[g,n]} \\frac {1} {\\card{\\Aut \x1c47}} \x1cd5_{\x1c61 \x1cce \\Edges{\x1c47}} \\frac{1} {\x1c6c_{\x1c61^+} + \x1c6c_{\x1c61^-}}. " "/home/rmurri/mat/dott/kontsevich.tex" nil)
+("eq:kontsevich-6" "e" "(;a(B (:t(B_{(:n(B_1} (<~(B (:t(B_{(:n(B_n} (;q(B = (;r(B_{(:p(B^{-1}(p^.=ŽÌ_*)} (:w(B_1^{(:n(B_1} (;Y(B (<~(B (;Y(B (:w(B_j^{(:n(B_n}, " "/home/rmurri/phd/kontsevich.tex" nil)
 
-("eq:KMI-F" "e" "F(t_0(\x1c4c), t_1(\x1c4c), \x1cbc) = \x1ce5_{n, \x1c6e_1, \x1cbc, \x1c6e_n} 1/n! \x1ce1 \x1c74_{\x1c6e_1} \x1d7e \x1c74_{\x1c6e_n} \x1cf1 t_{\x1c6e_1}(\x1c4c) \x1d7e t_{\x1c6e_n}(\x1c4c) " "/home/rmurri/mat/dott/kontsevich.tex" nil)
+("eq:KMI" "s" "(;e(B_(:n(B (;a(B (:t(B_{(:n(B_1} (<~(B (:t(B_{(:n(B_n} (;q(B (;U(B_{j=1}^n \\frac {(2(:n(B_j - 1)!!} {(:l(B_j^{2(:n(B_j + 1}} = (;e(B_{(:G(B (;N(B \\RG[g,n]} \\frac {" "/home/rmurri/phd/kontsevich.tex" nil)
 
-(toc "toc" "    4.5 The 't~Hooft-Kontsevich model" "/home/rmurri/mat/dott/kontsevich.tex" nil 2 "4.5" "\\section{The 't~Hooft-Kontsevich model}" 30499)
+("eq:8" "e" "U = (;e(B_(:n(B (;a(B (:t(B_{(:n(B_1} (<~(B (:t(B_{(:n(B_n} (;q(B (;U(B_{j=1}^n (2(:n(B_j)!! (:l(B_j^{-2(:n(B_j -1}, \\qquad (;e(B (:n(B_j = q. " "/home/rmurri/phd/kontsevich.tex" nil)
 
-("sec:matrix-models" "s" "\\everyxy={0,<2em,0em>:,(0,0.5),} % scala per i diagrammi The Kontsevich matrix model for 2D quantum " "/home/rmurri/mat/dott/kontsevich.tex" nil)
+("eq:7" "e" "U = (;e(B_{(:G(B (;N(B \\RG[g,n]} \\frac {1} {\\card{\\Aut (:G(B}} (;U(B_{(:a(B (;N(B \\Edges{(:G(B}} \\frac{1} {(:l(B_{(:a(B^+} + (:l(B_{(:a(B^-}}. " "/home/rmurri/phd/kontsevich.tex" nil)
 
-("thm:KMI-Z" "s" "The following formula holds: \\begin{equation*}  Z (\x1c47) = \x1ce5_{c} \x1cd5_{\x1d50\x1cce \\Edges{\x1c47}} \\frac{2}{\x1c4c_{c(\x1d50^+)} +" "/home/rmurri/mat/dott/kontsevich.tex" nil)
+("eq:KMI-F" "e" "F(t_0((:L(B), t_1((:L(B), (;<(B) = (;e(B_{n, (:n(B_1, (;<(B, (:n(B_n} 1/n! (;a(B (:t(B_{(:n(B_1} (<~(B (:t(B_{(:n(B_n} (;q(B t_{(:n(B_1}((:L(B) (<~(B t_{(:n(B_n}((:L(B) " "/home/rmurri/phd/kontsevich.tex" nil)
 
-("eq:KM" "s" "Z (\x1c47) = \x1ce5_{c} \x1cd5_{\x1d50\x1cce \\Edges{\x1c47}} \\frac{2}{\x1c4c_{c(\x1d50^+)} + \x1c4c_{c(\x1d50^-)}}, \\qquad c\x1c3a\\Holes{\x1c47} \x1cae \x1d3c\ 1, \\dots, N\x1d3e" "/home/rmurri/mat/dott/kontsevich.tex" nil)
+(toc "toc" "    4.5 The Kontsevich model" "/home/rmurri/phd/kontsevich.tex" nil 2 "4.5" "\\section{The Kontsevich model}" 1760)
 
-("eq:casimir" "e" "\x1c67 = \x1ce5_{i}\\frac{1}{{\x1c4c_i}}E_{ii}\x1cc4 E_{ii}+\x1ce5_{i<j}\\frac{2}{{\x1c4c_i+\x1c4c_j}}(E_{ij}\x1cc4 E_{ji} + E_{ji}\x1cc4 E_{ij})" "/home/rmurri/mat/dott/kontsevich.tex" nil)
+("sec:matrix-models" "s" "\\everyxy={0,<2em,0em>:,(0,0.5),} % scala per i diagrammi The Kontsevich matrix model for 2D quantum " "/home/rmurri/phd/kontsevich.tex" nil)
 
-("eq:vertices" "e" "T_k(E_{i_1j_1}\x1cc4 E_{i_2j_2}\x1cc4\x1d7e\x1cc4 E_{i_{k}j_k})=\x1c64_{j_1i_2}\x1c64_{j_2i_3}\x1d7e \x1c64_{j_{k-1}i_k}\x1c64_{j_ki_1}, " "/home/rmurri/mat/dott/kontsevich.tex" nil)
+("thm:KMI-Z" "s" "The following formula holds: \\begin{equation*}  Z ((:G(B) = (;e(B_{c} (;U(B_{(<P(;N(B \\Edges{(:G(B}} \\frac{2}{(:L(B_{c((<P(B^+)} +" "/home/rmurri/phd/kontsevich.tex" nil)
 
-(eof "/home/rmurri/mat/dott/kontsevich.tex")
+("eq:KM" "s" "Z ((:G(B) = (;e(B_{c} (;U(B_{(<P(;N(B \\Edges{(:G(B}} \\frac{2}{(:L(B_{c((<P(B^+)} + (:L(B_{c((<P(B^-)}}, \\qquad c(::(B\\Holes{(:G(B} (;.(B (<<(B1, \\dots, N(<>(B" "/home/rmurri/phd/kontsevich.tex" nil)
 
-(bof "/home/rmurri/mat/dott/construction.tex")
+("eq:casimir" "e" "(:g(B = (;e(B_{i}\\frac{1}{{(:L(B_i}}E_{ii}(;D(B E_{ii}+(;e(B_{i<j}\\frac{2}{{(:L(B_i+(:L(B_j}}(E_{ij}(;D(B E_{ji} + E_{ji}(;D(B E_{ij})" "/home/rmurri/phd/kontsevich.tex" nil)
 
-(toc "toc" "  5 Construction of $A_\x1ca5$ classes" "/home/rmurri/mat/dott/construction.tex" nil 1 "5" "\\chapter{Construction of $A_\x1ca5$ classes}" 39)
+("eq:vertices" "e" "T_k(E_{i_1j_1}(;D(B E_{i_2j_2}(;D(<~(;D(B E_{i_{k}j_k})=(:d(B_{j_1i_2}(:d(B_{j_2i_3}(<~(B (:d(B_{j_{k-1}i_k}(:d(B_{j_ki_1}, " "/home/rmurri/phd/kontsevich.tex" nil)
 
-("cha:construction" "s" "The construction of cohomology classes on $\\M_{g,n}$ from the data of an $A_\x1ca5$-algebra was first ske" "/home/rmurri/mat/dott/construction.tex" nil)
+(eof "/home/rmurri/phd/kontsevich.tex")
 
-(toc "toc" "    5.1 Arc-systems and their complexes" "/home/rmurri/mat/dott/construction.tex" nil 2 "5.1" "\\section{Arc-systems and their complexes}" 39)
+(bof "/home/rmurri/phd/ainfty.tex")
 
-("sec:arc-systems" "s" "Harer \\cite{harer;cohomological-dimension}, introduced the arc-systems complex as a tool to calculat" "/home/rmurri/mat/dott/construction.tex" nil)
+(toc "toc" "  5 Construction of $A_(;%(B$ classes" "/home/rmurri/phd/ainfty.tex" nil 1 "5" "\\chapter{Construction of $A_(;%(B$ classes}" 78)
 
-(eof "/home/rmurri/mat/dott/construction.tex")
+("cha:ainfty" "s" "The construction of cohomology classes on $\\M_{g,n}$ from the data of an $A_(;%(B$-algebra was first ske" "/home/rmurri/phd/ainfty.tex" nil)
+
+(toc "toc" "    5.1 $A_(;%(B$-algebras" "/home/rmurri/phd/ainfty.tex" nil 2 "5.1" "\\section{$A_(;%(B$-algebras}" 1509)
+
+("sec:anfty" "s" "\\newcommand{\\anfty}{\\ensuremath{A_(;%(B}} \\anfty-algebras are a generalization of homotopy associative a" "/home/rmurri/phd/ainfty.tex" nil)
+
+("eq:An+1" "e" "(;e(B_{i+j=n+1} (;e(B_{s=0}^{i-1} .AŽ± m_i(a_1, \\dots, a_s, m_j(a_{s+1}, \\dots, a_{s+j}), a_{s+j+1}, \\dots, a_n" "/home/rmurri/phd/ainfty.tex" nil)
+
+("eq:A2" "e" "0 &= m_1^2 \\tag{$A_{2}$} " "/home/rmurri/phd/ainfty.tex" nil)
+
+("eq:A3" "e" "0 &= m_1(m_2(a_1,a_2)) - m_2(m_1(a_1), a_2) - (-1)^{a_1} m_2(a_1, m_1(a_2)) \\tag{$A_{3}$} " "/home/rmurri/phd/ainfty.tex" nil)
+
+("eq:A4" "e" "\\tag{$A_{4}$} 0 &= {\\begin{aligned}[t] -m_1(m_3(a_1,a_2&, a_3)) + m_2(m_2(a_1, a_2), a_3) - m_2(a_1," "/home/rmurri/phd/ainfty.tex" nil)
+
+("eq:A4prime" "e" "m_2(m_2(a_1,a_2),a_3) - m_2(a_1,m_2(a_2,a_3)) = " "/home/rmurri/phd/ainfty.tex" nil)
+
+("eq:An+1prime" "e" "(;e(B_{\\substack{i+j=n+1 " "/home/rmurri/phd/ainfty.tex" nil)
+
+(toc "toc" "      5.1.1 A less trivial example" "/home/rmurri/phd/ainfty.tex" nil 3 "5.1.1" "\\subsection{A less trivial example}" 5695)
+
+("sec:Anfty-nontrivial" "s" "In \\cite{zhou;hodge-theory-infty-structures}, J.\\ Zhou adapted a construction by S.\\ A.\\ Merkulov to" "/home/rmurri/phd/ainfty.tex" nil)
+
+(toc "toc" "    5.2 The $\\Ao_(;%(B$ operad" "/home/rmurri/phd/ainfty.tex" nil 2 "5.2" "\\section{The $\\Ao_(;%(B$ operad}" 8347)
+
+("sec:anfty-operad" "s" "We can build an operad $\\Ao_(;%(B$ which governs $A_(;%(B$-algebras, paralleling the construction of the $\\A" "/home/rmurri/phd/ainfty.tex" nil)
+
+("eq:anfty-D-1" "e" "D\\left( \\xytreec\\branch{\\leaf{1}\\gap[(;<(B]\\leaf{n}}\\endxytreec \\right) = (;e(B_{\\substack{i+j=n+1 " "/home/rmurri/phd/ainfty.tex" nil)
+
+("eq:anfty-D-2" "e" "D\\left( \\xytreec\\branch{\\leaf{1}\\leaf{2}}\\endxytreec \\right) = 0. " "/home/rmurri/phd/ainfty.tex" nil)
+
+("prop:surjection-ass" "s" "There is a surjective morphism $\\Ao_(;%(B (;.(B \\Ao$ in the category of differential graded $R$-operads. " "/home/rmurri/phd/ainfty.tex" nil)
+
+(eof "/home/rmurri/phd/ainfty.tex")
 
 (appendix . t)
 
-(bof "/home/rmurri/mat/dott/arrows.tex")
+(bof "/home/rmurri/phd/arrows.tex")
 
-(toc "toc" "  A Arrows-only description of Categories" "/home/rmurri/mat/dott/arrows.tex" nil 1 "A" "\\chapter{Arrows-only description of Categories}" 77)
+(toc "toc" "  A Arrows-only description of Categories" "/home/rmurri/phd/arrows.tex" nil 1 "A" "\\chapter{Arrows-only description of Categories}" 77)
 
-("cha:arrows" "s" "It is convenient to have an arrows-only description of a category: in this picture, an object $A \x1cce \\" "/home/rmurri/mat/dott/arrows.tex" nil)
+("cha:arrows" "s" "It is convenient to have an arrows-only description of a category: in this picture, an object $A \\in" "/home/rmurri/phd/arrows.tex" nil)
 
-("item:A1" "i" "$\x1dc8 z: \x1c47(x,y;z) \x1cdb s(x) = t(y)$;  " "/home/rmurri/mat/dott/arrows.tex" nil)
+("item:A1" "i" "$\\exists z: \\Gamma(x,y;z) \\Leftrightarrow s(x) = t(y)$;  " "/home/rmurri/phd/arrows.tex" nil)
 
-("dfn:object" "s" "$A\x1cce \\A$ means that $A$ is a morphism of the category $\\A$ such that: \\begin{enumerate} %" "/home/rmurri/mat/dott/arrows.tex" nil)
+("dfn:object" "s" "$A\\in \\A$ means that $A$ is a morphism of the category $\\A$ such that: \\begin{enumerate} %" "/home/rmurri/phd/arrows.tex" nil)
 
-("item:AO1" "i" "$A = s(A) = t(A)$,  " "/home/rmurri/mat/dott/arrows.tex" nil)
+("item:AO1" "i" "$A = s(A) = t(A)$,  " "/home/rmurri/phd/arrows.tex" nil)
 
-("item:AO2" "i" "$\x1dd5 x\x1dd5 y[ y = x \x1dcc A \x1cde x = y] \x1cd9 \x1dd5 x\x1dd5 y [ x = A \x1dcc y \x1cde x = y]$.  " "/home/rmurri/mat/dott/arrows.tex" nil)
+("item:AO2" "i" "$\\forall x\\forall y[ y = x \\circ A \\Rightarrow x = y] \\land \\forall x\\forall y [ x = A \\circ y \\Righ" "/home/rmurri/phd/arrows.tex" nil)
 
-("xmp:braid-by-arrows" "s" "The $\\catBraid$ category (\\csref{xmp:braids}) is the category whose set of morphisms $\\Hom\\catBraid$" "/home/rmurri/mat/dott/arrows.tex" nil)
+("xmp:braid-by-arrows" "s" "The $\\catBraid$ category (\\csref{xmp:braids}) is the category whose set of morphisms $\\Hom\\catBraid$" "/home/rmurri/phd/arrows.tex" nil)
 
-(eof "/home/rmurri/mat/dott/arrows.tex")
+(eof "/home/rmurri/phd/arrows.tex")
 
-(bof "/home/rmurri/mat/dott/btc.tex")
+(bof "/home/rmurri/phd/btc.tex")
 
-(toc "toc" "  B Braided Tensor Categories, etc." "/home/rmurri/mat/dott/btc.tex" nil 1 "B" "\\chapter{Braided Tensor Categories, etc.}" 75)
+(toc "toc" "  B Braided Tensor Categories, etc." "/home/rmurri/phd/btc.tex" nil 1 "B" "\\chapter{Braided Tensor Categories, etc.}" 75)
 
-("cha:btc" "s" "This chapter summarizes the definition and properties of those enriched category structures that und" "/home/rmurri/mat/dott/btc.tex" nil)
+("cha:btc" "s" "This chapter summarizes the definition and properties of those enriched category structures that und" "/home/rmurri/phd/btc.tex" nil)
 
-(toc "toc" "    B.1 Monoidal Categories" "/home/rmurri/mat/dott/btc.tex" nil 2 "B.1" "\\section{Monoidal Categories}" 802)
+(toc "toc" "    B.1 Monoidal Categories" "/home/rmurri/phd/btc.tex" nil 2 "B.1" "\\section{Monoidal Categories}" 802)
 
-("sec:monoidal-categories" "s" "Recall that a monoidal category $\\A = (\\A, \x1cc4, I, a, l, r)$ is a category equipped with a ``tensor pr" "/home/rmurri/mat/dott/btc.tex" nil)
+("sec:monoidal-categories" "s" "Recall that a monoidal category $\\A = (\\A, \\otimes, I, a, l, r)$ is a category equipped with a ``ten" "/home/rmurri/phd/btc.tex" nil)
 
-(toc "toc" "      B.1.1 Braidings on monoidal categories" "/home/rmurri/mat/dott/btc.tex" nil 3 "B.1.1" "\\subsection{Braidings on monoidal categories}" 6346)
+(toc "toc" "      B.1.1 Braidings on monoidal categories" "/home/rmurri/phd/btc.tex" nil 3 "B.1.1" "\\subsection{Braidings on monoidal categories}" 7242)
 
-("sec:braidings" "s" "A brading is one sort of a ``relaxed commutativity constraint''. We quote the following definition f" "/home/rmurri/mat/dott/btc.tex" nil)
+("sec:braidings" "s" "A brading is one sort of a ``relaxed commutativity constraint''. We quote the following definition f" "/home/rmurri/phd/btc.tex" nil)
 
-("eq:B1" "e" "\\tag{B1} \\xymatrix{% & (B\x1cc4 A)\x1cc4 C & B\x1cc4(A\x1cc4 C) & " "/home/rmurri/mat/dott/btc.tex" nil)
+("eq:B1" "e" "\\tag{B1} \\xymatrix{% & (B\\otimes A)\\otimes C & B\\otimes(A\\otimes C) & " "/home/rmurri/phd/btc.tex" nil)
 
-("eq:B2" "e" "\\tag{B2} \\xymatrix{% & A\x1cc4(C\x1cc4 B) & (A\x1cc4 C)\x1cc4 B & " "/home/rmurri/mat/dott/btc.tex" nil)
+("eq:B2" "e" "\\tag{B2} \\xymatrix{% & A\\otimes(C\\otimes B) & (A\\otimes C)\\otimes B & " "/home/rmurri/phd/btc.tex" nil)
 
-("xmp:braids" "s" "Let $B_n$ be Artin's group of braids on $n$ strands; the category $\\catBraid$ has all braids in $\x1dc0_n" "/home/rmurri/mat/dott/btc.tex" nil)
+("xmp:braids" "s" "Let $B_n$ be Artin's group of braids on $n$ strands; the category $\\catBraid$ has all braids in $\\bi" "/home/rmurri/phd/btc.tex" nil)
 
-("thm:rev" "s" "The assignment $F := \\Id$, $\x1d78_2 := \x1c74$, $\x1d78_0 := \\id$ defines a a braided monoidal isomorphism between" "/home/rmurri/mat/dott/btc.tex" nil)
+("thm:rev" "s" "The assignment $F := \\Id$, $\\digamma_2 := \\tau$, $\\digamma_0 := \\id$ defines a a braided monoidal is" "/home/rmurri/phd/btc.tex" nil)
 
-("xmp:vec1" "s" "The category of vector spaces and linear maps is braided symmetric with the family of isomorphisms \\" "/home/rmurri/mat/dott/btc.tex" nil)
+("xmp:vec1" "s" "The category of vector spaces and linear maps is braided symmetric with the family of isomorphisms \\" "/home/rmurri/phd/btc.tex" nil)
 
-(toc "toc" "      B.1.2 Duality in monoidal categories" "/home/rmurri/mat/dott/btc.tex" nil 3 "B.1.2" "\\subsection{Duality in monoidal categories}" 13273)
+(toc "toc" "      B.1.2 Duality in monoidal categories" "/home/rmurri/phd/btc.tex" nil 3 "B.1.2" "\\subsection{Duality in monoidal categories}" 14888)
 
-("sec:duality" "s" "Let $\\A$ be a monoidal category, and $A,B \x1cce \\A$. \\begin{definition} The object $A$ is left dual to $" "/home/rmurri/mat/dott/btc.tex" nil)
+("sec:duality" "s" "Let $\\A$ be a monoidal category, and $A,B \\in \\A$. \\begin{definition} The object $A$ is left dual to" "/home/rmurri/phd/btc.tex" nil)
 
-("thm:funct-dual" "s" "Monoidal functors preserve duality relations. " "/home/rmurri/mat/dott/btc.tex" nil)
+("thm:funct-dual" "s" "Monoidal functors preserve duality relations. " "/home/rmurri/phd/btc.tex" nil)
 
-("dfn:autonomous-category" "s" "A monoidal category is left (resp.\\ right) autonomous iff every object has a left (resp.\\ right) dua" "/home/rmurri/mat/dott/btc.tex" nil)
+("dfn:autonomous-category" "s" "A monoidal category is left (resp.\\ right) autonomous iff every object has a left (resp.\\ right) dua" "/home/rmurri/phd/btc.tex" nil)
 
-("thm:ev-rev" "s" "Each left autonomous braided monoidal category is autonomous. " "/home/rmurri/mat/dott/btc.tex" nil)
+("thm:ev-rev" "s" "Each left autonomous braided monoidal category is autonomous. " "/home/rmurri/phd/btc.tex" nil)
 
-("xmp:vect-duality" "s" "The category $\\catVect[\\fk]$ of finite-dimensional vector spaces over $\\fk$ is autonomous with the u" "/home/rmurri/mat/dott/btc.tex" nil)
+("xmp:vect-duality" "s" "The category $\\catVect[\\fk]$ of finite-dimensional vector spaces over $\\fk$ is autonomous with the u" "/home/rmurri/phd/btc.tex" nil)
 
-("xmp:vect-duality-nondeg" "s" "Let $V \x1cce \\catVect$ be a finite dimensional vector space over $\\fk$. Fix a \\emph{non-degenerate} bili" "/home/rmurri/mat/dott/btc.tex" nil)
+("xmp:vect-duality-nondeg" "s" "Let $V \\in \\catVect$ be a finite dimensional vector space over $\\fk$. Fix a \\emph{non-degenerate} bi" "/home/rmurri/phd/btc.tex" nil)
 
-(toc "toc" "      B.1.3 Balanced and tortile monoidal categories" "/home/rmurri/mat/dott/btc.tex" nil 3 "B.1.3" "\\subsection{Balanced and tortile monoidal categories}" 17521)
+(toc "toc" "      B.1.3 Balanced and tortile monoidal categories" "/home/rmurri/phd/btc.tex" nil 3 "B.1.3" "\\subsection{Balanced and tortile monoidal categories}" 19549)
 
-("sec:tortile" "s" "Let $\\A$ be a monoidal category. From \\cite{joyal-street;btc} we quote the following. \\begin{definit" "/home/rmurri/mat/dott/btc.tex" nil)
+("sec:tortile" "s" "Let $\\A$ be a monoidal category. From \\cite{joyal-street;btc} we quote the following. \\begin{definit" "/home/rmurri/phd/btc.tex" nil)
 
-(eof "/home/rmurri/mat/dott/btc.tex")
+(eof "/home/rmurri/phd/btc.tex")
 
-(bof "/home/rmurri/mat/dott/rt.tex")
+(bof "/home/rmurri/phd/rt.tex")
 
-(toc "toc" "  C Graphical Calculus for Reshetikhin-Turaev graphs" "/home/rmurri/mat/dott/rt.tex" nil 1 "C" "\\chapter{Graphical Calculus for Reshetikhin-Turaev graphs}" 73)
+(toc "toc" "  C Graphical Calculus for Reshetikhin-Turaev graphs" "/home/rmurri/phd/rt.tex" nil 1 "C" "\\chapter{Graphical Calculus for Reshetikhin-Turaev graphs}" 74)
 
-("cha:rt" "s" "In this chapter we state (with no proof!) some results of graphical calculus, as developed by Reshet" "/home/rmurri/mat/dott/rt.tex" nil)
+("cha:rt" "s" "In this chapter we state (with no proof!) some results of graphical calculus, as developed by Reshet" "/home/rmurri/phd/rt.tex" nil)
 
-(toc "toc" "    C.1 The category of Reshetikhin-Turaev diagrams" "/home/rmurri/mat/dott/rt.tex" nil 2 "C.1" "\\section{The category of Reshetikhin-Turaev diagrams}" 851)
+(toc "toc" "    C.1 The category of Reshetikhin-Turaev diagrams" "/home/rmurri/phd/rt.tex" nil 2 "C.1" "\\section{The category of Reshetikhin-Turaev diagrams}" 852)
 
-("sec:rt-diagrams" "s" "Let $L$ be the infinite strip $\x1dda \x8d7 [0,1]$; for $j \x1cb3 1$ let $s_j$, $t_j$ be the points $(j, 0) \x1cce L$ a" "/home/rmurri/mat/dott/rt.tex" nil)
+("sec:rt-diagrams" "s" "Let $L$ be the infinite strip $\\setR \\times [0,1]$; for $j \\geq 1$ let $s_j$, $t_j$ be the points $(" "/home/rmurri/phd/rt.tex" nil)
 
-("RT1" "s" " " "/home/rmurri/mat/dott/rt.tex" nil)
+("RT1" "s" " " "/home/rmurri/phd/rt.tex" nil)
 
-("RT2" "s" " " "/home/rmurri/mat/dott/rt.tex" nil)
+("RT2" "s" " " "/home/rmurri/phd/rt.tex" nil)
 
-("RT3" "s" " " "/home/rmurri/mat/dott/rt.tex" nil)
+("RT3" "s" " " "/home/rmurri/phd/rt.tex" nil)
 
-("RT4" "s" " " "/home/rmurri/mat/dott/rt.tex" nil)
+("RT4" "s" " " "/home/rmurri/phd/rt.tex" nil)
 
-("RT5" "s" " " "/home/rmurri/mat/dott/rt.tex" nil)
+("RT5" "s" " " "/home/rmurri/phd/rt.tex" nil)
 
-("RT6" "s" " " "/home/rmurri/mat/dott/rt.tex" nil)
+("RT6" "s" " " "/home/rmurri/phd/rt.tex" nil)
 
-("RT7" "s" " " "/home/rmurri/mat/dott/rt.tex" nil)
+("RT7" "s" " " "/home/rmurri/phd/rt.tex" nil)
 
-("dfn:graph-composition" "s" "Two RT-diagrams $\x1c47$ and $\x1c46$ are \\emph{composable} iff $\\Src(\x1c47) = \\Tgt(\x1c46)$. If $\x1c47$ and $\x1c46$ are compos" "/home/rmurri/mat/dott/rt.tex" nil)
+("dfn:graph-composition" "s" "Two RT-diagrams $\\Gamma$ and $\\Phi$ are \\emph{composable} iff $\\Src(\\Gamma) = \\Tgt(\\Phi)$. If $\\Gamm" "/home/rmurri/phd/rt.tex" nil)
 
-("fig:graph-composition" "f" "Composition product of RT-diagrams." "/home/rmurri/mat/dott/rt.tex" nil)
+("fig:graph-composition" "f" "Composition product of RT-diagrams." "/home/rmurri/phd/rt.tex" nil)
 
-("fig:graph-otimes" "f" "Tensor product of RT-diagrams." "/home/rmurri/mat/dott/rt.tex" nil)
+("fig:graph-otimes" "f" "Tensor product of RT-diagrams." "/home/rmurri/phd/rt.tex" nil)
 
-("dfn:diagrams-category" "s" "$\\RTD$ is the monoidal category which has finite sequences of $\x8b1\ 1$ as objects; the $\\Hom$-space $\\RT" "/home/rmurri/mat/dott/rt.tex" nil)
+("dfn:diagrams-category" "s" "$\\RTD$ is the monoidal category which has finite sequences of $\\pm1$ as objects; the $\\Hom$-space $\\" "/home/rmurri/phd/rt.tex" nil)
 
-(toc "toc" "    C.2 The category of RT-graphs" "/home/rmurri/mat/dott/rt.tex" nil 2 "C.2" "\\section{The category of RT-graphs}" 8357)
+(toc "toc" "    C.2 The category of RT-graphs" "/home/rmurri/phd/rt.tex" nil 2 "C.2" "\\section{The category of RT-graphs}" 8786)
 
-("sec:rt-graphs" "s" "Let $\\Hom\\RTD := \x1dc0_{S,T \x1cce \\RTD} \\RTD(S,T)$ be the set of all morphisms in the category $\\RTD$; $\\Hom" "/home/rmurri/mat/dott/rt.tex" nil)
+("sec:rt-graphs" "s" "Let $\\Hom\\RTD := \\bigcup_{S,T \\in \\RTD} \\RTD(S,T)$ be the set of all morphisms in the category $\\RTD" "/home/rmurri/phd/rt.tex" nil)
 
-("lemma:moves" "s" "The set $\\Hom\\RTE$ of all isotopy classes (rel $\x1cb6 M$)\\FIXME{Se dobbiamo considerare isotopie col bor" "/home/rmurri/mat/dott/rt.tex" nil)
+("lemma:moves" "s" "The set $\\Hom\\RTE$ of all isotopy classes (rel $\\partial M$)\\FIXME{Se dobbiamo considerare isotopie " "/home/rmurri/phd/rt.tex" nil)
 
-("fig:rrt" "f" "Reidmeister-Reshetikhin-Turaev moves for RT-diagrams. Note that move (RRT2) changes a trivial framin" "/home/rmurri/mat/dott/rt.tex" nil)
+("fig:rrt" "f" "Reidmeister-Reshetikhin-Turaev moves for RT-diagrams. Note that move (RRT2) changes a trivial framin" "/home/rmurri/phd/rt.tex" nil)
 
-("thm:generators" "s" "The set $\\Hom\\RTE$ of RT-graphs is generated thorugh $\x1dcc$ and $\x1cc4$ from the following elementary piece" "/home/rmurri/mat/dott/rt.tex" nil)
+("thm:generators" "s" "The set $\\Hom\\RTE$ of RT-graphs is generated thorugh $\\circ$ and $\\otimes$ from the following elemen" "/home/rmurri/phd/rt.tex" nil)
 
-("fig:struct" "f" "The structure morphisms making $\\RTE$ into a braided \\textsl{(d)}, autonomous \\textsl{(a, b)}, torti" "/home/rmurri/mat/dott/rt.tex" nil)
+("fig:struct" "f" "The structure morphisms making $\\RTE$ into a braided \\textsl{(d)}, autonomous \\textsl{(a, b)}, torti" "/home/rmurri/phd/rt.tex" nil)
 
-("thm:rt" "s" "The category $\\RTE$ is braided, autonomous, and tortile. " "/home/rmurri/mat/dott/rt.tex" nil)
+("thm:rt" "s" "The category $\\RTE$ is braided, autonomous, and tortile. " "/home/rmurri/phd/rt.tex" nil)
 
-(toc "toc" "    C.3 Graphical calculus on tortile braided tensor categories" "/home/rmurri/mat/dott/rt.tex" nil 2 "C.3" "\\section{Graphical calculus on tortile braided tensor categories}" 18230)
+(toc "toc" "    C.3 Graphical calculus on tortile braided tensor categories" "/home/rmurri/phd/rt.tex" nil 2 "C.3" "\\section{Graphical calculus on tortile braided tensor categories}" 18980)
 
-("sec:rt-gc" "s" "Now let $\\A$ be a tensor category. Define $\\freemsc{\\A}$ to be the category whose objects are finite" "/home/rmurri/mat/dott/rt.tex" nil)
+("sec:rt-gc" "s" "Now let $\\A$ be a tensor category. Define $\\freemsc{\\A}$ to be the category whose objects are finite" "/home/rmurri/phd/rt.tex" nil)
 
-("thm:rt1" "s" "The set $\\Hom\\RTD[\\A]$ of $\\A$-colored RT-diagrams is generated thorugh $\x1dcc$ and $\x1cc4$ from the followi" "/home/rmurri/mat/dott/rt.tex" nil)
+("thm:rt1" "s" "The set $\\Hom\\RTD[\\A]$ of $\\A$-colored RT-diagrams is generated thorugh $\\circ$ and $\\otimes$ from t" "/home/rmurri/phd/rt.tex" nil)
 
-("thm:rt2" "s" "For any autonomous balanced braided tensor category $\\A$, there is a tensor functor $Z_{\\A}: \\RTD[\\A" "/home/rmurri/mat/dott/rt.tex" nil)
+("thm:rt2" "s" "For any autonomous balanced braided tensor category $\\A$, there is a tensor functor $Z_{\\A}: \\RTD[\\A" "/home/rmurri/phd/rt.tex" nil)
 
-("graph-cross+" "s" "& $\\xy*!LC\\xybox{% \\vcross~{(0,0)*+{B}}{(1,0)*+{A}}{(0,1)*+{A}}{(1,1)*+{B}}}\\endxy \x1d65 \x1c74_{XY}^{-1},$ %" "/home/rmurri/mat/dott/rt.tex" t)
+("graph-cross+" "s" "& $\\xy*!LC\\xybox{% \\vcross~{(0,0)*+{B}}{(1,0)*+{A}}{(0,1)*+{A}}{(1,1)*+{B}}}\\endxy \\mapsto \\tau_{XY}" "/home/rmurri/phd/rt.tex" t)
 
-("graph-cross-" "s" "& $\\xy*!LC\\xybox{ (0,1)*+[F]{f};% (-1,0)*+{A_1}**\\dir{-},(-0.5,0)*+{A_2}**\\dir{-},% (0,0.5)*+{\x1cbc},(1," "/home/rmurri/mat/dott/rt.tex" t)
+("graph-cross-" "s" "& $\\xy*!LC\\xybox{ (0,1)*+[F]{f};% (-1,0)*+{A_1}**\\dir{-},(-0.5,0)*+{A_2}**\\dir{-},% (0,0.5)*+{\\ldots" "/home/rmurri/phd/rt.tex" t)
 
-("graph-morphism" "s" " " "/home/rmurri/mat/dott/rt.tex" t)
+("graph-morphism" "s" " " "/home/rmurri/phd/rt.tex" t)
 
-("graph-casimir" "s" "& $\\xy*!LC\\xybox{% \\vloop~{(0,0)}{(1,0)}{(0,1)*+{A}}{(1,1)*+{A}}}\\endxy \x1d65 \\coev_{A},$ % &" "/home/rmurri/mat/dott/rt.tex" t)
+("graph-casimir" "s" "& $\\xy*!LC\\xybox{% \\vloop~{(0,0)}{(1,0)}{(0,1)*+{A}}{(1,1)*+{A}}}\\endxy \\mapsto \\coev_{A},$ % " "/home/rmurri/phd/rt.tex" t)
 
-("graph-coupling" "s" "& $\\xy*!LC\\xybox{(0,0)*+{A};(0,1)*+{A}**\\dir{-}}\\endxy \x1d65 \\id_X,$ % " "/home/rmurri/mat/dott/rt.tex" t)
+("graph-coupling" "s" "& $\\xy*!LC\\xybox{(0,0)*+{A};(0,1)*+{A}**\\dir{-}}\\endxy \\mapsto \\id_X,$ % " "/home/rmurri/phd/rt.tex" t)
 
-("graph-id" "s" " " "/home/rmurri/mat/dott/rt.tex" t)
+("graph-id" "s" " " "/home/rmurri/phd/rt.tex" t)
 
-(eof "/home/rmurri/mat/dott/rt.tex")
+(eof "/home/rmurri/phd/rt.tex")
 
-(bib "/home/rmurri/mat/dott/math.bib")
+(bof "/home/rmurri/phd/operads.tex")
 
-(eof "/home/rmurri/mat/dott/index.tex")
+(toc "toc" "  D Operads" "/home/rmurri/phd/operads.tex" nil 1 "D" "\\chapter{Operads}" 80)
+
+("cha:operads" "s" "Fix a differential graded $\\k$-algebra $K$; the category of $K$-dg-modules and their morphisms (not " "/home/rmurri/phd/operads.tex" nil)
+
+("dfn:operad" "s" "An operad ${\\Oo}$ is a collection of $K$-modules $\\{{\\Oo}(n)\\}_{n\\geq0}$ together with \\begin{enumer" "/home/rmurri/phd/operads.tex" nil)
+
+("o-ass" "i" "The following \\emph{associativity} diagrams commute, for all $n\\geq0$, $k_s \\geq0$, $j_{sr}\\geq0$: \\" "/home/rmurri/phd/operads.tex" nil)
+
+("eq:o-ass" "e" "{\\xymatrix{% {\\Oo}(n) \\otimes \\bigl( \\bigotimes_{s=1}^n {\\Oo}(k_n) \\bigr) \\otimes \\bigl( \\bigotimes_" "/home/rmurri/phd/operads.tex" nil)
+
+("o-unit" "i" "The following \\emph{unit} diagrams commute. \\begin{equation} {\\xymatrix{% {\\Oo}(n)\\otimes K\\tp{n} " "/home/rmurri/phd/operads.tex" nil)
+
+("eq:o-unit" "e" "{\\xymatrix{% {\\Oo}(n)\\otimes K\\tp{n} " "/home/rmurri/phd/operads.tex" nil)
+
+("o-perm" "i" "The following \\emph{equivariance} diagrams commute, for $\\sigma \\in \\Perm{n}$ and $\\tau_s \\in \\Perm{" "/home/rmurri/phd/operads.tex" nil)
+
+("eq:o-perm1" "e" "{\\xymatrix@C=36pt{% {\\Oo}(n) \\otimes {\\Oo}(k_1) \\otimes \\cdots \\otimes {\\Oo}(k_n) & {\\Oo}(n) \\otimes" "/home/rmurri/phd/operads.tex" nil)
+
+("eq:o-perm2" "e" "{\\xymatrix@C=48pt{% {\\Oo}(n) \\otimes {\\Oo}(k_1) \\otimes \\cdots \\otimes {\\Oo}(k_n) & {\\Oo}(k) " "/home/rmurri/phd/operads.tex" nil)
+
+(toc "toc" "      D.0.1 Signs in operads" "/home/rmurri/phd/operads.tex" nil 3 "D.0.1" "\\subsection{Signs in operads}" 5994)
+
+("sec:signs-operads" "s" "The ``signed reordering'' of diagram \\eqref{eq:o-ass} may appear as to introduce an unnatural sign: " "/home/rmurri/phd/operads.tex" nil)
+
+("eq:1" "e" "\\gamma(A \\otimes B_1 \\otimes B_2) (x_1 \\otimes x_2 \\otimes x_3) = (-1)^{x_1B_2} A\\bigl( (-1)^{x_1 B_" "/home/rmurri/phd/operads.tex" nil)
+
+(toc "toc" "    D.1 Algebras over operads" "/home/rmurri/phd/operads.tex" nil 2 "D.1" "\\section{Algebras over operads}" 8559)
+
+("sec:algebras-over-operads" "s" "Let $X$ be an $K$-dg-module, and ${\\Oo}$ a fixed operad. \\begin{definition} A structure of ${\\Oo}$-a" "/home/rmurri/phd/operads.tex" nil)
+
+("prop:structure-transfer" "s" "Any morphism ${\\Oo}\\to{\\Oo}'$ induces an ${\\Oo}$-algebra structure on every ${\\Oo}'$-algebra $X$, by" "/home/rmurri/phd/operads.tex" nil)
+
+("eq:o-alg" "e" "{\\xyc\\xymatrix{% {\\Oo}(n) \\otimes {\\Oo}(k_1) \\otimes \\cdots \\otimes {\\Oo}(k_n) \\otimes X\\tp{k} & {\\O" "/home/rmurri/phd/operads.tex" nil)
+
+(toc "toc" "      D.1.1 The operad of associative algebras" "/home/rmurri/phd/operads.tex" nil 3 "D.1.1" "\\subsection{The operad of associative algebras}" 11714)
+
+("sec:operad-assoc" "s" "If $X$ is an associative algebra, then a map $m: X\\tp2 \\to X$ is defined, which satisfies the constr" "/home/rmurri/phd/operads.tex" nil)
+
+("eq:ass" "e" "m(x_1, m(x_2, x3)) = m(m(x_1, x_2), x_3). " "/home/rmurri/phd/operads.tex" nil)
+
+("eq:ass-tree" "e" "\\xytreec \\branch{% \\leaf{1} \\branch{% \\leaf{2} \\leaf{3} } } \\endxytreec = " "/home/rmurri/phd/operads.tex" nil)
+
+(toc "toc" "    D.2 Modules over an operad algebra" "/home/rmurri/phd/operads.tex" nil 2 "D.2" "\\section{Modules over an operad algebra}" 17464)
+
+("sec:modules" "s" "Fix an operad ${\\Oo}$ and an ${\\Oo}$-algebra $X$, and an $K$-module $M$. \\begin{definition} A struct" "/home/rmurri/phd/operads.tex" nil)
+
+("eq:o-2" "e" "{\\xyc\\xymatrix{% {\\Oo}(n) \\otimes {\\Oo}(k_1) \\otimes \\cdots \\otimes {\\Oo}(k_n) \\otimes X\\tp{k-1} \\ot" "/home/rmurri/phd/operads.tex" nil)
+
+(eof "/home/rmurri/phd/operads.tex")
+
+(bib "/home/rmurri/phd/math.bib")
+
+(eof "/home/rmurri/phd/index.tex")
 ))
 

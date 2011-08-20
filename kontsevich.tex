@@ -27,124 +27,19 @@ provided a model for 2D quantum gravity, which had not been devised
 before!  The later paper \cite{witten;kontsevich-model} established
 that all three models of 2D quantum gravity are equivalent.
 
-This chapter is an exposition of Kontsevich' Theorem
-\cite[Theorem 1.1]{kontsevich;intersection-theory;1992} relating the
-generating series of intersection numbers on the moduli space of
-stable curves with the matrix integral that now bears his name, as it
-provides a template for treating intersection theory on $A_\infty$-classes.
-I will focus on those techniques that are needed in the sequel and
-most suitable to generalization.
+This chapter is an exposition of Kontsevich' Theorem \cite[Theorem
+1.1]{kontsevich;intersection-theory;1992} relating the generating
+series of intersection numbers on the moduli space of stable curves
+with the matrix integral that now bears his name, as it provides a
+template for treating intersection theory on $A_\infty$-classes.  The
+exposition will focus on those techniques that are needed in the
+sequel and most suitable to generalization.
 
 This is by no means a complete overview; I may only refer the
 interested reader to the survey papers by Looijenga
 \cite{looijenga;intersection-theory} and Dijkgraaf
 \cite{dijkgraaf;intersection-theory}, which are very readable yet
 complete introductions to the results obtained in this field.
-
-
-\section{Moduli Spaces of Curves}
-\label{sec:moduli-spaces}
-
-Let us recap the main points of the construction of the moduli space
-of smooth algebraic curves; the short summary given here tracks
-closely the first section of \cite{looijenga;cellular-decomposition},
-which has proofs and good references.
-
-Fix integers $g,n\geq0$ such that $2 -2g - n < 0$. Let $S$ be a Riemann
-surface of genus $g$ and $P = \{ x_1, \ldots, x_n \}$ a set of $n$ points
-in $S$.
-
-Every complex structure  on $S$ determines a conformal structure; let
-$\Conf(S)$ be the set of all conformal structures on $S$. 
-\begin{definition}\label{dfn:teichmuller}
-  The \emph{Teichm{\"u}ller space}
-  \begin{equation*}
-    \T_{g,n} := \Conf(S) / \Diff^0(S, n)
-  \end{equation*}
-  is, by definition, the quotient of the set of all conformal metrics on
-  $S$ by the set of all diffeomorphisms homotopic to the identity and
-  fixing the $n$ marked points.
-\end{definition}
-Every set $P$ of marked points can be carried into another chosen one
-$P'$ by a diffeomorphism $\phi \in \Diff^0(S, n)$ --- therefore,
-$\Diff^0(S, n)$ depends only on $n$ and not on $P$, cf.
-\cite{krushkal;riemann-surfaces}. The Teichm{\"u}ller space $\T_{g,n}$ is
-an analytic space and is homeomorphic to a convex domain in $\setC^{3g -
-  3 + n}$.
-
-\begin{definition}\label{dfn:mapping-class-group}
-  The \emph{mapping class group} $\Gamma_{g,n}$ is defined by:
-  \begin{equation*}
-    \Gamma_{g,n} := \Diff^+ (S, n) / \Diff^0(S, n).
-  \end{equation*}
-  It is the set of connected components of $\Diff^+(S, n)$, the group
-  of all diffeomorphisms that preserve orientation and fix marked
-  points.
-\end{definition}
-
-The topological space $\M_{g,n} := \T_{g,n} / \Gamma_{g,n}$ parameterizes
-complex structures on $S$, up to orientation-preserving
-diffeomorphisms fixing the $n$ marked points.
-\begin{remark}
-  \label{rem:moduli-punctured}
-  One may instead consider equivalence classes of $n$-punctured
-  surfaces $S$ (i.e., with $n$ points \emph{removed}) by bianalytic
-  mappings. In the event, this moduli space turns out to be the same
-  $\M_{g,n}$; this alternate description will occasionally be
-  useful.
-\end{remark}
-\begin{remark}
-  \label{rem:moduli-with-reference}
-  Conversely, one may want to keep the complex structure on $S$ fixed,
-  while actually moving the points $x_1, \ldots, x_n$; still, this
-  \emph{is} a way of varying the complex structure on $(C; x_1, \dots,
-  x_n)$. This approach leads to the construction of $\M_{g,n}$ by
-  equivalence classes of triples $(C, x, f)$ where $C$ is a complex
-  curve, $x: \{1, \ldots, n\} \longrightarrow C$ a marking of points, and $f: C \to S$ a
-  homeomorphism with a fixed reference topological Riemann surface
-  $S$.
-\end{remark}
-
-Since $\T_{g,n}$ is an analytic variety and $\Gamma_{g,n}$ acts
-discontinuously with finite stabilizers, $\M_{g,n}$ inherits a
-structure of analytic orbifold of complex dimension $3g - 3 + n$.
-
-
-\subsection{Moduli Space of Stable Curves}
-\label{sec:moduli-space-stable}
-
-Deligne and Mumford \cite{deligne-mumford} showed that $\M_{g,n}$ has
-a projective compactification $\Mbar_{g,n}$; this space can be
-described as the moduli space of stable curves of arithmetic genus
-$g$.
-\begin{definition}
-  A stable complex curve $C$ is a complete connected curve such that:
-  \begin{enumerate}
-  \item $C$ has only nodal singularities;
-  \item the marked points $x_1, \ldots, x_n$ are nonsingular points in
-    $C$;
-  \item the pair $(C; x_1, \ldots, x_n)$ has a \emph{finite} automorphism
-    group.
-  \end{enumerate}
-\end{definition}
-Equivalently, this last condition can be expressed by saying that:
-\textsl{a)} any rational component of the normalized curve $\tilde C$
-must contain at least 3 special points (that is, marked points or
-singular points); \textsl{b)} any component of genus $1$ must contain
-at least 1 special point.
-\begin{definition}
-  Let $C$ be a stable curve, with $q$ irreducible components and
-  $r$ nodal points. Let $\{C_j\}_{j=1, \dots, \nu}$ be the
-  irreducible components of $C$ and $g(C_j)$ the geometric genus
-  of $C_j$.  The arithmetic genus of $C$ is defined by the equation:
-  \begin{equation*}
-    p_C^{} := \bigl({\textstyle \sum_{j=1}^\nu} g(C_j) \bigr) + r - q + 1.
-  \end{equation*}
-\end{definition}
-
-Informally, stable curves are constructed by attaching smooth curves
-``by the nodes'', such that the arithmetic genus be $g$ and the total
-number of punctures be $n$.
 
 
 \section{Witten's conjecture and Kontsevich' theorem}
@@ -193,7 +88,8 @@ Arakelov,
 \end{definition}
 
 The permutation group $\Perm{n}$ acts trivially on
-$\Htop(\Mbar_{g,n})$, so we can introduce the abridged notation:
+$\Htop(\Mbar_{g,n})$ by \eqref{eq:positive-intersection}, so we can
+introduce the abridged notation:
 \begin{equation}
   \label{eq:intersection-index-cpt}
   \langle\tau_0^{d_0} \tau_1^{d_1} \cdots \tau_k^{d_k} \rangle := \langle \underbrace{\tau_0 \cdots
@@ -234,15 +130,14 @@ space, therefore, there is a naturally defined translation-invariant
 measure $\ud X$. Let $\ud\mu_\Lambda(X)$ be the Gaussian measure associated
 to $\exp ( -1/2 \tr \Lambda X^2)$, that is,
 \begin{equation*}
-  \ud \mu_\Lambda(X) := \frac{1}{C} \cdot \exp ( -1/2 \tr \Lambda X^2)
-  \ud X, \qquad C := \int_\Hn  \exp ( -1/2 \tr \Lambda X^2) \ud X.
+  \ud \mu_\Lambda(X) := c^{-1} \cdot \exp ( -1/2 \tr \Lambda X^2)
+  \ud X, \qquad c := \int_\Hn  \exp ( -1/2 \tr \Lambda X^2) \ud X.
 \end{equation*}
 
-\begin{definition}\FIXME{Togliere? Direi che possiamo dare per
-    scontato che si conosca la definizione di espansione asintotica\ldots}
+\begin{definition}\FIXME{Togliere? Direi che si pu\`o dare per
+    scontato che chi legge conosca la definizione di espansione asintotica\ldots}
   A formal series $\sum a_j t^j$ is an asymptotic expansion of a real
-  function of a real variable $f(t)$ 
-  at a point $t_0$ iff
+  function of a real variable $f(t)$ at a point $t_0$ iff
   \begin{equation*}
     \lim_{t \to t_0} t^{-(k+1)} \bigl( f(t) - {\textstyle\sum_0^k a_j t^j}
     \bigr) = a_{k+1}.
@@ -271,258 +166,8 @@ The intersection numbers of $\Mbar_{g,n}$ can be computed by choosing
 $N > 3g - 3 + n$; in the limit $N \to \infty$ we retrieve information on
 all moduli spaces. 
 
-
-\section{A combinatorial model of the moduli space of smooth curves}
-\label{sec:mgn-comb}
-
-\FIXME{Questa sezione sta meglio in una appendice? Meglio tagliarla
-  drasticamente?}
-String field theory attempts to explain properties of the fundamental
-particles by treating them like ``small'' closed strings. When
-point-like particles move in space-time, they draw trajectories; when
-strings move, they draw ``tubes''; when tubes join, they form a
-punctured surface. This simple idea is the link between string theory
-and the moduli space of curves. 
-
-Let $S$ be an $n$-punctured Riemann surface (i.e., a Riemann surface
-with $n$ points removed); $S$ retracts onto a graph. This graph is not
-uniquely determined.
-\begin{figure}[bt]
-  %% Figura sphere3.fig
-  \centering\includegraphics[width=\textwidth]{sfera3}
-  \caption{A thrice-punctured sphere and two inequivalent
-    deformation retracts.} 
-  \label{fig:sphere-retracts}
-\end{figure}
-We look forward to refining this correspondence: let us introduce more
-structure on the graph.
-\begin{definition}
-  \label{dfn:metric-ribbon-graphs}
-  A metric ribbon graph is the data of a type (0,0) ribbon graph (see
-  \csref{dfn:ribbon-graphs}) equipped with a real positive number
-  $\ell_\alpha$ for each edge $\alpha$.
-\end{definition}
-
-One can use the cyclic order to ``fatten'' edges of a graph $\Gamma$ into
-thin ribbons\footnote{Hence the names ``ribbon graph'' and
-  ``fatgraph''.}  (see \csref{fig:fattening-edges}), so to obtain a
-compact oriented Riemann surface with boundary $\tilde S(\Gamma)$.
-Viceversa, any graph $\Gamma$, embedded in a oriented Riemann surface,
-inherits a cyclic order from the orientation.
-\begin{figure}[htbp]
-  \begin{equation*}
-    \includegraphics{fatten}
-  \end{equation*}
-  \caption{Fattening edges at a vertex with cyclic order.}
-  \label{fig:fattening-edges} 
-\end{figure} 
-Now glue punctured disks alongside the boundary of $\tilde S(\Gamma)$ to
-get a punctured Riemann surface $S(\Gamma)$. Obviously,
-\begin{equation*}
-  \chi(\Gamma) = \chi(S(\Gamma)) = 2 - 2g - n,
-\end{equation*}
-so we can define, for a ribbon graph $\Gamma$, the \emph{genus} $g$ and the
-\emph{puncture number} $n$, as given by the above relation.
-
-Notice that this fattening procedure actually selects some homological
-$1$-cycles in $\Gamma$, those corresponding to the boundary components of
-$\tilde S(\Gamma)$. By abuse of language, we shall call these $1$-cycles
-``boundary components'' or ``holes'', for short.
-
-Denote $\Vertices{\Gamma}$, $\Edges{\Gamma}$ and $\Holes{\Gamma}$ the
-sets of vertices, edges and holes of a graph $\Gamma$. It will be
-convenient to identify a hole $\beta$ with the set of edges it is made
-of, and a vertex $\gamma$ with the set of edges incident to it.
-
-
-\subsection{A complex structure on $S(\Gamma)$}
-\label{sec:atlas}
-Let us give the topological Riemann surface $S(\Gamma)$ a complex
-structure, by means of a triangulation and an analytic atlas.
-
-In the course of the construction of $S(\Gamma)$, two punctured disk
-have been glued on the sides of an edge $\alpha \in \Edges{\Gamma}$: call
-them $\alpha^+$ and $\alpha^-$. Let $T_\alpha^+$ and $T_\alpha^-$ be the triangles
-delimited by $\alpha$ and the radii joining endpoints of $\alpha$ with the
-puncture of $\alpha^\pm$. The collection $\{T_\alpha^\pm : \alpha \in \Edges{\Gamma}\}$
-is a triangulation of $S(\Gamma)$.
-
-Define an atlas of $S(\Gamma)$:
-\begin{itemize}
-\item for any edge $\alpha$, put $V_\alpha := (T_\alpha^+ \cup T_\alpha^-)^\circ$;
-\item for any hole $\beta$, put $V_\beta := \bigl( \bigcup_{\alpha} T_\alpha \bigr)^\circ$
-  for all $\alpha$ bounding $\beta$;
-\item for any vertex $\gamma$, put $V_\gamma := \bigl( \bigcup_\alpha T_a^\pm \bigr)^\circ$
-  for all $\alpha$ incident to $\gamma$.
-\end{itemize}
-\begin{figure}[btp]
-  %% Figura atlas.fig
-  \centering\includegraphics[width=\textwidth]{atlas}
-  \caption{The open sets building an atlas of $S(\Gamma)$: (a) the
-    triangulation built from a graph $\Gamma$; (b) the neighborhood
-    $V_\alpha$ of an edge $\alpha$; (c) the neighborhood $V_\beta$ of a hole
-    $\beta$; (d) the neighborhood $V_\gamma$ of a vertex $\gamma$.}
-  \label{fig:atlas}
-\end{figure}
-
-Define charts on the open sets $V$ (see Figure~\ref{fig:charts}):
-\begin{itemize}
-\item for any edge $\alpha$, pick a homeomorphism $f_\alpha: V_\alpha \to \{ z \in \setC
-  : 0 < \Re z < \ell_\alpha \}$;
-\item for any hole $\beta$, bounded by edges $\alpha_1$, $\alpha_2$ and $\alpha_3$,
-  pick a homeomorphism $f_\beta: V_\beta \to \{ \abs{z} < \rho \}$, where $\rho =
-  (\ell_{\alpha_1} + \ell_{\alpha_2} + \ell_{\alpha_3}) / 2\pi$.
-\item for any vertex $\gamma$, pick a homeomorphism $f_\gamma: V_\gamma \to \setC$.
-\end{itemize}
-\begin{figure}[htbp]
-  %% Figura charts.fig
-  \centering\includegraphics{charts}
-  \caption{Local charts on the atlas: (a) any open set $V_\alpha$
-    maps to a strip in the complex plane; (b) any open set $V_\beta$
-    maps to a disk; (c) any open set $V_\gamma$ maps to the complex
-    plane itself.}
-  \label{fig:charts}
-\end{figure}
-These choices are subject to the condition that transition functions
-satisfy the following:
-\begin{itemize}
-\item if $\alpha$ is an edge bounding the hole $\beta$, then $f_\beta \circ
-  f_\alpha^{-1} = \exp (2\pi\I z / p_\beta)$ with $p_\beta := \sum_{\alpha \in \beta} \ell_\alpha$
-  (\emph{perimeter} of the hole $\beta$);
-\item if $\alpha$ is incident to a vertex $\gamma$, then $f_\gamma \circ f_\alpha^{-1} =
-  c \cdot z^{2/(m+2)}$, up to a complex constant of modulus $1$, where
-  $m$ is the valence of the vertex $\gamma$.
-\end{itemize}
-
-In the end, we have come upon a complex analytic structure on
-$S(\Gamma)$, which depends on the perimeters $p_1, \ldots, p_n$ of holes $\beta_1,
-\ldots, \beta_n$. By varying these (real positive) parameters, one can vary
-the complex structure on $S(\Gamma)$; this will allow for an alternative
-construction of the moduli space $\M_{g,n}$.
-
-
-\subsection{The Strebel construction}
-\label{sec:strebel}
-A theorem proved by K. Strebel in the 1960's provides an inverse
-route: the construction of ribbon graphs from smooth complex curves.
-
-\begin{definition}
-  A quadratic differential $q$ on a Riemann surface $S$ is a
-  (meromorphic) section of $(T^*)\tp2$.
-\end{definition}
-The set of vectors in $T_zS$ on which $q$ takes real non-negative
-values form a real line in $T_zS$: therefore, they make up a foliation
-on $S$. The non-compact leaves together with zeroes of $q$ form the
-``critical locus'' of $q$.
-
-Every quadratic differential $q$ induces a metric (away from the
-critical locus) by $ds^2 = \abs{q(z)} \cdot \abs{\ud z}$.
-
-\begin{theorem}[Strebel, {\cite[Theorem 23.2 and
-    23.5]{strebel;quadratic-differentials;1983}}] For any complex
-  analytic curve $S$ with $n$ marked points $x_1, \ldots, x_n$, and any
-  assignment of real positive numbers $p_1, \ldots, p_n$, there exists one
-  and only one meromorphic quadratic differential $q$ such that:
-  \begin{enumerate}
-  \item the critical locus of $q$ is a graph $\Gamma$ embedded in $S$;
-  \item the poles of $q$ reside in the marked points $x_1, \ldots, x_n$
-    with second residue $p_1, ..., p_n$;
-  \item every compact leaf rounding $x_i$ has length $p_i$ in the flat
-    metric induced by $q$.
-  \end{enumerate}
-\end{theorem}
-The critical graph $\Gamma$ inherits a structure of ribbon graph with
-metric from the ambient surface $S$; the length of an edge $\alpha$ is the
-one measured in the metric induced by the quadratic
-differential. Furthermore, Strebel's theory states that $\Gamma$ has a
-vertex of valence $k+2$ where $q$ has a zero of order $k$, therefore,
-vertices of $\Gamma$ have valence $\geq3$.
-
-Since the markings $x_1, \ldots, x_n$ are \emph{ordered}, $\Gamma$ has an
-additional structure of \emph{numbered} graph, that is, it is endowed
-with a bijection $h: \Holes{\Gamma} \to \{1, \ldots, n\}$. 
-\begin{definition}
-  \label{dfn:strebel-graphs}
-  Define a category $\Strebel[g,n]$, whose objects are metric numbered
-  ribbon graphs with genus $g$ and $n$ holes, all whose vertices have
-  valence $\geq3$ (call them ``Strebel graphs'', for short) .  Morphisms
-  $\Gamma \to \Gamma'$ are compositions of graph isomorphisms and contractions of
-  an edge $\alpha \in \Edges{\Gamma}$.
-\end{definition}
-
-Let $\Gamma$ be a Strebel graph of genus $g$ with $n$ holes.  A topological
-cell $\Delta_\Gamma \subseteq \M_{g,n}$ is spanned when varying the metric data
-$(\ell_\alpha)_{\alpha \in \Edges{\Gamma}}$; gluing these cells one recovers the whole
-$\M_{g,n}$. We show here a quick construction of $\M_{g,n}$,
-apparently due to Kontsevich
-\cite{kontsevich;intersection-theory;1992}.
-
-Call a set $X \subseteq \Edges{\Gamma}$ negligible whenever it is \emph{not} the
-support of a non-trivial homological cycle.  Define
-\begin{equation*}
-  \label{eq:kontsevich-3}
-  M(\Gamma) := \{ \ell: \Edges{\Gamma} \to \setR_{>0} | \text{the zero set of $\ell$ is negligible}\}.
-\end{equation*}
-It is a contravariant functor from the category of Strebel graphs to
-the category of topological spaces: if $\Gamma'$ is obtained from $\Gamma$ by
-contracting the edge $\alpha$, then
-\begin{equation*}
-  M(\Gamma') = \{ \ell \in M(\Gamma) | \ell_\alpha = 0 \}.
-\end{equation*}
-\begin{definition}
-  The combinatorial moduli space of smooth algebraic curves is the
-  direct limit of the functor $M$:
-  \begin{equation*}
-    \Mcomb_{g,n} := \varinjlim M(\Gamma),
-  \end{equation*}
-  with $\Gamma$ in the category $\Strebel[g,n]$ of Strebel graphs.
-\end{definition}
-\begin{remark}
-  $\Mcomb_{g,n}$ is obtained by gluing orbicells $M(\Gamma)$ (quotient of
-  a topological cell by $\Aut \Gamma$) alongside the boundary (if $\Gamma'$ is a
-  contraction of $\Gamma$, then $M(\Gamma')$ is a face of $M(\Gamma)$). Therefore,
-  $\Mcomb_{g,n}$ is a orbifold.
-\end{remark}
-
-It is easy to check that any $[\Gamma, \ell] \in \Mcomb_{g,n}$ has a unique
-representative such that $\ell_\alpha > 0$ for all $\alpha \in \Edges{\Gamma}$.
-The perimeter maps $p_\beta: \Mcomb_{g,n} \to \setR_{>0}$ are well-defined;
-write $p_j$ for the perimeter of the $j$-th hole.
-
-The construction of $\Mcomb_{g,n}$ can be done with slightly changed
-rules: if we define a set $X \subseteq \Edges{\Gamma}$ to be negligible iff it does
-not contain \emph{all} edges bounding a hole, then we can define a
-contrafunctor $\overline{M}(\Gamma)$ and a topological space:
-\begin{equation*}
-  \label{eq:kontsevich-4}
-  \Mbarcomb_{g,n} := \varinjlim \overline{M}(\Gamma).
-\end{equation*}
-$\Mbarcomb_{g,n}$ turns out to be a compactification of the orbifold
-$\Mcomb_{g,n}$. 
-
-\begin{theorem}[Mumford, Harer, Penner, Thurston;
-  \cite{looijenga;cellular-decomposition}] 
-  The Strebel construction defines morphisms
-  \begin{equation*}
-    \M_{g,n} \times \setR_{>0}^n \to \Mcomb_{g,n}, \qquad \Mbar_{g,n} \times
-    \setR_{>0}^n \to \Mbarcomb_{g,n}.
-  \end{equation*}
-  The first of these is a homeomorphism and, more, an orbifold
-  equivalence. The inverse map
-  \begin{equation*}
-    \Mcomb_{g,n} \to \M_{g,n} \times \setR_{>0}^n \to \setR_{>0}^n
-  \end{equation*}
-  is the perimeter map $\pi := (p_1, \ldots, p_n)$.  
-\end{theorem}
-
-For any given $p^\circ = (p_1^\circ, \ldots, p_n^\circ) \in \setR_{>0}^n$, the fiber
-$\pi^{-1}(p^\circ)$ is isomorphic to $\M_{g,n}$, thus, $\pi$ induces a
-triangulation of $\M_{g,n}$.
-
-The cell $M(\Gamma)$ has real dimension $\card{\Edges{\Gamma}}$; therefore,
-cells of maximal dimension are given by graphs with all vertices of
-valence $3$. The union of these cells is a dense subset of
-$\Mcomb_{g,n}$ with non-void interior.
+The proof of \csref{thm:kontsevich} is broken up into a series of
+lemmas that will be proved in the rest of this chapter.
 
 
 \section{Kontsevich' calculations}
@@ -645,7 +290,7 @@ conclusion.
   and $\alpha^-$ be the \emph{numbers} assigned to the two holes on
   the sides of $\alpha$. For real positive indeterminates $\lambda_1$,
   \ldots, $\lambda_N$, the following relation holds:
-  \begin{multline*}
+  \begin{multline*}\label{eq:KMI}
     \sum_\nu \langle \tau_{\nu_1} \cdots \tau_{\nu_n} \rangle \prod_{j=1}^n \frac {(2\nu_j - 1)!!}
     {\lambda_j^{2\nu_j + 1}} = \sum_{\Gamma \in \RG[g,n]} \frac
     {2^{-\card{\Vertices{\Gamma}}}} {\card{\Aut \Gamma}} \prod_{\alpha \in \Edges{\Gamma}}
@@ -722,8 +367,8 @@ conclusion.
   the thesis.
 \end{proof}
 
-Take a formal sum, over all $g,n$, of the LHS of the Main
-Identity, and substitute $\Lambda_{j_k}$ for $\lambda_k$: 
+Take a formal sum, over all $g,n$, of the LHS of the Main Identity
+\eqref{eq:KMI}, and substitute $\Lambda_{j_k}$ for $\lambda_k$:
 \begin{multline}
   \label{eq:KMI-F}
   F(t_0(\Lambda), t_1(\Lambda), \ldots) = \sum_{n, \nu_1, \ldots, \nu_n} 1/n! \langle \tau_{\nu_1}
@@ -743,15 +388,15 @@ computed from graphs; the right-hand side comes out to be a Feynman
 diagrams expansion of a matrix integral.
 
 
-\section{The 't~Hooft-Kontsevich model}
+\section{The Kontsevich model}
 \label{sec:matrix-models}
 \everyxy={0,<2em,0em>:,(0,0.5),} % scala per i diagrammi
 
 The Kontsevich matrix model for 2D quantum gravity, first defined in
 \cite{kontsevich;intersection-theory;1992}, provides a bridge from
 equation~\eqref{eq:KMI-F} to Hermitian matrix integrals. The
-Kontsevich model embodies the ``standard matrix model'' of 't~Hooft as
-a particular case. 
+Kontsevich model embodies the ``standard matrix model'' as a
+particular case.
 
 A cyclic algebra structure will be introduced on the vector space
 $\Hermitian[N]$ of $N\times N$ Hermitian matrices, so that we can apply the
@@ -783,10 +428,10 @@ Now, define cyclic tensors
   \tr(X_1X_2\cdots X_k) \in \setC;
 \end{equation*}
 These $T_k$, together with the inner product $\inner[\Lambda]{-}{-}$, define
-a cyclic algebra structure on $\Hermitian[N] \otimes \setC \cong \End(V)$, that we
-shall call the ``\'t~Hooft-kontsevich model''.  A graphical calculus
-$Z$ for the Kontsevich model is defined on the ribbon category $\RG$
-of ribbon graphs.
+a cyclic algebra structure on $\Hermitian[N] \otimes \setC \cong \End(V)$, that is
+called the ``Kontsevich model''.  A graphical calculus $Z$ for the
+Kontsevich model is defined on the ribbon category $\RG$ of ribbon
+graphs.
 
 \begin{lemma}\label{thm:KMI-Z}
   The following formula holds:
@@ -816,8 +461,8 @@ of ribbon graphs.
   \end{equation*}
   for some $\Lambda_i$ positive real numbers. Any choice of a like basis
   induces an identification of $V$ with $\setC^N$, and, consequently,
-  of $\End(V)$ with the space $M_N(\setC)$ of $N \times N$ complex
-  matrices. Let $\{E_{ij}\}$ be the canonical basis for $M_N(\setC)$:
+  of $\End(V)$ with the space $\setC^{N\times N}$ of $N \times N$ complex
+  matrices. Let $\{E_{ij}\}$ be the canonical basis for $\setC^{N\times N}$:
   \begin{equation*}
     (E_{ij})_{kl}=\delta_{ik}\delta_{jl}. 
   \end{equation*}
@@ -918,6 +563,21 @@ of ribbon graphs.
   with \eqref{eq:vertices}, we can conclude the proof.
 \end{proof}
 
+\begin{proof}[Proof of \csref{thm:kontsevich}]
+  Asymptotic expansions commute with the integral sign, therefore
+  \begin{equation*}
+    \int_{\Hn} \exp (\I/6 \cdot \tr X^3) \ud\mu_\Lambda(X) \asymp \sum_m
+    \frac{\I^m}{2^mm!} \correlator{(\tr
+      X^3/3)^m}. 
+  \end{equation*}
+  
+  By \csref{thm:FRT}, the $m$-th summand in the right-hand side
+  can be expanded into a sum over (possibly non-connected) colored
+  ribbon graphs with $m$ trivalent vertices. As $m$ ranges over
+  non-negative integers, we get the exponential of the right-hand side
+  of \eqref{eq:KMI-F}, which completely proves \csref{thm:kontsevich}. 
+\end{proof}
+
 \begin{example}[The standard matrix model]
   Take $\Lambda = I$; formula \eqref{eq:KM} specializes to 
   \begin{equation*}
@@ -937,20 +597,7 @@ of ribbon graphs.
   literature. 
 \end{example}
 
-\begin{proof}[Proof of \csref{thm:kontsevich}]
-  Asymptotic expansions commute with the integral sign, therefore
-  \begin{equation*}
-    \int_{\Hn} \exp (\I/6 \cdot \tr X^3) \ud\mu_\Lambda(X) \asymp \sum_m
-    \frac{\I^m}{2^mm!} \correlator{(\tr
-      X^3/3)^m}. 
-  \end{equation*}
-  
-  By \csref{thm:FRT}, the $m$-th summand in the right-hand side
-  can be expanded into a sum over (possibly non-connected) colored
-  ribbon graphs with $m$ trivalent vertices. As $m$ ranges over
-  non-negative integers, we get the exponential of the right-hand side
-  of \eqref{eq:KMI-F}, which completely proves \csref{thm:kontsevich}. 
-\end{proof}
+
 
 \everyxy={/r24pt/:} % riportiamo la scala per i diagrammi
 
