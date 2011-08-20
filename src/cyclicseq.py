@@ -192,15 +192,15 @@ def CyclicSequence(base, factory=None):
           
           Examples::
             >>> CyclicList([1,2,3]).repetition_pattern()
-            (1, [1, 1, 1])
+            (1, CyclicList([1, 1, 1]))
             >>> CyclicList([4,4,4]).repetition_pattern()
-            (0, [3])
+            (0, CyclicList([3]))
             >>> CyclicList([4,4,4,1]).repetition_pattern()
-            (3, [1, 3])
+            (3, CyclicList([1, 3]))
             >>> CyclicList([1,4,4,4,1]).repetition_pattern()
-            (1, [3, 2])
+            (1, CyclicList([3, 2]))
             >>> CyclicList([4,4,4,3,3]).repetition_pattern()
-            (3, [2, 3])
+            (3, CyclicList([2, 3]))
           """
           if self._repetition_pattern is None:
               if cls is None:
@@ -233,22 +233,22 @@ def CyclicSequence(base, factory=None):
             Examples::
               >>> a=CyclicList([3,2,1])
               >>> a.rotate(1); a
-              [2, 1, 3]
+              CyclicList([2, 1, 3])
 
             If `n` is negative, rotate rightwards by `abs(n)`
             positions::
               >>> a.rotate(-1); a
-              [3, 2, 1]
+              CyclicList([3, 2, 1])
 
             Rotating by 0 or by a multiple of the list length, will
             leave the sequence unchanged::
               >>> a=CyclicList([3,2,1])
               >>> a.rotate(0); a
-              [3, 2, 1]
+              CyclicList([3, 2, 1])
               >>> a.rotate(3); a
-              [3, 2, 1]
+              CyclicList([3, 2, 1])
               >>> a.rotate(6); a
-              [3, 2, 1]
+              CyclicList([3, 2, 1])
             
             """
             n %= len(self)
