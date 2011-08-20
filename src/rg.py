@@ -2309,8 +2309,8 @@ class TreeIterator(BufferingIterator):
             raise StopIteration
 
 
-def _MgnGraphsInsertionGenerator(g,n):
-    """Iterate over all connected fatgraphs having the
+def MgnGraphsInsertionGenerator(g,n):
+    """Iterate over all connected trivalent fatgraphs having the
     prescribed genus `g` and number of boundary cycles `n`.
     
     Examples::
@@ -2318,22 +2318,11 @@ def _MgnGraphsInsertionGenerator(g,n):
       >>> for g in MgnGraphsInsertionGenerator(0,3): print g
       Fatgraph([Vertex([1, 2, 1]), Vertex([2, 0, 0])]) 
       Fatgraph([Vertex([1, 0, 2]), Vertex([2, 0, 1])])
-      Fatgraph([Vertex([1, 1, 0, 0])])
 
       >>> for g in MgnGraphsInsertionGenerator(1,1): print g
       Fatgraph([Vertex([1, 0, 2]), Vertex([2, 1, 0])])
-      Fatgraph([Vertex([1, 0, 1, 0])])
 
     """
-
-##     __slots__ = [
-##         '_batch',
-##         '_current_edge',
-##         '_num_vertices',
-##         '_vertextype',
-##         'g',
-##         'n',
-##         ]
 
     assert n > 0, \
            "MgnGraphsInsertionGenerator: " \
@@ -2355,9 +2344,9 @@ def _MgnGraphsInsertionGenerator(g,n):
     logging.debug("  MgnGraphsInsertionGenerator: Computing roses with %d leaves ...", max_valence/2)
     roses = []
     discarded = 0
-    for rose in GivenValenceGraphsInsertionGenerator((max_valence,)):
-        if (rose.genus() != self.g) \
-               or (rose.num_boundary_components() != self.n) \
+    for rose in GivenValenceGraphsIterator((max_valence,)):
+        if (rose.genus() != g) \
+               or (rose.num_boundary_components() != n) \
                or (rose in roses):
             discarded += 1
             continue
@@ -2387,8 +2376,8 @@ def _MgnGraphsInsertionGenerator(g,n):
             rotated_rose[0].rotate(places)
             for tree in trees:
                 graph = rotated_rose.graft(tree, 0)
-                if (graph.genus() != self.g) \
-                       or (graph.num_boundary_components() != self.n) \
+                if (graph.genus() != g) \
+                       or (graph.num_boundary_components() != n) \
                        or (graph in trivalent):
                     discarded += 1
                     continue
@@ -2396,12 +2385,14 @@ def _MgnGraphsInsertionGenerator(g,n):
     logging.debug("    MgnGraphsInsertionGenerator: Found %d distinct trivalent graphs, discarded %d.",
                  len(trivalent), discarded)
 
-MgnGraphsInsertionGenerator = persist.PersistedIterator(_MgnGraphsInsertionGenerator)
+    return iter(trivalent)
+
+#MgnGraphsInsertionGenerator = persist.PersistedIterator(_MgnGraphsInsertionGenerator)
 
 
 
 def MgnTrivalentGraphsRecursiveGenerator(g, n):
-    """Iterate over all connected fatgraphs having the
+    """Iterate over all connected trivalent fatgraphs having the
     prescribed genus `g` and number of boundary cycles `n`.
     
     Examples::
