@@ -9,6 +9,7 @@ __docformat__ = 'reStructuredText'
 
 from decorator import decorator
 from time import time
+import weakref
 
 
 ## local imports
@@ -40,27 +41,57 @@ class _TimeBasedUnique(Iterator):
 _unique = _TimeBasedUnique()
 
 
-class PermanentID(object):
-    """Instances of this class return a `hash` value which is unique
-    and guaranteed not to be re-used.
+class Cacheable(object):
+    """Instances of this class provide an interface for use by caches
+    based on a `dict` subclass.
 
-    In contrast, Python's standard `hash()` function returns a value
-    based on the intance memory address, which *can* be re-used during
-    the lifetime of a program.
+    When an object that has been cached goes out of scope, its
+    `.invalidate()` method should be called, and it will notify all
+    caches holding a reference to it to release the reference, so that
+    Python GC can do its job.
+
+    Conforming caches should implement a `release(key)` method, by
+    which they release any reference to object identified by `key`.
     """
 
     def __init__(self):
         self.__id = _unique.next()
+        self.__cachers = []
 
-    def permanent_id(self):
+    def cache_id(self):
+        """Return a integer value which is unique and guaranteed not
+        to be re-used.
+        
+        (In contrast, Python's standard `id()` function returns a
+        value based on the intance memory address, which *can* be
+        re-used during the lifetime of a program.)
+        """
         return self.__id
 
+    def referenced(self, cache, key):
+        """Add `cache` to the set of stores that hold a reference to
+        this object.
+        """
+        self.__cachers.append((cache, key))
 
-def permanent_id(o):
+    def release(self):
+        """Notify all caches that this object should be removed from
+        their store, so that Python's GC can collect it.
+        """
+        for (c, k) in self.__cachers:
+            try:
+                del c[k]
+            except KeyError:
+                pass
+
+
+
+def cache_id(o):
     try:
-        return o.permanent_id()
+        return o.cache_id()
     except AttributeError:
         return id(o)
+
 
 
 __cache1 = {}
@@ -76,12 +107,13 @@ def cache1(func, obj):
     use a `__slots__` declaration.
     """
     rcache = __cache1.setdefault(func.func_name, {})
-    key = permanent_id(obj)
+    key = cache_id(obj)
     if key in rcache:
         return rcache[key]
     else:
         result = func(obj)
         rcache[key] = result
+        if isinstance(obj, Cacheable): obj.referenced(rcache, key)
         return result
 
 
@@ -97,13 +129,14 @@ def cache(func, obj, *args):
     use a `__slots__` declaration.
     """
     rcache = __cache2.setdefault(func.func_name, {})
-    oid = permanent_id(obj)
+    oid = cache_id(obj)
     key = (oid, args)
     if key in rcache:
         return rcache[key]
     else:
         result = func(obj, *args)
         rcache[key] = result
+        if isinstance(obj, Cacheable): obj.referenced(rcache, key)
         return result
 
 
@@ -121,17 +154,19 @@ def cache_symmetric(func, o1, o2):
     use a `__slots__` declaration.
     """
     rcache = __cache_symmetric.setdefault(func.func_name, {})
-    key = frozenset([permanent_id(o1),
-                     permanent_id(o2)])
+    key = frozenset([cache_id(o1),
+                     cache_id(o2)])
     if key in rcache:
         return rcache[key]
     else:
         result = func(o1, o2)
         rcache[key] = result
+        if isinstance(o1, Cacheable): o1.referenced(rcache, key)
+        if isinstance(o2, Cacheable): o2.referenced(rcache, key)
         return result
 
 
-class _IteratorRecorder(object):
+class _IteratorRecorder(Cacheable):
     """Cache results from a given iterator.  Client classes provided
     by the `replay()` method will then replay the iterator history;
     multiple players can replay from one recorded source
@@ -143,6 +178,10 @@ class _IteratorRecorder(object):
     def __init__(self, iterable):
         self.iterable = iterable
         self.history = []
+        Cacheable.__init__(self)
+
+    def __iter__(self):
+        return self.replay()
 
     def advance(self):
         """Record next item from the source iterator."""
@@ -189,13 +228,17 @@ def cache_iterator(func, obj, *args):
     generating function is invoked.
     """
     rcache = __cache_iterator.setdefault(func.func_name, {})
-    oid = permanent_id(obj)
+    oid = cache_id(obj)
     key = (oid, args)
     if key in rcache:
         return rcache[key].replay()
     else:
         result = _IteratorRecorder(func(obj, *args))
         rcache[key] = result
+        try:
+            if isinstance(obj, Cacheable): obj.referenced(rcache, key)
+        except AttributeError:
+            pass
         return result.replay()
 
 
