@@ -435,7 +435,12 @@ class Fatgraph(EqualIfIsomorphic):
         corners.
         """
         
-        __slots__ = [ 'origin' ]
+        __slots__ = [ 'graph' ]
+        
+        def __new__(cls, triples, graph=None):
+            # XXX: `graph` is required if `contract` is to be used,
+            # but it's handy not to have it for doctests, etc.
+            return frozenset.__new__(cls, triples)
         
         def __init__(self, triples, graph=None):
             """Construct a `BoundaryCycle` instance from a sequence of
@@ -443,7 +448,7 @@ class Fatgraph(EqualIfIsomorphic):
             the cyclic order sense) indices at a vertex `v`.
             """
             # use a weakref so not to create a reference cycle and ease GC
-            self.origin = weakref.proxy(graph) if graph else None
+            self.graph = weakref.proxy(graph) if graph else None
             frozenset.__init__(self, triples)
             if __debug__:
                 if graph is not None:
@@ -454,15 +459,76 @@ class Fatgraph(EqualIfIsomorphic):
                                " Non-consecutive indices in triple `%s`" \
                                % ((v,i,j),)
 
+        def contract(self, vi1, vi2, graph):
+            """Return a new `BoundaryCycle` instance, image of the
+            topological map that contracts the edge with endpoints
+            `(v1,i1)` and `(v2,i2)` that are passed as first and
+            second argument.
+
+            Optional third argument `graph` is passed unchanged to the
+            `BoundaryCycle` constructor.
+
+            XXX: return `self` if neither `v1` nor `v2` are contained
+            here.
+            """
+            (v1, pos1) = vi1
+            (v2, pos2) = vi2
+            l1 = len(self.graph.vertices[v1])
+            l2 = len(self.graph.vertices[v2])
+            new_bcy = []
+            for corner in self:
+                if corner[0] == v1:
+                    if pos1 == corner[1]:
+                        # skip this corner, keep only one of the
+                        # corners limited by the contracted edge
+                        continue
+                    else: 
+                        i1 = (corner[1] - pos1 - 1) % l1
+                        i2 = (corner[2] - pos1 - 1) % l1
+                        assert (i1+1-i2) % l1 == 0 # i1,i2 denote successive indices
+                        assert i1 != l1-1 # would collide with contracted corners from `v2`
+                        new_bcy.append((v1, i1, i2))
+                elif corner[0] == v2:
+                    if pos2 == corner[1]:
+                        # skip this corner, keep only one of the
+                        # corners limited by the contracted edge
+                        continue
+                    if pos2 == corner[2]:
+                        new_bcy.append((v1, l1+l2-3, 0))
+                    else:
+                        i1 = l1-1 + ((corner[1] - pos2 - 1) % l2)
+                        i2 = l1-1 + ((corner[2] - pos2 - 1) % l2)
+                        assert (i1+1-i2) % l1 == 0 # i1,i2 denote successive indices
+                        new_bcy.append((v1, i1, i2))
+                elif corner[0] > v2:
+                    # shift vertices after `v2` one position down
+                    new_bcy.append((corner[0]-1, corner[1], corner[2]))
+                else:
+                    # pass corner unchanged
+                    new_bcy.append(corner)
+            if __debug__:
+                cnt = {}
+                for corner in new_bcy:
+                    try:
+                        cnt[corner] += 1
+                    except KeyError:
+                        cnt[corner] = 1
+                for (corner, count) in cnt.iteritems():
+                    assert count == 1, \
+                           "BoundaryCycle.contract():" \
+                           " Corner %s appears %d times in contracted boundary cycle %s" \
+                           % (corner, count, new_bcy)
+            return Fatgraph.BoundaryCycle(new_bcy, graph)
+
         def transform(self, iso):
             """Return a new `BoundaryCycle` instance, obtained by
             transforming each corner according to a graph isomorphism.
             """
-            assert self.origin is not None
+            assert self.graph is not None
             (pv, rots, pe) = iso
             triples = []
             for (v, i, j) in self:
-                l = len(self.origin.vertices[v])
+                l = len(self.graph.vertices[v])
                 # create transformed triple 
                 v_ = pv[v]
                 i_ = (i + rots[v]) % l # XXX: is it `-` or `+`?
@@ -1766,17 +1832,16 @@ def MakeNumberedGraphs(graph):
     K = []
     for a in graph.automorphisms():
         k = Permutation()
-        k_is_ok = True
         for src in xrange(n):
             dst_cy = bc[src].transform(a)
             try:
                 dst = bc.index(dst_cy)
-            except ValueError:
-                # `dst_cy` not in `bc`
-                k_is_ok = False
+            except ValueError: # `dst_cy` not in `bc`
                 break # continue with next `a`
             k[src] = dst
-        if k_is_ok and (k not in K):
+        if len(k) != n: # not every `src` was mapped to a `dst`
+            continue # with next `a`
+        if k not in K:
             # `a` induces permutation `k` on the set `bc`
             K.append(k)
 
@@ -2043,38 +2108,12 @@ class NumberedFatgraph(Fatgraph):
         # `Fatgraph.contract()` for an explanation of how the
         # underlying graph is altered during contraction.
         new_numbering = {}
+        contracted = self.underlying.contract(edgeno)
         for (bcy, n) in self.numbering.iteritems():
-            new_cy = []
-            for corner in bcy:
-                if corner[0] == v1:
-                    if pos1 == corner[1]:
-                        # skip this corner, keep only one of the
-                        # corners limited by the contracted edge
-                        continue
-                    else:
-                        i1 = (corner[1] - pos1 - 1) % l1
-                        i2 = (corner[2] - pos1 - 1) % l1
-                        new_cy.append((v1, i1, i2))
-                elif corner[0] == v2:
-                    if pos2 == corner[1]:
-                        # skip this corner, keep only one of the
-                        # corners limited by the contracted edge
-                        continue
-                    if pos2 == corner[2]:
-                        new_cy.append((v1, l1+l2-3, 0))
-                    else:
-                        i1 = l1-1 + ((corner[1] - pos2 - 1) % l2)
-                        i2 = l1-1 + ((corner[2] - pos2 - 1) % l2)
-                        new_cy.append((v1, i1, i2))
-                elif corner[0] > v2:
-                    # shift vertices after `v2` one position down
-                    new_cy.append((corner[0]-1, corner[1], corner[2]))
-                else:
-                    # pass corner unchanged
-                    new_cy.append(corner)
+            new_cy = bcy.contract((v1,pos1), (v2,pos2), contracted)
             new_numbering[Fatgraph.BoundaryCycle(new_cy)] = n
 
-        return NumberedFatgraph(self.underlying.contract(edgeno),
+        return NumberedFatgraph(contracted,
                                 numbering=new_numbering)
         
 
