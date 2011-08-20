@@ -7,15 +7,7 @@ __docformat__ = 'reStructuredText'
 ## stdlib imports
 
 import sys
-
-
-## logging subsystem
-
 import logging
-
-logging.basicConfig(level=logging.DEBUG,
-                    format="[%(asctime)s] %(levelname)s: %(message)s",
-                    datefmt="%H:%M:%S")
 
 
 ## fatgraphs 
@@ -125,9 +117,12 @@ parser = OptionParser(usage="""Usage: %prog [options] action [arg ...]
         Run internal code tests and report results.
         
     """)
+parser.add_option("-l", "--logfile",
+                  action='store', dest='logfile', default=None,
+                  help="Redirect log messages to the named file (by default log messages are output to STDERR).")
 parser.add_option("-n", "--silent",
                   action='store_true', dest='silent', default=False,
-                  help="No output. (Useful for timing the algorithm.)")
+                  help="No output at all: useful for timing the algorithm.")
 parser.add_option("-L", "--latex",
                   action='store_true', dest='latex', default=False,
                   help="Output results in LaTeX format.")
@@ -142,6 +137,22 @@ if 0 == len(args) or 'help' == args[0]:
     parser.print_help()
     sys.exit(1)
 
+# configure logging
+if options.logfile is None:
+    log_output = sys.stderr
+else:
+    log_output = file(options.logfile, 'a')
+    
+if options.silent:
+    log_level = logging.WARNING
+else:
+    log_level = logging.DEBUG
+
+logging.basicConfig(level=log_level,
+                    stream=log_output,
+                    format="%(asctime)s [%(levelname)s] %(message)s",
+                    datefmt="%H:%M:%S")
+    
 # enable optional features
 if options.features is not None:
     features = options.features.split(",")
@@ -168,10 +179,6 @@ if options.features is not None:
         except ImportError:
             logging.warning("Could not import 'hotshot' - call profiling *not* enabled.")
             
-
-# disable logging when '--silent'
-if options.silent:
-    logging.disable(logging.WARNING)
 
 # hack to allow 'N1,N2,...' or 'N1 N2 ...' syntaxes
 for (i, arg) in enumerate(args):
