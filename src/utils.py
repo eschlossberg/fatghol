@@ -116,7 +116,7 @@ class itranslate:
     """
     def __init__(self, subst, iterable):
         self.mappings = subst
-        self.iterable = iterable
+        self.iterable = iter(iterable)
     def __iter__(self):
         return self
     def next(self):
