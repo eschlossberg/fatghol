@@ -1,1 +1,9 @@
 .semantic.cache
+*.pickle
+*.log
+*.bbl
+*.blg
+*.aux
+*.toc
+*.tar.gz
+TAGS
