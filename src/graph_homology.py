@@ -48,6 +48,12 @@ def FatgraphComplex(g, n):
     return C
 
 
+def sign_exp(m):
+    if (m % 2) == 0:
+        return +1
+    else:
+        return -1
+    
 def graph_homology_differential(graph):
     """The graph homology differential (the same for every grade).
 
@@ -64,7 +70,7 @@ def graph_homology_differential(graph):
                    " un-numbered graph `%s`."\
                    % (graph, l, dg)
             if dg.is_oriented():
-                result.append((dg, 1))
+                result.append((dg, sign_exp(graph.orient_e[l])))
     return result
         
 
