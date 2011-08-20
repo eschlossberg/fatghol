@@ -125,7 +125,7 @@ class Graph(object):
                "sum of vertex valences must be even."
 
         self._num_edges = sum(self._vertex_valences) / 2
-        self._num_vertices = len(vertex_valences)
+        self._num_vertices = len(self._vertex_valences)
         # these values will be computed on-demand
         self._num_boundary_components = None
         self._genus = None
@@ -134,7 +134,7 @@ class Graph(object):
         assert is_sequence_of_integers(edge_seq), \
                "Graph.__init__: parameter `edge_seq` must be sequence of integers, "\
                "but got '%s' instead" % edge_seq
-        assert max(edge_seq) == self._num_edges, \
+        assert max(edge_seq) == self._num_edges - 1, \
                "Graph.__init__: invalid parameter `edge_seq`:"\
                "Sequence of edges %s doesn't match number of edges %d" \
                % (edge_seq, self._num_edges)
@@ -157,7 +157,9 @@ class Graph(object):
         return iter(self.vertices)
 
     def __repr__(self):
-        return repr(self.vertices)
+        return "Graph(%s, %s)" \
+               % (repr(self._vertex_valences), repr(self.vertices))
+    
     def __str__(self):
         return str(self.vertices)
 
@@ -181,13 +183,14 @@ class Graph(object):
         ## pass 1: for each vertex, list all destinations it could be
         ## mapped to, in the form (dest. vertex, rotation).
 
-        # pre-allocate empty list of right size
+        # pre-allocate list of right size; all elements must be empty
+        # lists, that we fill with `.append()` later on
         candidates = [ [] ] * len(graph)
         
-        # FIXME: if vertex i can be mapped into vertex j, with some
-        # rotation delta, then vertex j can be mapped into vertex i
-        # with rotation -delta, so rearrange this to only do
-        # computations for i>j and use the values already available in
+        # FIXME: if vertex `i` can be mapped into vertex `j`, with some
+        # rotation delta, then vertex `j` can be mapped into vertex `i`
+        # with rotation `-delta`, so rearrange this to only do
+        # computations for `i>j` and use the values already available in
         # the other case...
         num_vertices = self.num_vertices()
         for i in xrange(num_vertices):
@@ -240,16 +243,16 @@ class Graph(object):
 
     def edges(self):
         """Iterate over edge colorings."""
-        return xrange(1, self.num_edges()+1)
+        return xrange(0, self.num_edges())
     
     def endpoints(self, n):
         """Return the endpoints of edge `n`.
     
         The endpoints are returned as a pair (v1,v2) where `v1` and `v2`
-        are indices of vertices in this `Graph` object.
+        are indices of endpoint vertices in this `Graph` object.
         """
         result = []
-        for vi in range(len(self.vertices)):
+        for vi in xrange(len(self.vertices)):
             c = self.vertices[vi].count(n)
             if 2 == c:
                 return (vi,vi)
@@ -344,13 +347,13 @@ class Graph(object):
         2) Vertices are sorted in lexicographic order.
 
         Examples::
-          >>> Graph([3,3],[3,2,1,3,2,1]).is_canonical()
-          True
-          >>> Graph([3,3],[3,2,1,3,1,2]).is_canonical()
-          True
-          >>> Graph([3,3],[3,1,2,3,2,1]).is_canonical()
+          >>> Graph([3,3],[2,1,0,2,1,0]).is_canonical()
+          True             
+          >>> Graph([3,3],[2,1,0,2,0,1]).is_canonical()
+          True             
+          >>> Graph([3,3],[2,0,1,2,1,0]).is_canonical()
           False
-          >>> Graph([3,3],[1,2,3,3,2,1]).is_canonical()
+          >>> Graph([3,3],[0,1,2,2,1,0]).is_canonical()
           False 
         """
         previous_vertex = None
@@ -369,20 +372,20 @@ class Graph(object):
         edges.
 
         Examples::
-          >>> Graph([3,3], [3,2,1,3,2,1]).num_boundary_components()
+          >>> Graph([3,3], [2,1,0,2,1,0]).num_boundary_components()
           1
-          >>> Graph([3,3], [3,2,1,3,1,2]).num_boundary_components()
+          >>> Graph([3,3], [2,1,0,2,0,1]).num_boundary_components()
           3
         """
         # try to return the cached value
-        if not (self._num_boundary_components is None):
+        if self._num_boundary_components is not None:
             return self._num_boundary_components
 
         # otherwise, compute it now...
         
-        L = self.num_edges() + 1
+        L = self.num_edges()
         # for efficiency, gather all endpoints now
-        ends = [ self.endpoints(l) for l in xrange(1,L) ]
+        ends = [ self.endpoints(l) for l in xrange(L) ]
 
         # pass1: build a "copy" of `graph`, replacing each edge coloring
         # with a pair `(other, index)` pointing to the other endpoint of
@@ -398,9 +401,9 @@ class Graph(object):
         for (vertex_index, vertex) in enumerate(self.vertices):
             replacement = []
             for (current_index, edge) in enumerate(vertex):
-                (v1, v2) = ends[edge-1]
+                (v1, v2) = ends[edge]
                 if v1 != v2:
-                    other_end = other(ends[edge-1], vertex_index)
+                    other_end = other(ends[edge], vertex_index)
                     other_index = self.vertices[other_end].index(edge)
                 else:
                     other_end = v1 # == v2, that is *this* vertex
@@ -484,12 +487,12 @@ def all_graphs(vertex_valences):
 
     Examples::
       >>> all_graphs([4])
-      [[[2, 1, 2, 1]],
-       [[2, 2, 1, 1]]]
+      [Graph([4], [[1, 0, 1, 0]]),
+       Graph([4], [[1, 1, 0, 0]])]
       >>> all_graphs([3,3])
-      [[[3, 1, 2], [3, 1, 2]],
-       [[3, 2, 1], [3, 1, 2]],
-       [[3, 2, 2], [3, 1, 1]]]
+      [Graph([3, 3], [[2, 0, 1], [2, 0, 1]]),
+       Graph([3, 3], [[2, 1, 0], [2, 0, 1]]),
+       Graph([3, 3], [[2, 1, 1], [2, 0, 0]])]
     """
     assert is_sequence_of_integers(vertex_valences), \
            "all_graphs: parameter `vertex_valences` must be a sequence of integers, "\
@@ -643,12 +646,14 @@ class InplacePermutationIterator:
 def all_edge_seq(n):
     """Iterate over lists representing edges of a ribbon graph.
 
-    Each returned list has length `2*n` and comprises the symbols `{1,...,n}`,
+    Each returned list has length `2*n` and comprises the symbols `{0,...,n-1}`,
     each of which is repeated exactly twice.
     """
+    # build list [0,0,1,1,...,n-1,n-1]
     edges=[]
-    for l in xrange(1,n+1):
+    for l in xrange(0,n):
         edges += [l,l]
+    # iterate over all its permutations
     ps = InplacePermutationIterator(edges)
     for s in ps:
         yield s
