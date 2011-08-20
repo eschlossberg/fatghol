@@ -297,23 +297,34 @@ elif 'selftest' == args[0]:
     for (g, n, ok) in [ (0,3, [0,0,1]),
                         (1,1, [0,0,1]),
                         (1,2, [0,0,0,0,0,1]),
-                        (0,4, [0,0,0,0,2,1])
+                        (0,4, [0,0,0,0,2,1]),
+                        (2,1, [0,0,0,0,0,0,1,0,1])
                         ]:
-        logging.debug("Now computing homology of M_{%d,%d} ..." % (g,n))
-        # temporarily turn off logging to avoid cluttering the output
-        logging.getLogger().setLevel(logging.ERROR)
+        sys.stdout.write("Computation of M_{%d,%d} homology: " % (g,n))
         # compute homology of M_{g,n}
         hs = do_homology(g,n)
-        # restore normal logging level
-        logging.getLogger().setLevel(log_level)
         # check result
         if hs == ok:
-            print("Computation of M_{%d,%d} homology: OK" % (g,n))
+            print("OK")
         else:
             logging.error("Computation of M_{%d,%d} homology: FAILED, got %s expected %s"
                           % (g,n,hs,ok))
-            print("Computation of M_{%d,%d} homology: FAILED, got %s expected %s"
-                  % (g,n,hs,ok))
+            print("FAILED, got %s expected %s" % (g,n,hs,ok))
+
+    # third, count graphs produced in known good cases
+    for (g, n, ok) in [ (0,5, 290),
+                        ]:
+        sys.stdout.write("Computation of M_{%d,%d} graphs: " % (g,n))
+        # compute number of graphs in M_{g,n}
+        qty = len(list(MgnGraphsIterator(g,n)))
+        # check result
+        if qty == ok:
+            print("OK")
+        else:
+            logging.error("Computation of M_{%d,%d} graphs: FAILED, got %s expected %s"
+                          % (g,n,qty,ok))
+            print("FAILED, got %s expected %s" % (g,n,qty,ok))
+        
         
 
 # valences -- show vertex valences for given g,n
