@@ -334,6 +334,8 @@ class Fatgraph(object):
         for (edge, ep_v, ep_i) in izip(count(),
                                        self.endpoints_v[:self.num_edges],
                                        self.endpoints_i[:self.num_edges]):
+            assert isinstance(ep_v, list)  # Fatgraph.contract() updates this destructively
+            assert isinstance(ep_i, list)  # Fatgraph.contract() updates this destructively
             assert len(ep_v) == 2
             assert len(ep_i) == 2
             assert isinstance(ep_v[0], int)
@@ -362,6 +364,8 @@ class Fatgraph(object):
         for (edge, ep_v, ep_i) in izip(count(),
                                        self.endpoints_v[self.num_edges:],
                                        self.endpoints_i[self.num_edges:]):
+            assert isinstance(ep_v, list)  # Fatgraph.contract() updates this destructively
+            assert isinstance(ep_i, list)  # Fatgraph.contract() updates this destructively
             xedge = -self.num_external_edges + edge
             assert (ep_v[1] is None)
             assert isinstance(ep_v[0], int)
@@ -716,24 +720,24 @@ class Fatgraph(object):
         new_vertices = self.vertices + [midpoint1, midpoint2]
         ## the connecting edge has endpoints in the mid-points of
         ## `edge1` and `edge2`, and is *always* in third position.
-        new_endpoints_v = self.endpoints_v + [(midpoint1_index, midpoint2_index)]
-        new_endpoints_i = self.endpoints_i + [(2,2)]
+        new_endpoints_v = self.endpoints_v + [ [midpoint1_index, midpoint2_index] ]
+        new_endpoints_i = self.endpoints_i + [ [2,2] ]
         
         (v1a, v1b) = self.endpoints_v[edge1]
         (pos1a, pos1b) = self.endpoints_i[edge1]
-        new_endpoints_v[one_half1] = (v1a, midpoint1_index)
-        new_endpoints_i[one_half1] = (pos1a, side1)
+        new_endpoints_v[one_half1] = [v1a, midpoint1_index]
+        new_endpoints_i[one_half1] = [pos1a, side1]
         if edge1 != edge2:
             # replace `edge1` with new `other_half1` in the second endpoint
             new_vertices[v1b] = self._vertextype(new_vertices[v1b][:pos1b]
                                                  + [other_half1]
                                                  + new_vertices[v1b][pos1b+1:])
-            new_endpoints_v.append((midpoint1_index, v1b))  # other_half1
-            new_endpoints_i.append((opposite_side1, pos1b)) # other_half1
+            new_endpoints_v.append([midpoint1_index, v1b])  # other_half1
+            new_endpoints_i.append([opposite_side1, pos1b]) # other_half1
         else:
             # same edge, "other half" ends at the second endpoint
-            new_endpoints_v.append((midpoint1_index, midpoint2_index))
-            new_endpoints_i.append((opposite_side1, side2)) 
+            new_endpoints_v.append([midpoint1_index, midpoint2_index])
+            new_endpoints_i.append([opposite_side1, side2]) 
 
         # replace `edge2` with new `other_half2` in the second
         # endpoint; again we need to distinguish the special case when
@@ -741,19 +745,19 @@ class Fatgraph(object):
         (v2a, v2b) = self.endpoints_v[edge2]
         (pos2a, pos2b) = self.endpoints_i[edge2]
         if edge1 != edge2:
-            new_endpoints_v[one_half2] = (v2a, midpoint2_index)
-            new_endpoints_i[one_half2] = (pos2a, side2)
+            new_endpoints_v[one_half2] = [v2a, midpoint2_index]
+            new_endpoints_i[one_half2] = [pos2a, side2]
         else:
             # `edge1 == edge2`, so `one_half2 == other_half1`
-            new_endpoints_v[one_half2] = (midpoint1_index, midpoint2_index)
-            new_endpoints_i[one_half2] = (opposite_side1, side2)
+            new_endpoints_v[one_half2] = [midpoint1_index, midpoint2_index]
+            new_endpoints_i[one_half2] = [opposite_side1, side2]
         # "other half" of second edge *always* ends at the previous
         # edge endpoint, so replace `edge2` in `v2b`.
         new_vertices[v2b] = self._vertextype(new_vertices[v2b][:pos2b]
                                              + [other_half2]
                                              + new_vertices[v2b][pos2b+1:])
-        new_endpoints_v.append((midpoint2_index, v2b))  # other_half2
-        new_endpoints_i.append((opposite_side2, pos2b)) # other_half2
+        new_endpoints_v.append([midpoint2_index, v2b])  # other_half2
+        new_endpoints_i.append([opposite_side2, pos2b]) # other_half2
 
         # build new graph 
         new_edge_numbering = self.edge_numbering + \
@@ -840,7 +844,7 @@ class Fatgraph(object):
                                        for x in xrange(other.num_vertices))
         # vertex indices need to be shifted for endpoints
         new_endpoints_v = self.endpoints_v \
-                          + [ (renumber_other_vertices[x], renumber_other_vertices[y])
+                          + [ [renumber_other_vertices[x], renumber_other_vertices[y]]
                               for (x,y) in other.endpoints_v ]
         # but vertex positions are the same
         new_endpoints_i = self.endpoints_i + other.endpoints_i
@@ -885,34 +889,34 @@ class Fatgraph(object):
         new_vertices += [midpoint1, midpoint2]
         ## the connecting edge has endpoints in the mid-points of
         ## `edge1` and `edge2`, and is *always* in third position.
-        new_endpoints_v += [(midpoint1_index, midpoint2_index)]
-        new_endpoints_i += [(2,2)]
+        new_endpoints_v += [[midpoint1_index, midpoint2_index]]
+        new_endpoints_i += [[2,2]]
         
         (v1a, v1b) = new_endpoints_v[edge1]
         (pos1a, pos1b) = new_endpoints_i[edge1]
-        new_endpoints_v[one_half1] = (v1a, midpoint1_index)
-        new_endpoints_i[one_half1] = (pos1a, side1)
+        new_endpoints_v[one_half1] = [v1a, midpoint1_index]
+        new_endpoints_i[one_half1] = [pos1a, side1]
         # replace `edge1` with new `other_half1` in the second endpoint
         new_vertices[v1b] = self._vertextype(new_vertices[v1b][:pos1b]
                                              + [other_half1]
                                              + new_vertices[v1b][pos1b+1:])
-        new_endpoints_v.append((midpoint1_index, v1b))  # other_half1
-        new_endpoints_i.append((opposite_side1, pos1b)) # other_half1
+        new_endpoints_v.append([midpoint1_index, v1b])  # other_half1
+        new_endpoints_i.append([opposite_side1, pos1b]) # other_half1
 
         # replace `edge2` with new `other_half2` in the second
         # endpoint; again we need to distinguish the special case when
         # `edge1` and `edge2` are the same edge.
         (v2a, v2b) = new_endpoints_v[edge2]
         (pos2a, pos2b) = new_endpoints_i[edge2]
-        new_endpoints_v[one_half2] = (v2a, midpoint2_index)
-        new_endpoints_i[one_half2] = (pos2a, side2)
+        new_endpoints_v[one_half2] = [v2a, midpoint2_index]
+        new_endpoints_i[one_half2] = [pos2a, side2]
         # "other half" of second edge *always* ends at the previous
         # edge endpoint, so replace `edge2` in `v2b`.
         new_vertices[v2b] = self._vertextype(new_vertices[v2b][:pos2b]
                                              + [other_half2]
                                              + new_vertices[v2b][pos2b+1:])
-        new_endpoints_v.append((midpoint2_index, v2b))  # other_half2
-        new_endpoints_i.append((opposite_side2, pos2b)) # other_half2
+        new_endpoints_v.append([midpoint2_index, v2b])  # other_half2
+        new_endpoints_i.append([opposite_side2, pos2b]) # other_half2
 
         # build new graph 
         new_edge_numbering +=  [other_half1, other_half2, connecting_edge]
@@ -1234,22 +1238,22 @@ class Fatgraph(object):
         ## - replace `edge` with new `other_half` in the second endpoint:
         (v1, v2) = self.endpoints_v[edge]
         (pos1, pos2) = self.endpoints_i[edge]
-        new_endpoints_v[one_half] = (v1, midpoint_index)
-        new_endpoints_i[one_half] = (pos1, side)
+        new_endpoints_v[one_half] = [v1, midpoint_index]
+        new_endpoints_i[one_half] = [pos1, side]
         new_vertices[v2] = self._vertextype(new_vertices[v2][:pos2]
                                              + [other_half]
                                              + new_vertices[v2][pos2+1:])
-        new_endpoints_v.append((midpoint_index, v2))  # other_half1
-        new_endpoints_i.append((opposite_side, pos2)) # other_half1
+        new_endpoints_v.append([midpoint_index, v2])  # other_half1
+        new_endpoints_i.append([opposite_side, pos2]) # other_half1
 
         ## - the connecting edge has endpoints in the mid-point of
         ## `edge` and in `T`, and is *always* in third position:
-        new_endpoints_v.append((midpoint_index, T_index))
-        new_endpoints_i.append((2,2))
+        new_endpoints_v.append([midpoint_index, T_index])
+        new_endpoints_i.append([2,2])
 
         ## - the circling edge is a loop with vertex `T`
-        new_endpoints_v.append((T_index, T_index))
-        new_endpoints_i.append((0,1))
+        new_endpoints_v.append([T_index, T_index])
+        new_endpoints_i.append([0,1])
         
         # finally, build new graph 
         new_edge_numbering = self.edge_numbering + \
@@ -2305,7 +2309,203 @@ class TreeIterator(BufferingIterator):
             raise StopIteration
 
 
-class _MgnGraphsIterator(BufferingIterator):
+def _MgnGraphsInsertionGenerator(g,n):
+    """Iterate over all connected fatgraphs having the
+    prescribed genus `g` and number of boundary cycles `n`.
+    
+    Examples::
+
+      >>> for g in MgnGraphsInsertionGenerator(0,3): print g
+      Fatgraph([Vertex([1, 2, 1]), Vertex([2, 0, 0])]) 
+      Fatgraph([Vertex([1, 0, 2]), Vertex([2, 0, 1])])
+      Fatgraph([Vertex([1, 1, 0, 0])])
+
+      >>> for g in MgnGraphsInsertionGenerator(1,1): print g
+      Fatgraph([Vertex([1, 0, 2]), Vertex([2, 1, 0])])
+      Fatgraph([Vertex([1, 0, 1, 0])])
+
+    """
+
+##     __slots__ = [
+##         '_batch',
+##         '_current_edge',
+##         '_num_vertices',
+##         '_vertextype',
+##         'g',
+##         'n',
+##         ]
+
+    assert n > 0, \
+           "MgnGraphsInsertionGenerator: " \
+           " number of boundary cycles `n` must be positive,"\
+           " but got `%s` instead" % n
+    assert (g > 0) or (g == 0 and n >= 3), \
+           "MgnGraphsInsertionGenerator: " \
+           " Invalid (g,n) pair (%d,%d): "\
+           " need either g>0 or g==0 and n>2" \
+           % (g,n)
+
+    #: Unique (up to isomorphism) graphs found so far
+    graphs = []
+
+    #: Minimum number of edges of a (g,n)-graph
+    max_valence = 2 * (2*g + n - 1)
+
+    ## pass 1: Gather all roses.
+    logging.debug("  MgnGraphsInsertionGenerator: Computing roses with %d leaves ...", max_valence/2)
+    roses = []
+    discarded = 0
+    for rose in GivenValenceGraphsInsertionGenerator((max_valence,)):
+        if (rose.genus() != self.g) \
+               or (rose.num_boundary_components() != self.n) \
+               or (rose in roses):
+            discarded += 1
+            continue
+        roses.append(rose)
+        # a rose is a valid fatgraph too
+        #graphs.extend(MakeNumberedGraphs(rose))
+    logging.debug("    MgnGraphsInsertionGenerator: Found %d distinct unique roses; discarded %d.",
+                 len(roses), discarded)
+
+    ## pass 2: Gather all 3-valent graphs.
+    trivalent = []
+    #: Full binary trees
+    logging.debug("  MgnGraphsInsertionGenerator: Computing full binary trees with %d leaves ...",
+                 max_valence - 3)
+    trees = [ Tree(zip(l,r))
+              for l,r in AlgorithmB(max_valence - 3) ]
+
+    logging.debug("  MgnGraphsInsertionGenerator: Computing trivalent fat graphs ...")
+    discarded = 0
+    for rose in roses:
+        # now substitute the unique vertex with any possible tree
+        # and any possible rotation
+        for places in xrange(max_valence):
+            # need to make a deep copy, because `Vertex` objects are shared
+            rotated_rose = Fatgraph([copy(rose[0])])
+            #rotated_rose = rose
+            rotated_rose[0].rotate(places)
+            for tree in trees:
+                graph = rotated_rose.graft(tree, 0)
+                if (graph.genus() != self.g) \
+                       or (graph.num_boundary_components() != self.n) \
+                       or (graph in trivalent):
+                    discarded += 1
+                    continue
+                trivalent.append(graph)
+    logging.debug("    MgnGraphsInsertionGenerator: Found %d distinct trivalent graphs, discarded %d.",
+                 len(trivalent), discarded)
+
+MgnGraphsInsertionGenerator = persist.PersistedIterator(_MgnGraphsInsertionGenerator)
+
+
+
+def MgnTrivalentGraphsRecursiveGenerator(g, n):
+    """Iterate over all connected fatgraphs having the
+    prescribed genus `g` and number of boundary cycles `n`.
+    
+    Examples::
+
+      >>> for g in MgnTrivalentGraphsRecursiveGenerator(0,3): print g
+      Fatgraph([Vertex([1, 2, 1]), Vertex([2, 0, 0])]) 
+      Fatgraph([Vertex([1, 0, 2]), Vertex([2, 0, 1])])
+
+      >>> for g in MgnTrivalentGraphsRecursiveGenerator(1,1): print g
+      Fatgraph([Vertex([1, 0, 2]), Vertex([2, 1, 0])])
+
+    """
+    # avoid infinite recursion in later statements
+    if n==0 or (g,n)<(0,3):
+        raise StopIteration
+
+    # sanity check
+    assert n > 0, \
+           "MgnTrivalentGraphsRecursiveGenerator: " \
+           " number of boundary cycles `n` must be positive,"\
+           " but got `%s` instead" % n
+
+    logging.debug("Starting MgnTrivalentGraphsRecursiveGenerator(%d,%d) ..." % (g,n))
+
+    ## M_{0,3} - induction base
+    if (g,n) == (0,3):
+        for G in [ Fatgraph([Vertex([1, 2, 1]), Vertex([2, 0, 0])]) ,
+                   Fatgraph([Vertex([1, 0, 2]), Vertex([2, 0, 1])]) ]:
+            yield G
+
+    ## M_{1,1} - induction base
+    elif (g,n) == (1,1):
+        yield Fatgraph([Vertex([1, 0, 2]), Vertex([2, 1, 0])])
+
+    ## General case
+    else:
+        def graphs(g,n):
+            logging.debug("  MgnTrivalentGraphsRecursiveGenerator(%d,%d): "
+                          "pass 1: hang a circle to all edges of graphs in M_{%d,%d} ..." % (g,n, g,n-1))
+            for G in MgnTrivalentGraphsRecursiveGenerator(g,n-1):
+                for x in xrange(G.num_edges):
+                    yield G.hangcircle(x,0)
+                    yield G.hangcircle(x,1)
+
+            logging.debug("  MgnTrivalentGraphsRecursiveGenerator(%d,%d): "
+                          "pass 2: bridge all edges of a single graph in M_{%d,%d} ..." % (g,n, g,n-1))
+            for G in MgnTrivalentGraphsRecursiveGenerator(g,n-1):
+                for x in xrange(G.num_edges):
+                    # since G.bridge() is symmetric, we need only consider
+                    # edge pairs `(x,y)` where `y <= x`.
+                    for y in xrange(x+1):
+                        yield G.bridge(x,0, y,0)
+                        yield G.bridge(x,0, y,1)
+                        yield G.bridge(x,1, y,0)
+                        yield G.bridge(x,1, y,1)
+
+            logging.debug("  MgnTrivalentGraphsRecursiveGenerator(%d,%d): "
+                          "pass 3: bridge all edges of a single graph in M_{%d,%d} ..." % (g,n, g-1,n+1))
+            for G in MgnTrivalentGraphsRecursiveGenerator(g-1,n+1):
+                for x in xrange(G.num_edges):
+                    # since G.bridge() is symmetric, we need only consider
+                    # edge pairs `(x,y)` where `y <= x`.
+                    for y in xrange(x+1):
+                        yield G.bridge(x,0, y,0)
+                        yield G.bridge(x,0, y,1)
+                        yield G.bridge(x,1, y,0)
+                        yield G.bridge(x,1, y,1)
+
+            logging.debug("  MgnTrivalentGraphsRecursiveGenerator(%d,%d): "
+                          "pass 4: bridge two graphs of such that g_1+g_2=%d, n_1+n_2=%d ..." % (g,n, g,n+1)) 
+            def add_up_to(x, min=0):
+                if x == 0 and min == 0:
+                    yield (0,0)
+                elif x-min >= 0:
+                    for y in xrange(min, x-min+1):
+                        yield (y, x-y)
+            for (g1, g2) in add_up_to(g, min=0):
+                for (n1, n2) in add_up_to(n+1, min=1):
+                    if (g1, n1) < (0, 3) or (g2, n2) < (0,3):
+                        continue
+                    for G1 in MgnTrivalentGraphsRecursiveGenerator(g1,n1):
+                        for G2 in MgnTrivalentGraphsRecursiveGenerator(g2,n2):
+                            for x1 in xrange(G1.num_edges):
+                                for x2 in xrange(G2.num_edges):
+                                    yield Fatgraph.bridge2(G1, x1, 0, G2, x2, 0)
+                                    yield Fatgraph.bridge2(G1, x1, 0, G2, x2, 1)
+                                    yield Fatgraph.bridge2(G1, x1, 1, G2, x2, 0)
+                                    yield Fatgraph.bridge2(G1, x1, 1, G2, x2, 1)
+
+        unique = []
+        for G in graphs(g,n):
+            # XXX: should this check be done in graphs(g,n)?
+            if (G.genus(), G.num_boundary_components()) != (g,n):
+                continue
+            if G in unique:
+                continue
+            unique.append(G)
+            yield G
+
+        logging.debug("  MgnTrivalentGraphsRecursiveGenerator(%d,%d) done, found %d unique graphs." % (g,n, len(unique)))
+
+
+
+class MgnGraphsIterator(BufferingIterator):
     """Iterate over all connected fatgraphs having the
     prescribed genus `g` and number of boundary cycles `n`.
     
@@ -2331,7 +2531,7 @@ class _MgnGraphsIterator(BufferingIterator):
 ##         'n',
 ##         ]
 
-    def __init__(self, g, n, vertextype=VertexCache()):
+    def __init__(self, g, n, trivalent_graphs_generator=MgnTrivalentGraphsRecursiveGenerator):
         assert n > 0, \
                "MgnGraphsIterator: " \
                " number of boundary cycles `n` must be positive,"\
@@ -2348,60 +2548,8 @@ class _MgnGraphsIterator(BufferingIterator):
         #: Prescribed number of boundary components
         self.n = n
         
-        #: Factory method to build `Vertex` instances from the
-        #  incoming edges list.
-        self._vertextype = vertextype
-
-        #: Unique (up to isomorphism) graphs found so far
-        graphs = []
-        
-        #: Minimum number of edges of a (g,n)-graph
-        max_valence = 2 * (2*g + n - 1)
-
-        ## pass 1: Gather all roses.
-        logging.debug("Computing roses with %d leaves ...", max_valence/2)
-        roses = []
-        discarded = 0
-        for rose in GivenValenceGraphsIterator((max_valence,)):
-            if (rose.genus() != self.g) \
-                   or (rose.num_boundary_components() != self.n) \
-                   or (rose in roses):
-                discarded += 1
-                continue
-            roses.append(rose)
-            # a rose is a valid fatgraph too
-            #graphs.extend(MakeNumberedGraphs(rose))
-        logging.debug("  Found %d distinct unique roses; discarded %d.",
-                     len(roses), discarded)
-            
-        ## pass 2: Gather all 3-valent graphs.
-        trivalent = []
-        #: Full binary trees
-        logging.debug("Computing full binary trees with %d leaves ...",
-                     max_valence - 3)
-        trees = [ Tree(zip(l,r))
-                  for l,r in AlgorithmB(max_valence - 3) ]
-
-        logging.debug("Computing trivalent fat graphs ...")
-        discarded = 0
-        for rose in roses:
-            # now substitute the unique vertex with any possible tree
-            # and any possible rotation
-            for places in xrange(max_valence):
-                # need to make a deep copy, because `Vertex` objects are shared
-                rotated_rose = Fatgraph([copy(rose[0])])
-                #rotated_rose = rose
-                rotated_rose[0].rotate(places)
-                for tree in trees:
-                    graph = rotated_rose.graft(tree, 0)
-                    if (graph.genus() != self.g) \
-                           or (graph.num_boundary_components() != self.n) \
-                           or (graph in trivalent):
-                        discarded += 1
-                        continue
-                    trivalent.append(graph)
-        logging.debug("  Found %d distinct trivalent graphs, discarded %d.",
-                     len(trivalent), discarded)
+        # Gather all 3-valent graphs.
+        trivalent = list(MgnTrivalentGraphsRecursiveGenerator(g,n))
 
         #: Fatgraphs to be contracted at next `.refill()` invocation
         self._batch = trivalent
@@ -2413,7 +2561,7 @@ class _MgnGraphsIterator(BufferingIterator):
 
         self._num_vertices = 4*g + 2*n - 4
         
-        # initialize superclass with list of roses + trivalent graphs
+        # initialize superclass with list of trivalent graphs
         BufferingIterator.__init__(self, trivalent)
 
     def refill(self):
@@ -2439,11 +2587,11 @@ class _MgnGraphsIterator(BufferingIterator):
                      len(next_batch), self._num_vertices, discarded)
         return next_batch
 
-MgnGraphsIterator = persist.PersistedIterator(_MgnGraphsIterator)
+#MgnGraphsIterator = persist.PersistedIterator(_MgnGraphsIterator)
 
 
 
-class _MgnNumberedGraphsIterator(BufferingIterator):
+class MgnNumberedGraphsIterator(BufferingIterator):
     """Iterate over all connected numbered fatgraphs having the
     prescribed genus `g` and number of boundary cycles `n`.
     
@@ -2488,13 +2636,14 @@ class _MgnNumberedGraphsIterator(BufferingIterator):
     """
 
     def __init__(self, g, n, vertextype=VertexCache()):
-        self.__naked_graphs_iterator = MgnGraphsIterator(g, n, vertextype)
+        #self.__naked_graphs_iterator = MgnGraphsIterator(g, n)
+        self.__naked_graphs_iterator = MgnGraphsIterator(g, n)
         BufferingIterator.__init__(self)
 
     def refill(self):
         return MakeNumberedGraphs(self.__naked_graphs_iterator.next())
 
-MgnNumberedGraphsIterator = persist.PersistedIterator(_MgnNumberedGraphsIterator)
+#MgnNumberedGraphsIterator = persist.PersistedIterator(_MgnNumberedGraphsIterator)
 
 
 
