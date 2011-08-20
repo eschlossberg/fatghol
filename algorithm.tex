@@ -149,54 +149,59 @@ get $F \in \text{\l{graphs[2]}}$ with $m-2$ edges; and so on:
           if F not in graphs[k]:
             graphs[k].append(F)
 \end{lstlisting}
-A line-by-line explanation is in order:
-\begin{itemize}
-\item At line 13, the \l{range(1,m)} function sequentially generates
-  all integers in the half-open range $[1, m)$; therefore, the
-  \l{for}-loop body in lines 14--20 is executed $m-1$ times, with $k$
-  taking the values $1$, ..., $m-1$ in order.  Note that, by Python
-  syntax, the loop body is indented w.r.t the loop head line.
-\item At line 14, \l{graph[k]} is initialized to an empty list:
-  at the start of the loop body, the \l{graphs} list only has items
-  \l{graphs[0]} through \l{graphs[k-1]}.
-\item Line 15 introduces a new loop: code in lines 16--20 will be
-  executed once for each fatgraph \l{G} in \l{graphs[k-1]}.
-\item Line 16 starts the core of the function: contract edges of
-  the fatgraph \l{G} to generate new fatgraphs with $m-k$ edges.
-  However, we need not contract every edge of a fatgraph: if $a \in
-  \Aut(G)$ is an automorphism and $x \in E(G)$ is an edge, then the
-  contracted graphs $G' = G/x$ and $G'' = G/a(x)$ are isomorphic.
-  Hence, we can restrict the computation to consider only one edge per
-  orbit of the action induced by $\Aut(G)$ on the set $E(G)$. This is
-  what the method call \l{G.edge_orbits()} provides: for each graph
-  \l{G}, it partitions the set of edges of \l{G} into orbits and
-  returns one representative edge \l{e} for each one.
-\item Line 17 skips non-regular edges: the following code is executed
-  if and only if \l{e} is not a loop.
-\item Line 18 computes the fatgraph \l{F} obtained by contracting the
-  current edge \l{e} in \l{G}: the \l{Fatgraph.contract(G,e)} invocation
-  returns a \emph{new} fatgraph instance obtained by applying
-  topological contraction.
-\item Lines 19--20 add \l{F} to \l{graphs[k]} \emph{only if it is not
-    already there}.  This is actually very concise syntax for the most
-  computationally expensive part of the \l{MgnGraphs} function: Python
-  performs a comparison between \l{F} and each element in
-  \l{graphs[k]}; each comparison invokes the \l{Fatgraph.__eq__}
-  method, which in turn invokes \l{Fatgraph.isomorphism}.  
+A line-by-line explanation is in order.
 
-  If $L = \text{\l{len(graph[k])}}$ is the number of elements in
-  \l{graph[k]} and $T_\text{iso}$ is the average time needed to
-  determine if two graphs are isomorphic, evaluating the expression
-  \l{F in graphs[k]} takes $O(L \cdot T_\text{iso})$ time: thus, the
-  subdivision of \l{graphs} into lists, each one holding graphs with a
-  specific number of edges, reduces the number of fatgraph comparisons
-  done in the innermost loop of \l{MgnGraphs}.  (Although graphs with
-  a different number of edges are readily seen not to be isomorphic,
-  since the test is performed in the innermost loop, it is executed
-  nonetheless a considerable number of times, and each saving, albeit
-  small, can result in a substantial shortening of the total running
-  time.)
-\end{itemize}
+At line 13, the \l{range(1,m)} function sequentially generates all
+integers in the half-open range $[1, m)$; therefore, the \l{for}-loop
+body in lines 14--20 is executed $m-1$ times, with $k$ taking the
+values $1$, ..., $m-1$ in order.  Note that, by Python syntax, the
+loop body is indented w.r.t the loop head line.
+
+At line 14, \l{graph[k]} is initialized to an empty list: at the start
+of the loop body, the \l{graphs} list only has items \l{graphs[0]}
+through \l{graphs[k-1]}.
+
+Line 15 introduces a new loop: code in lines 16--20 will be executed
+once for each fatgraph \l{G} in \l{graphs[k-1]}.
+
+Line 16 starts the core of the function: contract edges of the
+fatgraph \l{G} to generate new fatgraphs with $m-k$ edges.  However,
+we need not contract every edge of a fatgraph: if $a \in \Aut(G)$ is
+an automorphism and $x \in E(G)$ is an edge, then the contracted
+graphs $G' = G/x$ and $G'' = G/a(x)$ are isomorphic.  Hence, we can
+restrict the computation to consider only one edge per orbit of the
+action induced by $\Aut(G)$ on the set $E(G)$. This is what the method
+call \l{G.edge_orbits()} provides: for each graph \l{G}, it partitions
+the set of edges of \l{G} into orbits and returns one representative
+edge \l{e} for each one.
+
+Line 17 skips non-regular edges: the following code is executed if and
+only if \l{e} is not a loop.
+
+Line 18 computes the fatgraph \l{F} obtained by contracting the
+current edge \l{e} in \l{G}: the \l{Fatgraph.contract(G,e)} invocation
+returns a \emph{new} fatgraph instance obtained by applying
+topological contraction.
+
+Lines 19--20 add \l{F} to \l{graphs[k]} \emph{only if it is not
+  already there}.  This is actually very concise syntax for the most
+computationally expensive part of the \l{MgnGraphs} function: Python
+performs a comparison between \l{F} and each element in \l{graphs[k]};
+each comparison invokes the \l{Fatgraph.__eq__} method, which in turn
+invokes \l{Fatgraph.isomorphism}.
+
+If $N_k = \text{\l{len(graph[k])}}$ is the number of elements in
+\l{graph[k]} and $T_\text{iso}$ is the average time needed to
+determine if two graphs are isomorphic, then evaluating the expression
+`\l{F in graphs[k]}' takes $O(N_k \cdot T_\text{iso})$ time: thus, the
+subdivision of \l{graphs} into lists, each one holding graphs with a
+specific number of edges, reduces the number of fatgraph comparisons
+done in the innermost loop of \l{MgnGraphs}.  (Although graphs with a
+different number of edges are readily seen not to be isomorphic, the
+isomorphism test is performed in the innermost loop, so it is executed
+nonetheless a considerable number of times, and each saving, albeit
+small, can result in a substantial shortening of the total running
+time.)
 
 Finally, function \l{MgnGraphs} exits and returns the list \l{graphs} to the
 caller:
@@ -208,16 +213,230 @@ caller:
 Note that the top-level function \l{MgnGraphs} is quite independent of
 the actual Python implementation of the \l{Fatgraph} type of objects:
 all is needed here, is that a \l{Fatgraph} instance has methods for
-enumerating edges, contract an edge, and test two graphs for equality.
+enumerating edges, contracting an edge, and testing two graphs for
+isomorphism.
+
+\begin{lemma}
+  If \l{MgnTrivalentGraphs(g,n)} returns the complete list of
+  \emph{trivalent} fatgraphs in $\R_{g,n}$, then the function
+  \l{MgnGraphs} defined above returns the complete set of fatgraphs
+  $\R_{g,n}$.
+\end{lemma}
+\begin{proof}
+  By the above dissection of the algorithm, all we need to prove is
+  that any fatgraph in $\R_{g,n}$ can be obtained by a chain of edge
+  contractions from a trivalent fatgraph.  This follows immediately
+  from the fact that any fatgraph vertex $V$ of valence $v \geq 3$ can
+  be expanded (in several ways) into vertices $V_1$, $V_2$ of valences
+  $v_1$, $v_2$ such that $v = (v_1 -1) + (v_2 -1)$, plus a connecting
+  edge.
+\end{proof}
 
 
 \subsection{Generation of Trivalent Fatgraphs}
 \label{sec:stage1-trivalent}
 
-\begin{lstlisting}
+The generation of trivalent graphs can be tackled by an inductive
+procedure: given a trivalent graph, a new edge is added, which joins
+the midpoints of two existing edges.  
+In order to determine which graphs should be input to the ``edge
+addition'' procedure, one can instead follow the reverse route, and
+ascertain how a trivalent graph is transformed by \emph{deletion} of
+an edge.
+
+\subsubsection{Removal of edges}
+\label{sec:removal}
+
+Let $G \in \R_{g,n}$ be a \emph{connected} trivalent graph. Each edge
+$x \in E(G)$ falls into one of the following categories:
+\begin{enumerate}[A)]
+\item\label{item:deletion-A} $x$ is a loop: both endpoints of $x$ are
+  attached to a single vertex $v$; another edge $x'$ joins $v$ with a
+  distinct vertex $v'$;
+\item\label{item:deletion-B} $x$ joins two distinct vertices $v, v'
+  \in V(G)$ and separates two distinct boundary cycles $\beta, \beta'
+  \in B(G)$;
+\item\label{item:deletion-C} $x$ joins two distinct vertices $v, v'
+  \in V(G)$ but belongs to only one boundary cycle $\beta \in B(G)$
+  (in which it occurs twice, once for each orientation).
+\end{enumerate}
+Deletion of edge $x$ requires different adjustments in order to get a
+trivalent graph again in each of the three cases above; it also yields
+a different result in each case.
+
+If $x$ is a loop attached to $v$ (case \ref{item:deletion-A}), then,
+after deletion of $x$, one needs to also delete the loose edge $x'$ and
+also the vertex $v'$ (that is, join the two other edges attached to
+$v'$).  The resulting fatgraph $G'$ has:
+\begin{itemize}
+\item two vertices less than $G$: $v$ and $v'$ have been deleted;
+\item three edges less: $x$, $x'$ have been deleted and two other
+  edges merged into one;
+\item one boundary cycle less: the boundary cycle totally bounded by
+  $x$ has been removed.
+\end{itemize}
+Therefore:
+\begin{align*}
+  2 - 2g' &= \chi(G') = V' - E' + n' 
+  \\
+  &= (V-2) -(E-3) + (n-1)
+  \\
+  &= V - E + n = \chi(G) = 2 - 2g,
+\end{align*}
+hence $g=g'$, and 
+\begin{equation}
+G' \in \R_{g,n-1}.
+\label{eq:A}\tag{A}
+\end{equation}
+
+In case \ref{item:deletion-B}, $x$ joins distinct vertices $v$, $v'$ and
+separates distinct boundary cycles.  Delete $x$ and merge the two
+edges attached to each of the two vertices $v$ and $v'$; in the
+process, the two boundary cycles $\beta, \beta'$ also merge into
+one. The resulting fatgraph $G'$ is connected. Indeed, given any two vertices
+$u, u' \in V(G')$, there is a path $(x_1, \ldots, x_k)$ connecting $u$
+with $u'$ in $G$; if this path passes through $x$, one can replace the
+occurrence of $x$ with the perimeter ---excluding $x$--- of one of
+the two boundary cycles $\beta, \beta'$ to get a path joining $v$ and
+$v'$ which avoids $x$, and thus projects to a path in $G'$.  Again we
+see that $G'$ has:
+\begin{itemize}
+\item two vertices less than $G$: $v$ and $v'$ have been deleted;
+\item three edges less: $x$ has been deleted and four other
+  edges merged into two, pair by pair;
+\item one boundary cycle less: the boundary cycles $\beta$, $\beta'$
+  have been merged into one.
+\end{itemize}
+Therefore $g=g'$, and 
+\begin{equation}
+G' \in \R_{g,n-1}.
+\label{eq:B}\tag{B}
+\end{equation}
+
+In case \ref{item:deletion-C}, $x$ joins distinct vertices $v$, $v'$
+but belongs into \emph{one} boundary cycle $\beta \in B(G)$ only.
+Delete edge $x$ and the two vertices $v$, $v'$, joining the attached
+edges two by two as in case \ref{item:deletion-B}.
+\begin{enumerate}
+\item[C')]
+If the resulting fatgraph $G'$ is connected, then $\beta \in B(G)$ has
+been split into two distinct boundary cycles $\beta', \beta'' \in
+B(G')$.  Indeed, write the boundary cycle $\beta$ as an ordered sequence of
+oriented edges: $y_0 \to  y_1 \to \ldots \to y_l \to y_0$. 
+(The $y_*$ appear in this sequence in the exact order they are
+encountered when waling along $\beta$ in the sense given by the
+fatgraph orientation.) The oriented edges $y_j$ are pairwise
+distinct: if $y_i$ and $y_k$ share the same supporting edge, then
+$y_i$ and $y_k$ have opposite orientations. By the initial assumption
+of case~\ref{item:deletion-C}, edge $x$ must appear \emph{twice} in
+the list: if $\bar x$ and $\underline x$ denote the two orientations
+of $x$, then $y_i = \bar x$ and $y_k = \underline x$.  Deleting $x$
+from $\beta$ is (from a homotopy point of view) the same as replacing
+$y_i = \bar x$ with $\bar x \to \underline x$, and $y_k = \underline x$
+with $\underline x \to \bar x$ when walking a boundary cycle. Then we
+see that $\beta$ splits into two disjoint cycles:
+\begin{align*}
+  \beta' &= y_0 \to y_1 \to \cdots \to y_{i-1} \to \bar{x} \to
+  \underline{x} \to y_{k+1} \to \cdots \to y_l \to y_0
+  \\
+  \beta'' &= y_{i+1} \to \cdots \to y_{k-1} \to \underline{x} \to
+  \bar{x} \to y_{i+1}
+\end{align*}
+In this case, $G'$ has:
+\begin{itemize}
+\item two vertices less than $G$: $v$ and $v'$ have been deleted;
+\item three edges less: $x$ has been deleted and four other
+  edges merged into two, pair by pair;
+\item one boundary cycle \emph{more}: the boundary cycle $\beta$ has
+  been split in two.
+\end{itemize}
+Therefore $g'=g-1$ and $n'=n+1$, so:
+\begin{equation}
+G' \in \R_{g-1,n+1}.
+\label{eq:C'}\tag{C'}
+\end{equation}
+
+\item[C'')] $G'$ is a disconnected union of fatgraphs $G'_1$ and
+$G'_2$. Then:
+  \begin{equation*} V'_1 + V'_2 = V -2, 
+    \qquad E'_1 + E'_2 = E - 3,
+    \qquad n'_1 + n'_2 = n + 1,
+  \end{equation*} hence:
+\begin{align*} 
+  (2- 2g'_1) + (2-2g'_2) &= (V-2) - (E-3) + (n+1) 
+  \\ 
+  &= (V-E+n) + 2 = 4 - 2g
+\end{align*} 
+So that $g'_1 + g'_2 = g$, $n'_1 + n'_2 = n+1$ and
+\begin{equation} 
+  G'= G'_1 \otimes G'_2 \in \R_{g'_1, n'_1} \times \R_{g'_2, n'_2}.
+  \label{eq:C''}\tag{C''}
+\end{equation}
+\end{enumerate}
+
+\subsubsection{Inverse construction}
+\label{sec:addition}
+
+Let $\R'_{g,n}$ be the set of fatgraphs with a selected oriented edge:
+$\R'_{g,n} := \{ (G,\bar x) : G \in \R_{g,n}, \bar{x} \in L(G)\}.$ 
+Similarly, let $\R''_{g,n}$ be the set of fatgraphs with two distinct
+selected edges:
+$\R''_{g,n} := \{ (G, \bar x, \bar y) : G \in \R_{g,n}, \bar{x},
+\bar{y} \in L(G), x \not= y\}.$ 
+
+We can define maps that invert the constructions A), B), C') and C'')
+above:
+\begin{description}
+\item[$a : \R'_{g,n-1} \to \R_{g,n}$]: from a pair $(G, \bar{x})$,
+  creates $a(G,\bar{x})$ by attaching a
+  ``slip knot''\footnote{A single 3-valent vertex with one loop
+    attached and a regular edge with one loose end.} to the midpoint of
+  $x$ by the loose end, in such a way that the two halves of $x$
+  appear in the cyclic order (at the new midpoint vertex) in the same
+  order induced by the orientation of $\bar x$.
+\item[$b : \R''_{g,n-1} \to \R_{g,n}$]: given $(G, \bar{x}, \bar{y})$,
+  attaches a new edge to the midpoints of $x$ and $y$; again the
+  cyclic order on the new midpoint vertices is chosen such that the
+  two halves of $x$ and $y$ appear in the order induced by the
+  orientations $\bar x$, $\bar y$.
+\item[$c': \R''_{g-1,n+1} \to \R_{g,n}$]: defined just like $b(G,
+  \bar{x}, \bar{y})$, except on a different domain.
+\item[$c'': \bigoplus_{\substack{g'_1+g'_2=g \\ n'_1+n'_2=n}}
+  \R'_{g'_1, n'_1} \times \R'_{g'_2, n'_2} \to \R_{g,n}$]: from $(G',
+  \bar{x}', G'', \bar{x}'')$, constructs a new fatgraph by bridging
+  $G'$ and $G''$ with a new edge, whose endpoints are in the midpoints
+  of $x'$ and $x''$; again, stipulate that the cyclic order on the new
+  vertices is chosen such that the two halves of $x'$, $x''$ appear in
+  the order induced by the orientations $\bar{x}'$, $\bar{x}''$.
+\end{description}
+Summing up, any fatgraph $G \in \R_{g,n}$ belongs to the image of one
+of the above maps $a$, $b$, $c'$ and $c''$. There is considerable
+overlap among the different image sets: indeed, one can prove that
+$c''$ is superfluous.
+\begin{lemma}
+  Any fatgraph obtained by inverting construction C'' can be obtained
+  by procedures $a$, $b$ or $c'$.
+\end{lemma}
+\begin{proof}
+  Assume, on the contrary, that $G$ lies in the image of $c''$ only.
+  Then, deletion of any edge $x$ from $G$ yields a disconnected graph
+  $G' \otimes G''$.  Both subgraphs $G'$ and $G''$ enjoy the same
+  property, namely, that deletion of any edge disconnects: otherwise,
+  if the removal of $y \in E(G')$ does not disconnect $G'$, then
+  neither does it disconnect $G = G' \sqcup x \sqcup G''$, contrary to
+  the assumption. As long as $G'$ or $G''$ has more than 3 edges, we
+  can delete another edge; by recursively repeating the process, we
+  end up with a fatgraph $G^*$ with $\leq 3$ edges.  For trivalent
+  graphs, $3 \cdot E = 2 \cdot V$, therefore $G^*$ must have 3 edges
+  and 2 vertices. But all such fatgraphs belong in $\R_{g,n}$, and it
+  is readily checked that there is no way to add an edge such that the
+  required property holds, that any deletion disconnects.
+\end{proof}
+
+\begin{lstlisting}[name=MgnTrivalentGraphs,firstnumber=1]
 def MgnTrivalentGraphs(g, n):
   """
-  Return a list of all connected trivalent fatgraphs having the
+  Return a list of all connected trivalent fatgraphs with
   prescribed genus `g` and number of boundary cycles `n`.
   """
   # avoid infinite recursion in later statements
@@ -236,13 +455,13 @@ def MgnTrivalentGraphs(g, n):
   # general case
   else:
     def graphs(g,n):
-      # pass 1: hang a circle to all edges of graphs in $M_{g,n-1}$
+      # case A: hang a circle to all edges of graphs in $M_{g,n-1}$
       for G in MgnTrivalentGraphs(g,n-1):
         for x in G.edge_orbits():
           yield G.hangcircle(x,0)
           yield G.hangcircle(x,1)
 
-      # pass 2: bridge all edges of a single graph in $M_{g,n-1}$
+      # case B: bridge all edges of a single graph in $M_{g,n-1}$
       for G in MgnTrivalentGraphs(g,n-1):
         for (x,y) in G.edge_pair_orbits():
           yield G.bridge(x,0, y,0)
@@ -250,7 +469,7 @@ def MgnTrivalentGraphs(g, n):
           yield G.bridge(x,1, y,0)
           yield G.bridge(x,1, y,1)
 
-      # pass 3: bridge all edges of a single graph in $M_{g-1,n+1}$
+      # case C': bridge all edges of a single graph in $M_{g-1,n+1}$
       for G in MgnTrivalentGraphs(g-1,n+1):
         for (x,y) in G.edge_pair_orbits():
           yield G.bridge(x,0, y,0)
