@@ -231,9 +231,9 @@ class Graph:
                 return pair[1]
             else:
                 return pair[0]
-        for (vertex, vertex_index) in izip(self.vertices, count(0)):
+        for (vertex_index, vertex) in enumerate(self.vertices):
             replacement = []
-            for (edge, current_index) in izip(vertex, count(0)):
+            for (current_index, edge) in enumerate(vertex):
                 (v1, v2) = ends[edge]
                 if v1 != v2:
                     other_end = other(ends[edge], vertex_index)
@@ -310,7 +310,6 @@ class Graph:
         return (self.genus(), self.num_boundary_components())
 
 
-
 def all_graphs(vertex_valences):
     """Return all graphs having vertices of the given valences.
 
@@ -382,20 +381,127 @@ def all_graphs(vertex_valences):
     return graphs
 
 
+class PermutationEnumerator:
+    """Iterate over all permutations of a given sequence.
+
+    The code is a port of the C++ STL one, as described in:
+      http://marknelson.us/2002/03/01/next-permutation
+    """
+    def __init__(self, seq, start=0, end=None):
+        self.seq = seq
+        self.start = start
+        if end is None:
+            end = len(self.seq)
+        self.end = end
+        if (start == end) or (start == end-1):
+            self.enumeration_finished = True
+        else:
+            self.enumeration_finished = False
+    def __iter__(self):
+        return self
+    def next(self):
+        """Return next permutation of initially given `sequence`."""
+        if self.enumeration_finished:
+            raise StopIteration
+        def swap(seq, pos1, pos2):
+            """Swap items at positions `pos1` and `pos2` in `seq`."""
+            seq[pos1],seq[pos2] = seq[pos2],seq[pos1]
+        def reverse(seq, from_pos, to_pos):
+            """Reverse the specified subsequence of `seq` *in-place*."""
+            if to_pos == from_pos+1:
+                seq[from_pos],seq[to_pos] = seq[to_pos],seq[from_pos]
+            else:
+                for i in xrange(0, (to_pos - from_pos) / 2):
+                    seq[from_pos+i],seq[to_pos-i] = seq[to_pos-i],seq[from_pos+i]
+        i = self.end - 1
+        while True:
+            j = i
+            i -= 1
+            if self.seq[i] < self.seq[j]:
+                k = self.end-1
+                while self.seq[i] >= self.seq[k]:
+                    k -= 1
+                swap(self.seq, i, k)
+                reverse(self.seq, j, self.end-1)
+                return self.seq
+            if (i == self.start):
+                self.seq.reverse()
+                self.enumeration_finished = True
+                return self.seq
+
+
+class WpPermutationEnumerator:
+    """Iterate over all permutations of a given sequence.
+
+    The code is a port of the one described in Wikipedia at:
+      http://en.wikipedia.org/wiki/Permutation#Algorithm_to_generate_permutations
+
+    Examples::
+      >>> p = PermutationEnumerator2([1,2,3])
+      >>> p.next()
+      [1, 2, 3]
+      >>> p.next()
+      [2, 1, 3]
+      >>> p.next()
+      [1, 3, 2]
+      >>> p.next()
+      [2, 3, 1]
+      >>> p.next()
+      [3, 2, 1]
+      >>> p.next()
+      [3, 1, 2]
+    """
+    def __init__(self, seq, initial=0):
+        self.seq = seq
+        self.rank = initial
+        # pre-compute factorial
+        self.factorial = [1]
+        for j in xrange(0, len(seq)):
+            self.factorial.append((j+1)*self.factorial[-1])
+    def __iter__(self):
+        return self
+    def next(self):
+        """Return next permutation of initially given `sequence`."""
+        if self.rank >= self.factorial[-1]:
+            raise StopIteration
+        def swap(seq, pos1, pos2):
+            """Swap items at positions `pos1` and `pos2` in `seq`."""
+            seq[pos1],seq[pos2] = seq[pos2],seq[pos1]
+        for j in xrange(1, len(self.seq)):
+            swap(self.seq, j, j - ((self.rank / self.factorial[j]) % (j+1)))
+        self.rank += 1
+        return self.seq
+
+
+def all_edge_seq2(n):
+    """Iterate over lists representing edges of a ribbon graph.
+
+    Each returned list has length `2*n` and comprises the symbols `{1,...,n}`,
+    each of which is repeated exactly twice.
+    """
+    ps = WpPermutationEnumerator(range(1,2*n+1))
+    for s in ps:
+        tr_inplace(s, range(n+1,2*n+1), range(1,n+1))
+        yield s
+
+
 def all_edge_seq(n):
     """Iterate over lists representing edges of a ribbon graph.
 
     Each returned list has length `2*n` and comprises the symbols `{1,...,n}`,
     each of which is repeated exactly twice.
     """
-    for s in permutations(2*n):
-        tr_inplace(s, range(n+1,2*n+1), range(1,n+1))
+    edges=[]
+    for l in xrange(1,n+1):
+        edges += [l,l]
+    ps = PermutationEnumerator(edges)
+    for s in ps:
         yield s
 
 
 def all_canonical_decorated_graphs(vertex_valences, total_edges):
     """Iterate over all canonical decorated graphs with `total_edges` edges."""
-    for edge_seq in all_edge_seq(total_edges):
+    for edge_seq in all_edge_seq2(total_edges):
         g = Graph(vertex_valences, edge_seq)
         if g.is_canonical():
             yield g
