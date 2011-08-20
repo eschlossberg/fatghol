@@ -42,9 +42,11 @@ class CyclicList(list):
             list.__init__(self)
         else:
             list.__init__(self, sequence)
+
     def __getitem__(self, i): return list.__getitem__(self, i % len(self))
     def __setitem__(self, i, item): list.__setitem__(self, i % len(self), item)
     def __delitem__(self, i): list.__delitem__(self, i%len(self))
+
     def __getslice__(self, i, j):
         """*Note:* returned slice is of `list` type!"""
         i = max(i, 0); j = max(j, 0); l = len(self)
@@ -68,6 +70,7 @@ class CyclicList(list):
     def __delslice__(self, i, j):
         i = max(i, 0); j = max(j, 0)
         list.__delslice__(self, i%len(self), j%len(self))
+
     def __eq__(self, other):
         """Compare `self` with all possible translations of `other`."""
         if len(other) != len(self):
