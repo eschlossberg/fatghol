@@ -115,7 +115,7 @@ class ChainComplex(object):
                    " but got `%s`." % length
         #: Total length of the complex.
         self.length = length
-        self.module = length * [ VectorSpace() ]
+        self.module = length * [ VectorSpace([]) ]
         def null_differential(vector):
           return [ ] # null linear combination
         #: Boundary operators; `differentials[i]` sends elements in

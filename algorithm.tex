@@ -201,7 +201,7 @@ function: Python performs a comparison between "F" and each element in
 "graphs[k]"; each comparison invokes the "Fatgraph.__eq__" method,
 which in turn invokes "Fatgraph.isomorphism".
 
-If $N_k = \text{\l{len(graph[k])}}$ is the number of elements in
+If $N_k = \text{\q{len(graph[k])}}$ is the number of elements in
 "graph[k]" and $T_\text{iso}$ is the average time needed to
 determine if two graphs are isomorphic, then evaluating the expression
 ``"F in graphs[k]"'' takes $O(N_k \cdot T_\text{iso})$ time: thus, the
@@ -743,12 +743,12 @@ number of loops is a vertex invariant and will be used in the
 computation of fatgraph isomorphisms.  The number of loops is computed
 as the difference between "len(self)", the number of attached edges,
 and "len(set(self))", the number of (unique) labels of attached
-edges.\footnote{Python's expression \l{set(self)} builds a \l{set}
-  object from the list of integers \l{self}, i.e., it removes multiple
+edges.\footnote{Python's expression \q{set(self)} builds a \q{set}
+  object from the list of integers \q{self}, i.e., it removes multiple
   occurrences of the same number from the list.  Therefore
-  \l{len(set(self))} is the number of elements in \l{set(self)}, that
+  \q{len(set(self))} is the number of elements in \q{set(self)}, that
   is, the number of unique edge colorings at the vertex represented by
-  \l{self}.}
+  \q{self}.}
 
 \begin{definition}
   A fatgraph vertex together with a choice of an attached edge is
@@ -914,12 +914,12 @@ Two boundary cycles are equal if they comprise the same corners.
 Thus, there is no reason to record the order in which the edges are
 encountered when walking along a boundary cycles: the "BoundaryCycle"
 objects can be just an alias for Python's built-in "frozenset"
-class.\footnote{Class \l{frozenset} is the immutable variant of a
-  \l{set}: \l{frozenset} objects cannot be modified after creation, on
-  the other hand they can be used as keys in \l{dict} objects.  This
+class.\footnote{Class \q{frozenset} is the immutable variant of a
+  \q{set}: \q{frozenset} objects cannot be modified after creation, on
+  the other hand they can be used as keys in \q{dict} objects.  This
   is a feature that will be needed when defining a numbering on a
   fatgraph: the additional structure will be just a dictionary
-  associating \l{BoundaryCycles} with an integer.}
+  associating \q{BoundaryCycles} with an integer.}
 \begin{lstlisting}
 class BoundaryCycle(frozenset):
   """A boundary cycle of a Fatgraph."""
@@ -954,7 +954,7 @@ data above.
   % rubber: make ctor.pdf from ctor.fig
   \includegraphics{ctor}
   \caption{Construction of a fatgraph out of a set of
-    \l{Vertex} instances: half-edges tagged with the same
+    \q{Vertex} instances: half-edges tagged with the same
     (numeric) label are joined together to form an edge.}
   \label{fig:ctor}
 \end{figure}
@@ -987,8 +987,8 @@ additional "kwargs" argument for efficiency reasons (e.g., when a data
 structure is already known to the caller, as is the case in the
 "Fatgraph.contract" method).\footnote{This is a
   work-around for Python's lack of multiple constructors: The
-  \l{kwargs} parameter is a way to assemble a \l{Fatgraph} object out of
-  already-computed data, see, for instance, the \l{contract}
+  \q{kwargs} parameter is a way to assemble a \q{Fatgraph} object out of
+  already-computed data, see, for instance, the \q{contract}
   method.}
 \begin{lstlisting}
 class Fatgraph(object):
@@ -1048,7 +1048,7 @@ each endpoint is recorded in the form of a 2-uple \emph{(index of
 hold the endpoints (line~106); endpoints of the same edge shall be
 kept together, at the same position in the list (line~110). Finally,
 the list of endpoints is used to construct a list of "Edge" objects
-(line~112).\footnote{The Python syntax \l{Edge(*e)} allows calling a
+(line~112).\footnote{The Python syntax \q{Edge(*e)} allows calling a
   function with a list of arguments only known at runtime; it is
   briefly explained in Section~\ref{sec:fn-special-syntax}.}
 
@@ -2590,7 +2590,7 @@ class ChainComplex(object):
   def __init__(self, length):
     """Create a chain complex of specified length."""
     self.length = length
-    self.module = length * [ VectorSpace() ]
+    self.module = length * [ VectorSpace([]) ]
     def null_differential(vector):
       return [ ] # null linear combination
     self.differential = length * [ null_differential ]
@@ -2751,9 +2751,7 @@ to perform several costly lookups in "C.base" to find out the
 coordinates of $de^{(i)}_j$.  In the case of the complex $W_*$
 of orientable fatgraphs, we can take a shortcut: if two topological
 fatgraphs $G$ and $G'$ are not isomorphic, so are any two numbered
-fatgraphs $(G,\nu)$ and $(G',\nu')$.  There are $n! / |Aut(G)|$
-numbered fatgraphs per given topological fatgraph $G$, so this
-approach can cut the complexity down by a factor $O((n!)^2)$.
+fatgraphs $(G,\nu)$ and $(G',\nu')$.  
 
 Indeed, rearrange the rows and columns of the boundary operator matrix
 $D^{(k)}$ so that numbered fatgraphs $(G,\nu)$ over the same
@@ -2762,7 +2760,9 @@ indices. Then there is a rectangular portion of $D^{(k)}$ that is
 uniquely determined by a pair of topological fatgraphs $G$ and $G'$.
 The main function for computing the boundary operator matrix can thus loop
 over pairs of topological fatgraphs, and delegate computing the each
-rectangular block to a specialized function.
+rectangular block to a specialized function.  There are $n! / |Aut(G)|$
+numbered fatgraphs per given topological fatgraph $G$, so this
+approach can cut the complexity down by $O((n!)^2)$.
 
 Generation of inequivalent numbered fatgraphs (over the same
 topological fatgraph $G$) can be reduced to the (computationally
@@ -2780,7 +2780,7 @@ function is twofold:
 \item\label{nfp:1} Generate all inequivalent numberings of a given
   topological fatgraph $G$.
 \item\label{nfp:2} Given topological fatgraphs $G$ and $G'$, compute
-  the rectangular section of a boundary operator matrix whose entries
+  the rectangular block of a boundary operator matrix whose entries
   correspond to coordinates of $d(G,\nu)$ w.r.t. $(G',\nu')$.
 \end{enumerate}
 
@@ -2788,74 +2788,55 @@ A "NumberedFatgraphPool" instance is initialized with a "Fatgraph"
 instance (representing a topological fatgraph); the list of inequivalent
 numberings on $G$ is immediately computed in the "__init__" method.
 
-A "facets" method is provided, that, given two "NumberedFatgraphPool"
+A "block" method is provided, that, given two "NumberedFatgraphPool"
 instances, iterates over the non-zero entries in the associated
 rectangular block within $D^{(k)}$.
 
-\begin{lstlisting}
-class NumberedFatgraphPool(object):
-  """
-  An opaque virtual collection of numbered fatgraphs.
-  """
+The following sections implement the "NumberedFatgraphPool" class.
 
-\end{lstlisting}
-A "NumberedFatgraphPool" instance is an ``opaque'' collection, in that the
-individual numberings stored in it are not directly accessible by
-Python standard collection methods, and are only used internally
-within the "facets" code.  It is ``virtual'' in the sense that no
-numbered fatgraph is actually stored in it: only the numberings are,
-in the form of Python dictionaries mapping a "BoundaryCycle" object to
-an integer.
 
 \subsection{Generation of inequivalent numbered fatgraphs}
 \label{sec:numberings}
 
-Recall that a numbered fatgraph automorphism $a: (G,\nu) \to (G,\nu)$
-must satisfy the following diagram:
-\begin{equation*}
-  \xymatrix{%
-    \Holes{G} &  & \Holes{G}
-    \\
-    & \{ 1, \ldots, n \} &
-    \ar^{\Holes{a}} "1,1";"1,3"
-    \ar_{\nu} "1,1";"2,2"
-    \ar^{\nu} "1,3";"2,2"
-  }%
-\end{equation*}
-Therefore $\Holes{a} = \id_{\Holes{G}}$, i.e., $a$ induces the
-identity map on the boundary cycles of $G$.
-
+For any numbered fatgraph $(G, \nu)$, denote $[G, \nu]$ its
+isomorphism class.  Let $N(G)$ be the sets of all fatgraphs over $G$
+and $\tilde N(G)$ the set of isomorphism classes thereof:
+\begin{align*}
+  N(G) &:= \{\, (G,\nu) \;|\; \nu\colon B(G) \to \{1,\ldots,n\} \,\},
+  \\
+  \tilde N(G) &:= \{\, [G,\nu] \;|\; \nu\colon B(G) \to \{1,\ldots,n\} \,\}.
+\end{align*}
 Let $(G, \nu_0)$ be a chosen numbered fatgraph.  Define a group
-homomorphism $\Phi: \Aut(G) \ni a \mapsto \nu_0 \circ \Holes{a} \circ
-\nu_0^{-1} \in \Perm{n}$; then $P = \Phi(\Aut G)$ is a subgroup of
-$\Perm{n}$.
-\begin{lemma}\label{lemma:numberings}
-  There is a bijective correspondence between (isomorphism classes of)
-  numbered fatgraphs over the same underlying topological fatgraph $G$
-  and cosets of $P$ within $\Perm{n}$.
+homomorphism:
+\begin{equation}\label{eq:Phi}
+\Phi: \Aut(G) \ni a \longmapsto \nu_0 \circ \Holes{a} \circ
+\nu_0^{-1} \in \Perm{n}.
+\end{equation}
+The set $P = \Phi(\Aut G)$ is a subgroup of $\Perm{n}$.
+\begin{lemma}\label{lemma:sigma}
+  The numbered fatgraphs $(G, \nu_0)$ and $(G, \sigma\nu_0)$ are
+  isomorphic iff $\sigma \in P$.
 \end{lemma}
 \begin{proof}
-  Let $\sigma \in \Perm{n}$ be such that $\sigma P = P$; then there
-  exist $a, a' \in \Aut G$ such that:
+  Let $\sigma \in P$, then $\sigma\inv \in P$ and there
+  exist $a \in \Aut G$ such that:
   \begin{equation*}
-    \sigma \circ \nu_0 \circ \Holes{a'} \circ \nu_0^{-1}
-    = \nu_0 \circ \Holes{a} \circ \nu_0^{-1}
+    \sigma^{-1} = \nu_0 \circ \Holes{a} \circ \nu_0^{-1},
   \end{equation*}
   whence:
   \begin{equation*}
-    (\sigma \circ \nu_0) \circ \Holes{a' \circ a^{-1}} \circ
-    \nu_0^{-1} = \id
+    (\sigma \circ \nu_0) \circ \Holes{a} \circ \nu_0^{-1} = \id
   \end{equation*}
-  therefore $a' \circ a^{-1}$ is a numbered fatgraph isomorphism
-  between $(G, \nu)$ and $(G, \sigma \circ \nu)$.
+  therefore $a$ induces a numbered fatgraph isomorphism
+  between $(G, \nu_0)$ and $(G, \sigma \circ \nu_0)$.
 
-  Conversely, assume $(G, \nu_0)$ and $(G, \nu_1)$ are isomorphic as
-  numbered fatgraphs: then there exists $a \in \Aut G$ such that
-  $\nu_1 \circ \Holes{a} \circ \nu_0^{-1}$ is the identity on
-  $\Perm{n}$.  Let $\sigma = \nu_0 \circ \nu_1^{-1}$; given any $\nu_0
-  \circ \Holes{a'} \circ \nu_0^{-1} \in P$ we have:
+  Conversely, let $\nu_1 = \sigma\nu_0$ and assume $(G, \nu_0)$ and
+  $(G, \nu_1)$ are isomorphic as numbered fatgraphs: then there exists
+  $a \in \Aut G$ such that $\nu_1 \circ \Holes{a} \circ \nu_0^{-1}$ is
+  the identity. Given any $\nu_0 \circ \Holes{a'} \circ \nu_0^{-1} \in
+  P$ we have:
   \begin{multline*}
-    \nu_0 \circ \Holes{a'} \circ \nu_0^{-1} 
+    P \ni \nu_0 \circ \Holes{a'} \circ \nu_0^{-1} 
     = \nu_0 \circ (\nu_1^{-1} \circ \nu_1) 
       \circ \Holes{a} \circ \Holes{a}^{-1}
       \circ \Holes{a'} \circ \nu_0^{-1} 
@@ -2864,63 +2845,203 @@ $\Perm{n}$.
       \circ (\nu_0^{-1} \circ \nu_0) \circ \Holes{a^{-1}} 
       \circ \Holes{a'} \circ \nu_0^{-1} 
     \\
-    = \sigma \circ (\nu_1 \circ
+    = \sigma\inv \circ (\nu_1 \circ
       \Holes{a} \circ \nu_0^{-1}) \circ \nu_0 \circ \Holes{a^{-1} \circ
       a'} \circ \nu_0^{-1}
     \\
-    = \sigma \circ \left( \nu_0 \circ
+    = \sigma\inv \circ \left( \nu_0 \circ
       \Holes{a^{-1} \circ a'} \circ \nu_0^{-1} \right)
-    \in \sigma P,
+    \in \sigma\inv P,
   \end{multline*}
-  therefore $P = \sigma P$.
+  therefore $P = \sigma\inv P$, so $\sigma \in P$.
 \end{proof}
 
-Generation of all inequivalent numbered fatgraphs over the same
-topological fatgraph $G$ is a direct application of
-Lemma~\ref{lemma:numberings}: for each automorphism $a \in \Aut G$, we
-compute the permutation $\Phi(a)$ it induces on the set of boundary
-components, and form the subgroup $P$.  Then, compute the cosets of
-$P$ in $\Perm{n}$ by a simple brute-force algorithm.
+Define a transitive action of $\Perm{n}$ over $N(G)$ by $\sigma \cdot
+(G,\nu) := (G, \sigma\nu)$; this descends to a transitive action of
+$\Perm{n}$ on $\tilde N(G)$.  By the previous Lemma, $P$ is the
+stabilizer of $[G, \nu_0]$ in $\tilde N(G)$.
+\begin{lemma}\label{lemma:numberings}
+  The action of $\Perm{n}$ on $\tilde N(G)$ induces a bijective
+  correspondence between isomorphism classes of numbered fatgraphs and
+  cosets of $P$ within $\Perm{n}$.
+\end{lemma}
+\begin{proof}
+  Given isomorphic numbered fatgraphs $(G,\nu)$ and $(G,\nu')$, let
+  $\sigma, \sigma' \in \Perm{n}$ be such that $\nu = \sigma \circ
+  \nu_0$ and $\nu' = \sigma' \circ \nu_0$.  By definition of numbered
+  fatgraph isomorphism, there is $a \in \Aut G$ such that the
+  following diagram commutes:
+  \begin{equation*}
+    \xymatrix{
+      \Holes{G} & & \Holes{G} \\
+      & \{1, \ldots, n\} &
+      \ar^{\Holes{a}} "1,1";"1,3"
+      \ar_{\sigma\circ\nu_0 = \nu} "1,1";"2,2"
+      \ar^{\nu' = \sigma' \circ \nu_0} "1,3";"2,2"
+      }
+  \end{equation*}
+  Whence commutativity of another diagram follows:
+  \begin{equation*}
+    \xymatrix{
+      \Holes{G} &&  \Holes{G} \\
+      \{1,\ldots,n\} && \{1,\ldots,n\}
+      \ar^{\Holes{a}} "1,1";"1,3"
+      \ar_{\nu_0} "1,1";"2,1"
+      \ar^{\nu_0} "1,3";"2,3"
+      \ar_{\sigma\inv \sigma'} "2,3";"2,1"
+    }
+  \end{equation*}
+  Thus $(G, \nu_0)$ is isomorphic to $(G, \sigma\inv \sigma' \circ
+  \nu_0)$; therefore $\sigma\inv \sigma' \in P$, hence, $\sigma' \in
+  \sigma P$., i.e., $\sigma$ and $\sigma'$ belong into the same coset
+  of $P$.
+  
+  Conversely, let $\tau, \tau' \in \sigma P$; explicitly:
+  \begin{equation*}
+    \tau = \sigma \circ \nu_0 \circ \Holes{a} \circ \nu_0\inv,
+    \qquad
+    \tau' = \sigma \circ \nu_0 \circ \Holes{a'} \circ \nu_0\inv.
+  \end{equation*}
+  Set $\nu = \tau \circ \nu_0$, $\nu' = \tau' \circ \nu_0$;
+  substituting back the definition of $\tau$, we have:
+  \begin{equation*}
+    \nu =  \sigma \circ \nu_0 \circ \Holes{a} \circ \nu_0\inv \circ \nu_0 
+        =  \sigma \circ \nu_0 \circ \Holes{a},
+  \end{equation*}
+  whence $\nu_0 = \sigma\inv \circ \nu \circ \Holes{a}\inv$, and:
+  \begin{equation*}
+    \nu' = \sigma \circ \nu_0 \circ \Holes{a'}
+    = \sigma \circ \left( \sigma\inv \circ \nu \circ B(a)\inv \right) \circ \Holes{a'}
+    = \nu \circ \Holes{a\inv \circ a'},
+  \end{equation*}
+  therefore $a\inv \circ a'$ is an isomorphism between the numbered
+  fatgraphs $(G,\nu)$ and $(G,\nu')$.
+\end{proof}
 
-This is implemented in the "NumberedFatgraphPool" class "__init__"
-method.  Given a "Fatgraph" instance "G" (representing a topological
-fatgraph $G$), the main results of this algorithm are:
+The following is an immediate corollary of the transitivity of the
+action of $\Perm{n}$ on $\tilde N(G)$.
+\begin{lemma}\label{lemma:sigma+aut}
+  Given any numbering $\nu$ on the fatgraph $G$, there exist $\sigma
+  \in \Perm{n}$ and $a \in \Aut G$ such that: $\nu = \sigma \circ
+  \nu_0 \circ a$.
+\end{lemma}
+\begin{proof}
+  By Lemma~\ref{lemma:numberings}, there exists $\sigma \in \Perm{n}$
+  such that $[G, \nu] = [G, \sigma \circ \nu_0]$, i.e., $(G, \nu)$ is
+  isomorphic to $(G, \sigma \circ \nu_0)$.  If $a \in \Aut G$ is this
+  fatgraph isomorphism, then the following diagram commutes:
+  \begin{equation*}
+    \xymatrix{
+      \Holes{G} & & \Holes{G} \\
+      & \{1, \ldots, n\} &
+      \ar^{\Holes{a}} "1,1";"1,3"
+      \ar_{\nu} "1,1";"2,2"
+      \ar^{\sigma \circ \nu_0} "1,3";"2,2"
+    }
+  \end{equation*}
+  Therefore $\nu = \sigma \circ \nu_0 \circ \Holes{a}$.
+\end{proof}
+
+\paragraph{The \q{NumberedFatgraphPool} class.}
+The "NumberedFatgraphPool" class represents the set $\tilde N(G)$ of
+isomorphism classes $[G,\nu]$; thus, its core content is a list of
+numberings $\nu^{(j)}$ such that $(G, \nu^{(j)}) \tilde= (G,
+\nu^{(k)})$ iff $j = k$.
+
+Given a fatgraph $G$ and a corresponding "Fatgraph" instance "G",
+stipulate that $\nu_0$ be the numbering on $G$ that enumerates
+boundary cycles of $G$ in the order they are returned by
+"G.compute_boundary_cycles()".  By Lemma~\ref{lemma:sigma+aut}, every
+$(G, \nu^{(j)})$ can then be expressed (up to isomorphism) as $(G,
+\sigma^{(j)} \circ \nu_0)$ with $\sigma^{(j)} \in \Perm{n}$.  The set
+$\{ \sigma^{(j)} \}$ enumerates all distinct isomorphism classes of
+numbered fatgraphs over $G$ iff $\{ \sigma^{(j)}P \}$ runs over all
+distinct cosets of $P$ in $\Perm{n}$ (by
+Lemma~\ref{lemma:numberings}).
+
+The attributes of a "NumberedFatgraphPool(G)" instance are thus as
+follows:
 \begin{itemize}
-\item the group $P = \Phi(\Aut G)$ of permutations induced by
-  automorphisms of $G$; the map $\nu_0:
-  \Holes{G} \to \{1, \ldots, n\}$ is chosen to be the map that
-  enumerates boundary cycles of $G$ in the order they are returned by
-  the function "G.compute_boundary_cycles()";
-\item a corresponding set of representatives "A", where each element
-  is an automorphism of "G": permutation "P[i]" is induced by
-  automorphism "A[i]".
+\item The "graph" attribute holds a reference to the underlying
+  "Fatgraph" instance "G".
+\item The "P" attribute holds a list of all elements in the group $P =
+  \Phi(\Aut G)$.
+\item A corresponding set of pre-image representatives (each element
+  is an automorphism of "G") is stored into attribute "A": permutation
+  "P[i]" is induced by automorphism "A[i]", i.e., if $\pi=\;$"P[i]"
+  and $a=\;$"A[i]" then $\pi = \Phi(a)$.
+\item The "numberings" attribute holds the list $\{ \sigma^{(j)} \}$
+  of distinct cosets of $P$
+  (representing inequivalent numberings); each $\sigma^{(j)}$ is
+  represented by a Python "Permutation" object.
 \end{itemize}
-These are stored, respectively, in variables "P" and "A", which are
+Since the automorphism group of a numbered fatgraph $\Aut (G, \nu)$
+can be a proper subgroup of $\Aut G$, then $(G,\nu)$ can be orientable
+even if $G$ is not, we need a separate boolean variable to record the
+orientability of the family of numbered fatgraphs $\{ (G, \nu) \}$.
+\begin{itemize}
+\item The "is_orientable" attribute is a boolean value indicating
+  whether any $(G,\nu)$ in the pool is orientable.
+\end{itemize}
+
+The set-up of this attributes given a "Fatgraph" instance "G" is done
+in the "__init__" method.
+
+\paragraph{The \q{\_\_init\_\_} method.}
+Generation of all inequivalent numberings over $G$ is a direct
+application of Lemma~\ref{lemma:numberings}: for each automorphism $a
+\in \Aut G$, we compute the permutation $\Phi(a)$ it induces on the
+set of boundary components, and form the subgroup $P$.  Then, compute
+the cosets of $P$ in $\Perm{n}$ by a exhaustive enumeration.
+This is all implemented in the "NumberedFatgraphPool" class "__init__"
+method.  
+
+Given a "Fatgraph" instance "G" (representing a topological
+fatgraph $G$), the main outputs of this algorithm are the instance
+attributes outlined above.  The computation proceeds in two stages:
+\begin{enumerate}
+\item In the first step, the subgroup $P$ and the associated set of
+  automorphisms $A \subseteq \Aut G$ are computed and stored in
+  variables "P" and "A".
+\item In the second part, the list $\{ \sigma^{(j)} \}$ is stored into
+  the "numberings" variable, by enumerating the cosets of $P$.
+\end{enumerate}
+As an important by-product of the computation, the automorphism group
+$\Aut (G, \nu_0)$ is computed, and used to determine if the numbered
+fatgraphs in the pool are orientable.
+
+At the start of step~{\sl (1)}, the variables "P" and "A" are
 initialized with an empty list; items will be added in the main loop
 (see below).
 \begin{lstlisting}
+class NumberedFatgraphPool(object):
   def __init__(self, G):
     P = [ ] 
     A = [ ] 
 
 \end{lstlisting}
-Since the automorphism group of a numbered fatgraph $(G, \nu)$ can be a proper
-subgroup of $\Aut G$, then $(G,\nu)$ can be orientable even if $G$ is
-not, we need a separate boolean variable to record the orientability
-of the family of numbered fatgraphs $\{ (G, \nu) \}$.
-Consider the fatgraphs orientable until we have found evidence of the
-contrary:
+Since $G$ is orientable, we presume $(G, \nu)$ is orientable until we
+have found evidence of the contrary:
 \begin{lstlisting}
     orientable = True
 
 \end{lstlisting}
 
 A local function "phi" computes the permutation $\Phi(a) = \nu_0 \circ
-\Holes{a} \circ \nu_0^{-1}$.  A permutation "p" is created; it is
+\Holes{a} \circ \nu_0^{-1}$.  A permutation "pi" is created; it is
 initially empty (line~\nr{nb0:1}) and is then stepwise constructed by
 iterating over boundary cycles (lines~\nr{nb0:2}--\nr{nb0:5}).  
+\begin{lstlisting}
+    def phi(a):
+      pi = Permutation()                                     |\n{nb0:1}|
+      for src_index,src_cycle in enumerate(bc):                 |\n{nb0:2}|
+        dst_cycle = a.transform_boundary_cycle(src_cycle)       |\n{nb0:3}|
+        dst_index = bc.index(dst_cycle)                         |\n{nb0:4}|
+        pi[src_index] = dst_index                            |\n{nb0:5}|
+      return pi
 
-Indeed the boundary cycle "src_cycle" is transformed according to
+\end{lstlisting}
+Indeed, the boundary cycle "src_cycle" is transformed according to
 $\Holes{a}$ (line~\nr{nb0:3}) and its index is then sought for into
 the list of boundary cycles "bc" (line~\nr{nb0:4}); note that this
 lookup may fail and raise and exception "ValueError".  There are
@@ -2928,22 +3049,11 @@ infact cases, in which the "Fatgraph.isomorphisms" algorithm finds a
 valid mapping, changing from "G1" to an \emph{equivalent but
   alternate} representation of "G2" --- these cause a failure here as
 they don't preserve the boundary cycles.
-
 If the lookup was successful, the mapping of "src_index" into
-"dst_index" is recorded into "p" (line~\nr{nb0:5}).
-\begin{lstlisting}
-    def phi(a):
-      p = Permutation()                                         |\n{nb0:1}|
-      for src_index,src_cycle in enumerate(bc):                 |\n{nb0:2}|
-        dst_cycle = a.transform_boundary_cycle(src_cycle)       |\n{nb0:3}|
-        dst_index = bc.index(dst_cycle)                         |\n{nb0:4}|
-        p[src_index] = dst_index                                |\n{nb0:5}|
-      return p
-
-\end{lstlisting}
+"dst_index" is recorded into "pi" (line~\nr{nb0:5}).
 
 The main loop starts on line~\nr{nb1:1}: for each automorphisms $a \in
-\Aut G$, the permutation "p" induced on the boundary cycles is
+\Aut G$, the permutation "pi" induced on the boundary cycles is
 computed (line~\nr{nb1:2}); in case the computation failed, the
 algorithm proceeds with another automorphism.
 \begin{lstlisting}
@@ -2951,7 +3061,7 @@ algorithm proceeds with another automorphism.
     n = len(bc) # == "G.num_boundary_cycles"
     for a in G.automorphisms():                                 |\n{nb1:1}|
       try:
-        p = phi(a)                                              |\n{nb1:2}|
+        pi = phi(a)                                          |\n{nb1:2}|
       except ValueError:                                        |\n{nb1:3}|
         continue # with next "a"                                |\n{nb1:4}|
 
@@ -2960,48 +3070,48 @@ If "a" preserves the boundary cycles pointwise, then it induces an
 automorphism of the numbered graph and we need to test whether it
 preserves or reverses orientation.
 \begin{lstlisting}
-      if p.is_identity():                                       |\n{nb1:5}|
+      if pi.is_identity():                                   |\n{nb1:5}|
         if a.compare_orientations() == -1:                      |\n{nb1:6}|
           orientable = False                                    |\n{nb1:7}|
 
 \end{lstlisting}
-At last, if "p" is not already present in "P",\footnote{If $K$ is the
-  Kernel of $\Phi$, there are of course $\card{K}$ distinct
-  automorphisms inducing the same permutation on boundary cycles.}  it
-is added to that list; likewise, we keep record of the automorphism
-"a" inducing it.
+At last, if "pi" is not already present in "P",\footnote{There are
+  of course $\card{\Ker\Phi}$ distinct automorphisms inducing the same
+  permutation on boundary cycles.}  it is added to that list;
+likewise, we keep record of the automorphism "a" inducing it.
 \begin{lstlisting}
-      if p not in P:                                            |\n{nb1:8}|
-        # "a" induces permutation "p" on the set "bc"           
-        P.append(p)                                             |\n{nb1:9}|
+      if pi not in P:                                        |\n{nb1:8}|
+        P.append(pi)                                         |\n{nb1:9}|
         A.append(a)                                             |\n{nb1:10}|
 
 \end{lstlisting}
+This ends the stage {\sl (1)} computation.
 
-By Lemma~\ref{lemma:numberings}, there will be as many distinct
-numberings as there are cosets of "P" in $\Perm{n}$.  The algorithm
-proceeds by simply enumerating all permutations in $\Perm{n}$
-(line~\nr{nb2:3}): with "numbering" initially set to the empty list
-(line~\nr{nb2:2}), for each permutation $\sigma$ a test is made as to
-whether $\sigma P$ intersects the list "numberings" (line~\nr{nb2:5});
-if it does not, then the numbering induced by $\sigma$ is added to the
-list (line~\nr{nb2:5}).  The local function "unseen" implements this
-test: it returns boolean "False" iff any of the products $s \circ p$
-(for $p \in P$) belongs into "numberings".\footnote{The expression
-  \Verb`p.rearranged(s)` might need an explanation.  Permutation
-  \Verb`s` is represented by a Python list with $n$ items: it is
-  understood that \Verb`s` maps \Verb`i` (with $0 \leq i < n$) to
-  \Verb`s[i]`.  On the other hand, permutation \Verb`p` is represented
-  by a \Verb`Permutation` object; the \Verb`p.rearranged(s)`
-  invocation returns a new list whose \Verb`i`-th element is
-  \Verb`s[p[i]]`, i.e., $(s \circ p) (i)$.}
+By Lemma~\ref{lemma:numberings}, there are as many distinct numberings
+as there are cosets of "P" in $\Perm{n}$.  The algorithm proceeds by
+simply enumerating all permutations in $\Perm{n}$ (line~\nr{nb2:3}),
+with "numbering" initially set to the empty list (line~\nr{nb2:2});
+for each permutation $\sigma$ a test is made as to whether $\sigma P$
+intersects the list "numberings" (line~\nr{nb2:5}); if it does not,
+then the numbering induced by $\sigma$ is added to the list
+(line~\nr{nb2:5}).  The local function "unseen"
+(lines~\nr{nb2:1a}--\nr{nb2:1b}) implements this test: it returns
+boolean "False" iff any of the products $\sigma \circ \pi$ (for $\pi
+\in P$) belongs into "numberings".\footnote{The expression
+  \q{pi.rearranged(sigma)} might need an explanation.  Permutation
+  \q{sigma} is represented by a Python list with $n$ items: it is
+  understood that \q{sigma} maps \q{i} (with $0 \leq i < n$) to
+  \q{sigma[i]}.  On the other hand, permutation \q{pi} is represented
+  by a \q{Permutation} object; the \q{pi.rearranged(sigma)} invocation
+  returns a new list whose \q{i}-th element is \q{sigma[pi[i]]}, i.e.,
+  $(\sigma \circ \pi) (i)$.}
 \begin{lstlisting}
     if len(P) > 1:
       def unseen(s):                                |\n{nb2:1}| 
-        for p in P:
-          if p.rearranged(s) in numberings:         |\n{nb2:1a}|
+        for pi in P:
+          if pi.rearranged(sigma) in numberings:    |\n{nb2:1a}|
             return False
-        return True
+        return True                                 |\n{nb2:1b}|
       numberings = [ ]                              |\n{nb2:2}|
       for sigma in PermutationIterator(range(n)):   |\n{nb2:3}|
         if unseen(sigma):                           |\n{nb2:4}|
@@ -3011,11 +3121,12 @@ test: it returns boolean "False" iff any of the products $s \circ p$
 Of course we can take a shortcut in case "P" is the one-element group:
 \begin{lstlisting}
     else: # len(P) == 1
-      numberings = [ p for p in PermutationIterator(range(n)) ]
+      numberings = [ sigma 
+                     for sigma in PermutationIterator(range(n)) ]
 
 \end{lstlisting}
 
-Finally store the data computed about the family of fatgraphs into
+Finally, store the data computed about the family of fatgraphs into
 instance attributes:
 \begin{lstlisting}
     self.graph = G
@@ -3028,14 +3139,48 @@ instance attributes:
 
 \end{lstlisting}
 
-The special Python method "__len__" is implemented, so that we can get
-the number of inequivalent numbered fatgraphs as "len(N)" when "N" is
-a "NumberedFatgraphPool" instance.
+\paragraph{The \q{index\_and\_aut} method.}
+The following "index_and_aut" method provides a constructive version
+of Lemma~\ref{lemma:sigma+aut}: given a numbering, it returns the
+permutation (by index number "j" in "self.numberings") and fatgraph
+automorphism $a=\;$"self.A[i]" such that the topological fatgraph
+"self.graph" decorated with "numbering" is isomorphic (thorugh $a$) to
+the same graph decorated with "self.numberings[j]".
+\begin{lstlisting}
+  def index_and_aut(self, numbering):
+    """
+    Return index of the stored numbering equivalent 
+    to the given `numbering`, and the automorphism
+    realizing this equivalence.
+    """
+    for (i, pi) in enumerate(self.P):                      |\n{iaut:1}|
+      try:
+        j = self.numberings.index(pi.rearranged(numbering))|\n{iaut:2}|
+        # once a "pi" has matched, there's no reason to try others
+        return (j, self.A[i])                              |\n{iaut:3}|
+      except ValueError:
+        pass |\n{iaut:4}| # continue with next "pi"
+\end{lstlisting}
+Let $G$ be "self.graph"; the algorithm enumerates all permutations
+$\pi \in P$: if one is found (line~\nr{iaut:2}), then it is returned
+to the caller together with the corresponding automorphism
+automorphism "self.A[i]" (line~\nr{iaut:3}); if none of the elements
+$\sigma$ in "self.numberings" matches $\sigma \circ \pi$ (signalled by
+Python's "ValueError" exception), then we just proceed and try a
+different $\pi$ (line~\nr{iaut:4}): by Lemma~\ref{lemma:numberings},
+we know that one must match.
+
+\paragraph{The \q{\_\_len\_\_} method.}
+In addition, the special Python method "__len__" is implemented in the
+"NumberedFatgraphPool" class, so that we can get the number of
+inequivalent numbered fatgraphs as "len(p)" when "p" is a
+"NumberedFatgraphPool" instance.
 \begin{lstlisting}
   def __len__(self):
     return len(self.numberings)
 
 \end{lstlisting}
+
 
 \subsection{Computing boundary operator matrix blocks}
 \label{sec:blocks}
@@ -3044,144 +3189,209 @@ The differential $d(G,\nu)$ is computed by summing (with alternating
 signs) over all contractions of regular edges in $G$; likewise, the
 matrix block corresponding to coordinates of the families of numbered
 fatgraphs $\{(G,\nu)\}$ and $\{(G',\nu')\}$ can be decomposed into a
-sum of blocks, each representing the coordinates of $\{(G/e,\nu)\}$
-(with $e$ ranging over the edges of $G$) projected on the linear span
-of $\{(G',\nu')\}$.
+sum of blocks, each block representing the coordinates of $\{(G/e,\nu)
+\}_{e \in \Edges{G}}$ projected on the linear span of $\{(G',\nu')\}$.
 
-The following "facets" function implements exactly this interface:
+The following "block" function implements exactly this interface:
 given two "NumberedFatgraphPool" instances "p1" and "p2" and an edge
 index (referring to an edge in the underlying fatgraph of "p1"), it
-returns an iterator over the non-zero elements in the relevant matrix
-block. 
-Each returned item is a triple "(j,k,s)", where:
+iterates over the non-zero elements in the relevant matrix block.
+
+Assume "p1" is the "NumberedFatgraphPool" instance associated with a
+fatgraph $G_1$, and "p2" is associated with $G_2$.  In particular,
+"p1" provides an exhaustive enumeration of all inequivalent numbering
+maps $\nu_1: \Holes{G_1} \to \{1, \ldots, n\}$, stored in the list
+"p1.numberings"; thus, any integer $j$ in the range from 0 to
+"len(p1.numberings)" identifies a numbering $\nu_1^{(j)}$ on $G_1$,
+i.e., a numbered fatgraph $(G_1, \nu_1^{(j)})$.  Similarly, any valid
+index $k$ into the list "p2.numbering" uniquely identifies a numbered
+fatgraph $(G_2, \nu_2^{(k)})$.  Each item returned from
+"block(p1,e,p2)" is a triple "(j,k,s)", where:
 \begin{itemize}
-\item "j" is the index of a "NumberedFatgraph" in "p1";
-\item "k" is the index of a "NumberedFatgraph" in "p2";
-\item "s" is the sign by which "self[j].contract(edge)" projects onto
-  "other[k]".
+\item "j" is the index of a numbering $\nu_1^{(j)}$ in "p1.numberings";
+\item "k" is the index of a numbering $\nu_2^{(k)}$ in "p2.numberings";
+\item "s" is the sign by which $(G_1/e, \nu_1^{(j)})$ projects onto
+  $(G_2, \nu_2^{(k)})$.
 \end{itemize}
 Only triples for which "s" is non-zero are returned.
+
 \begin{lstlisting}
-  def facets(p1, edge, p2):
+  def block(p1, edge, p2):
     """
-    Iterate over facets obtained by contracting "edge" and
-    projecting onto "p2".
+    Iterate over facets obtained by contracting 
+    "edge" in all numbered graphs in "p1" and 
+    projecting onto graphs in the "p2" family.
     """
 
 \end{lstlisting}
 
-Extract the underlying topological fatgraphs $G_1$, $G_2$ from the
-"NumberedFatgraphPool" instances "p1" and "p2"; also, let $G$ be the
-fatgraph obtained by contracting the chosen edge in $G_1$.
+Let $G_1$, $G_2$ be the topological fatgraphs underlying "p1", "p2" as
+above; also, let $G$ be the fatgraph obtained by contracting the
+chosen edge in $G_1$.
 \begin{lstlisting}
     G1 = p1.graph
     G = G1.contract(edge)
     G2 = p2.graph
     
 \end{lstlisting}
-These three graphs are related by the following diagram of fatgraph
-morphisms, where $f_1$ is the quotient projection map and $f_2$ is a
-fatgraph isomorphism:
+If $G_2$ and $G$ are isomorphic, then these three graphs are related
+by the following diagram of fatgraph morphisms, where $f_1$ is the
+contraction map and $f_2$ is a fatgraph isomorphism:
 \begin{equation*}
   \xymatrix{
     G_1 & 
     \\
     G   &  G_2
     \ar_{f_1} "1,1";"2,1"
-    \ar_{f_2}^{\sim} "2,2";"2,1"
+    \ar_{f_2}^{\sim} "2,1";"2,2"
   }
 \end{equation*}
 If $G_2$ and $G$ are not isomorphic, then the whole matrix block will
-be null so the algorithm should just return an empty list as early as
-possible. 
+be null so the algorithm must return an empty list.
 
-Let $\nu_1$, $\nu$, $\nu_2$ be the ``natural'' numberings on $G_1$,
-$G$, $G_2$, i.e., the maps that enumerate boundary cycles in the order
-they are returned by the "compute_boundary_cycle" method on "G1", "G",
-"G2".  The above diagram functorially induces a \emph{non-commuting}
-diagram on the set of boundary cycles:
-\begin{equation*}
+The above diagram functorially induces a diagram on the set of
+boundary cycles:
+\begin{equation}
+  \label{eq:nbdiag}
   \xymatrix{
     \Holes{G_1} & \{1, \ldots, n\}
     \\
     \Holes{G}   &  \Holes{G_2}
     \ar_{\Holes{f_1}}^{=} "1,1";"2,1"
-    \ar^{\Holes{f_2}}_{\sim} "2,2";"2,1"
-    \ar_{\nu_1} "1,1";"1,2"
+    \ar_{\Holes{f_2}}^{\sim} "2,1";"2,2"
+    \ar^{\nu_1} "1,1";"1,2"
     \ar_{\nu} "2,1";"1,2"
     \ar_{\nu_2} "2,2";"1,2"
   }
-\end{equation*}
-Define:
+\end{equation}
+Diagram~\eqref{eq:nbdiag} commutes iff $f_1$, $f_2$ extend to
+morphisms of numbered fatgraphs $f_1: (G_1, \nu_1) \to (G, \nu)$ and
+$f_2 : (G, \nu) \to (G_2, \nu_2)$.
+
+Let $\bar\nu_1$, $\bar\nu$, $\bar\nu_2$ be the ``canonical''
+numberings on $G_1$, $G$, $G_2$, i.e., enumerate
+boundary cycles in the order they are returned by the
+"compute_boundary_cycle" method on "G1", "G", "G2"; this is
+implemented by a call to "boundary_cycles.index".  Define:
 \begin{equation}
   \label{eq:phi-maps}
-  \phi_1 := \nu \circ \Holes{f_1} \circ \nu_1^{-1},
+  \phi_1 := \bar\nu \circ \Holes{f_1} \circ \bar\nu_1^{-1},
   \qquad
-  \phi_2 := \nu \circ \Holes{f_2} \circ \nu_2^{-1}.
+  \phi_2 := \bar\nu_2 \circ \Holes{f_2} \circ \bar\nu^{-1}.
 \end{equation}
 
-The map $\phi_1$ is relatively easy to compute: since $\nu_1$ numbers
-the boundary cycles of $G_1$ in the order they are returned by
+\begin{lemma}\label{lemma:unique-nu}
+  Given any numbering $\nu_1$ on $G_1$, choose $\sigma_1 \in \Perm{n}$ such that
+  $\nu_1 = \sigma_1 \circ \bar\nu_1$ and define:
+  \begin{equation}\label{eq:nu2}
+    \sigma_2 := \sigma_1 \circ \phi_1\inv \circ \phi_2\inv,
+    \qquad
+    \nu_2 := \sigma_2 \circ \bar\nu_2 ,
+  \end{equation}
+  Then $\nu_2$ is the unique numbering on $G_2$ such that
+  diagram~\eqref{eq:nbdiag} commutes.
+\end{lemma}
+\begin{proof}
+  We need to prove that the external square in diagram~\eqref{eq:nbdiag} is commutative;
+  indeed, we have:
+  \begin{multline*}
+    \sigma_2 = \sigma_1 \circ (\bar\nu_1 \circ \Holes{f_1}\inv \circ
+    \bar\nu\inv) \circ ( \bar\nu \circ \Holes{f_2}\inv \circ
+    \bar\nu_2)
+    \\
+    = \sigma_1 \bar\nu_1 \circ \Holes{f_2 \circ f_1}\inv \circ
+    \bar\nu_2\inv,
+  \end{multline*}
+  so that:
+  \begin{multline*}
+    \nu_2 \circ \Holes{f_2} \circ \Holes{f_1} = \sigma_2 \circ \nu_2
+    \circ \Holes{f_2 \circ f_1}
+    \\
+    = \sigma_1 \bar\nu_1 \circ \Holes{f_2 \circ f_1}\inv \circ
+    \bar\nu_2\inv \circ \nu_2 \circ \Holes{f_2 \circ f_1}
+    \\
+    = \sigma_1 \circ \bar\nu_1 = \nu_1.
+  \end{multline*}
+  The uniqueness assertion is of immediate proof, since maps
+  $\Holes{f_1}$ and $\Holes{f_2}$ are invertible.
+\end{proof}
+
+The sign "s" in a result triplet "(j,k,s)" is obtained by comparing
+the orientation $\Omega_2$ of $(G_2, \nu_2^{(k)})$ with the
+orientation ${(f_2 \circ f_1)}_* \Omega_1$, where $\Omega_1$ is the
+orientation on $(G_1, \nu_1^{(j)})$.  By the above
+Lemma~\ref{lemma:unique-nu}, given $\nu_1 = \nu_1^{(j)}$ there is a
+unique $\nu_2$ such that "s" can be non-null;\FIXME{Quindi,
+  all'interno di un blocco, su ogni colonna c'\'e un solo indice
+  nonzero.  Questa potrebbe essere una osservazione importante per il
+  calcolo del rango: per\`o non sono riuscito finora ad applicarla in
+  alcun modo.} by Lemma~\ref{lemma:sigma+aut}, there exist
+$\nu_2^{(k)} = \sigma_2^{(k)} \circ \bar\nu_2$ and $a \in \Aut G$ such
+that $(G_2, \nu_2^{(k)})$ is representative the isomorphism class
+$[G_2,\nu_2]$ stored within the "NumberedFatgraphPool" instance "p2",
+and $a$ gives the isomorphism between numbered fatgraphs $(G_2,\nu_2)$
+and $(G_2, \nu_2^{(k)})$.  Actual computation of these data is the
+purpose of the final part of this function.
+
+The map $\phi_1$ is relatively easy to compute: since $\bar\nu_1$
+numbers the boundary cycles of $G_1$ in the order they are returned by
 "G1.compute_boundary_cycles", we can just map the composition of
-functions "G1.contract_boundary_cycle" (which expresses $\Holes{f_1}$ on
-the computer representation of $G_1$) and "G.boundary_cycles.index"
-(which computes $\nu$) over the list "G1.boundary_cycles":
+functions "G1.contract_boundary_cycle" (which corresponds to
+$\Holes{f_1}$ on the computer representation "G1" of $G_1$) and
+"G.boundary_cycles.index" (which computes $\bar\nu$) over the list
+"G1.boundary_cycles".  By composing with the "inverse" method of the
+"Permutation" class, we can compute $\phi_1\inv$ in one go and store
+it into the variable "phi1_inv":
 \begin{lstlisting}
-    phi1 = Permutation(enumerate(
-      G.boundary_cycles.index(G1.contract_boundary_cycle(bcy, edge))
-      for bcy in G1.boundary_cycles
-      ))
+    phi1_inv = Permutation(enumerate(
+      G.boundary_cycles.index(
+         G1.contract_boundary_cycle(beta, edge))
+      for beta in G1.boundary_cycles
+      )).inverse()
 
 \end{lstlisting}
  
-Computation of the map $\phi_2$ depends on the chosen isomorphism
+Computation of the map $\phi_2$ depends on the isomorphism
 $f_2$; however, two different choices for $f_2$ will not change the
 outcome of the algorithm: in the final loop at lines~\nr{bl:19}--\nr{bl:25},
 only the sign of $f_2$ is used, and the sign is constant across all
-isomorphisms having the same source and target fatgraphs (provided
-they are orientable).
+isomorphisms having the same source and target fatgraphs (iff
+they are both orientable).
 
-If no isomorphism of $G_2$ onto $G$ can be found, the code needs to
-stop iteration at the earliest possibile stage, which happens on
-line~\nr{bl:18}.  Python allows a "for" loop over an empty list, but
-the body of the loop will not be executed; therefore, we need to use a
-boolean variable "f2_found" to record whether an isomorphism has
-actually been found in the loop in lines~\nr{bl:2}--\nr{bl:16a}: it is
-initialized to "False" on line~\nr{bl:1} and set to "True" on
-line~\nr{bl:16} if an isomorphism is found.
-
-Actual computation of $\phi_2$ happens in lines~\nr{bl:3}--\nr{bl:5}:
-the variable "phi2" is first initialized to an empty "Permutation"
-object, then mappings are added as indices of the boundary cycles of
-$G$, transformed by $f_2$, are looked up in "G.boundary_cycles".  If
-such index lookup fails, construction of "phi2" is abandoned and
-another isomorphism "f2" is tried (line~\nr{bl:6}).
+If there is an isomorphism between "G" and "G2", then it returned by
+the "Fatgraph.isomorphism" function call, and stored into the variable "f2":
 \begin{lstlisting}
-    f2_found = False                                       |\n{bl:1}|
-    for f2 in Fatgraph.isomorphisms(G2, G):                |\n{bl:2}|
-      try:
-        phi2 = Permutation()
-        for (index, bc) in enumerate(G.boundary_cycles):   |\n{bl:3}|
-          bc2 = f2.transform_boundary_cycle(bc)            |\n{bl:4}|
-          phi2[index] = G2.boundary_cycles.index(bc2)      |\n{bl:5}|
-      except KeyError:                                     
-        continue # with next "f2"                          |\n{bl:6}|
+    f2 = Fatgraph.isomorphisms(G, G2).next()                |\n{bl:2}|
+\end{lstlisting}
+If no isomorphism between "G" and "G2" is found, execution stops here
+and end of iteration is signaled to the caller function. (A
+"StopIteration" exception is raised by the "next()" method, and
+propagated to the caller, exiting the "block" function without
+results.)
+
+Computation of $\phi_2\inv$ happens in lines~\nr{bl:3}--\nr{bl:4b}:
+it follows closely the similar computation for $\phi_1\inv$:
+\begin{lstlisting}
+    phi2_inv = Permutation(enumerate(             |\n{bl:3}|
+      G.2boundary_cycles.index(                   |\n{bl:4}|
+          f2.transform_boundary_cycle(beta))      |\n{bl:4a}|
+      for beta in G.boundary_cycles               |\n{bl:4b}|
+      )).inverse()
 
 \end{lstlisting}
 
-A further check needs to be performed on the candidate isomorphism
-"f2": that every numbering of "G1" can be mapped to a
-numbering on "G2" through the composite map $\phi_2^{-1} \circ
-\phi_1$; otherwise the ismorphism map $f_2$ must be rejected as
-invalid.\FIXME{Explain.}  This is done in
-lines~\nr{bl:7}--\nr{bl:15} as follows.
+On lines~\nr{bl:6}--\nr{bl:7}, the "push_fwd" function is defined to
+compute $\phi_1^{-1} \circ \phi_2\inv$:
+\begin{lstlisting}
+    def push_fwd(sigma):                                     |\n{bl:7}|
+      return phi2_inv.rearranged(phi1_inv.rearranged(sigma)) |\n{bl:8}|
+\end{lstlisting}
+Indeed, if "p" is a "Permutation" instance and "s" is a list, then
+"p.rearranged(s)" is the list whose "i"-th item is "s[p[i]]".
 
-On lines~\nr{bl:6}--\nr{bl:7}, the "composite" function is defined to
-compute $\phi_1^{-1} \circ \phi_2$.  Indeed, if "p" is a "Permutation"
-instance and "s" is a list, then "p.rearranged(s)" is the list whose
-"i"-th item is "s[p[i]]".
-
-Two "dict" instances "nb_map" and "a_map" are defined:
+In order to map the numberings $\nu_1^{(j)}$ onto the $\nu_2^{(k)}$
+and the corresponding $a$, two "dict" instances "sigma_map" and
+"a_map" are defined:
 \begin{itemize}
 \item the first maps (indices of) numberings in the
   "NumberedFatgraphPool" instance "p1" to corresponding
@@ -3192,42 +3402,25 @@ Two "dict" instances "nb_map" and "a_map" are defined:
   to $\phi_1^{-1} \circ \phi_2$ of the numbering corresponding to the
   coset $\sigma P$ with $\sigma = \Phi(a)$ (in "p2").
 \end{itemize}
-If the index lookup operation on line~\nr{bl:12} fails, then
-"KeyError" is raised and execution goes back to line~\nr{bl:2} to try
-with a new candidate isomorphism "f2".
+Actually computing these maps is straightforward: they are first
+initialized to empty "dict" instances (lines~\nr{bl:9} and~\nr{bl:10})
+and then a loop is run over all inequivalent numberings on "G1"
+(line~\nr{bl:11});  the corresponding data on "G2" is provided by the
+"p2.index_and_aut" method (which see):
 \begin{lstlisting}
-      def composite(nb):                                     |\n{bl:7}|
-        return phi2.rearranged(phi1.inverse().rearranged(nb))|\n{bl:8}|
-      try:
-        nb_map = dict()                                      |\n{bl:9}|
-        a_map = dict()                                       |\n{bl:10}|
-        for (i, nb) in enumerate(p1.numberings):             |\n{bl:11}|
-          (j, a) = p2._index_and_aut(composite(nb))          |\n{bl:12}|
-          nb_map[i] = j                                      |\n{bl:13}|
-          a_map[i] = a                                       |\n{bl:14}|
-      except KeyError:
-        continue # with next "f2"                            |\n{bl:15}|
-\end{lstlisting}
-If execution reaches this point, then "f2" is a graph
-isomorphism that induces a map on the boundary cycles
-\begin{lstlisting}
-      f2_found = True                                        |\n{bl:16}|
-      break # correct "f2" found                             |\n{bl:16a}|
-\end{lstlisting}
-Conversely, if no isomorphism between "G" and "G2" was found,
-execution stops here and end of iteration is signaled to the caller
-function:
-\begin{lstlisting}
-    if not f2_found:                                         |\n{bl:17}|
-      raise StopIteration                                    |\n{bl:18}|
+    sigma_map = { }                                        |\n{bl:9}|
+    a_map = { }                                            |\n{bl:10}|
+    for (j, sigma) in enumerate(p1.numberings):            |\n{bl:11}|
+      (k, a) = p2.index_and_aut(push_fwd(sigma))           |\n{bl:12}|
+      sigma_map[i] = k                                     |\n{bl:13}|
+      a_map[i] = a                                         |\n{bl:14}|
 
 \end{lstlisting}
 
-For every numbering "nb" on "G1", compute the (index of)
-corresponding numbering on "G2" (under the composition map
-$f_2^{-1} \circ f_1$) and return the triple ``(index of nb, index of
-push-forward, sign)''.
-There are three components that make up the sign "s":
+Finally, for every numbering "sigma" on "G1" (corresponding to a
+$\nu_1^{(j)}$), compute the (index of) corresponding numbering
+$\nu_2^{(k)}$ on "G2" and return the triple formed by $j$, $k$ and the
+sign.  There are three components that make up the sign "s":
 \begin{itemize}
 \item the sign given by the ismorphism "f2";
 \item the sign of the automorphism of "G2" that transforms the
@@ -3237,28 +3430,16 @@ There are three components that make up the sign "s":
 \end{itemize}
 \begin{lstlisting}
     for (j, nb) in enumerate(p1.numberings):     |\n{bl:19}|
-      k = nb_map[j]                              |\n{bl:20}|
+      k = sigma_map[j]                           |\n{bl:20}|
       a = a_map[j]                               |\n{bl:21}|
       s = f2.compare_orientations() \            |\n{bl:22}|
         * a.compare_orientations() \             |\n{bl:23}|
         * (-1)**(G1.edge_numbering[edge])        |\n{bl:24}|
       yield (j, k, s)                            |\n{bl:25}|
-  # end of "NumberedFatgraphPool.facets"
+  # end of "NumberedFatgraphPool.block"
 
 \end{lstlisting}
 
-\begin{lstlisting}
-  def _index_and_aut(self, numbering):
-    """
-    """
-    for (i, p) in enumerate(self.P):
-      try:
-        j = self.numberings.index(p.rearranged(numbering))
-        # once a "p" has matched, there's no reason to try others
-        return (j, self.A[i])
-      except ValueError:
-        pass # ignore errors if "p" is not included in "self.numberings"
-\end{lstlisting}
 
 \subsection{A specialized chain complex object}
 \label{sec:MgnChainComplex}
@@ -3320,7 +3501,7 @@ class MgnChainComplex(ChainComplex):
           for edgeno in range(pool1.graph.num_edges):
             if pool1.graph.is_loop(edgeno):
               continue # with next "edgeno"
-            for (j, k, s) in NumberedFatgraphPool.facets(pool1, edgeno, pool2):
+            for (j, k, s) in NumberedFatgraphPool.block(pool1, edgeno, pool2):
               d.addToEntry(k+k0, j+j0, s)
           k0 += len(pool2)
         j0 += len(pool1)
