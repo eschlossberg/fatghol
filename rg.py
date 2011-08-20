@@ -84,18 +84,17 @@ class Vertex(CyclicList):
           >>> Vertex([1]).is_maximal_representative()
           True
         """
-        def wrap_index(i,l):
-            if i >= l:
-                return i % l
-            else:
-                return i
         L = len(self)
         for i in xrange(1,L):
             for j in xrange(0,L):
-                if self[wrap_index(i+j,L)] < self[j]:
+                # k := (i+j) mod L
+                k = i+j
+                if k >= L:
+                    k %= L
+                if self[k] < self[j]:
                     # continue with next i
                     break
-                elif self[wrap_index(i+j,L)] > self[j]:
+                elif self[k] > self[j]:
                     return False
                 # else, continue comparing
         return True
@@ -161,7 +160,181 @@ class Graph(object):
         return repr(self.vertices)
     def __str__(self):
         return str(self.vertices)
-            
+
+    def automorphisms(self):
+        """Enumerate automorphisms of this `Graph` object.
+
+        An automorhism is represented as a pair of ordered lists `(dests,
+        rots)`: the i-th vertex of `graph` is to be mapped to the vertex
+        `dests[i]`, and rotated by `rots[i]`.
+        """
+        # build enpoints vector for the final check that a constructed map
+        # is an automorphism
+        ev = [ self.endpoints(l) for l in self.edges() ]
+        ev.sort()
+
+        # gather valences and repetition pattern at
+        # start for speedup
+        valence = [ len(vertex) for vertex in self.vertices ]
+        rp = [ repetition_pattern(vertex) for vertex in self.vertices ]
+
+        ## pass 1: for each vertex, list all destinations it could be
+        ## mapped to, in the form (dest. vertex, rotation).
+
+        # pre-allocate empty list of right size
+        candidates = [ [] ] * len(graph)
+        
+        # FIXME: if vertex i can be mapped into vertex j, with some
+        # rotation delta, then vertex j can be mapped into vertex i
+        # with rotation -delta, so rearrange this to only do
+        # computations for i>j and use the values already available in
+        # the other case...
+        num_vertices = self.num_vertices()
+        for i in xrange(num_vertices):
+            for j in xrange(num_vertices):
+                # if valences don't match, skip to next vertex in list
+                if valence[i] != valence[j]:
+                    continue
+                # if repetition patterns don't match, skip to next vertex in list
+                if not (rp[i] == rp[j]):
+                    continue
+                # append `(destination vertex, rotation shift)` to
+                # candidate destinations list
+                for delta in rp[i].all_shifts_for_list_eq(rp[j]):
+                    candidates[i].append((j,delta))
+
+        ## pass 2: for each vertex, pick a destination and return the resulting
+        ##         automorphism. (FIXME: do we need to check that the adjacency 
+        ##         matrix stays the same?)
+        for a in enumerate_set_product(candidates):
+            # check that map does not map two distinct vertices to the same one
+            already_assigned = []
+            a_is_no_real_map = False
+            for dest in a:
+                v = dest[0]
+                if v in already_assigned:
+                    a_is_no_real_map = True
+                    break
+                else:
+                    already_assigned.append(v)
+            if a_is_no_real_map:
+                # try with next map `a`
+                continue
+            # check that the endpoints vector stays the same
+            vertex_permutation = [ elt[0] for elt in a ]
+            new_ev = [
+                (vertex_permutation[e[0]], vertex_permutation[e[1]])
+                for e in ev
+                ]
+            new_ev.sort()
+            if 0 != deep_cmp(ev, new_ev):
+                # this is no automorphism, skip to next one
+                continue
+            # return automorphism in (vertex_perm_list, rot_list) form
+            yield ([ elt[0] for elt in a ],
+                   [ elt[1] for elt in a ])
+
+    def classify(self):
+        """Return the pair (g,n) for this `Graph` object."""
+        return (self.genus(), self.num_boundary_components())
+
+    def edges(self):
+        """Iterate over edge colorings."""
+        return xrange(1, self.num_edges()+1)
+    
+    def endpoints(self, n):
+        """Return the endpoints of edge `n`.
+    
+        The endpoints are returned as a pair (v1,v2) where `v1` and `v2`
+        are indices of vertices in this `Graph` object.
+        """
+        result = []
+        for vi in range(len(self.vertices)):
+            c = self.vertices[vi].count(n)
+            if 2 == c:
+                return (vi,vi)
+            elif 1 == c:
+                result.append(vi)
+        if 0 == len(result):
+            raise KeyError, "Edge %d not found in graph '%s'" % (n, repr(self))
+        return result
+    
+    def genus(self):
+        """Return the genus g of this `Graph` object."""
+        # compute value if not already done
+        if (self._genus is None):
+            n = self.num_boundary_components()
+            K = self.num_vertices()
+            L = self.num_edges()
+            # by Euler, K-L+n=2-2*g
+            self._genus = (L - K - n + 2) / 2
+        return self._genus
+
+    def has_orientation_reversing_automorphism(self):
+        """Return `True` if `Graph` has an orientation-reversing automorphism.
+
+        Enumerate all automorphisms of `graph`, end exits with `True`
+        result as soon as one orientation-reversing one is found.
+        """
+        for a in self.automorphisms():
+            if is_orientation_reversing(a):
+                return True
+        return False
+
+    def is_orientation_reversing(self, automorphism):
+        """Return `True` if `automorphism` reverses orientation of this `Graph` instance."""
+        def sign_of_rotation(l,r=1):
+            """Return sign of a rotation of `l` elements, applied `r` times."""
+            # evaluating a conditional is faster than computing (-1)**...
+            if 0 == ((l-1)*r) % 2:
+                return 1
+            else:
+                return -1
+        def sign_of_permutation(p):
+            """Return sign of permutation `p`.
+
+            A permutation is represented as a linear list: `p` maps `i` to
+            `p[i]`.  Items of `p` are required to be valid indices in `p`,
+            that is, `p[i] =< max(p)` for all `i`.
+
+            This is an adaptation of the `perm_sign` code by John Burkardt
+            (see it among the collection at
+            http://orion.math.iastate.edu/burkardt/f_src/subset/subset.f90
+            or http://www.scs.fsu.edu/~burkardt/math2071/perm_sign.m ); it
+            computes the sign by counting the number of interchanges
+            required to change the given permutation into the identity
+            one.
+
+            Examples::
+              >>> sign_of_permutation([1,2,3])
+              1
+              >>> sign_of_permutation([1,3,2])
+              -1
+              >>> sign_of_permutation([3,1,2])
+              1
+              >>> sign_of_permutation([1])
+              1
+              >>> sign_of_permutation([])
+              1
+            """
+            n = len(p)
+            s = +1
+            # get elements back in their home positions
+            for j in xrange(n):
+                q = p[j]
+                if q !=j :
+                    p[j],p[q] = p[q],q # interchange p[j] and p[p[j]]
+                    s = -s             # and account for the interchange
+            # note that q is now in its home position
+            # whether or not an interchange was required
+            return s
+        return reduce(operator.mul,
+                      [ sign_of_rotation(l,r)
+                        for l,r in
+                        ([ len(v) for v in self.vertices],
+                         automorphism[1]) ],
+                      sign_of_permutation(automorphism[0]))
+
     def is_canonical(self):
         """Return `True` if this `Graph` object is canonical.
 
@@ -189,29 +362,6 @@ class Graph(object):
             previous_vertex = vertex
         return True
     
-    def endpoints(self, n):
-        """Return the endpoints of edge `n`.
-    
-        The endpoints are returned as a pair (v1,v2) where `v1` and `v2`
-        are indices of vertices in this `Graph` object.
-        """
-        result = []
-        for vi in range(len(self.vertices)):
-            c = self.vertices[vi].count(n)
-            if 2 == c:
-                return (vi,vi)
-            elif 1 == c:
-                result.append(vi)
-        if 0 == len(result):
-            raise KeyError, "Edge %d not found in graph '%s'" % (n, repr(self))
-        return result
-    
-    def num_edges(self):
-        return self._num_edges
-
-    def num_vertices(self):
-        return self._num_vertices
-
     def num_boundary_components(self):
         """Return the number of boundary components of this `Graph` object.
 
@@ -308,20 +458,11 @@ class Graph(object):
         # that's all, folks!
         return result
 
-    def genus(self):
-        """Return the genus g of this `Graph` object."""
-        # compute value if not already done
-        if (self._genus is None):
-            n = self.num_boundary_components()
-            K = self.num_vertices()
-            L = self.num_edges()
-            # by Euler, K-L+n=2-2*g
-            self._genus = (L - K - n + 2) / 2
-        return self._genus
-    
-    def classify(self):
-        """Return the pair (g,n) for this `Graph` object."""
-        return (self.genus(), self.num_boundary_components())
+    def num_edges(self):
+        return self._num_edges
+
+    def num_vertices(self):
+        return self._num_vertices
 
     def valence_spectrum(self):
         """Return a dictionary mapping valences into vertex indices."""
@@ -405,12 +546,12 @@ def all_graphs(vertex_valences):
         pos2 = pos+1
         while pos2 < len(graphs):
             candidate = graphs[pos2]
-            candidate_is_isomorhic_to_current = False
+            candidate_is_isomorphic_to_current = False
             if candidate == current:
-                candidate_is_isomorhic_to_current = True
+                candidate_is_isomorphic_to_current = True
             else:
                 for vertex_index_map in vertex_to_vertex_mappings:
-                    perm = Map(total_edges)
+                    morphism = Map(total_edges)
                     for i1,i2 in izip(vertex_to_vertex_mapping_domain, vertex_index_map):
                         v1 = current.vertices[i1]
                         (b1, rp1) = v1.repetition_pattern()
@@ -424,14 +565,14 @@ def all_graphs(vertex_valences):
                         #  displacement for v1 by summing elements of rp1 up to
                         # -but not including- `rp_shift`.
                         shift = sum(rp1[:rp_shift])
-                        if not perm.extend(v1[b1+shift:b1+shift+len(v1)],v2[b2:b2+len(v2)]):
+                        if not morphism.extend(v1[b1+shift:b1+shift+len(v1)],v2[b2:b2+len(v2)]):
                             # continue with next candidate
-                            perm = None
+                            morphism = None
                             break
-                    if perm and perm.completed():
+                    if morphism and morphism.is_complete():
                         # the two graphs are isomorphic
-                        candidate_is_isomorhic_to_current = True
-            if candidate_is_isomorhic_to_current:
+                        candidate_is_isomorphic_to_current = True
+            if candidate_is_isomorphic_to_current:
                 # delete candidate; do *not* advance `pos2`, as the
                 # list would be shifted up because of the deletion in
                 # the middle.
@@ -519,136 +660,6 @@ def all_canonical_decorated_graphs(vertex_valences, total_edges):
         g = Graph(vertex_valences, edge_seq)
         if g.is_canonical():
             yield g
-            
-
-
-def all_automorphisms(graph):
-    """Enumerate all automorphisms of `graph`.
-
-    An automorhism is represented as a pair of ordered lists `(dests,
-    rots)`: the i-th vertex of `graph` is to be mapped to the vertex
-    `dests[i]`, and rotated by `rots[i]`.
-    """
-    # build enpoints vector for the final check that a constructed map
-    # is an automorphism
-    ev = []
-    for l in range(1,num_edges(graph)+1):
-        ev.append(endpoints(l, graph))
-    ev.sort()
-    
-    # gather valences and repetition pattern at
-    # start for speedup
-    valence = [len(vertex) for vertex in graph]
-    rp = [repetition_pattern(vertex) for vertex in graph]
-
-    ## pass 1: for each vertex, list all destinations it could be mapped to,
-    ##         in the form (dest. vertex, rotation).
-    candidates = [ [] ] * len(graph)
-    # FIXME: if vertex i can be mapped into vertex j, with some rotation delta,
-    # then vertex j can be mapped into vertex i with rotation -delta,
-    # so rearrange this to only do computations for i>j and use the values already
-    # available in the other case...
-    for i in range(len(graph)):
-        for j in range(len(graph)):
-            # if valences don't match, skip to next vertex in list
-            if valence[i] != valence[j]:
-                continue
-            # if repetition patterns don't match, skip to next vertex in list
-            if not (rp[i] == rp[j]):
-                continue
-            # append `(destination vertex, rotation shift)` to
-            # candidate destinations list
-            for delta in rp[i].all_shifts_for_list_eq(rp[j]):
-                candidates[i].append((j,delta))
-
-    ## pass 2: for each vertex, pick a destination and return the resulting
-    ##         automorphism. (FIXME: do we need to check that the adjacency 
-    ##         matrix stays the same?)
-    for a in enumerate_set_product(candidates):
-        # check that map does not map two distinct vertices to the same one
-        already_assigned = []
-        a_is_no_real_map = False
-        def first(seq):
-            return seq[0]
-        for dest in a:
-            v = first(dest)
-            if v in already_assigned:
-                a_is_no_real_map = True
-            else:
-                already_assigned.append(v)
-        if a_is_no_real_map:
-            # try with next map
-            continue
-        # check that the endpoints vector stays the same
-        vertex_permutation = map(first, a)
-        new_ev = [(vertex_permutation[e[0]], vertex_permutation[e[1]]) for e in ev]
-        new_ev.sort()
-        if 0 != deep_cmp(ev, new_ev):
-            # this is no automorphism, skip to next one
-            continue
-        # return automorphism in (vertex_perm_list, rot_list) form
-        def second(seq):
-            return seq[1]
-        yield (map(first, a), map(second, a))
-
-
-def is_orientation_reversing(graph, automorphism):
-    """Return `True` if `automorphism` reverses orientation of `graph`."""
-    def sign_of_rotation(l,r=1):
-        """Return the sign of a rotation of `l` elements, applied `r` times."""
-        # evaluating a conditional is faster than computing (-1)**...
-        if 0 == ((l-1)*r) % 2:
-            return 1
-        else:
-            return -1
-    def sign_of_permutation(p):
-        """Recursively compute the sign of permutation `p`.
-
-        A permutation is represented as a linear list: `p` maps
-        `i` to `p[i]`.
-
-        Examples:
-        >>> sign_of_permutation([1,2,3])
-        1
-        >>> sign_of_permutation([1,3,2])
-        -1
-        >>> sign_of_permutation([3,1,2])
-        1
-        >>> sign_of_permutation([1])
-        1
-        >>> sign_of_permutation([])
-        1
-        """
-        l = len(p)
-        if 1 >= l:
-            return 1
-        # find highest-numbered element
-        k = p.index(l)
-        # remove highest-numbered element for recursion
-        q = p[:]
-        del q[k] 
-        # recursively compute
-        if 0 == ((l+k) % 2):
-            s = -1
-        else:
-            s = 1
-        return s * sign_of_permutation(q)
-    return reduce(operator.mul,
-                  map(sign_of_rotation,
-                      map(len, graph), automorphism[1]),
-                  sign_of_permutation(automorphism[0]))
-                                         
-
-def has_orientation_reversing_automorphism(graph):
-    """Return `True` if `graph` has an orientation-reversing automorphism.
-    
-    Enumerate all automorphisms of `graph`, end exits with `True`
-    result as soon as one orientation-reversing one is found.
-    """
-    for a in all_automorphisms(graph):
-        if is_orientation_reversing(a):
-            return True
-    return False
 
 
 class Map:
@@ -695,7 +706,7 @@ class Map:
             else:
                 self.map[src] = mappings[src]
         return True
-    def completed(self):
+    def is_complete(self):
         return self.order == len(self.map.keys())
     def is_assigned(self, src):
         return self.map.has_key(src)
