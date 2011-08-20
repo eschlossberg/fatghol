@@ -231,7 +231,7 @@ resource.setrlimit(resource.RLIMIT_CORE, (0,0))
 
 # parse command-line options
 from optparse import OptionParser
-parser = OptionParser(version="3.6.1",
+parser = OptionParser(version="3.7",
     usage="""Usage: %prog [options] action [arg ...]
 
 Actions:
@@ -252,7 +252,7 @@ Actions:
     Run internal code tests and report failures.
     """)
 parser.add_option("-C", "--cache",
-                  action="count", dest="cache", default=0,
+                  action="store_true", dest="cache", default=False,
                   help="""Turn on internal result caching (trade memory for speed).  With '-C', cache graph attributes and equality testing results: this gives a small speedup with a reasonable memory increase.  With '-CC', cache also isomorphism groups: the speedup is nearly double, but the memory usage can be more than doubled.""")
 parser.add_option("-f", "--feature", dest="features", default=None,
                   help="""Enable optional speedup or tracing features:
@@ -344,13 +344,11 @@ from cache import (
     ocache_weakref,
     )
 
-if options.cache is not None:
+if options.cache:
     ocache0.enabled = True
     ocache_weakref.enabled = True
     ocache_symmetric.enabled = True
-    # only enable iterator caching wih "-CC"
-    if options.cache > 1:
-        ocache_iterator.enabled = True
+    ocache_iterator.enabled = True
     # this reduces memory usage at the cost of some speed
     gc.enable()
     if options.cache < 3:
