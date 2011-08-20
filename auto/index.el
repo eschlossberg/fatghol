@@ -1,5 +1,6 @@
 (TeX-add-style-hook "index"
- (lambda ()
+ (function
+  (lambda ()
     (LaTeX-add-bibliographies
      "math")
     (LaTeX-add-environments
@@ -28,50 +29,45 @@
      '("Holes" 1)
      '("Edges" 1)
      '("Vertices" 1)
+     '("ftpc" 1)
      '("btpc" 1)
      '("tpc" 1)
      '("freemsc" 1)
      '("freemc" 1)
-     '("textsuperscript" 1)
-     '("textsubscript" 1)
      "theoremname"
-     "ksz"
-     "aksz"
      "A"
      "B"
      "rev"
      "catN"
-     "Ao"
      "Conf"
      "T"
      "Lb"
      "Hn"
-     "Harmonic"
-     "ad"
-     "rel"
      "xyc"
-     "csref")
+     "nx")
     (TeX-run-style-hooks
      "graphicx"
      "final"
+     "csref"
+     "nomencl"
+     "refpage"
      "hyperref"
      "url"
      "mdwtab"
      "mdwlist"
      "paralist"
-     "newenum"
      "newitem"
-     "xytree"
+     "newenum"
      "rg"
      "xy"
-     "poly"
-     "knot"
-     "arc"
-     "all"
-     "colour"
-     "xdvi"
-     "dvips"
      "ps"
+     "dvips"
+     "xdvi"
+     "colour"
+     "all"
+     "arc"
+     "knot"
+     "poly"
      "miscmath"
      "amsthm"
      "rcs"
@@ -79,19 +75,16 @@
      "latex2e"
      "amsbook10"
      "amsbook"
-     "draft"
-     "openany"
-     "reqno"
      "a4paper"
+     "reqno"
+     "openany"
+     "draft"
      "title"
      "prelim"
-     "ainfty"
      "gc"
      "fd"
      "kontsevich"
-     "construction"
      "arrows"
      "btc"
-     "rt"
-     "operads")))
+     "rt"))))
 

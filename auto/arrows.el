@@ -2,7 +2,7 @@
  (function
   (lambda ()
     (LaTeX-add-labels
-     "cha:arrows-only"
+     "cha:arrows"
      "item:A1"
      "dfn:object"
      "item:AO1"

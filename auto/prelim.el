@@ -1,7 +1,7 @@
 (TeX-add-style-hook "prelim"
- (lambda ()
+ (function
+  (lambda ()
     (LaTeX-add-labels
-     "cha:prelim"
      "sec:dg-things"
      "sec:btc+dg"
      "eq:dgm-braiding"
@@ -14,5 +14,6 @@
      "eq:vec-evaluation"
      "eq:vec-coevaluation"
      "rem:ev-rev"
-     "sec:bosonic")))
+     "sec:bosonic"
+     "sec:fermionic"))))
 

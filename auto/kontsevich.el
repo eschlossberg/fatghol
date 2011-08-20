@@ -1,12 +1,11 @@
 (TeX-add-style-hook "kontsevich"
- (lambda ()
+ (function
+  (lambda ()
     (LaTeX-add-labels
      "cha:kontsevich"
      "sec:moduli-spaces"
      "dfn:teichmuller"
      "dfn:mapping-class-group"
-     "rem:moduli-punctured"
-     "rem:moduli-with-reference"
      "sec:moduli-space-stable"
      "sec:witten-classes"
      "eq:intersection-index"
@@ -41,5 +40,5 @@
      "thm:KMI-Z"
      "eq:KM"
      "eq:casimir"
-     "eq:vertices")))
+     "eq:vertices"))))
 

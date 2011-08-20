@@ -1,7 +1,8 @@
 (TeX-add-style-hook "fd"
- (lambda ()
+ (function
+  (lambda ()
     (LaTeX-add-labels
-     "cha:fd"
+     "sec:fd"
      "dfn:gaussian-measure"
      "eq:avg-x"
      "eq:W1"
@@ -20,5 +21,5 @@
      "G3"
      "G4"
      "thm:feynman-of-Z"
-     "eq:feynman-of-Z")))
+     "eq:feynman-of-Z"))))
 
