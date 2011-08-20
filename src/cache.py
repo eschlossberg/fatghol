@@ -8,6 +8,7 @@ __docformat__ = 'reStructuredText'
 ## additional imports
 
 from decorator import decorator
+from time import time
 
 
 ## local imports
@@ -52,7 +53,27 @@ class PersistentCount(Iterator):
         
         return self.counted
 
-_unique = PersistentCount()
+
+class TimeBasedUnique(Iterator):
+    """Return a new unique ID at each iteration step.
+
+    The returned ID is the number of nanoseconds elapsed since the
+    system epoch.  The returned ID is guaranteed to be monotonically
+    increasing::
+
+      >>> u = TimeBasedUnique()
+      >>> u.next() < u.next() < u.next()
+      True
+
+    """
+    def __init__(self):
+        pass
+
+    def next(self):
+        return int(time() * 1000000)
+
+
+_unique = TimeBasedUnique()
 
 
 def persistent_id(o):
