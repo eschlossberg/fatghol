@@ -23,8 +23,10 @@ from combinatorics import (
     Permutation,
     )
 from cyclicseq import CyclicList,CyclicTuple
+import persist
 from utils import (
     BufferingIterator,
+    Iterator,
     concat,
     itranslate,
     sign,
@@ -36,9 +38,9 @@ from utils import (
 class VertexCache(object):
     """A caching factory of `Vertex` objects.
     """
-    __slots__ = [
-        'cache',
-        ]
+##     __slots__ = [
+##         'cache',
+##         ]
     def __init__(self):
         self.cache = {}
     def __call__(self, edge_seq):
@@ -61,7 +63,7 @@ class Vertex(CyclicList):
     #   2) we could not implement `rotate()` and friends: tuples are
     #      immutable.
 
-    __slots__ = [ '_num_loops' ]
+##     __slots__ = [ '_num_loops' ]
 
     def __init__(self, seq=None):
         self._num_loops = None
@@ -171,7 +173,19 @@ class Vertex(CyclicList):
                     seen[self[x]] = True
             self._num_loops = loops
         return self._num_loops
-                
+
+
+class _count(Iterator):
+    """A pickable clone of `itertools.count`."""
+
+    def __init__(self):
+        self.counted = -1
+
+    def next(self):
+        self.counted += 1
+        return self.counted
+
+
 class Graph(object):
     """A fully-decorated ribbon graph.
 
@@ -180,31 +194,31 @@ class Graph(object):
     """
     # the only reason to use `__slots__` here is to keep a record of
     # all instance attribute names.
-    __slots__ = [
-        '_boundary_components',
-        '_fasteq_cache',
-        '_genus',
-        '_id',
-        '_id_factory',
-        '_numbering',
-        '_num_boundary_components',
-        '_valence_spectrum',
-        '_vertextype',
-        '_vertex_valences',
-        'endpoints_v',
-        'endpoints_i',
-        'numbering',
-        'num_edges',
-        'num_external_edges',
-        'num_vertices',
-        'orient_e',
-        #'orient_v',
-        #'orient_a',
-        'vertices',
-        ]
+##     __slots__ = [
+##         '_boundary_components',
+##         '_fasteq_cache',
+##         '_genus',
+##         '_id',
+##         '_id_factory',
+##         '_numbering',
+##         '_num_boundary_components',
+##         '_valence_spectrum',
+##         '_vertextype',
+##         '_vertex_valences',
+##         'endpoints_v',
+##         'endpoints_i',
+##         'numbering',
+##         'num_edges',
+##         'num_external_edges',
+##         'num_vertices',
+##         'orient_e',
+##         #'orient_v',
+##         #'orient_a',
+##         'vertices',
+##         ]
 
     def __init__(self, vertices, vertextype=Vertex,
-                 __fasteq_cache={}, __id_factory=count(), **kwargs):
+                 __fasteq_cache={}, __id_factory=_count(), **kwargs):
         """Construct a `Graph` instance, taking list of vertices.
 
         Argument `vertices` must be a sequence of `Vertex` class
@@ -1583,7 +1597,7 @@ def MakeNumberedGraphs(graph):
     return graphs
 
 
-class ConnectedGraphsIterator(BufferingIterator):
+class _ConnectedGraphsIterator(BufferingIterator):
     """Iterate over all connected numbered graphs having vertices of
     the prescribed valences.
     
@@ -1645,9 +1659,9 @@ class ConnectedGraphsIterator(BufferingIterator):
 
     """
 
-    __slots__ = [
-        '_graphs',
-        ]
+##     __slots__ = [
+##         '_graphs',
+##         ]
 
     def __init__(self, vertex_valences, vertextype=VertexCache()):
         assert debug.is_sequence_of_integers(vertex_valences), \
@@ -1666,9 +1680,10 @@ class ConnectedGraphsIterator(BufferingIterator):
 
     def refill(self):
         return MakeNumberedGraphs(self._graphs.next())
+ConnectedGraphsIterator = persist.PersistedIterator(_ConnectedGraphsIterator)
 
 
-class GivenValenceGraphsIterator(object):
+class _GivenValenceGraphsIterator(object):
     """Iterate over all connected (un-numbered) ribbon graphs having
     vertices of the prescribed valences.
     
@@ -1703,13 +1718,13 @@ class GivenValenceGraphsIterator(object):
 
     """
 
-    __slots__ = [
-        'graphs',
-        'vertextype',
-        '_edge_seq_iterator',
-        '_morphism_factory',
-        '_vertex_valences',
-        ]
+##     __slots__ = [
+##         'graphs',
+##         'vertextype',
+##         '_edge_seq_iterator',
+##         '_morphism_factory',
+##         '_vertex_valences',
+##         ]
 
     def __init__(self, vertex_valences, vertextype=VertexCache()):
         assert debug.is_sequence_of_integers(vertex_valences), \
@@ -1757,6 +1772,7 @@ class GivenValenceGraphsIterator(object):
 
         # no more graphs to generate
         raise StopIteration
+GivenValenceGraphsIterator = persist.PersistedIterator(_GivenValenceGraphsIterator)
 
 
 def AlgorithmB(n):
@@ -1907,7 +1923,7 @@ class TreeIterator(BufferingIterator):
             raise StopIteration
 
 
-class MgnGraphsIterator(BufferingIterator):
+class _MgnGraphsIterator(BufferingIterator):
     """Iterate over all connected numbered graphs having the
     prescribed genus `g` and number of boundary cycles `n`.
     
@@ -1951,14 +1967,14 @@ class MgnGraphsIterator(BufferingIterator):
 
     """
 
-    __slots__ = [
-        '_batch',
-        '_current_edge',
-        '_num_vertices',
-        '_vertextype',
-        'g',
-        'n',
-        ]
+##     __slots__ = [
+##         '_batch',
+##         '_current_edge',
+##         '_num_vertices',
+##         '_vertextype',
+##         'g',
+##         'n',
+##         ]
 
     def __init__(self, g, n, vertextype=VertexCache()):
         assert n > 0, \
@@ -2075,7 +2091,7 @@ class MgnGraphsIterator(BufferingIterator):
         logging.info("Found %d distinct numbered graphs with %d vertices.",
                      len(result), self._num_vertices)
         return result
-    
+MgnGraphsIterator = persist.PersistedIterator(_MgnGraphsIterator)
 
 
 ## main: run tests

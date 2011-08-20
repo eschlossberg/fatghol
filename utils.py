@@ -7,10 +7,17 @@ These were mostly ripped out of `rg.py` for readability.
 __docformat__ = 'reStructuredText' 
 
 
+## stdlib imports
+
 import operator
 import types
 
+## additional imports
 
+from decorator import decorator
+
+
+## main content
 
 class BufferingIterator(object):
     """Iterate over items stored in an internal buffer; when all items
@@ -38,7 +45,7 @@ class BufferingIterator(object):
       
     """
     
-    __slots__ = ('__buffer',)
+##     __slots__ = ('__buffer',)
 
     def __init__(self, initial=None):
         """Create a `BufferingIterator` instance and fill the internal
@@ -48,10 +55,10 @@ class BufferingIterator(object):
             self.__buffer = []
         else:
             self.__buffer = list(initial)
-    
+
     def __iter__(self):
         return self
-
+    
     def next(self):
         """Return next item from queue, refilling queue if empty."""
         # try to refill buffer if empty
@@ -75,6 +82,30 @@ class BufferingIterator(object):
         """
         raise StopIteration
 
+
+# from /usr/share/doc/python-decorator/documentation.txt.gz
+def getattr_default(obj, name, default_thunk):
+    "Similar to .setdefault in dictionaries."
+    try:
+        return getattr(obj, name)
+    except AttributeError: 
+        default = default_thunk()
+        setattr(obj, name, default)
+        return default
+
+
+# from /usr/share/doc/python-decorator/documentation.txt.gz   
+@decorator
+def memoize(func, *args):
+    dic = getattr_default(func, "memoize_dic", dict) 
+    # memoize_dic is created at the first call
+    if args in dic:
+        return dic[args]
+    else:
+        result = func(*args)
+        dic[args] = result
+        return result
+ 
 
 def concat(seqs):
     """Return concatenation of all sequences in `seqs`.
@@ -184,6 +215,7 @@ class itranslate(object):
                 # skip this item
                 continue
             return translated
+
 
 
 def positive_int(arg):
