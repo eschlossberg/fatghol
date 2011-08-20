@@ -6,7 +6,7 @@ __docformat__ = 'reStructuredText'
 
 
 from homology import *
-from rg import MgnGraphsIterator
+from rg import MgnGraphsIterator, Graph,Vertex
 from valences import vertex_valences_for_given_g_and_n
 
 
@@ -34,15 +34,19 @@ def FatgraphComplex(g, n):
 
     # gather graphs
     for graph in MgnGraphsIterator(g,n):
+        if not graph.is_oriented():
+            continue
         grade = graph.num_edges - 1
         generators[grade].append(graph)
-
+        graph._seqnr = len(generators[grade]) - 1
+        
     # build chain complex
     C = ChainComplex(top_dimension)
     for i in xrange(top_dimension):
         # set support module and differential
         C[i] = (FatgraphComplexSlice(generators[i]),
                 graph_homology_differential)
+
     return C
 
 
@@ -62,8 +66,14 @@ def graph_homology_differential(graph):
     for l in xrange(graph.num_edges):
         if not graph.is_loop(l):
             dg = graph.contract(l)
+            assert dg.numbering is not None, \
+                   "graph_homology_differential: "\
+                   " contraction of graph `%s` by edge %d yields"\
+                   " un-numbered graph `%s`."\
+                   % (graph, l, dg)
             if dg.is_oriented():
-                result.append((dg, sign1(l)))
+                #result.append((dg, sign1(l)))
+                result.append((dg, 1))
     return result
         
 
@@ -74,47 +84,36 @@ class FatgraphComplexSlice(VectorSpace):
     `coordinates` method will detect different presentations of the
     same fatgraph.
     """
-    def __init__(self, graphs):
-        """Constructor, taking generating graphs."""
-        base = []
-        self.base_aliases = {}
-        for graph in graphs:
-            if graph.is_oriented():
-                base.append(graph)
-                for edge_seq in graph.edge_seq_aliases:
-                    self.base_aliases[edge_seq] = graph
-            # non-orientable graphs are silently discarded
-        VectorSpace.__init__(self, base)
-
+    
+    if __debug__:
+        def __init__(self, base):
+            for (i, graph) in enumerate(base):
+                assert graph.numbering is not None, \
+                       "FatgraphComplexSlice.__init__:"\
+                       " initialized with non-numbered graph `%s`" \
+                       " (at position %d)" \
+                       % (graph, i)
+            VectorSpace.__init__(self, base)
+                
     def coordinates(self, combo):
         """Return coordinate vector of linear combination `combo`."""
-        coordinates = [0] * self.dimension
-
         # canonicalize graphs
-        for monomial in combo:
-            graph = monomial[0]
-            if graph not in self.base:
-                canonical = None
-                if graph.edge_seq in self.base_aliases:
-                    # replace graph with canonical
-                    canonical = self.base_aliases[graph.edge_seq]
-                else:
-                    # try to determine which element in base `graph`
-                    # is isomorphic to.
-                    for gg in self.base:
-                        if graph == gg:
-                            canonical = gg
-                            break
-                if canonical:
-                    # by modifying `monomial`, the object in the
-                    # `combo` list is modified, because `monomial` is
-                    # a reference.
-                    monomial[0] = canonical
-                    monomial[1] *= graph.projection(canonical)
-                else:
-                    raise ValueError, \
-                          "Cannot find canonical representative for graph %s" \
-                          % repr(graph)
+        for x in xrange(len(combo)):
+            graph = combo[x][0]
+
+            # try to determine which element in base `graph`
+            # is isomorphic to.
+            try:
+                canonical = self.base[self.base.index(graph)]
+##                 i = [ (graph == g) for g in self.base ].index(True)
+##                 canonical = self.base[i]
+            except ValueError:
+                raise ValueError, \
+                      "Cannot find canonical representative for graph `%s`." \
+                      % (repr(graph),)
+
+            # alter the `combo` list in-place
+            combo[x] = (canonical, combo[x][1] * graph.projection(canonical))
 
         # call method from superclass
         return VectorSpace.coordinates(self, combo)
