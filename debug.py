@@ -48,6 +48,38 @@ def trace(func):
     return __tracing_wrapper
 
 
+# from: http://www.friday.com/bbum/2005/10/27/tracing-python-execution/
+import sys
+import linecache
+import inspect
+
+def _traceit(frame, event, arg):
+    if event == 'line':
+        lineno = frame.f_lineno
+        if '__file__' in frame.f_globals:
+            filename = frame.f_globals['__file__']
+            if (filename.endswith('.pyc') or
+                filename.endswith('.pyo')):
+                filename = filename[:-1]
+            name = frame.f_globals['__name__']
+            line = linecache.getline(filename, lineno)
+        else:
+            name = '[unknown]'
+            try:
+                src = inspect.getsourcelines(frame)
+                line = src[lineno]
+            except IOError:
+                line = 'Unknown code named [%s].  VM instruction #%d' % \
+                    (frame.f_code.co_name, frame.f_lasti)
+        print '%s:%s: %s' % (name, lineno, line.rstrip())
+    return _traceit
+
+def start_tracing():
+    sys.settracing(_traceit)
+
+def stop_tracing():
+    sys.settracing(lambda x,y,z: None)
+    
 
 
 ## main: run tests
