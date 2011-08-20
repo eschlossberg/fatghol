@@ -105,8 +105,17 @@ class CyclicList(list):
     def __delslice__(self, i, j):
         i = max(i, 0); j = max(j, 0)
         list.__delslice__(self, i%len(self), j%len(self))
-    def shift_for_list_eq(self, other):
-        """Return shift index `b` such that `self[b:b+len]==other` as Python lists."""
+    def shift_for_list_eq(self, other, start=0):
+        """Return minimum shift index `b >= start` such that `self[b:b+len]==other` as Python lists.
+
+        Examples:
+        >>> a=CyclicList([1,2,3])
+        >>> b=CyclicList([2,3,1])
+        >>> a.shift_for_list_eq(b)
+        1
+        >>> a.shift_for_list_eq(b,2)
+        None
+        """
         l = len(self)
         def _eq_shifted(first, second, shift):
             l=len(first)
@@ -117,13 +126,23 @@ class CyclicList(list):
                 else:
                     i += 1
             return True
-        shift=0
+        shift = start
         while shift < l:
             if _eq_shifted(self, other, shift):
                 return shift
             else:
                 shift += 1
         return None
+    def all_shifts_for_list_eq(self, other):
+        start = 0
+        l = len(self)
+        while start < l:
+            shift = self.shift_for_list_eq(other, start)
+            if shift is None:
+                break
+            else:
+                yield shift
+            start = shift+1
     def __eq__(self, other):
         """Compare `self` with all possible translations of `other`."""
         if len(other) != len(self):
@@ -344,17 +363,24 @@ def all_graphs(vertex_list):
     pos = 0
     while pos < len(graphs):
         current = graphs[pos]
+        # slight optimization: since `current` is constant in the loop below,
+        # pre-compute as much as we can...
+        current_cy = [CyclicList(v) for v in current]
+        current_b_rp = [repetition_pattern(v_cy) for v_cy in current_cy]
+
         pos2 = pos+1
-        to_remove = []
         while pos2 < len(graphs):
             candidate = graphs[pos2]
+            candidate_is_isomorhic_to_current = False
             if candidate == current:
-                to_remove.insert(0,pos2)
+                candidate_is_isomorhic_to_current = True
             else:
                 perm = Map(total_edges)
-                for v1,v2 in [(CyclicList(w1),CyclicList(w2)) for (w1,w2)
-                              in map(None, current, candidate)]:
-                    (b1, rp1) = repetition_pattern(v1)
+                # FIXME: could save some processing time by caching
+                # the cyclic list of vertices) for any `candidate`, at
+                # the expense of memory usage...
+                for v1,b1,rp1,v2 in [(w1,b1,rp1,CyclicList(w2)) for (w1,(b1,rp1),w2)
+                              in map(None, current_cy, current_b_rp, candidate)]:
                     (b2, rp2) = repetition_pattern(v2)
                     rp_shift = rp1.shift_for_list_eq(rp2)
                     if rp_shift is None:
@@ -370,11 +396,15 @@ def all_graphs(vertex_list):
                         break
                 if perm and perm.completed():
                     # the two graphs are isomorphic
-                    to_remove.insert(0,pos2)
-            pos2 += 1
-        if len(to_remove) > 0:
-            for i in to_remove:
-                del graphs[i]
+                    candidate_is_isomorhic_to_current = True
+            if candidate_is_isomorhic_to_current:
+                # delete candidate; do *not* advance `pos2`, as the
+                # list will shift up because of the deletion in the
+                # middle.
+                del graphs[pos2]
+            else:
+                # advance to next candidate
+                pos2 += 1
         pos += 1
     return graphs
 
@@ -504,6 +534,186 @@ def classify(graph):
     return (g,n)
 
 
+def all_automorphisms(graph):
+    """Enumerate all automorphisms of `graph`.
+
+    An automorhism is represented as a pair of ordered lists `(dests,
+    rots)`: the i-th vertex of `graph` is to be mapped to the vertex
+    `dests[i]`, and rotated by `rots[i]`.
+    """
+    # build enpoints vector for the final check that a constructed map
+    # is an automorphism
+    ev = []
+    for l in range(1,num_edges(graph)+1):
+        ev.append(endpoints(l, graph))
+    ev.sort()
+    
+    # gather valences and repetition pattern at
+    # start for speedup
+    valence = [len(vertex) for vertex in graph]
+    rp = [repetition_pattern(vertex) for vertex in graph]
+
+    ## pass 1: for each vertex, list all destinations it could be mapped to,
+    ##         in the form (dest. vertex, rotation).
+    candidates = [ [] ] * len(graph)
+    # FIXME: if vertex i can be mapped into vertex j, with some rotation delta,
+    # then vertex j can be mapped into vertex i with rotation -delta,
+    # so rearrange this to only do computations for i>j and use the values already
+    # available in the other case...
+    for i in range(len(graph)):
+        for j in range(len(graph)):
+            # if valences don't match, skip to next vertex in list
+            if valence[i] != valence[j]:
+                continue
+            # if repetition patterns don't match, skip to next vertex in list
+            if not (rp[i] == rp[j]):
+                continue
+            # append `(destination vertex, rotation shift)` to
+            # candidate destinations list
+            for delta in rp[i].all_shifts_for_list_eq(rp[j]):
+                candidates[i].append((j,delta))
+
+    ## pass 2: for each vertex, pick a destination and return the resulting
+    ##         automorphism. (FIXME: do we need to check that the adjacency 
+    ##         matrix stays the same?)
+    def enumerate_certesian_product(p):
+        """Iterate over all elements in the cartesian products of elements of items in `p`.
+
+        Examples:
+        >>> list(enumerate_cartesian_product([[1],[1]])
+        [[1,1]]
+        >>> list(enumerate_cartesian_product([[1,2],[1]])
+        [[1,1],[1,2)]
+        >>> list(enumerate_cartesian_product([[1,2],[1,2]])
+        [[1,1],[1,2],[2,1],[2,2]]
+        """
+        if len(p) == 0:
+            yield []
+        else:
+            for i in p[-1]:
+                for js in enumerate_cartesian_product(p[:-1]):
+                    yield js+[i]
+
+    def deep_cmp(s1,s2):
+        """Compare items in `s1` and `s2`, recursing into subsequences.
+
+        Examples:
+        >>> deep_cmp(1,1)
+        0
+        >>> deep_cmp([1],[1])
+        0
+        >>> deep_cmp([1,1],[1,1])
+        0
+        >>> deep_cmp([1,[1]],[1,[1]])
+        0
+        >>> deep_cmp([1,[1]],[1,[2]])
+        -1
+        """
+        if not (type(s1) == type(s2)):
+            raise TypeError, \
+                "Comparing arguments of different type: %s vs %s" \
+                % (repr(type(s1)), repr(type(s2)))
+        else:
+            try:
+                # assume s1,s2 are sequences and recursively apply this
+                # function to pairs of corresponding elements...
+                def _first_nonzero(x,y):
+                    if 0 != x:
+                        return x
+                    else:
+                        return y
+                return reduce(_first_nonzero, map(deep_cmp, s1, s2), 0)
+            except TypeError:
+                # ...if s1,s2 are not sequences, then do a builtin comparison
+                return cmp(s1,s2)
+
+    for a in enumerate_cartesian_product(candidates):
+        # check that map does not map two distinct vertices to the same one
+        already_assigned = []
+        a_is_no_real_map = False
+        def first(seq):
+            return seq[0]
+        for dest in a:
+            v = first(dest)
+            if v in already_assigned:
+                a_is_no_real_map = True
+            else:
+                already_assigned.append(v)
+        if a_is_no_real_map:
+            # try with next map
+            continue
+        # check that the endpoints vector stays the same
+        vertex_permutation = map(first, a)
+        new_ev = [(vertex_permutation[e[0]], vertex_permutation[e[1]]) for e in ev]
+        new_ev.sort()
+        if 0 != deep_cmp(ev, new_ev):
+            # this is no automorphism, skip to next one
+            continue
+        # return automorphism in (vertex_perm_list, rot_list) form
+        def second(seq):
+            return seq[1]
+        yield (map(first, a), map(second, a))
+
+
+def is_orientation_reversing(graph, automorphism):
+    """Return `True` if `automorphism` reverses orientation of `graph`."""
+    def sign_of_rotation(l,r=1):
+        """Return the sign of a rotation of `l` elements, applied `r` times."""
+        # evaluating a conditional is faster than computing (-1)**...
+        if 0 == ((l-1)*r) % 2:
+            return 1
+        else:
+            return -1
+    def sign_of_permutation(p):
+        """Recursively compute the sign of permutation `p`.
+
+        A permutation is represented as a linear list: `p` maps
+        `i` to `p[i]`.
+
+        Examples:
+        >>> sign_of_permutation([1,2,3])
+        1
+        >>> sign_of_permutation([1,3,2])
+        -1
+        >>> sign_of_permutation([3,1,2])
+        1
+        >>> sign_of_permutation([1])
+        1
+        >>> sign_of_permutation([])
+        1
+        """
+        l = len(p)
+        if 1 >= l:
+            return 1
+        # find highest-numbered element
+        k = p.index(l)
+        # remove highest-numbered element for recursion
+        q = p[:]
+        del q[k]
+        # recursively compute
+        if 0 == ((l+k) % 2):
+            s = -1
+        else:
+            s = 1
+        return s * sign_of_permutation(q)
+    return reduce(operator.mul,
+                  map(sign_of_rotation,
+                      map(len, graph), automorphism[1]),
+                  sign_of_permutation(automorphism[0]))
+                                         
+
+def has_orientation_reversing_automorphism(graph):
+    """Return `True` if `graph` has an orientation-reversing automorphism.
+    
+    Enumerate all automorphisms of `graph`, end exits with `True`
+    result as soon as one orientation-reversing one is found.
+    """
+    for a in all_automorphisms(graph):
+        if is_orientation_reversing(a):
+            return True
+    return False
+
+
 def graph_to_xypic(graph):
     r"""Print XY-Pic code snippet to render graph `graph`.
 
@@ -538,7 +748,7 @@ def graph_to_xypic(graph):
     \endxy
     """
     def vertex_label(v):
-        return "["+("".join(map(str,v)))+"]"
+        return '['+("".join(map(str,v)))+']'
     label = map(vertex_label, graph)
     K = len(graph) # number of vertices
     result = r'\xy 0;<2cm,0cm>:%'+'\n'
@@ -580,11 +790,25 @@ def graph_to_xypic(graph):
     return result
 
 
-# by default, print all graphs with two vertices of valence 3
+## main
+
 if "__main__" == __name__:
     # parse command-line options
     from optparse import OptionParser
-    parser = OptionParser(usage='usage: %prog [options] action [arg ...]')
+    parser = OptionParser(usage="""Usage: %prog [options] action [arg ...]
+
+    Actions:
+
+      mgn G N
+        Print the vertex valences occurring in M_{g,n} graphs
+
+      vertices V1,V2,...
+        Print the graphs having only vertices of the specified valences.
+
+      test
+        Run internal code tests and report results.
+        
+    """)
     parser.add_option("-v", "--verbose",
                       action='store_true', dest='verbose', default=False,
                       help="Report verbosely on progress.")
@@ -597,7 +821,6 @@ if "__main__" == __name__:
 
     if 0 == len(args):
         parser.print_help()
-        #print num_boundary_components([[1,2,1,2]])
         
     elif 'test' == args[0]:
         import doctest
