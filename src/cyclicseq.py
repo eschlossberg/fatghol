@@ -48,7 +48,7 @@ def CyclicSequence(base, factory=None):
             #: inf of the range
             b = min(i,j)
             #: highest multiple of `l` below `a`
-            c = l*(a/l)
+            c = l*(a//l)
             a -= c
             b -= c
             return base.__delslice__(self, b, a)
@@ -67,13 +67,13 @@ def CyclicSequence(base, factory=None):
             b = min(i,j)
             if (b >= 0) and (a-b < l):
                 #: highest multiple of `l` below `a`
-                c = l*(a/l)
+                c = l*(a//l)
                 a -= c
                 b -= c
                 return base.__getslice__(self, b, a)
             else:
                 #: how many times the whole seq is repeated in the middle
-                n = (a/l) - (b/l + 1) 
+                n = (a//l) - (b//l + 1) 
                 return base.__getslice__(self, b%l,l) \
                        + (n * base.__getslice__(self, 0,l)) \
                        + base.__getslice__(self, 0,a%l)
@@ -90,7 +90,7 @@ def CyclicSequence(base, factory=None):
             #: inf of the range
             b = min(i,j)
             #: highest multiple of `l` below `a`
-            c = l*(a/l)
+            c = l*(a//l)
             a -= c
             b -= c
             return base.__setslice__(self, b, a, other)
