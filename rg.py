@@ -490,22 +490,22 @@ class Fatgraph(EqualIfIsomorphic, PermanentID):
 
     @cache
     def boundary_components(self):
-        """Return the number of boundary components of this `Fatgraph` object.
+        """Return the set of boundary components of this `Fatgraph` object.
 
         Each boundary component is represented by the list of (colored)
         edges::
 
           >>> Fatgraph([Vertex([2,1,0]),Vertex([2,0,1])]).boundary_components()
-          [CyclicTuple((2, 0)), CyclicTuple((1, 2)), CyclicTuple((0, 1))]
+          set([CyclicTuple((2, 0)), CyclicTuple((1, 2)), CyclicTuple((0, 1))])
 
         If both sides of an edge belong to the same boundary
         component, that edge appears twice in the list::
 
           >>> Fatgraph([Vertex([2,1,1]),Vertex([2,0,0])]).boundary_components()
-          [CyclicTuple((2, 0, 2, 1)), CyclicTuple((1,)), CyclicTuple((0,))]
+          set([CyclicTuple((2, 0, 2, 1)), CyclicTuple((1,)), CyclicTuple((0,))])
           
           >>> Fatgraph([Vertex([2,1,0]),Vertex([2,1,0])]).boundary_components()
-          [CyclicTuple((2, 1, 0, 2, 1, 0))]
+          set([CyclicTuple((2, 1, 0, 2, 1, 0))])
           
         """
         assert self.num_external_edges == 0, \
