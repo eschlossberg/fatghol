@@ -8,6 +8,129 @@ __docformat__ = 'reStructuredText'
 import itertools
 
 
+class OrderedSetPartitionsIterator(object):
+    """Iterate over all (ordered) partitions of a set with prescribed block sizes.
+
+    Instanciating an `OrderedSetPartitionsIterator` object requires
+    two arguments: second argument `set` is a list of items to be
+    partitioned into blocks, whose sizes are prescribed by first
+    argument `sizes`::
+    
+      >>> tuple(OrderedSetPartitionsIterator([2,3], ['a','b','c','d','e']))
+      ([['a', 'b'], ['c', 'd', 'e']],
+       [['a', 'c'], ['b', 'd', 'e']],
+       [['a', 'd'], ['b', 'c', 'e']],
+       [['a', 'e'], ['b', 'c', 'd']],
+       [['b', 'c'], ['a', 'd', 'e']],
+       [['b', 'd'], ['a', 'c', 'e']],
+       [['b', 'e'], ['a', 'c', 'd']],
+       [['c', 'd'], ['a', 'b', 'e']],
+       [['c', 'e'], ['a', 'b', 'd']],
+       [['d', 'e'], ['a', 'b', 'c']])
+
+    Each returned partition is a list whose items are -in turn- list
+    of the sizes prescribed in the `sizes` argument, in the order
+    given.
+
+    If the set to be partitioned is omitted, then the integer range
+    `[0, 1, ..., N=sum(sizes)]` is used::
+    
+      >>> tuple(OrderedSetPartitionsIterator([2,1]))
+      ([[0, 1], [2]],
+       [[0, 2], [1]],
+       [[1, 2], [0]])
+
+    If the size of the given `set` does not match the total size of
+    the partition blocks, an exception is raised::
+
+      >>> OrderedSetPartitionsIterator([2,2], ['a','b','c'])
+      Traceback (most recent call last):
+        ...
+      AssertionError: Sum of partition lengths is not equal to set size.
+      
+    **Note:** The order of parts *is* significant: thus, if the
+    `sizes` list prescribes two or more blocks of equal size, then,
+    for each partition, one gotten from it by permuting the same-size
+    blocks is returned as a distinct partition::
+    
+      >>> tuple(OrderedSetPartitionsIterator([1,1]))
+      ([[0], [1]], [[1], [0]])
+
+    This is not what you would expect in a set-theoretical partition
+    enumerator.
+
+    This is a Python port of the David Landgren's `Set::Partition`
+    CPAN module, which see for an explanation of how the algorithm
+    works.
+    """
+
+    def __init__(self, sizes, items=None):
+        self.sizes = sizes
+        if items is not None:
+            self.items = items
+        else:
+            self.items = range(sum(self.sizes))
+        assert (len(self.items) == sum(sizes)), \
+               "Sum of partition lengths is not equal to set size."
+        self.state = None
+        
+    def __iter__(self):
+        return self
+
+    def next(self):
+        if self.state is None:
+            # initial partition arrangement is the most obvious one:
+            # ...
+            self.state = []
+            index = 0
+            for size in self.sizes:
+                self.state.extend(size * [index])
+                index += 1
+        else:
+            # advance `self.state` to next partition arrangement;
+            # raises `StopIteration` if current state is the last one
+            self._next_state()
+            
+        # make blocks
+        parts = [ [] for x in xrange(len(self.sizes)) ]
+        for x in xrange(len(self.state)):
+            parts[self.state[x]].append(self.items[x])
+        return parts
+
+    def _next_state(self):
+        s = self.state
+        end = len(s) - 1
+        off = end - 1
+        inc = 0
+        while off >= 0:
+            cur = off + 1
+            if s[off] > s[cur]:
+                inc += 1
+            if s[off] < s[cur]:
+                if s[cur] > s[off]+1:
+                    # find smallest x in [cur .. end] such that s[x]>s[off]
+                    l = len(s) - 1
+                    while l > 0:
+                        if s[l] > s[off]:
+                            break
+                        else:
+                            l -= 1
+                    # swap s[off] and s[l]
+                    s[off], s[l] = s[l], s[off]
+                    # reverse s[cur] .. s[end]
+                    if cur < end:
+                        s[cur:] = list(reversed(s[cur:]))
+                else:
+                    # just swap current and next element
+                    s[off], s[cur] = s[cur], s[off]
+                    if (cur < end) and (inc > 0):
+                        s[cur:] = list(sorted(s[cur:]))
+                return
+            off -= 1
+        raise StopIteration
+
+
+
 class SetProductIterator(object):
     """Iterate over all elements in a cartesian product.
 
