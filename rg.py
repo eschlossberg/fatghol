@@ -1348,7 +1348,42 @@ class Fatgraph(EqualIfIsomorphic):
         
         # As this procedure is quite complex, we break it into a
         # number of auxiliary functions.
-        
+
+        def valence_spectrum(self):
+            """Return a dictionary mapping valences into vertex indices.
+
+            Examples::
+
+               >>> Fatgraph([Vertex([1,1,0,0])]).valence_spectrum()
+               {4: [0]}
+
+               >>> Fatgraph([Vertex([1,1,0]), Vertex([2,2,0])]).valence_spectrum()
+               {3: [0, 1]}
+
+               >>> Fatgraph([Vertex([3, 1, 0, 1]), \
+                          Vertex([4, 4, 0]), Vertex([3, 2, 2])]).valence_spectrum()
+               {3: [1, 2], 4: [0]}
+            """
+            result = {}
+            for (index, vertex) in enumerate(self.vertices):
+                l = len(vertex)
+                if l in result:
+                    result[l].append(index)
+                else:
+                    result[l] = [index]
+            # consistency checks
+            assert set(result.keys()) == set(self.vertex_valences()), \
+                   "Fatgraph.valence_spectrum:" \
+                   "Computed valence spectrum `%s` does not exhaust all " \
+                   " vertex valences %s" \
+                   % (result, self.vertex_valences())
+            assert set(concat(result.values())) \
+                   == set(range(self.num_vertices)), \
+                   "Fatgraph.valence_spectrum:" \
+                   "Computed valence spectrum `%s` does not exhaust all " \
+                   " %d vertex indices" % (result, self.num_vertices)
+            return result
+
         def starting_vertices(graph):
             """
             Return the pair `(valence, vertices)`, which minimizes the
@@ -1364,7 +1399,7 @@ class Fatgraph(EqualIfIsomorphic):
             val = max(graph.vertex_valences())
             vs = None
             n = len(graph.vertices)+1
-            for (val_, vs_) in graph.valence_spectrum().iteritems():
+            for (val_, vs_) in valence_spectrum(graph).iteritems():
                 n_ = len(vs_)
                 if (n_*val_ < n*val) \
                        or (n_*val_ == n*val and val_<val):
@@ -1471,8 +1506,8 @@ class Fatgraph(EqualIfIsomorphic):
             return result
             
         # if graphs differ in vertex valences, no isomorphisms
-        vs1 = G1.valence_spectrum()
-        vs2 = G2.valence_spectrum()
+        vs1 = valence_spectrum(G1)
+        vs2 = valence_spectrum(G2)
         if not set(vs1.keys()) == set(vs2.keys()):
             return # StopIteration
         # if graphs have unequal vertex distribution by valence, no isomorphisms
@@ -1536,50 +1571,9 @@ class Fatgraph(EqualIfIsomorphic):
     
 
     @maybe(ocache0)
-    def valence_spectrum(self):
-        """Return a dictionary mapping valences into vertex indices.
-
-        Examples::
-
-           >>> Fatgraph([Vertex([1,1,0,0])]).valence_spectrum()
-           {4: [0]}
-
-           >>> Fatgraph([Vertex([1,1,0]), Vertex([2,2,0])]).valence_spectrum()
-           {3: [0, 1]}
-
-           >>> Fatgraph([Vertex([3, 1, 0, 1]), \
-                      Vertex([4, 4, 0]), Vertex([3, 2, 2])]).valence_spectrum()
-           {3: [1, 2], 4: [0]}
-        """
-        result = {}
-        for (index, vertex) in enumerate(self.vertices):
-            l = len(vertex)
-            if l in result:
-                result[l].append(index)
-            else:
-                result[l] = [index]
-        # consistency checks
-        assert set(result.keys()) == set(self.vertex_valences()), \
-               "Fatgraph.valence_spectrum:" \
-               "Computed valence spectrum `%s` does not exhaust all " \
-               " vertex valences %s" \
-               % (result, self.vertex_valences())
-        assert set(concat(result.values())) \
-               == set(range(self.num_vertices)), \
-               "Fatgraph.valence_spectrum:" \
-               "Computed valence spectrum `%s` does not exhaust all " \
-               " %d vertex indices" % (result, self.num_vertices)
-        return result
-
-    @maybe(ocache0)
     def vertex_valences(self):
         return frozenset(len(v) for v in self.vertices)
 
-    @maybe(ocache0)
-    def vertex_valence_distribution(self):
-        spec = self.valence_spectrum()
-        return dict((v, len(spec[v]))
-                    for v in spec.iterkeys())
 
     
     
