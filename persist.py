@@ -12,16 +12,68 @@ import pickle
 
 ## local imports
 
-from utils import Iterator
+from iterators import Iterator
 
 
 
-#: object-to-filename dict
-_backing_store = dict()
+class CheckpointingIterator(Iterator):
+    """Iterator class, periodically checkpointing state to persistent storage.
 
+    Every `checkpoint_every` (initialization parameter) invocations of
+    the `.next()` method, the iterator state is saved to disk.
+    """
 
+    def __init__(self, iterable, filename, checkpoint_every=10):
+        self.iterable = iter(iterable)
+        self.checkpoint_every = checkpoint_every
+        self.__filename = filename
+        self.__countdown = checkpoint_every
+        self.__stop_iteration = False
 
-class RecordingIterator(Iterator):
+    def checkpoint(self, filename=None, remember=False):
+        """Save an object to the associated persistent store.
+        """
+        if filename is None:
+            filename = self.__filename
+        store = open(filename, 'w')
+        self.pickle()
+        pickle.dump(self, store)
+        store.close()
+        if remember:
+            self.__filename = filename
+
+    def next(self):
+        if self.__stop_iteration:
+            raise StopIteration
+        try:
+            next = self.iterable.next()
+            self.__countdown -= 1
+            if self.__countdown == 0:
+                # checkpoint to file
+                self.checkpoint()
+                self.__countdown = self.checkpoint_every
+            return next
+        except StopIteration:
+            self.__stop_iteration = True
+            self.checkpoint()
+            raise StopIteration
+
+    def pickle(self):
+        """Called *before* the iterator is pickled."""
+        try:
+            self.iterable.pickle()
+        except AttributeError:
+            pass
+
+    def unpickle(self):
+        """Called *after* the iterator has been un-pickled."""
+        try:
+            self.iterable.unpickle()
+        except AttributeError:
+            pass
+
+    
+class RecordingIterator(CheckpointingIterator):
     """Records the results of another iterator, and lets caller rewind
     and replay values.
 
@@ -31,51 +83,47 @@ class RecordingIterator(Iterator):
       1
       2
       3
-      >>> r.rewind(1)
+      >>> r.replay(1)
       >>> for x in r: print x
       2
       3
       
     """
 
-    def __init__(self, iterable, checkpoint=10):
-        self.iterable = iter(iterable)
+    def __init__(self, iterable, filename, checkpoint_every=10, restart=True):
         self.pos = -1
         self.history = []
-        self.checkpoint = checkpoint
+        self.restart = restart
+        CheckpointingIterator.__init__(self, iterable,
+                                       filename, checkpoint_every)
 
     def next(self):
         if (self.pos < len(self.history) - 1):
             self.pos += 1
             return self.history[self.pos]
         else:
-            next = self.iterable.next()
+            next = super(RecordingIterator, self).next()
             self.history.append(next)
             self.pos += 1
-            if len(self.history) % self.checkpoint == 0:
-                # checkpoint to file
-                try:
-                    checkpoint(self)
-                except AttributeError:
-                    pass
             return next
 
-    def rewind(self, pos=0):
-        """Rewind iterator at the given position.
-        By default, rewinds iterator at start of the recorded values.
+    def replay(self, pos=0):
+        """Replay iterator starting at the given position.
+        By default, replays iterator from start of the recorded values.
         """
         self.pos = pos-1
 
-    def thaw(self):
-        """Called after the iterator has been un-pickled."""
+    def unpickle(self):
+        """Called *after* the iterator has been un-pickled."""
         try:
-            self.iterable.thaw()
+            self.iterable.unpickle()
         except AttributeError:
-            # rewind iterator at start
-            self.rewind()
+            # replay iterator at start
+            if self.restart:
+                self.replay()
 
 
-def PersistedIterator(factory):
+def PersistedIterator(factory, checkpoint_every=10, record=True, replay=True):
     """Wrap a factory function: the wrapped version looks for and uses
     the saved copy of an object, and falls back to constructing a new
     one if no saved copy exists.
@@ -88,14 +136,18 @@ def PersistedIterator(factory):
       >>> class _X(object):
       ...   def __init__(self, arg):
       ...     self.arg = arg
-      >>> X = cached(_X)
+      ...   def __iter__(self):
+      ...     return self
+      ...   def next(self):
+      ...     return self.arg
+      >>> X = PersistedIterator(_X)
       >>> x = X(1)
-      >>> x.arg
+      >>> x.next()
       1
       >>> x.arg =2
       >>> checkpoint(x)
       >>> x = X(1) # uses saved copy
-      >>> x.arg
+      >>> x.next()
       2
 
     *Note:* If a class constructor is wrapped, like in the example above,
@@ -122,29 +174,20 @@ def PersistedIterator(factory):
             instance = pickle.load(store)
             store.close()
             # tell instance it has been un-pickled
-            instance.thaw()
+            instance.unpickle()
         except IOError: # filename does not exist
             # run normal class initialization
-            instance = RecordingIterator(factory(*args, **kwargs))
-
-        # save persistent store ref into instance
-        _backing_store[id(instance)] = filename
+            if record:
+                instance = RecordingIterator(factory(*args, **kwargs),
+                                             filename, checkpoint_every,
+                                             restart=replay)
+            else:
+                instance = CheckpointingIterator(factory(*args, **kwargs),
+                                                 filename, checkpoint_every)
 
         return instance
 
     return make
-
-
-def checkpoint(self, filename=None):
-    """Save an object to the associated persistent store.
-    """
-    if filename is None:
-        filename = _backing_store[id(self)]
-    store = open(filename, 'w')
-    pickle.dump(self, store)
-    _backing_store[id(self)] = filename
-    store.close()
-
 
 
 ## main: run tests

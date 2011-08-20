@@ -17,24 +17,30 @@ from itertools import chain,count,izip
 
 ## application-local imports
 
+from cache import (
+    cache1,
+    cache2,
+    )
 from combinatorics import (
     InplacePermutationIterator,
     SetProductIterator,
     Permutation,
     )
 from cyclicseq import CyclicList,CyclicTuple
-import persist
-from utils import (
+from iterators import (
     BufferingIterator,
     Iterator,
-    concat,
     itranslate,
-    memoize,
+    )
+import persist
+from utils import (
+    concat,
     sign,
     )
 
 
 ## main
+
 
 class VertexCache(object):
     """A caching factory of `Vertex` objects.
@@ -176,22 +182,6 @@ class Vertex(CyclicList):
         return self._num_loops
 
 
-class _Count(Iterator):
-    """A pickable clone of `itertools.count`."""
-
-    def __init__(self, firstval=0):
-        self.counted = firstval - 1
-
-    def next(self):
-        self.counted += 1
-        return self.counted
-
-    def thaw(self):
-        pass # do not reset counter on unpickle
-    
-Count=persist.PersistedIterator(_Count)
-
-
 class Fatgraph(object):
     """A fully-decorated ribbon graph.
 
@@ -217,8 +207,7 @@ class Fatgraph(object):
 ##         'vertices',
 ##         ]
 
-    def __init__(self, vertices, vertextype=Vertex,
-                 __fasteq_cache={}, __id_factory=Count(), **kwargs):
+    def __init__(self, vertices, vertextype=Vertex, **kwargs):
         """Construct a `Fatgraph` instance, taking list of vertices.
 
         Argument `vertices` must be a sequence of `Vertex` class
@@ -233,14 +222,6 @@ class Fatgraph(object):
         assert debug.is_sequence_of_type(Vertex, vertices), \
                "Fatgraph.__init__: parameter `vertices` must be" \
                " sequence of `Vertex` instances."
-
-        #: class-wide cache for `__eq__` results
-        self._fasteq_cache = __fasteq_cache
-
-        #: unique numeric id of this `Fatgraph` object; id's of deleted
-        #: object should *not* be re-used
-        self._id = __id_factory.next()
-        self._id_factory = __id_factory
         
         # the following values will be computed on-demand
 
@@ -369,6 +350,7 @@ class Fatgraph(object):
         
         return True
 
+    @cache2
     def __eq__(self, other):
         """Return `True` if Fatgraphs `self` and `other` are isomorphic.
 
@@ -459,32 +441,28 @@ class Fatgraph(object):
         assert isinstance(other, Fatgraph), \
                "Fatgraph.__eq__:" \
                " called with non-Fatgraph argument `other`: %s" % other
-        # try cached result first
-        args = frozenset([self._id, other._id])
-        if args not in self._fasteq_cache:
-            # shortcuts
-            if (self is other) or (self._id == other._id):
-                self._fasteq_cache[args] = True
-            elif ((self.num_edges != other.num_edges)
-                or (self.num_vertices != other.num_vertices)
-                or (self._vertex_valences != other._vertex_valences)):
-                self._fasteq_cache[args] = False
-            elif (self.vertices == other.vertices) \
-               and (self.endpoints_v == other.endpoints_v) \
-               and (self.endpoints_i == other.endpoints_i) \
-               and (self.numbering == other.numbering):
-                self._fasteq_cache[args] = True
-            else:
-                # go the long way: try to find an explicit isomorphims
-                # between graphs `self` and `other`
-                try:
-                    # if there is any morphism, then return `True`
-                    self.isomorphisms(other).next()
-                    self._fasteq_cache[args] = True
-                except StopIteration:
-                    # list of morphisms is empty, graphs are not equal.
-                    self._fasteq_cache[args] = False
-        return self._fasteq_cache[args]
+        # shortcuts
+        if self is other:
+            return True
+        elif ((self.num_edges != other.num_edges)
+            or (self.num_vertices != other.num_vertices)
+            or (self._vertex_valences != other._vertex_valences)):
+            return False
+        elif (self.vertices == other.vertices) \
+                 and (self.endpoints_v == other.endpoints_v) \
+                 and (self.endpoints_i == other.endpoints_i) \
+                 and (self.numbering == other.numbering):
+            return True
+        else:
+            # go the long way: try to find an explicit isomorphims
+            # between graphs `self` and `other`
+            try:
+                # if there is any morphism, then return `True`
+                self.isomorphisms(other).next()
+                return True
+            except StopIteration:
+                # list of morphisms is empty, graphs are not equal.
+                return False
 
     def __getitem__(self, index):
         return self.vertices[index]
@@ -528,7 +506,7 @@ class Fatgraph(object):
         """
         return self.isomorphisms(self)
 
-    @memoize
+    @cache1
     def boundary_components(self):
         """Return the number of boundary components of this `Fatgraph` object.
 
@@ -871,7 +849,7 @@ class Fatgraph(object):
                      )
             
 
-    @memoize
+    @cache1
     def genus(self):
         """Return the genus g of this `Fatgraph` object."""
         n = self.num_boundary_components()
@@ -1312,7 +1290,7 @@ class Fatgraph(object):
             # list of morphisms is empty, graphs are not equal.
             return 0
 
-    @memoize
+    @cache1
     def valence_spectrum(self):
         """Return a dictionary mapping valences into vertex indices.
 
