@@ -209,40 +209,8 @@ class ChainComplex(object):
         #: ranks of `D[n]` matrices, for 0 <= n < len(self); the differential
         #: `D[0]` is the null map.
         ranks = [ 0 ]
-        for n in xrange(len(D)):
-            A = D[n]            # micro-optimization (saves a few lookups)
-            columns = len(A)    #: number of columns
-            if 0 == columns:
-                # corresponding module has no generators (dim 0)
-                ranks.append(0)
-                continue
-            rows = len(A[0])    #: number of rows
-            i = 0  #: row index
-            j = 0  #: column index
-            rank = 0  #: computed rank of matrix `A`
-            while (i < rows) and (j < columns):
-              # find pivot in row i, starting at column j:
-              pivot_column = j
-              for jj in xrange(j+1, columns):
-                if abs(A[jj][i]) > abs(A[pivot_column][i]):
-                  pivot_column = jj
-              if A[pivot_column][i] != 0:
-                rank += 1
-                # swap columns `j` and `pivot_column`
-                A[pivot_column], A[j] = A[j], A[pivot_column]
-                # divide each entry in column `j` by `A[j][i]`
-                lead = A[j][i]
-                for ii in xrange(rows):
-                    A[j][ii] /= lead
-                # A[-,u] -= A[-,j] * A[i,u]
-                for u in xrange(j+1, columns):
-                  for ii in xrange(rows):
-                      A[u][ii] -= A[j][ii] * A[u][i]
-                      # now A[u][i] will be 0, since:
-                      # A[u][i] - A[j][i] * A[u][i] = A[u][i] - 1 * A[u][i] = 0.
-                j += 1
-              i += 1
-            ranks.append(rank)
+        for A in D:
+            ranks.append(rank_of_matrix(A))
 
         ## pass 3: compute homology group ranks from rank and nullity
         ##         of boundary operators.
@@ -260,9 +228,124 @@ class ChainComplex(object):
                  for i in xrange(self.length) ]
     
 
-        
+def rank_of_matrix(A):
+    """Destructively compute rank of matrix `A`.
+    The rank is computed by performing Gaussian elimination on the
+    matrix `A`, which is therefore altered irreversibly.
+
+    Matrix `A` is represented as a list of vectors; each vector is
+    represented by a Python list of numbers::
+    
+      >>> rank_of_matrix([[1,0,0], [0,0,1]])
+      2
+
+    Since rank by columns equals rank by rows, it does not matter
+    whether the vectors actually represent matrix rows or matrix
+    columns::
+
+      >>> rank_of_matrix([[1,0], [0,0], [0,1]]) \
+          == rank_of_matrix([[1,0,0], [0,0,1]])
+      True
+
+    An empty list represents a 0x0 matrix::
+
+      >>> rank_of_matrix([])
+      0
+
+    Examples::
+
+      >>> rank_of_matrix([[0,0,0,0]])
+      0
+
+      >>> rank_of_matrix([[0,0,0,0], [0,0,0,0]])
+      0
+
+      >>> rank_of_matrix([[1,0,0]])
+      1
+
+    These matrices always have rank 2 for N>1::
+    
+      >>> def m(N): return [ [ float(N*n+k) for k in xrange(1,N+1) ] \
+                             for n in xrange(0, N) ]
+      >>> [ rank_of_matrix(m(N)) for N in xrange(10) ]
+      [0, 1, 2, 2, 2, 2, 2, 2, 2, 2]
+      
+    Vandermonde matrices always have maximal rank::
+    
+      >>> def v(N): return [ [ float(k**n) for k in xrange(1,N+1) ] \
+                             for n in xrange(0, N) ]
+      >>> [ rank_of_matrix(v(N)) for N in xrange(10) ]
+      [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+      
+    """
+    sup_i = len(A)
+    if sup_i == 0:
+        # null matrix
+        return 0
+    sup_j = len(A[0])
+    i = 0
+    j = 0
+    
+    rank = 0  #: computed rank of matrix `A`
+    while (i < sup_i) and (j < sup_j):
+        ## pass 1 : Choose pivot as the first `i` such that `A[i][j]`
+        ## is non-zero.
+        ##
+        ## XXX: Since we are using rational exact arithmentic, we might
+        ## choose the element `A[ii][j] = Rational(p,q)` such that:
+        ##   1) `abs(p) + abs(q) > 0`;
+        ##   2) `abs(p) + abs(q)` is smallest among those satisfying 1).
+        ## This *might* help reduce rationals growth.
+        if A[i][j] == 0:
+            for ii in xrange(i+1, sup_i):
+                if A[ii][j] != 0:
+                    # swap current `i` and `ii`
+                    A[ii], A[i] = A[i], A[ii]
+                    break
+        if A[i][j] == 0:
+            # A[* >= i][j] is always zero, try with next `j`
+            j += 1
+            continue # next iteration of the 'while' loop
+
+        ## pass 2: Collect quotients `q[ii] = A[ii][j] / A[i][j]` for
+        ## `ii != i`; each row/column with index `ii != i` will be
+        ## subtracted a multiple of `A[i]` by `q[ii]`.
+        ##
+        ## Usually implementations store the quotients `q[ii]` into
+        ## `A[ii][j]` (which will be then zeroed by the Gaussian
+        ## elimination in pass 3), but Python has list comprehensions,
+        ## which are apparently both cleaner and faster.
+        ##
+        pivot = A[i][j]  # micro-optimization: avoid lookup
+        q = [ (A[ii][j] / pivot) for ii in xrange(i+1, sup_i) ]
+
+        ## pass 3: Elimination step: set `A[ii] = A[ii] - A[i]*q[ii]`
+        ## for `ii != i`.
+        ##
+        ## Since we are only interested in the rank of `A`, we only
+        ## perform the elimination step above on `A[ii][jj]` for `ii >
+        ## i` and `jj > j`, that is, the part of `A` that would be
+        ## examined by subsequent iterations of steps 1&2.  Matrix `A`
+        ## will not be in proper Echelon form, but we get the rank
+        ## count right nonetheless.
+        ##
+        for jj in xrange(j+1, sup_j):
+            for ii in xrange(i+1, sup_i):
+                A[ii][jj] -= A[i][jj] * q[ii - i - 1]
+        j += 1
+        i += 1
+        rank += 1
+##         if __debug__:
+##             print "DEBUG: At i=%d, j=%d:" % (i,j)
+##             for a in A:
+##                 print "DEBUG: %s" %a
+    return rank
+
+
+
 ## main: run tests
 
 if "__main__" == __name__:
     import doctest
-    doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE)
+    doctest.testmod(name="homology",
+                    optionflags=doctest.NORMALIZE_WHITESPACE)
