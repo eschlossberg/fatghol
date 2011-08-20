@@ -165,9 +165,9 @@ def PersistedIterator(factory, checkpoint_every=10, record=True, replay=True):
         if len(args) > 0:
             filename = factory.__name__ \
                 + "-" + str.join(",", [str(x) for x in args]) \
-                + '.pickle'
+                + '.cache'
         else:
-            filename = factory.__name__ + ".pickle"
+            filename = factory.__name__ + ".cache"
         try:
             # try loading it
             store = open(filename, 'r')
