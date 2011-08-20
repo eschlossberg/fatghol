@@ -8,6 +8,16 @@ __docformat__ = 'reStructuredText'
 
 ## main content
 
+class Iterator(object):
+    """Base class for user-defined iterators."""
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        raise StopIteration
+
+    
 class BufferingIterator(object):
     """Iterate over items stored in an internal buffer; when all items
     in the buffer have been handed out to caller, refill the buffer by
@@ -122,16 +132,25 @@ class chunks(object):
                    for x in xrange(self.sizes[self.current_chunk]) ]
 
 
-class Iterator(object):
-    """Base class for user-defined iterators."""
+class IndexedIterator(Iterator):
+    """Return the items corresponding to indices `start`, `start+1`, etc.
+    in the initialization sequence `lst`.
 
-    def __iter__(self):
-        return self
+    Iteration stops as soon as an `IndexError` (indicating
+    out-of-bounds) is returned.
+    """
+    def __init__(self, lst, start=0):
+        self.__lst = lst
+        self.__cur = start-1
 
     def next(self):
-        raise StopIteration
+        self.__cur += 1
+        try:
+            return self.__lst[self.__cur]
+        except IndexError:
+            raise StopIteration
 
-    
+
 class itranslate(object):
     """Return items from a sequence, substituting them as specified.
 
@@ -163,7 +182,6 @@ class itranslate(object):
                 # skip this item
                 continue
             return translated
-
 
 
 ## main: run tests
