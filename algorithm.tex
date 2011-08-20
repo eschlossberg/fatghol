@@ -1249,124 +1249,110 @@ topological constructions.
 \subsubsection{Contraction of an edge}
 \label{sec:contract}
 
-
 Recall from the definition in \csref{sec:contractions}) that
 contraction produces a ``child'' fatgraph from a ``parent'' fatgraph
 and a chosen regular (i.e., non-looping) edge. 
 
 The "Fatgraph.contract" method thus needs only take as input the ``parent''
-graph and the (number of) the edge to contract:
+graph and the (label of) the edge to contract:
 \begin{lstlisting}
-  def contract(self, edgeno):
+  def contract(self, edge):
     """
     Return new `Fatgraph` obtained by contracting the specified edge.
     """
 
 \end{lstlisting}
 
-In the actual computer representation of a fatgraph, the contraction
-process effects the following changes:
+On the concrete fatgraph representations, the contraction algorithm
+proceeds in the following way:
 \begin{itemize}
-\item Two vertices are merged into one. Thus, one item is deleted from
-  the "self.vertices" list; we choose always to plug the
-  higher-numbered vertex into the lower-numbered one, and to delete
-  the higher-numbered one from the list.  This also affects the "Edge"
-  objects in the "self.edges" list, as the endpoints store the vertex
-  reference by index.
-\item The contracted edge is deleted from the "self.edges" list, thus
-  one element has to be removed from it.
+\item Two vertices are merged into one. Thus the list of vertices of
+  the ``child'' fatgraph (stored in the "new_vertices" variable) has
+  one item less than the "self.vertices" list; we choose always to
+  plug the higher-numbered vertex into the lower-numbered one, and to
+  delete the higher-numbered one from the list.
 \item Deletion of an edge also affects the orientation: the canonical
   orientation on the ``child'' fatgraph keeps the edges in the same
-  order as they are in the parent fatgraph.  However, since the
+  order as they are in the parent fatgraph.  However, since
   "edge_numbering" must be a permutation of the edge indices, we need
   to renumber the edges and shift the higher-numbered edges down one
-  place. 
+  place.
+\item The new graph is constructed with the new vertices list and the
+  derived orientation; the "Fatgraph" class constructor has the
+  responsibility of computing the new adjacency list. 
 \end{itemize}
-
-There is thus much renumbering/mapping that takes place on
-lists. The following "translate" function abstracts this kind of
-operation: it takes a Python dictionary $m$
-and a sequence $s$ as input, and returns a sequence $s'$ formed by
-applying $m$ to each element $x$ of $s$; if $x$ is not a key in $m$,
-i.e., there is no mapping in $m$ for $x$, then $x$ is copied unchanged
-to $s'$.  
-\begin{lstlisting}
-    def translate(m, s):
-      """
-      Return items from a sequence, 
-      substituting them as specified.
-      """
-      for x in s:
-        if not m.has_key(x):
-          yield x
-        elif m[x] is None:
-          continue # with next "x"
-        else:
-          yield m[x]
-\end{lstlisting}
-
-A few values need to be saved in local variables before processing,
-namely the endpoints of the edge to be contracted (stored in
-"(v1,pos1)" and "(v2,pos2)"):
-\begin{lstlisting}
-    ((v1, pos1), (v2, pos2)) = self.edges[edgeno].endpoints
-
-\end{lstlisting}
-Note that, by construction of the "Edge" objects (\csref{sec:edges}),
-we have "v1 < v2".
-
-The number of edges attached to the vertices to be mate is stored in
-variables "l1" and "l2" for later reference:
-\begin{lstlisting}
-    l1 = len(self.vertices[v1]) - 1
-    l2 = len(self.vertices[v2]) - 1
-
-\end{lstlisting}
 
 The list of vertices of the ``child'' fatgraph is built by removing
 the contracted edge and shifting all indices above:
 \begin{itemize}
-\item edges numbered 0 to "edgeno-1" are unchanged;
-\item edge "edgeno" is (temporarily) kept intact, will be
+\item edges labeled 0 to "edge-1" are unchanged;
+\item edge "edge" is temporarily kept intact, it will be
   removed by mating operation (see below);
-\item edges numbered "edgeno+1" and above are renumbered, 
+\item edges labeled "edge+1" and above are renumbered, 
   shifting the number down one position.
 \end{itemize}
-This prescription is implemented through the "translate" function (see
-above).  Assuming $l$ is the value of "edgeno", we make
-"renumber_edges" into a dictionary which maps $i$ to $i-1$ for $i >
-l$:
+This prescription is implemented through applying a mapping to every
+element in the cyclic list representing a vertex.  Assuming $l$ is the
+value of "edge", we make "renumber_edges" into a dictionary which
+maps $i$ to $i$ for $i \leq l$, and $i$ to $i-1$ for $i > l$:
 \begin{lstlisting}
-    renumber_edges = { i:(i-1)
-                       for i in range(edgeno+1, self.num_edges) }
+    renumber_edges = { i:i 
+                       for i in range(0, edge+1) }
+    renumber_edges.update({ i:(i-1)
+          for i in range(edge+1, self.num_edges) })
 \end{lstlisting}
+The above pattern will often be applied when constructing Python
+"dict" objects: the dictionary is first constructed with one set of
+mappings ($i \mapsto i$ for $0 \leq i < l$) and then another set of
+mappings are added with the "update" method ($i \mapsto i-1$ for $l <
+i < E$).
+
 Then apply this transformation to the edge labels in each vertex, to
 get the vertices of the ``child'' fatgraph. (This yields incorrect
-values on the endpoints of "edgeno": they will be replaced shortly.)
+values on the endpoints of "edge": they will be replaced shortly.)
 \begin{lstlisting}
-    new_vertices = [ Vertex(translate(renumber_edges, V))
+    new_vertices = [ Vertex([ renumber_edges[e] 
+                              for e in V ])
                      for V in self.vertices ]
 
 \end{lstlisting}
-Now mate endpoints of the contracted edge:
+
+Assume "v1" and "v2" are the indices of the endpoint vertices of the
+contracted edge, and that it appears at position "pos1" in the first
+vertex and at "pos2" in the second (line~\nr{contract-1}).  Now mate
+endpoints of the contracted edge:
 \begin{enumerate}
-\item Rotate endpoints "v1", "v2" so that the given edge "edgeno" would appear
-  \emph{last} in "v1" and \emph{first} in "v2". (Note: since "v1", "v2" are
-  \emph{cyclic}, this means that we do the same operation on "v1" and "v2"
-  alike).
+\item Rotate endpoints "v1", "v2" so that the given edge "edge" would
+  appear \emph{last} in "v1" and \emph{first} in "v2". (Note that, by
+  construction of the "Edge" objects (\csref{sec:edges}), we have 
+  "v1 < v2".) This can be accomplished by operating on the list:
+\begin{lstlisting}
+    def rotated(L, p):
+      # return a copy of list `L`, rotated rightwards `p` places.
+      return L[p+1:] + L[:p]
+\end{lstlisting}
+  Since "v1", "v2" are \emph{cyclic}, we can rotate "v1" and "v2" in
+  the same direction (lines~\nr{contract-2a} and~\nr{contract-2b}).
 \item Join vertices by concatenating the list of incident
-  edges.
+  edges (line~\nr{contract-3}).
 \item Set the newly-constructed vertex in the place of old first
-  endpoint within list "new_vertices".
-\item Remove the second endpoint from the list of new vertices.
+  endpoint within list "new_vertices" (line~\nr{contract-4}).
+\item Remove the second endpoint from the list of new vertices
+  (line~\nr{contract-5}).
 \end{enumerate}
 \begin{lstlisting}
-    new_vertices[v1] = Vertex(
-      new_vertices[v1][pos1+1:] + new_vertices[v1][:pos1]
-      +
-      new_vertices[v2][pos2+1:] + new_vertices[v2][:pos2]
+    # get endpoints of the contracted edge
+    ((v1,pos1), (v2,pos2)) = self.edges[edge].endpoints |\n{contract-1}|
+
+    # the mated vertex is placed at index "v1"
+    new_vertices[v1] = Vertex(                          |\n{contract-4}|
+      rotated(new_vertices[v1], pos1)                   |\n{contract-2a}|
+      +                                                 |\n{contract-3}|
+      rotated(new_vertices[v2], pos2)                   |\n{contract-2b}|
       )
-    del new_vertices[v2]
+
+    # the old vertex at index "v2" is removed
+    del new_vertices[v2]                                |\n{contract-5}|
 
 \end{lstlisting}
 
@@ -1402,7 +1388,8 @@ Correspondingly, the "new_edge_numbering" is built by shifting values
 in the ``parent'' fatgraph's "edge_numbering" down one position if
 they are follow the contracted edge in the orientation order:
 \begin{lstlisting}
-    k = self.edge_numbering[edgeno]
+    k = self.edge_numbering[edge]
+
     # edges with index below the contracted one are untouched
     renumber_edge_numbering = { n:n for n in range(0,k) }
     # edges with index above the contracted one are shifted down
@@ -1410,10 +1397,11 @@ they are follow the contracted edge in the orientation order:
     renumber_edge_numbering.update({ 
         (n+1):n for n in range(k, self.num_edges) 
     })
+
     new_edge_numbering = [ 
-        renumber_edge_numbering[self.edge_numbering[i]]
-            for i in range(self.num_edges)
-            if i != edgeno 
+        renumber_edge_numbering[self.edge_numbering[n]]
+            for n in range(0,self.num_edges)
+            if n != edge 
     ]
     
 \end{lstlisting}
@@ -1421,7 +1409,8 @@ they are follow the contracted edge in the orientation order:
 The ``child'' fatgraph can finally be constructed, overriding the
 default orientation:
 \begin{lstlisting}
-    return Fatgraph(new_vertices, orientation=new_edge_numbering)
+    return Fatgraph(new_vertices, 
+                    orientation=new_edge_numbering)
 
 \end{lstlisting}
 
@@ -1429,111 +1418,80 @@ default orientation:
 \subsubsection{The map $q(G,x,y)$: bridging two edges of a fatgraph}
 \label{sec:bridge}
 
+The method "Fatgraph.bridge" implements the construction $q(G,x,y)$
+described in \csref{sec:addition}:
 \begin{lstlisting}
   def bridge(self, edge1, side1, edge2, side2):
-    """Return a new `Fatgraph`, formed by inserting trivalent
+    """
+    Return a new `Fatgraph`, formed by inserting trivalent
     vertices in the middle of edges `edge1` and `edge2` and
     connecting them with a new edge.
-
-    >>> g = Fatgraph([Vertex([0,1,2]), Vertex([0,2,1])])
-    >>> g1 = g.bridge(0, 0, 1, 1)
-    >>> g1 is g
-    False
-    >>> g1 == g
-    False
-    
-    Arguments `side1` and `side2` control which side the new edge
-    is attached to (valid values are 0 or 1), i.e., which of the
-    two inequivalent cyclic orders the new trivalent vertices will
-    be given::
-    
-    >>> g = Fatgraph([Vertex([0,1,2]), Vertex([0,2,1])])
-    >>> g1 = g.bridge(0, 0, 1, 0)
-    >>> g2 = g.bridge(0, 1, 1, 0)
-    >>> g1 == g2
-    False
-
-    In more detail: let 0,1,2 be the indices of the edges attached
-    to the new vertex in the middle of `edge1`, where 0,1 denote
-    the two halves of `edge1`.  If `side1` is `0`, then the new
-    trivalent vertex will have the cyclic order [0,1,2]; if
-    `side1` is `1`, then 0,1 are swapped and the new trivalent
-    vertex gets the cyclic order [1,0,2]::
-
-    >>> g1 == Fatgraph([Vertex([0,1,2]), Vertex([4,2,5]), Vertex([0,4,3]), Vertex([1,5,3])])
-    True
-    >>> g2 == Fatgraph([Vertex([0,1,2]), Vertex([4,2,5]), Vertex([4,0,3]), Vertex([1,5,3])])
-    True
-
-    It is worth noting that this procedure involves 5 edges in
-    total, 3 of which need new indices.
-
-    >>> g.num_edges
-    3
-    >>> g1.num_edges
-    6
-    
-    This function is obviously symmetric: the pairs `edge1, side1`
-    and `edge2, side2` can be swapped and the result stays the
-    same::
-
-    >>> g3 = g.bridge(1, 0, 0, 0)
-    >>> g1 == g3
-    True
-
-    >>> g4 = g.bridge(1, 0, 0, 1)
-    >>> g2 == g4
-    True
-
-    Examples::
-    
-    1) Bridging different sides of the same edge may yield
-    different results::
-    
-    >>> g.bridge(0, 0, 1, 0)  == Fatgraph([Vertex([0,1,2]), Vertex([4,2,5]), Vertex([0,4,3]), Vertex([1,5,3])])
-      True
-      
-      >>> g.bridge(0, 1, 1, 0) == Fatgraph([Vertex([0,1,2]), Vertex([4,2,5]), Vertex([4,0,3]), Vertex([1,5,3])])
-      True
-
-    2) One can connect an edge to itself on different sides::
-    
-      >>> g.bridge(0, 0, 0, 1) == Fatgraph([Vertex([0,1,2]), Vertex([5,2,1]), Vertex([0,4,3]), Vertex([5,4,3])])
-      True
-
-    3) And also with both ends on the same side::
-    
-      >>> g.bridge(0, 0, 0, 0) == Fatgraph([Vertex([0,1,2]), Vertex([5,2,1]), Vertex([0,4,3]), Vertex([4,5,3])])
-      True
-      
     """
-    opposite_side1 = 0 if side1==1 else 1
-    opposite_side2 = 0 if side2==1 else 1
+\end{lstlisting}
+This function must be symmetric: the pairs "edge1", "side1" and
+"edge2", "side2" can be swapped and the result stays the same.
 
-    # assign edge indices
+Arguments "side1" and "side2" control which side the new edge is
+attached to (valid values are 0 or 1), i.e., which of the two
+inequivalent cyclic orders the new trivalent vertices will be given.
+In more detail: let "0", "1", "2" be the indices of the edges attached
+to the new vertex in the middle of "edge1", where "0","1" denote the
+labels assigned to the two halves of "edge1".  If "side1" is "0", then
+the new trivalent vertex will have the cyclic order "[0,1,2]"; if
+"side1" is "1", then the labels "0","1" are swapped and the new
+trivalent vertex gets the cyclic order "[1,0,2]".
+
+The construction involves 5 edges in total, 3 of which need new
+labels. They will be stored in variables "connecting_edge",
+"one_half1", "other_half1", "one_half2" and "other_half2".
+\begin{lstlisting}
+    # assign new edge indices
     connecting_edge = self.num_edges
-    # break "edge1" in two halves: if "v1a" and "v1b" are the
-    # endpoints of "edge1", then the "one_half" edge extends from
-    # the "v1a" endpoint of "edge1" to the new vertex
-    # "midpoint1"; the "other_half" edge extends from the
-    # "midpoint1" new vertex to "v1b".
+\end{lstlisting}
+Break "edge1" in two halves: one of them (see below for a precise
+account) gets the old "edge1" label, the other needs a new one.
+\begin{lstlisting}
     one_half1 = edge1
     other_half1 = self.num_edges + 1
-    # break "edge2" in two halves; if "edge2" is the same edge as
-    # "edge1", then we are breaking the second half of "edge1" in
-    # two parts.  Otherwise, proceed as above.  In any case, the
-    # "other half" of "edge2" needs a new edge index.
+\end{lstlisting}
+Break "edge2" in two halves as well; if "edge2" is the same edge as
+"edge1", then we are breaking the second half of "edge1" in
+two parts.  Otherwise, proceed as above.  In any case, the
+"other half" of "edge2" needs a new edge label.
+\begin{lstlisting}
     if edge2 == edge1:
       one_half2 = other_half1
     else:
       one_half2 = edge2
     other_half2 = self.num_edges + 2
 
+\end{lstlisting}
+The list of edges for the new fatgraph can now be constructed, but the
+endpoints for the new edges have to be filled in
+later.\footnote{There's a ``chicken and egg'' issue: we need the
+  new vertices to construct the endpoints, but we need the edge labels
+  to construct the vertices.  So, the edge labels are assigned first,
+  then vertices are constructed and then finally the new edge
+  endpoints are created.\label{fn:chicken-and-egg}}
+\begin{lstlisting}
+    # three new edges are added (constructed below)
+    new_edges = self.edges + [
+      None, # new edge: "connecting_edge"
+      None, # new edge: "other_half1"
+      None, # new edge: "other_half2"
+      ]
+\end{lstlisting}
+
+Two new vertices are also created: the mid-points of the connected
+edges. Depending on the value of "side1" (resp.~"side2"), one of the
+two inequivalent cyclic orders is chosen on the new vertex "midpoint1"
+(resp.~"midpoint2").
+\begin{lstlisting}
     # assign new vertex indices
     midpoint1_index = self.num_vertices
     midpoint2_index = self.num_vertices + 1
 
-    if side1 == 1:
+    if side1 == 1:                                   |\n{bridge-midpoints-1}|
       midpoint1 = Vertex([other_half1, one_half1, connecting_edge])
     else: # side2 == 0
       midpoint1 = Vertex([one_half1, other_half1, connecting_edge])
@@ -1546,51 +1504,92 @@ default orientation:
     # two new vertices are added: the mid-points of the connected edges.
     new_vertices = self.vertices + [midpoint1, midpoint2]
 
-    # three new edges are added (constructed below)
-    new_edges = self.edges + [
-      None, # new edge: "connecting_edge"
-      None, # new edge: "other_half1"
-      None, # new edge: "other_half2"
-      ]
-    
-    # the connecting edge has endpoints in the mid-points of
-    # "edge1" and "edge2", and is *always* in third position.
+\end{lstlisting}
+Once the new vertices have been constructed, the "Edge" objects can
+also.
+
+The connecting edge has endpoints in the mid-points of
+"edge1" and "edge2", and is always in third position.
+\begin{lstlisting}
     new_edges[connecting_edge] = Edge((midpoint1_index, 2), (midpoint2_index, 2))
 
+\end{lstlisting}
+A couple of shortcut variables are introduced to make the code cleaner:
+\begin{lstlisting}
+    opposite_side1 = 0 if (side1==1) else 1
+    opposite_side2 = 0 if (side2==1) else 1
+
+\end{lstlisting}
+
+Construct the two halves of "edge1": if "v1a" and "v1b" are the
+endpoints of "edge1", then the "one_half" edge extends from the "v1a"
+endpoint of "edge1" to the new vertex "midpoint1".  The "other_half"
+edge extends from the "midpoint1" new vertex to "v1b"; if we are
+bridging an edge with itself ("edge1 == edge2") then "other_half"
+ends in "midpoint2" instead.
+\begin{lstlisting}
     ((v1a, pos1a), (v1b, pos1b)) = self.edges[edge1].endpoints
-    new_edges[one_half1] = Edge((v1a, pos1a), (midpoint1_index, side1))
+
+    new_edges[one_half1] = Edge((v1a, pos1a), 
+                                (midpoint1_index, side1))
     if edge1 != edge2:
       # replace "edge1" with new "other_half1" in the second endpoint
       new_vertices[v1b] = Vertex(new_vertices[v1b][:pos1b]
                          + [other_half1]
                          + new_vertices[v1b][pos1b+1:])
-      new_edges[other_half1] = Edge((midpoint1_index, opposite_side1), (v1b, pos1b))
-    else:
+      new_edges[other_half1] = Edge((midpoint1_index, opposite_side1), 
+                                    (v1b, pos1b))
+    else:                                                        |\n{bridge-other-half1-1}|
       # same edge, the `other half' ends at the second endpoint
-      new_edges[other_half1] = Edge((midpoint1_index, opposite_side1), (midpoint2_index, side2))
+      new_edges[other_half1] = Edge((midpoint1_index, opposite_side1), 
+                                    (midpoint2_index, side2))    |\n{bridge-other-half1-2}|
 
-    # replace "edge2" with new "other_half2" in the second
-    # endpoint; again we need to distinguish the special case when
-    # "edge1" and "edge2" are the same edge.
+\end{lstlisting}
+Note that, when replacing the second endpoint in vertex "v1b", we need
+to construct a new "Vertex" object, since "Vertex" instances can be
+shared among different "Fatgraph" instances.
+
+Also note that "side1" and "side2" are used as attachment indices in
+the code snippet above; this is due to the choice of the cyclic list
+representatives when defining "midpoint1" and "midpoint2"
+(line~\nr{bridge-midpoints-1} and following ones).
+
+A similar construction is applied to "edge2": again we need to distinguish the special case when
+"edge1" and "edge2" are the same edge.  When the two bridged edges are
+different, then "one_half2" extends from
+"v2a" to "midpoint2"; otherwise, "one_half2" and "other_half1" hold
+the the same edge, and the endpoints of "other_half1" have already
+been correctly set in lines~\nr{bridge-other-half1-1} to~\nr{bridge-other-half1-2}.
+\begin{lstlisting}
     ((v2a, pos2a), (v2b, pos2b)) = self.edges[edge2].endpoints
+
     if edge1 != edge2:
       new_edges[one_half2] = Edge((v2a, pos2a), (midpoint2_index, side2))
     else:
-      # \verb`edge1 == edge2`, so "one_half2" == "other_half1"
+      # "edge1 == edge2", so "one_half2" == "other_half1"
       pass # that is: "new_edges[one_half2] = new_edges[other_half1]"
-    # `other half' of second edge *always* ends at the previous
-    # edge endpoint, so replace "edge2" in "v2b".
+\end{lstlisting}
+The "other_half2", instead, always ends at the endpoint "v2b", so we
+can unconditionally replace "edge2" for "other_half2" in "v2b".
+\begin{lstlisting}
     new_vertices[v2b] = Vertex(new_vertices[v2b][:pos2b]
                        + [other_half2]
                        + new_vertices[v2b][pos2b+1:])
     new_edges[other_half2] = Edge((midpoint2_index, opposite_side2), (v2b, pos2b))
 
-    # inherit orientation, and add the three new edges in the order they were created
-    # FIXME: this is not the identity in the last segment!!
-    new_edge_numbering = self.edge_numbering + \
-               [other_half1, other_half2, connecting_edge]
+\end{lstlisting}
 
-    # build new graph 
+Orientation is inherited from the ``parent'' graph, adding the three
+new edge labels in the order they were created:
+\begin{lstlisting}
+    new_edge_numbering = self.edge_numbering + \
+               [connecting_edge, other_half1, other_half2]
+
+\end{lstlisting}
+Finally, the ``child'' graph can be built, overriding the default
+orientation and the construction of the adjacency list (for
+computational efficiency):
+\begin{lstlisting}
     return Fatgraph(new_vertices,
             edges = new_edges,
             num_edges = self.num_edges + 3,
@@ -1600,95 +1599,110 @@ default orientation:
 \end{lstlisting}
 
 
-\subsubsection{The map $p(G,x)$}
+\subsubsection{The map $p(G,x)$: add a simple boundary cycle}
 \label{sec:hangcircle}
 
+The method "Fatgraph.bridge" implements the construction $q(G,x,y)$
+described in \csref{sec:addition}:
 \begin{lstlisting}
   def hangcircle(self, edge, side):
-    """Return a new `Fatgraph`, formed by attaching a circle with
-    a new edge to a new trivalent vertex in the middle of `edge`.
-
-      >>> g = Fatgraph([Vertex([0,1,2]), Vertex([0,2,1])])
-      >>> g1 = g.hangcircle(0, 0)
-      >>> g1 is g
-      False
-      
-    Argument `side` controls which side of `edge` the circle is
-    hung to (valid values are 0 or 1), i.e., which of the two
-    inequivalent cyclic orders the new trivalent vertices will be
-    given::
-    
-      >>> g = Fatgraph([Vertex([0,1,2]), Vertex([0,2,1])])
-      >>> g1 = g.hangcircle(0, 0)
-      >>> g1 == Fatgraph([Vertex([0,1,2]), Vertex([3,2,1]), Vertex([0,3,4]), Vertex([5,5,4])])
-      True
-      >>> g2 = g.hangcircle(0, 1)
-      >>> g2 == Fatgraph([Vertex([0,1,2]), Vertex([3,2,1]), Vertex([3,0,4]), Vertex([5,5,4])])
-      True
-
-    It is worth noting that the new graph will have 3 edges more
-    than the original one::
-
-      >>> g1.num_edges == g.num_edges + 3
-      True
-      
     """
-    opposite_side = 0 if side else 1
+    Return a new `Fatgraph`, formed by attaching a circle with
+    a new edge to a new trivalent vertex in the middle of `edge`.
+    """
+\end{lstlisting}
+The implementation of "Fatgraph.hangcircle" is closely related to
+"Fatgraph.bridge" (see \csref{sec:bridge}): break "edge" in two
+halves: if "v1" and "v2" are the endpoints of "edge", then the
+"one_half" edge extends from "v1" to the new vertex "midpoint"; the
+"other_half" edge extends from the new "midpoint" vertex to "v2".
 
-    # assign edge indices
-    
-    # break "edge" in two halves: if "v1" and "v2" are the
-    # endpoints of "edge", then the "one_half" edge extends from
-    # the "v1" endpoint of "edge1" to the new vertex
-    # "midpoint"; the "other_half" edge extends from the
-    # "midpoint" new vertex to "v2".
+In particular, argument `side` controls which side of "edge" the
+circle is hung to (valid values are "0" or "1"), i.e., which of the
+two inequivalent cyclic orders the new "midpoint" vertex will be
+given.
+
+The new graph will have 3 edges more than the original one, all of
+which need new edge labels:
+\begin{lstlisting}
     one_half = edge
     other_half = self.num_edges
     connecting_edge = self.num_edges + 1
     circling_edge = self.num_edges + 2
     
-    # assign new indices to new vertices
-    midpoint_index = self.num_vertices
-    T_index = self.num_vertices + 1
-
-    # two new vertices are added: the mid-point of "edge", and
-    # the vertex "T" lying on the circle.
-    if side == 1:
-      midpoint = Vertex([other_half, one_half, connecting_edge])
-    else: # side == 0
-      midpoint = Vertex([one_half, other_half, connecting_edge])
-    T = Vertex([circling_edge, circling_edge, connecting_edge])
-    new_vertices = self.vertices + [midpoint, T]
-
-    # new edges:
-    # - inherit edges from parent, and add place for three new edges
     new_edges = self.edges + [
       None, # new edge: "other_half"
       None, # new edge: "connecting_edge"
       None, # new edge: "circling_edge"
       ]
-    
-    # - break "edge" into two edges "one_half" and "other_half":
+\end{lstlisting}
+Endpoint data for the new edges can only be filled once the new
+vertices have been constructed (see note~\ref{fn:chicken-and-egg} on
+page~\pageref{fn:chicken-and-egg}).% or \thefootnote
+%  http://anthony.liekens.net/index.php/LaTeX/MultipleFootnoteReferences
+
+Two new vertices are added: the mid-point of "edge", and
+the vertex "T" lying on the circle.
+\begin{lstlisting}
+    midpoint_index = self.num_vertices
+    T_index = self.num_vertices + 1
+
+    if side == 1:
+      midpoint = Vertex([other_half, one_half, connecting_edge])
+    else: # side == 0
+      midpoint = Vertex([one_half, other_half, connecting_edge])
+
+    T = Vertex([circling_edge, circling_edge, connecting_edge])
+    new_vertices = self.vertices + [midpoint, T]
+
+\end{lstlisting}
+
+Break "edge" into two edges "one_half" and "other_half": we set the
+new endpoints in the corresponding entries in "new_edges" and then
+replace "edge" with "other_half" in the endpoint "v2":
+\begin{lstlisting}
     ((v1, pos1), (v2, pos2)) = self.edges[edge].endpoints
-    new_edges[one_half] = Edge((v1, pos1), (midpoint_index, side))
-    new_edges[other_half] = Edge((midpoint_index, opposite_side), (v2, pos2))
+
+    opposite_side = 0 if side else 1
+
+    new_edges[one_half] = Edge((v1, pos1), 
+                               (midpoint_index, side))
+    new_edges[other_half] = Edge((midpoint_index, opposite_side), 
+                                 (v2, pos2))
+
     new_vertices[v2] = Vertex(new_vertices[v2][:pos2]
-                       + [other_half]
+                       + [ other_half ]
                        + new_vertices[v2][pos2+1:])
 
-    # - the connecting edge has endpoints in the mid-point of
-    # "edge" and in "T", and is *always* in third position:
-    new_edges[connecting_edge] = Edge((midpoint_index, 2), (T_index, 2))
+\end{lstlisting}
 
-    # - the circling edge is a loop with vertex "T"
-    new_edges[circling_edge] = Edge((T_index, 0), (T_index, 1))
+The connecting edge has endpoints in the mid-point of
+"edge" and in "T", and is always in third position:
+\begin{lstlisting}
+    new_edges[connecting_edge] = Edge((midpoint_index, 2), 
+                                      (T_index, 2))
 
-    # Inherit edge numbering from parent and extend as identity
-    # on the newly-added edges.
+\end{lstlisting}
+
+The circling edge is a loop with vertex "T":
+\begin{lstlisting}
+    new_edges[circling_edge] = Edge((T_index, 0), 
+                                    (T_index, 1))
+
+\end{lstlisting}
+
+Orientation is inherited from the ``parent'' graph, adding the three
+new edge labels in the order they were created:
+\begin{lstlisting}
     new_edge_numbering = self.edge_numbering + \
                [other_half, connecting_edge, circling_edge]
 
-    # finally, build new graph 
+\end{lstlisting}
+
+Finally, the ``child'' graph can be built, overriding the default
+orientation and the construction of the adjacency list (for
+computational efficiency):
+\begin{lstlisting}
     return Fatgraph(new_vertices,
             edges = new_edges,
             num_edges = self.num_edges + 3,
@@ -1702,44 +1716,6 @@ default orientation:
 
 
 \begin{lstlisting}
-  # Instances of this class will compare equal if there is an
-  # isomorphism mapping one to the other.
-  def __eq__(self, other):
-    """Return `True` if `self` and `other` are isomorphic."""
-
-    # shortcuts
-    if self is other:
-      return True
-    if self.invariants != other.invariants:
-      return False
-
-    # go the long way: try to find an explicit isomorphims
-    # between "self" and "other"
-    try:
-      # if there is any morphism, then return "True"
-      self.isomorphisms(other).next()
-      return True
-    except StopIteration:
-      # list of morphisms is empty, objects are not equal.
-      return False
-
-
-  # both "__eq__" and "__ne__" are needed 
-  # for testing equality of Python objects
-  def __ne__(self, other):
-    """The opposite of `__eq__` (which see)."""
-    return not self.__eq__(other)
-
-
-  def automorphisms(self):
-    """Enumerate automorphisms of this `Fatgraph` object.
-
-    See `.isomorphisms()` for details of how a `Fatgraph`
-    isomorphism is represented.
-    """
-    return self.isomorphisms(self)
-
-
   def isomorphisms(G1, G2):
     """Iterate over `Fatgraph` isomorphisms from `G1` to `G2`.
 
@@ -1941,6 +1917,44 @@ default orientation:
 
         # finally
         yield Isomorphism(G1, G2, pv, rots, pe)
+
+
+  # Instances of this class will compare equal if there is an
+  # isomorphism mapping one to the other.
+  def __eq__(self, other):
+    """Return `True` if `self` and `other` are isomorphic."""
+
+    # shortcuts
+    if self is other:
+      return True
+    if self.invariants != other.invariants:
+      return False
+
+    # go the long way: try to find an explicit isomorphims
+    # between "self" and "other"
+    try:
+      # if there is any morphism, then return "True"
+      self.isomorphisms(other).next()
+      return True
+    except StopIteration:
+      # list of morphisms is empty, objects are not equal.
+      return False
+
+
+  # both "__eq__" and "__ne__" are needed 
+  # for testing equality of Python objects
+  def __ne__(self, other):
+    """The opposite of `__eq__` (which see)."""
+    return not self.__eq__(other)
+
+
+  def automorphisms(self):
+    """Enumerate automorphisms of this `Fatgraph` object.
+
+    See `.isomorphisms()` for details of how a `Fatgraph`
+    isomorphism is represented.
+    """
+    return self.isomorphisms(self)
 
 
   def num_automorphisms(self):
