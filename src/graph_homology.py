@@ -90,7 +90,7 @@ def graph_homology_differential(graph):
                    " un-numbered graph `%s`."\
                    % (graph, l, dg)
             if dg.is_oriented():
-                result.append((dg, sign_exp(graph.orient_e[l])))
+                result.append((dg, sign_exp(graph.edge_numbering[l])))
     return result
         
 

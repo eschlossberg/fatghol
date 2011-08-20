@@ -216,9 +216,7 @@ class Graph(object):
 ##         'num_edges',
 ##         'num_external_edges',
 ##         'num_vertices',
-##         'orient_e',
-##         #'orient_v',
-##         #'orient_a',
+##         'edge_numbering',
 ##         'vertices',
 ##         ]
 
@@ -317,25 +315,13 @@ class Graph(object):
                     self.endpoints_v[edge].append(current_vertex_index)
                     self.endpoints_i[edge].append(edge_index_in_vertex)
 
-        ## Orientation is represented according to Conant+Vogtmann:
-        ##   - an ordering of the vertices;
-        ##   - an arrow on each edge.
-        ## Unless an explicit ordering is given in the constructor arguments,
-        ## use the obvious one: vertex have the order they are stored in
-        ## `self.vertices` and all edges get a positive arrow.
+        ## Orientation is given by an ordering of the edges,
+        ## which directly translates into an orientation of the
+        ## associated cell.  
         if 'orientation' in kwargs:
-            self.orient_e = kwargs.get('orientation')
-##             self.orient_v, self.orient_a = kwargs.get('orientation')
+            self.edge_numbering = kwargs.get('orientation')
         else:
-            self.orient_e = [ x for x in xrange(self.num_edges) ]
-##             #: Order on the vertices: the mapping from (internal)
-##             #: vertex index to the vertex number given according to
-##             #: the order.
-##             self.orient_v = [ x for x in xrange(self.num_vertices) ]
-##             #: Arrow on the edges; this is `-1` iff the arrow goes
-##             #: opposite to the order the edge endpoints are stored in
-##             #: the adjacency list, and `+1` otherwise.
-##             self.orient_a = [ +1 for x in xrange(self.num_edges) ]
+            self.edge_numbering = [ x for x in xrange(self.num_edges) ]
 
         assert self._ok()
 
@@ -402,9 +388,7 @@ class Graph(object):
                        "External edge %d appears in %d vertices" \
                        % (edge, cnt)
 
-        assert self.orient_e is not None
-##         assert self.orient_v is not None
-##         assert self.orient_a is not None
+        assert self.edge_numbering is not None
         
         return True
 
@@ -704,8 +688,7 @@ class Graph(object):
                      num_edges = self.num_edges,
                      num_vertices = self.num_vertices,
                      numbering = self.numbering,
-##                      orientation = (self.orient_v, self.orient_a),
-                     orientation = self.orient_e,
+                     orientation = self.edge_numbering,
                      vertextype = self._vertextype,
                      _boundary_components = self._boundary_components,
                      _genus = self._genus,
@@ -716,52 +699,11 @@ class Graph(object):
 
     def _cmp_orient(self, other, iso):
         pe = iso[2]
-        image_orient_e = Permutation(dict((self.orient_e[x],
-                                           other.orient_e[pe[x]])
+        image_edge_numbering = Permutation(dict((self.edge_numbering[x],
+                                           other.edge_numbering[pe[x]])
                                           for x in xrange(self.num_edges)))
-        return image_orient_e.sign()
+        return image_edge_numbering.sign()
         
-    def _cmp_orient_conantvogtmann(self, other, iso):
-        pv = iso[0]
-        pe = iso[2]
-        
-        # compute permutation on vertex order
-        image_orient_v = pv.rearrange(self.orient_v[:])
-        result = Permutation(dict((image_orient_v[x], other.orient_v[x])
-                                  for x in xrange(self.num_vertices))).sign()
-
-        # for positively-oriented edges, return +1 if endpoint
-        # indices are in decreasing lexicographic order, -1
-        # otherwise; sign is reversed if edge has negative
-        # orientation.
-        def arrow(edge, endpoints_v, endpoints_i, orient_a):
-            e0 = endpoints_v[edge][0]
-            e1 = endpoints_v[edge][1]
-            if e0 == e1:
-                # use attachment indices to determine arrow
-                e0 = endpoints_i[edge][0]
-                e1 = endpoints_i[edge][1]
-            assert e0 != e1
-            if e0 > e1:
-                return orient_a[edge]
-            else:
-                return -orient_a[edge]
-
-        orig_arrows = [ arrow(x, other.endpoints_v, other.endpoints_i,
-                              other.orient_a)
-                        for x in xrange(other.num_edges) ]
-        image_arrows = [ arrow(x,
-                               [ (pv[self.endpoints_v[pe[y]][0]],
-                                  pv[self.endpoints_v[pe[y]][1]])
-                                 for y in xrange(self.num_edges)],
-                               pe.rearrange(self.endpoints_i[:]),
-                               pe.rearrange(self.orient_a[:]))
-                         for x in xrange(self.num_edges) ]
-        for x in xrange(self.num_edges):
-            result *= orig_arrows[x] * image_arrows[x]
-
-        return result
-
 
     def contract(self, edgeno):
         """Return new `Graph` obtained by contracting the specified edge.
@@ -815,37 +757,21 @@ class Graph(object):
                " must be in range 0..%d" \
                % (edgeno, self.num_edges)
 
-        ## Contraction of an edge should follow the arrow on that
-        ## edge: the vertex at the tail of the arrow is plugged into
-        ## the vertex at the head (or the other way round - it doesn't
-        ## matter as long as the same recipe is followed
-        ## consistently).  The resulting code is however simpler if we
-        ## plug the higher-numbered vertex into the lower-numbered
-        ## one, and possibly reverse the orientation on the resulting
-        ## graph.
+        ## To keep code simpler we plug the higher-numbered vertex
+        ## into the lower-numbered one, and possibly reverse the
+        ## orientation on the resulting graph.
         
         # store endpoints and arrow on the edge-to-be-contracted; edge
-        # orientation goes from `v1` to `v2`, unless
-        # `self.orient_a[edgeno]` is -1, in which case it is reversed;
-        # at the end of this block of code, `arrow` should be +1 if
-        # edges have been contracted in the order given by the arrow
-        # on `edgeno`, and -1 otherwise.
-        # FIXME: this piece of code must be
-        # kept in sync with `Graph._cmp_orient`.
+        # orientation goes from `v1` to `v2`
+        #
+        # FIXME: this piece of code must be kept in sync with
+        # `Graph._cmp_orient`.
         (v1, v2) = self.endpoints_v[edgeno]
         (pos1, pos2) = self.endpoints_i[edgeno]
         if v1 > v2:
-##             arrow = self.orient_a[edgeno]
             # swap endpoints so that `v1 < v2`
             v1, v2 = v2, v1
             pos1, pos2 = pos2, pos1
-##         elif v1 == v2:
-##             if pos1 > pos2:
-##                 arrow = self.orient_a[edgeno]
-##             else:
-##                 arrow = -self.orient_a[edgeno]
-##         else:
-##             arrow = -self.orient_a[edgeno]
 
         # save highest-numbered index of vertices to be contracted
         l1 = len(self.vertices[v1]) - 1
@@ -931,57 +857,15 @@ class Graph(object):
 
         ## Orientation of the contracted graph.
 
-        cut = self.orient_e[edgeno]
-        renumber_orient_e = { cut:None }
-        renumber_orient_e.update(dict((x,x) for x in xrange(cut)))
-        renumber_orient_e.update(dict((x+1,x)
+        cut = self.edge_numbering[edgeno]
+        renumber_edge_numbering = { cut:None }
+        renumber_edge_numbering.update(dict((x,x) for x in xrange(cut)))
+        renumber_edge_numbering.update(dict((x+1,x)
                                       for x in xrange(cut,self.num_edges)))
-        new_orient_e = [ renumber_orient_e[self.orient_e[x]]
+        new_edge_numbering = [ renumber_edge_numbering[self.edge_numbering[x]]
                          for x in xrange(self.num_edges)
                          if x != edgeno ]
         
-##         ## vertex order stays the same, but vertices numbered higher
-##         ## than `self.orient_v[v2]` need to be shifted down one place.
-##         cut = self.orient_v[v2]
-##         renumber_orient_v = { cut:None }
-##         renumber_orient_v.update(dict((x,x) for x in xrange(cut)))
-##         renumber_orient_v.update(dict((x+1,x)
-##                                       for x in xrange(cut,self.num_vertices)))
-##         new_orient_v = [ renumber_orient_v[self.orient_v[x]]
-##                          for x in xrange(self.num_vertices)
-##                          if x != v2 ]
-        
-##         ## edges keep their arrows, *unless* renumbering vertices has
-##         ## altered the order relation on endpoints (e.g., an edge with
-##         ## endpoints `[v3, v2]` with `v1<v3<v2` would now have
-##         ## endpoints `[v3,v1]` and the order relation is exactly the
-##         ## opposite, resulting in reversed orientation).
-##         new_orient_a = self.orient_a[:edgeno] + self.orient_a[edgeno+1:]
-##         for x in xrange(self.num_edges):
-##             if x == edgeno:
-##                 continue # with next `x`
-
-##             s1 = sign(self.endpoints_v[x][0] - self.endpoints_v[x][1])
-##             if s1 == 0:
-##                 s1 = sign(self.endpoints_i[x][0] - self.endpoints_i[x][1])
-
-##             s2 = sign(new_endpoints_v[renumber_edges.get(x,x)][0]
-##                       - new_endpoints_v[renumber_edges.get(x,x)][1])
-##             if s2 == 0:
-##                 s2 = sign(new_endpoints_i[renumber_edges.get(x,x)][0]
-##                           - new_endpoints_i[renumber_edges.get(x,x)][1])
-##             if s1 == s2:
-##                 continue # with next `x`
-##             else:
-##                 # compensate for changed orientation
-##                 new_orient_a[renumber_edges.get(x,x)] = s1/s2
-            
-        
-##         ## if vertices have been joined in the order opposite to the
-##         ## arrow on `edgeno`, then swap orientation on the first edge
-##         ## of contracted graph
-##         new_orient_a[0] *= arrow
-
         numbering = None
         bc = None
         #   - edge `edgeno` is removed (subst with `None`)
@@ -998,15 +882,9 @@ class Graph(object):
         if __debug__:
             assert len(new_endpoints_v) == self.num_edges - 1
             assert len(new_endpoints_i) == len(new_endpoints_v)
-            assert len(new_orient_e) == self.num_edges - 1
-##             assert len(new_orient_v) == self.num_vertices - 1
-##             assert len(new_orient_a) == self.num_edges - 1
-##             for x in xrange(self.num_edges - 1):
-##                 assert new_orient_a[x] in [+1, -1]
-##             for x in xrange(self.num_vertices - 1):
-##                 assert 0 <= new_orient_v[x] < self.num_vertices - 1
+            assert len(new_edge_numbering) == self.num_edges - 1
             for x in xrange(self.num_edges - 1):
-                assert 0 <= new_orient_e[x] < self.num_edges - 1
+                assert 0 <= new_edge_numbering[x] < self.num_edges - 1
             g = Graph(new_vertices,
                  vertextype = self._vertextype,
                  endpoints = (new_endpoints_v, new_endpoints_i),
@@ -1025,8 +903,7 @@ class Graph(object):
                      num_edges = self.num_edges - 1,
                      num_external_edges = self.num_external_edges,
                      numbering = numbering,
-##                      orientation = (new_orient_v, new_orient_a),
-                     orientation = new_orient_e,
+                     orientation = new_edge_numbering,
                      _boundary_components = bc,
                      )
             
@@ -1479,21 +1356,11 @@ class Graph(object):
           >>> g2 = g1.clone()
           >>> Graph.projection(g1, g2)
           1
-          >>> g2.endpoints_v = [tuple(reversed(g2.endpoints_v[0]))] \
-                                + g1.endpoints_v[1:]
-          >>> g2.endpoints_i = [tuple(reversed(g2.endpoints_i[0]))] \
-                                + g1.endpoints_i[1:]
+          >>> g2.edge_numbering[0], g2.edge_numbering[1] = \
+              g2.edge_numbering[1], g2.edge_numbering[0]
           >>> Graph.projection(g1, g2)
           -1
           
-        The same happens if vertex order is changed by an odd
-        permutation::
-        
-          >>> g2 = g1.clone()
-          >>> g2.orient_v = list(reversed(g2.orient_v))
-          >>> Graph.projection(g1, g2)
-          -1
-
         """
         assert isinstance(other, Graph), \
                "Graph.__eq__:" \
