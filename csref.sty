@@ -2,7 +2,7 @@
 %%
 %% csref.sty -- 2001-11-28  Riccardo Murri
 %%
-%% $Id: csref.sty,v 1.9 2006/05/18 08:07:29 rmurri Exp $
+%% $Id: csref.sty,v 1.10 2006/05/26 15:10:44 rmurri Exp $
 %%
 \def\filename{csref}
 \def\fileversion{0.4}
@@ -160,7 +160,7 @@
 \providecommand\sectionrefname{Section}%
 \@ifundefined{sectionname}% hack for AMS document classes
   {}%
-  {\def\sectionrefname{\sectionrefname}}%
+  {\def\sectionrefname{\sectionname}}%
 \newcsref{document}{\sectionrefname~\csr@ref{#1}}%
 %%
 %% If the environment named in the first argument is defined, then
