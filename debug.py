@@ -11,6 +11,9 @@ import sys
 import types
 
 
+from decorator import decorator
+
+
 def is_sequence_of_type(t, seq):
     """Return `True` if all items of sequence `s` are of type `t`.
 
@@ -39,13 +42,19 @@ def is_sequence_of_integers(seq):
     return is_sequence_of_type(types.IntType, seq)
 
 
-def trace(func):
-    def __tracing_wrapper(*args, **kwargs):
-        print "DEBUG: Entering %s(%s, %s)" % (func.__name__, args, kwargs)
-        result = func(*args, **kwargs)
-        print "DEBUG: Got result %s from %s(%s, %s)" % (result, func.__name__, args, kwargs)
-        return result
-    return __tracing_wrapper
+@decorator
+def trace(func, *args, **kwargs):
+    incantation = "%s(%s, %s)" % (func.func_name,
+                                  str.join(", ",
+                                           ["<0x%x>:%s" % (id(a), repr(a))
+                                            for a in args]),
+                                  str.join(", ",
+                                           ["%s=%s," % (k,v)
+                                            for k,v in kwargs.iteritems()]))
+    print "DEBUG: Entering %s" % incantation
+    result = func(*args)
+    print "DEBUG: Got result %s from %s" % (result, incantation)
+    return result
 
 
 # from: http://www.friday.com/bbum/2005/10/27/tracing-python-execution/
