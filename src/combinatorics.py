@@ -8,7 +8,7 @@ __docformat__ = 'reStructuredText'
 import itertools
 
 
-class SetProductIterator:
+class SetProductIterator(object):
     """Iterate over all elements in a cartesian product.
 
     Argument `factors` is a sequence, all whose items are sequences
@@ -304,7 +304,7 @@ class Permutation(dict):
         return True
 
 
-class PermutationList:
+class PermutationList(object):
     """Simulate a (read-only) list of all permutations of a prescribed order.
 
     The list is ordered lexicographically; at position `0` and `n!`
@@ -342,7 +342,7 @@ class PermutationList:
         return self.factorial[-1]
 
 
-class PermutationIterator:
+class PermutationIterator(object):
     """Iterate over all permutations of a given sequence.
 
     The code is a port of the one described in Wikipedia at:
@@ -385,7 +385,7 @@ class PermutationIterator:
         return self.seq
 
 
-class InplacePermutationIterator:
+class InplacePermutationIterator(object):
     """Iterate (destructively) over all permutations of a given sequence.
 
     The given sequence `seq` is altered as new permutations are
@@ -443,7 +443,7 @@ class InplacePermutationIterator:
                 return self.seq
 
 
-class FixedLengthPartitionIterator:
+class FixedLengthPartitionIterator(object):
     """Iterate over partitions of integer `N` into *exactly* `K`
     positive integers.
 
