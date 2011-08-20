@@ -574,11 +574,29 @@ class ConnectedGraphsIterator(object):
     """Iterate over all connected graphs having vertices of the
     prescribed valences.
 
+    Generation of all graphs with prescribed vertex valences `(v_1,
+    v_2, ..., v_n)` goes this way:
+    
+      1) Generate all lists `L` of length `2*n` comprising the symbols
+         `{0,...,n-1}`, each of which is repeated exactly twice;
+
+      2) Pick such a list `L` and break it into smaller pieces of
+         length `v_1`, ..., `v_n`, each one corresponding to a vertex
+         (this is actually done in the `Graph` class constructor),
+         effectively building a graph `G`.
+
+      3) Test the graph `G` for connectedness: if it's not connected,
+         then go back to step 2).
+
+      4) Compare `G` with all graphs previously found: if there is a
+         permutation of the edge labels that transforms `G` into an
+         already-found graph, then go back to step 2).
+
     Examples::
-      >>> all_connected_graphs([4])
+      >>> list(ConnectedGraphsIterator([4]))
       [Graph([4], [[1, 0, 1, 0]]),
        Graph([4], [[1, 1, 0, 0]])]
-      >>> all_connected_graphs([3,3])
+      >>> list(ConnectedGraphsIterator([3,3]))
       [Graph([3, 3], [[2, 0, 1], [2, 0, 1]]),
        Graph([3, 3], [[2, 1, 0], [2, 0, 1]]),
        Graph([3, 3], [[2, 1, 1], [2, 0, 0]])]
@@ -614,11 +632,6 @@ class ConnectedGraphsIterator(object):
         return self
     
     def next(self):
-        """Iterate over lists representing edges of a ribbon graph.
-
-        Each returned list has length `2*n` and comprises the symbols `{0,...,n-1}`,
-        each of which is repeated exactly twice.
-        """
         for edge_seq in self._edge_seq_iterator:
             current = Graph(self._vertex_valences,
                             edge_seq,
@@ -632,15 +645,20 @@ class ConnectedGraphsIterator(object):
                 self._morphism_factory = MorphismIteratorFactory(current.valence_spectrum())
 
             # now walk down the list and remove isomorphs
-            current_is_isomorphic_to_already_found = False
+            current_is_not_isomorphic_to_already_found = True
             for candidate in self.graphs:
-                for isomorphism in self._morphism_factory(candidate, current):
-                    # if there is any isomorphism, then reject current
-                    current_is_isomorphic_to_already_found = True
+                # if there is any isomorphism, then reject current
+                try:
+                    self._morphism_factory(candidate, current).next()
+                    # if we get here, an isomorphism has been found,
+                    # so try again with a new `current` graph
+                    current_is_not_isomorphic_to_already_found = False
                     break
-                if current_is_isomorphic_to_already_found:
-                    break
-            if not current_is_isomorphic_to_already_found:
+                except StopIteration:
+                    # no isomorphism has been found, try with next
+                    # `candidate` graph
+                    pass
+            if current_is_not_isomorphic_to_already_found:
                 # add current to graph list
                 self.graphs.append(current)
                 return current
