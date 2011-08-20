@@ -120,7 +120,7 @@ Since $\T_{g,n}$ is contractible, its equivariant (co)homology with
 rational coefficients is isomorphic to the rational (co)homology of
 $\M_{g,n}$ (see \cite[VII.7.7]{brown}):
 \begin{equation}
-  \label{eq:2}
+  \label{eq:rational-homology-of-Mgn-from-equivariant-homology-of-Tgn}
   H^{\Gamma_{g,n}}_*(\T_{g,n}, \setQ) \cong H_*(\M_{g,n}, \setQ),
   \qquad
   H_{\Gamma_{g,n}}^*(\T_{g,n}, \setQ) \cong H^*(\M_{g,n}, \setQ),
@@ -349,7 +349,7 @@ us to give the following.
 
   If $S(G)$ has genus $g$ and $n$ punctures, then:
   \begin{equation}
-    \label{eq:2}
+    \label{eq:euler-characteristics-of-fatgraphs}
     \chi(G) = \chi(S(G)) = 2 - 2g - n = 2 - 2g - \card{\Holes{G}},
   \end{equation}
   so we can define, for any fatgraph $G$, the \emph{genus} $g$, as
@@ -1089,7 +1089,8 @@ Form a differential complex of orientable fatgraphs as follows.
 \end{definition}
 
 Call a fatgraph with one vertex only a \emph{clover}; the number $l$
-of edges of a clover of genus $g$ is readily computed by \eqref{eq:2}:
+of edges of a clover of genus $g$ is readily computed by
+\eqref{eq:euler-characteristics-of-fatgraphs}:
 \begin{equation}
   \label{eq:9}
   l_{\min} = 1 - \chi(G) = 2g + n - 1.
@@ -1118,7 +1119,7 @@ taking the wedge product of edges of $G$ in the order given by $\omega$;
 conversely, any $\alpha_1 \land \ldots \land \alpha_p \in W_G$ defines an orientation on $G$ by
 setting $\alpha_1 < \ldots < \alpha_p$.
 
-\begin{theorem}
+\begin{theorem}\label{thm:fatgraph-homology}
   The $\Gamma_{g,n}$-equivariant homology of $\T_{g,n}$ with rational
   coefficients is computed by the complex of oriented fatgraphs
   $(W_*, D)$, that is, there exists an isomorphism
