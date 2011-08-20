@@ -1,16 +1,21 @@
 %%% index.tex -- Master LaTeX file.
 %%%
-\documentclass[draft]{scrbook}
-\usepackage{beton}
-\usepackage{euler}
-%\documentclass[a4paper,reqno,openany,draft]{amsbook}
-
-%% Debugging code
+\documentclass[draft,a4paper]{memoir}
 \usepackage{prelim2e}
-%\usepackage[nomsgs]{refcheck}
-\usepackage[reqno]{amsmath}
+
+%%% standard utility packages
 \usepackage{color}
 \usepackage[T1]{fontenc}
+\usepackage[final]{graphicx}
+%\usepackage[nomsgs]{refcheck}
+\usepackage{url}
+
+
+%%% document appearance and style
+
+\usepackage{beton}
+\usepackage{euler}
+
 \usepackage{mdwlist}
 %  \renewenvironment{description}{%
 %    \begin{basedescript}{%
@@ -20,12 +25,23 @@
 %    \end{basedescript}%
 %  }
 %\usepackage{mdwtab}
-\usepackage[final]{graphicx}
-%\usepackage{hyperref}
-\usepackage[final]{listings}
+\usepackage[newitem,newenum]{paralist}
+  \setdefaultenum{\slshape (1)}{\slshape (a)}{\slshape (i)}{A.}
+  %\setdefaultitem{\blacktriangleright}{\smalltriangleright}{$\bullet$}{$\circ$}
+  \setdefaultitem{\guillemotright}{\guilsinglright}{$-$}{*}
+
+
+%%% specialized utilities
+
+\usepackage{fancyvrb}
+  \DefineShortVerb{\"}
+
+\usepackage[final]{listings}%
+  \def\codefont{\ttfamily}%
+  \let\l=\codefont%
   \lstloadlanguages{Python}%
   \lstset{language=Python,%
-          basicstyle=\ttfamily,%
+          basicstyle=\codefont,%
           commentstyle=\normalfont\small,%
           texcl,mathescape=true,%
           showspaces=false,%
@@ -34,36 +50,22 @@
           numbers=left,%
           numberstyle=\tiny,%
           stepnumber=1,%
-          firstnumber=last%
-        }
-  \let\l=\lstinline
-  %\lstnewenvironment{py}{\lstset{numbers=none}}{}
-\usepackage[newitem,newenum]{paralist}
-  \setdefaultenum{\slshape (1)}{\slshape (a)}{\slshape (i)}{A.}
-  %\setdefaultitem{\blacktriangleright}{\smalltriangleright}{$\bullet$}{$\circ$}
-  \setdefaultitem{\guillemotright}{\guilsinglright}{$-$}{*}
-\usepackage{url}
+          firstnumber=last,%
+          fancyvrb%
+        }%
+  \lstnewenvironment{code}{}{}%
+  \lstnewenvironment{codexmp}{\lstset{numbers=none,xleftmargin=1em}}{}%
 
 \usepackage[debug]{csref}
-\newcsref{theorem}{Theorem~\ref{#1}}%
-\newcsref{lemma}{Lemma~\ref{#1}}%
-\newcsref{proposition}{Proposition~\ref{#1}}%
-\newcsref{claim}{Claim~\ref{#1}}%
-\newcsref{conjecture}{Conjecture~\ref{#1}}%
-\newcsref{example}{Example~\ref{#1}}%
-\newcsref{definition}{Definition~\ref{#1}}%
-\newcsref{corollary}{Corollary~\ref{#1}}%
-\newcsref{remark}{Remark~\ref{#1}}%
-
-\usepackage[ps,dvips,xdvi,colour,all,arc,knot,poly]{xy}
-  \everyxy={/r24pt/:} % scala per i diagrammi
-  \def\xyc#1\endxyc{\xy*!LC\xybox{#1}\endxy}
-
-\usepackage{rg} % vertici e buche di grafi a nastro
-
-\usepackage{xytree}
-\setlength{\treegap}{24pt}  
-\setlength{\treeheight}{18pt}
+  \newcsref{theorem}{Theorem~\ref{#1}}%
+  \newcsref{lemma}{Lemma~\ref{#1}}%
+  \newcsref{proposition}{Proposition~\ref{#1}}%
+  \newcsref{claim}{Claim~\ref{#1}}%
+  \newcsref{conjecture}{Conjecture~\ref{#1}}%
+  \newcsref{example}{Example~\ref{#1}}%
+  \newcsref{definition}{Definition~\ref{#1}}%
+  \newcsref{corollary}{Corollary~\ref{#1}}%
+  \newcsref{remark}{Remark~\ref{#1}}%
 
 %% package FIXME
 \makeatletter%
@@ -75,16 +77,21 @@
     \stepcounter{fixme@note}%
 }%
 \makeatother%
-%%
+
+\usepackage[ps,dvips,xdvi,colour,all,arc,knot,poly]{xy}
+  \everyxy={/r24pt/:} % scala per i diagrammi
+  \def\xyc#1\endxyc{\xy*!LC\xybox{#1}\endxy}
+
+\usepackage{rg} % vertici e buche di grafi a nastro
+
+\usepackage{xytree}
+\setlength{\treegap}{24pt}  
+\setlength{\treeheight}{18pt}
 
 
-%%%
-%%% NOTAZIONI MATEMATICHE
-%%%
+%%% mathematics
+\usepackage[reqno]{amsmath}
 
-%%
-%% Theorems, Lemmas, and the like...
-%%
 \usepackage{amsthm}
 \providecommand{\theoremname}{Theorem}
 
@@ -96,21 +103,22 @@
 \newtheorem{conjecture}[theorem]{Conjecture}
 \newtheorem{corollary}[theorem]{Corollary}
 
-\theoremstyle{remark}
-\newtheorem{remark}{Remark}[section]
-\newtheorem*{ack}{Acknowledgments}
-\newtheorem*{notations}{Notations}
-
 \theoremstyle{definition}
 \newtheorem{definition}[theorem]{Definition}
-\newtheorem{example}{Example}[chapter]
+\newtheorem{example}[theorem]{Example}
+
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem*{ack}{Acknowledgments}
+\newtheorem*{notations}{Notations}
 
 \numberwithin{equation}{section}
 
 
-%%
-%% Notazioni matematiche di *questo* articolo
-%%
+%%%
+%%% NOTAZIONI MATEMATICHE
+%%%
+
 \usepackage{miscmath} % simboli vari
 
 \providecommand{\textsubscript}[1]{$\sb{#1}$}
@@ -196,16 +204,26 @@
 \newcommand{\rel}{\sim}
 
 
-%%%
-%%% Cominciamo...
-%%%
+%%% hyperref
+\usepackage{hyperref}
+
+
+%%% document
 \includeonly{algorithm,python}
 \begin{document}
+\VerbatimFootnotes% from `fancyvrb`
 
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{2ex plus 0.5ex minus 1ex}
 
+
+\frontmatter
+
 \include{title}
+
+
+\mainmatter
+
 \include{prelim}
 \include{graphcomplex}
 \include{algorithm}
@@ -228,6 +246,8 @@
 \bibliography{math,tech}
 \bibliographystyle{halpha}
 
+
+\backmatter
 
 \end{document}
 

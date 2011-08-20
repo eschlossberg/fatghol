@@ -1,6 +1,7 @@
-
 \chapter{Python language syntax}
 \label{chap:python}
+
+\lstset{numbers=none}%
 
 This chapter features a short introduction to the syntax of the
 programming language Python, and an explanation of the commonly-used
@@ -30,7 +31,7 @@ computer.  Each statement must fit into a \emph{logical line}; a
 logical line is the sortest sequence of consecutive display lines such
 that all parentheses are balanced.  In other words, a statement ends
 at the first newline character such that for every occurrence of
-`\verb"("', `\verb"["', or `\verb"{"' there is a matching occurence of
+`"("', `"["', or `"{"' there is a matching occurence of
   the corresponding closing symbol.
 \begin{lstlisting}
 # single-line statement
@@ -43,7 +44,7 @@ u = (1 + 4*x[2]
        + z)
 \end{lstlisting}
 As one can see from the example above, the Python interpreter ignores
-any character following `\l"#"' until the end of the line.  This
+any character following `"#"' until the end of the line.  This
 syntax is used to add explicative comments to the Python source code.
 The Python interpreter completely ignores comments and blank lines
 while reading a source file; that is, a Python program will have
@@ -54,8 +55,8 @@ are removed.
 \label{sec:variables}
 
 A variable name is \emph{bound} by assigning a value to it: e.g.,
-\l{a=42}.  Variables in Python are \emph{untyped}, that is, any
-variable can hold an object of any type: \l{a=42} and \l{a=list()}
+"a=42".  Variables in Python are \emph{untyped}, that is, any
+variable can hold an object of any type: "a=42" and "a=list()"
 are both valid assignments. Variables in Python are also
 \emph{mutable}, meaning that a single variable may be assigned a
 different value several times over, within the same block of code.
@@ -100,10 +101,10 @@ for x in range(10):
 # the body block of the "for" loop.
 print "All done."
 \end{lstlisting}
-The assignment to variable \l"y" and the \l"print"
+The assignment to variable "y" and the "print"
 statement belong in the same code block (they body of the
-\l"for" cycle), therefore both begin in column 2.  The
-\l"for" and the last \l"print" statement belong in
+"for" cycle), therefore both begin in column 2.  The
+"for" and the last "print" statement belong in
 the same sequence and therefore start at column 0. 
 
 
@@ -115,7 +116,7 @@ named parameters.  A function is invoked by giving actual values to
 the parameters; upon termination, functions return a value to their
 caller. 
 
-Python functions are defined using the \l"def" keyword; it must be
+Python functions are defined using the "def" keyword; it must be
 followed by the function name and a parenthesized list of parameters:
 \begin{lstlisting}
 def binomial(n, k):
@@ -151,13 +152,13 @@ fields (called ``instance variables'') and functions (called
 ``methods''); for the limited purposes of this exposition, it suffices
 to say that an object is a group of variables and functions.
 
-If $x$ is an object and $v$ is a variable name, then \l"$x$.$v$" is
+If $x$ is an object and $v$ is a variable name, then "$x$.$v$" is
 the Python syntax used to refer to the instance variable $v$ within
 $x$. Variables belonging in different object instances are independent
 and can store different values.
 
 If $x$ is an object and $f$ is a function name, then
-\l"$x$.$f$($...$)" is said to ``invoke method $f$ on object $x$''
+"$x$.$f$($...$)" is said to ``invoke method $f$ on object $x$''
 and is an alternate syntax for the function call \l{$f$($x$, $...$)}.
 
 \subsection{Classes}
@@ -166,7 +167,7 @@ and is an alternate syntax for the function call \l{$f$($x$, $...$)}.
 The type of an object determines what instance variables and methods
 it has initially.  The type of an object is called its ``class'';
 equivalently, one says that object $x$ is an \emph{instance} of class
-$X$.  Classes are defined with the \l"class" statement:
+$X$.  Classes are defined with the "class" statement:
 \begin{lstlisting}
 class Complex(object):
   def __init__(self, real, imag):
@@ -175,12 +176,12 @@ class Complex(object):
   def norm(self):
     return math.sqrt(self.real**2 + self.imag**2)
 \end{lstlisting}
-The above code defines a class \l"Complex" with two instance variables
-\l"real" and \l"imag", and two instance methods \l"__init__" and
-\l"norm".  Within the class definition, the keyword \l"self" denotes
+The above code defines a class "Complex" with two instance variables
+"real" and "imag", and two instance methods "__init__" and
+"norm".  Within the class definition, the keyword "self" denotes
 the actual object on which the method is invoked: namely, if $x$ and
-$y$ are both instances of class \l"Complex", then \l"$x$.norm()" and
-\l"$y$.norm()" both execute the same code, with the variable \l"self"
+$y$ are both instances of class "Complex", then "$x$.norm()" and
+"$y$.norm()" both execute the same code, with the variable "self"
 bound to $x$ in the first case and to $y$ in the second. 
 
 An instance of a class is created by invoking the class name as a
@@ -188,18 +189,18 @@ function, e.g.:
 \begin{lstlisting}
 x = Complex(1.0, 1.0)
 \end{lstlisting}
-The \l"__init__" method is executed when creating an instance of a
-class, with the \l"self" parameter bound to the newly-created object.
+The "__init__" method is executed when creating an instance of a
+class, with the "self" parameter bound to the newly-created object.
 The number of parameters following the class name in instance creation
-must match those defined in the \l"__init__" method.
+must match those defined in the "__init__" method.
 
 \subsection{Inheritance}
 \label{sec:inheritance}
 
 A class can \emph{inherit} its methods from other classes (named the
 \emph{superclasses}): assume $x$ is an instance of class $X$, and $Y$ is a
-superclass of $X$ defining a method $f$ then \l"$x$.$f$()" invokes the
-method $f$ as defined in $Y$ (with \l"self" bound to $x$), unless $X$
+superclass of $X$ defining a method $f$ then "$x$.$f$()" invokes the
+method $f$ as defined in $Y$ (with "self" bound to $x$), unless $X$
 also defines a method named $f$ (which would be invoked instead).
 
 The ``inherits from'' relation is a partial order on the set of all
@@ -217,41 +218,41 @@ class ComplexV(Complex):
 x = ComplexV(2, 2)  # `x` is $2 + 2\I$
 y = x.unit_vector() # `y` is $1/\sqrt{2} + 1/\sqrt{2}\I$
 \end{lstlisting}
-A class \l"ComplexV" is defined, which inherits from class
-\l"Complex"; object of class \l"ComplexV" shall have a method
-\l"unit_vector" defined in \l"ComplexV", and  methods \l"norm" and
-\l"__init__" defined in \l"Complex" (by inheritance).  Indeed, the
-definition of \l"unit_vector" invokes \l"self.norm()".
+A class "ComplexV" is defined, which inherits from class
+"Complex"; object of class "ComplexV" shall have a method
+"unit_vector" defined in "ComplexV", and  methods "norm" and
+"__init__" defined in "Complex" (by inheritance).  Indeed, the
+definition of "unit_vector" invokes "self.norm()".
 
 \subsection{Special methods}
 \label{sec:special-methods}
 
 Python defines some special method names; these methods, when defined,
 are invoked with Python's natural operator syntax: e.g., if $x$
-defines a method \l"__add__", then $x + y$ results in the method call
-\l"$x$.__add__($y$)".  The full list of special methods and their
+defines a method "__add__", then $x + y$ results in the method call
+"$x$.__add__($y$)".  The full list of special methods and their
 meaning is only available in the Python Language Reference
 \cite{python:reference}; the ones used in the listings of
 \csref{chap:algorithm} are:
 \begin{itemize}
-\item[{\tt \_\_eq\_\_}] Used for testing object equality; if $x$ implements
-  \l"__eq__", then \l{$x$ == $y$} actually runs \l"$x$.__eq__($y$)".
-\item[{\tt \_\_getitem\_\_}] If $x$ has a method \l"__getitem__", then the
+\item[{\ttfamily \_\_eq\_\_}] Used for testing object equality; if $x$ implements
+  "__eq__", then \l{$x$ == $y$} actually runs "$x$.__eq__($y$)".
+\item[{\ttfamily \_\_getitem\_\_}] If $x$ has a method "__getitem__", then the
   look-up expression \l{$x$[$k$]} is translated to the method call
-  \l"$x$.__getitem__($k$)".
-\item[{\tt \_\_init\_\_}] Instance initialization, see \csref{sec:classes}.
-\item[{\tt \_\_len\_\_}] Returns the length (number of elements) in a
+  "$x$.__getitem__($k$)".
+\item[{\ttfamily \_\_init\_\_}] Instance initialization, see \csref{sec:classes}.
+\item[{\ttfamily \_\_len\_\_}] Returns the length (number of elements) in a
   container.
-\item[{\tt \_\_ne\_\_}] The opposite of \l"__eq__" (which see); if $x$
-  implements \l"__ne__", then \l{$x$ != $y$} actually runs
-  \l"$x$.__ne__($y$)"
-\item[{\tt \_\_repr\_\_}] Machine-readable printable representation of an
+\item[{\ttfamily \_\_ne\_\_}] The opposite of "__eq__" (which see); if $x$
+  implements "__ne__", then \l{$x$ != $y$} actually runs
+  "$x$.__ne__($y$)"
+\item[{\ttfamily \_\_repr\_\_}] Machine-readable printable representation of an
   object; returns a string, which should be a valid Python expression
   that yields a copy of the object when evaluated; called by
-  \l"repr($x$)".
-\item[{\tt \_\_str\_\_}] Human-readable printable representation of an
+  "repr($x$)".
+\item[{\ttfamily \_\_str\_\_}] Human-readable printable representation of an
   object; returns a string describing the instance; called by
-  \l"str($x$)".
+  "str($x$)".
 \end{itemize}
 
 
@@ -259,38 +260,38 @@ meaning is only available in the Python Language Reference
 \label{sec:control-flow}
 
 Python supports the usual control flow constructs
-\l"if"/\l"else", \l"for", \l"while".
+"if"/"else", "for", "while".
 
-The \l"if"/\l"else" statements are used to select which of two
-blocks of code will be executed.  The \l"else" part is optional and
-can be omitted.  Cascaded \l"if"/\l"else" occurrences (to
+The "if"/"else" statements are used to select which of two
+blocks of code will be executed.  The "else" part is optional and
+can be omitted.  Cascaded "if"/"else" occurrences (to
 select the execution of a particular block of instructions) are best
-written using the \l"elif" keyword as a shorthand for 
+written using the "elif" keyword as a shorthand for 
 `\verb"else: if:"'. 
 
-The \l"while" statement repeatedly executes the ensuing code block;
-the expression specified after the \l"while" keyword is evaluated
+The "while" statement repeatedly executes the ensuing code block;
+the expression specified after the "while" keyword is evaluated
 at the beginning of each execution cycle, if the result is boolean
 false, then execution of the code block is aborted and the program
-flows continues after the block following the \l"while" statement.
+flows continues after the block following the "while" statement.
 Therefore, if an expression evaluates to false at the first entrance
-in the \l"while" block, the block is never executed.
+in the "while" block, the block is never executed.
 
-The \l"for" statement repeatedly executes the ensuing code block,
+The "for" statement repeatedly executes the ensuing code block,
 each time binding the specified variables to a new value of the
-sequence following the \l"in" keyword.
+sequence following the "in" keyword.
 \begin{lstlisting}
 for x in range(10):
   print(x)
 \end{lstlisting}
-The \l"range" function is provided as a convenience to specify
+The "range" function is provided as a convenience to specify
 numerical integer sequences; by Python convention, the range is always
-half-open: \l"range(10)" is the sequence of natural numbers $\{0,
+half-open: "range(10)" is the sequence of natural numbers $\{0,
 1, \ldots, 9\}$.  More formally, we have:
 \begin{align*}
-  \text{\l"range"($n$,$m$)} &:= \{ x \in \setN : n \leq x < m \},
+  \text{\ttfamily range($n$,$m$)} &:= \{ x \in \setN : n \leq x < m \},
   \\
-  \text{\l"range"($n$)} &:= \text{\l"range"(0,$n$)}
+  \text{\ttfamily range($n$)} &:= \text{\ttfamily range(0,$n$)}
 \end{align*}
 
 
@@ -306,7 +307,7 @@ purpose is to store a collection of other objects.
 There are two main operations supported by Python on standard
 containers: \emph{iteration} and \emph{look-up}.
 
-Iteration over a container is supported through the \l"for" loop
+Iteration over a container is supported through the "for" loop
 syntax:
 \begin{lstlisting}
 for item in container:
@@ -315,7 +316,7 @@ for item in container:
 \end{lstlisting}
 The block of code following a \l{for ... in ...:} line will be
 executed once for each item stored in the container; at each
-iteration, the \l"for" variable will be bound to a different object in
+iteration, the "for" variable will be bound to a different object in
 the container.  Containers are said to be \emph{ordered} or
 \emph{unordered}, depending whether iteration returns the objects in
 the order they were added to the container (lists, tuples) or not
@@ -325,9 +326,9 @@ Look-up returns the item stored at a particular position in the
 container (in lists and tuples) or the one associated with a certain
 \emph{key} (in dictionaries); sets do not support item look-up.  
 Look-up is expressed by suffixing a container name with the index or key
-within square brackets: if \l"L" is container name, and \l"p" is a
-position, then \l{L[p]} represents the object stored in \l"L" at
-position \l"p".
+within square brackets: if "L" is container name, and "p" is a
+position, then \l{L[p]} represents the object stored in "L" at
+position "p".
 
 \subsection{Sets}
 \label{sec:sets}
@@ -337,7 +338,7 @@ Python sets are an unordered collection of Python objects.  Sets are
 a set, and to implement the most common set-theoretic operations.
 Sets are defined by enclosing the list of member objects in braces
 `\{' and `\}'; if an object is repeated several times in the list,
-it will be stored only once in the \l"set" container:
+it will be stored only once in the "set" container:
 \begin{lstlisting}
 # define a set; duplicates will be removed
 s1 = { 0, 1, "two", 1, 0 }
@@ -367,18 +368,18 @@ where:
 \item[$f$] is any Python expression (i.e., a computation \l{n*n+1}) 
   that is only function of $x$;
 \item[$p$] is a Python expression that evaluates to a
-  Boolean truth value (\l"True"/\l"False") and only depends on $x$.
+  Boolean truth value ("True"/"False") and only depends on $x$.
 \end{itemize}
 The above Python set comprehension translates to the current
 mathematics notation:
 \begin{equation*}
   \{ f(x) : x \in X \text{ such that } p(x) \text{ is true} \}
 \end{equation*}
-The \l"if"-clause with the boolean expression can be omitted, in which
-case it is assumed to be \l"True" for all $x \in X$.
+The "if"-clause with the boolean expression can be omitted, in which
+case it is assumed to be "True" for all $x \in X$.
 
 Sets do not allow look-up of elements, but allow iteration over the set
-contents in a \l"for" loop:
+contents in a "for" loop:
 \begin{lstlisting}
 # define a set; duplicates will be removed
 s = { 0, 1, "two", 1, 0 }
@@ -388,8 +389,8 @@ for item in s:
   print(item)
 \end{lstlisting}
 
-An \emph{immutable} variant \l"frozenset" is also provided;
-\l"frozenset" instances cannot be modified once created.
+An \emph{immutable} variant "frozenset" is also provided;
+"frozenset" instances cannot be modified once created.
 
                                                                
 \subsection{Lists}
@@ -511,7 +512,7 @@ lists, but the look-up key can be any valid Python object:
 print (f["one"])
 \end{lstlisting}
 Looking up a key which is not in the dictionary domain raises an
-exception of type \l"KeyError".
+exception of type "KeyError".
 
 Dictionaries are \emph{mutable} objects, new mappings can be added or
 old ones can be replaced:
@@ -549,7 +550,7 @@ g = { v:k for (k, v) in f.iteritems() }
 \end{lstlisting}
 
 
-\section[Exception handling]{Exception handling: \l"try"/\l"except"/\l"finally" statements}
+\section[Exception handling]{Exception handling: \l{try}/\l{except}/\l{finally} statements}
 \label{sec:try-except-finally}
 
 Exceptions are a language runtime construct to abort current function
@@ -562,27 +563,27 @@ function's caller for an exception handler.  If no exception handler
 could be found across the whole call stack, the Python program aborts
 execution.
 
-The \l"try"/\l"except"/\l"finally" statements
+The "try"/"except"/"finally" statements
 are used to define exception handlers for a block of code.  The code
-block following the \l"try" statement is executed; if it
-raises an exception, then each \l"except" clauses immediately
+block following the "try" statement is executed; if it
+raises an exception, then each "except" clauses immediately
 following is inspected: if the type of the exception being raised
-matches the type specified in the \l"except" clause, then the
-code block following \l"except" is executed. The code block
-following an \l"except" statement can raise a new exception
+matches the type specified in the "except" clause, then the
+code block following "except" is executed. The code block
+following an "except" statement can raise a new exception
 (or re-raise the one it caught); if no exception is raised, execution
 continues with the statement that follows the
-\l"try"/\l"except".  The code block following
-\l"finally" is \emph{always} excuted before control leaves the
-\l"try"/\l"except" clauses (in either way, that is,
-after a \l"try"/\l"except" block completed with no
+"try"/"except".  The code block following
+"finally" is \emph{always} excuted before control leaves the
+"try"/"except" clauses (in either way, that is,
+after a "try"/"except" block completed with no
 errors, or before returning control to the caller function because
 another exception has been raised).
 
-In the following example, the \l{a[42]} value lookup may
-raise an exception of type \l"KeyError"; if this happens,
-code in the \l"except" block will assign a default value to
-\l"b".
+In the following example, the "a[42]" value lookup may
+raise an exception of type "KeyError"; if this happens,
+code in the "except" block will assign a default value to
+"b".
 \begin{lstlisting}
 try:
     b = a[42]
@@ -594,17 +595,17 @@ except KeyError:
 # execution continues here
 print (b)
 \end{lstlisting}
-                          
+                     
 
-\subsection{The {\l"pass"} statement}
+\subsection{The {\l pass} statement}
 \label{sec:pass}
 
 Python syntax does not allow to specify an empty block of code. There
-is thus a special \l"pass" statement that performs no
+is thus a special "pass" statement that performs no
 computational operation, and is used to define ``no-op'' blocks.
 
-The main use of \l"pass" is in combination with an
-\l"except" statement, to ignore a particular error condition:
+The main use of "pass" is in combination with an
+"except" statement, to ignore a particular error condition:
 \begin{lstlisting}
 try:
   print (a[42])
