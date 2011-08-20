@@ -39,9 +39,9 @@ integrable with respect to $\ud v$.
 \begin{definition}\label{dfn:gaussian-measure}
   The probability measure on $V$ defined by
   \begin{equation*}
-    \ud\mu(v) \joinrel:= \frac{1}{C} \E^{-\onehalf\inner{v}{v}} \ud v, 
+    \ud\mu(v) \joinrel:= c^{-1} \E^{-\onehalf\inner{v}{v}} \ud v, 
     \qquad
-    C := {\int_V \E^{-\onehalf\inner{v}{v}} \ud v},
+    c := {\int_V \E^{-\onehalf\inner{v}{v}} \ud v},
   \end{equation*}
   is called the \emph{Gaussian measure} on $V$.
 \end{definition}
@@ -313,21 +313,23 @@ valence $i$, for $i=1,\dots,k$.
   \end{align*}
   by lemmas~\ref{thm:feynman-avg-gc} and~\ref{thm:feynman-avg-coeff}.
 \end{proof}
-A similar argument yields:
+
+Consider the set of all ribbon graphs having $l_i$ distinguished
+$i$-valent vertices for $i=1\dots,k$ ---call them ``special''
+vertices, as opposed to ``oridnary'' vertices. Let $\Aut(\Gamma)$ be the
+group of automorphisms that map the set of special vertices to itself.
+We can extend the graphical calculus functor $Z$ to interpret each
+$i$-valent special vertex as the operator $T_i$ and each ordinary
+$i$-valent vertex as the operator $x_iT_i$. Reasoning as in the proof
+of \ref{thm:FRT} we find:
 \begin{equation}
   \label{eq:FRT2}
   \int_V \frac{T_1(v)^{l_1} T_2(v\tp{2})^{l_2} \cdots
     T_k(v\tp{k})^{l_k}} {1^{l_1} l_1! 2^{l_2} l_2! \cdots k^{l_k}
     l_k!} \exp \left\{ \sum_{k=1}^\infty x_k\frac{T_k(v\tp{k})}{k}
-    \right\} \ud\mu(v)
-    = \sum_{\Gamma} \frac{Z_{x_*}(\Gamma)}{\card{\Aut\Gamma}}
+  \right\} \ud\mu(v)
+  = \sum_{\Gamma} \frac{Z_{x_*}(\Gamma)}{\card{\Aut\Gamma}}
 \end{equation}
-where the sum in the right-hand side ranges over all ribbon graphs
-having $l_i$ ``special'' $i$-valent vertices (for $i=1\dots,k$), and
-$\Aut(\Gamma)$ is the group of automorphisms that map the set of special
-vertices to itself. In \eqref{eq:FRT2}, the graphical calculus
-$Z_{x_*}$ interprets each $i$-valent special vertex as the operator
-$T_i$ and each ordinary $i$-valent vertex as the operator $x_iT_i$.
 This is the same as considering graphs with two sorts of vertices (see
 \csref{rem:many-sorted-graphs}), one decorated by operators $T_i$
 (call them ``special vertices''), and the other decorated by $x_iT_i$
@@ -597,7 +599,7 @@ ones.
         \otimes \Gamma_k)} {k! \card{\Aut\Gamma_1} \cdots
         \card{\Aut\Gamma_k}}
     \end{equation*}
-    For a graph $\Phi$ having $k$ connected components $\Gamma_1, \dots,
+    for a graph $\Phi$ having $k$ connected components $\Gamma_1, \dots,
     \Gamma_k$.  Let $I_\Phi$ be the set of all possible juxtapositions of
     $\Gamma_1, \ldots, \Gamma_k$; all graphs in $I_\Phi$ are isomorphic to $\Phi$. The
     semi-direct product $K$ of $\Perm{k}$ and $\Aut\Gamma_1 \times \dots \times
@@ -616,19 +618,6 @@ ones.
       {\card{\Aut\Phi}}=Z(x_*).
     \end{equation*}
   \end{proof}
-%  For example, taking logarithm of both sides of equation
-%  \eqref{eq:modulargraphs} we find
-%  \begin{equation}\label{eq:logmodulargraphs}
-%    \log\int_V \exp \biggl\{\frac{1}{\hbar}
-%    \left(\zeta(v)+\sum_{k=1}^\infty\sum_{g,n}
-%      \hbar^g
-%      \frac{S_{k,g}(v\tp{k})}{k!} 
-%    \right)\biggr\} \ud\mu_\hbar(v)
-%    = \frac{1}{\hbar}\sum_{g,n}\hbar^g\!\!\!\!\!\sum_{\Gamma \in
-%      \textrm{M}(g,n)\sptext{conn}}
-%    \frac{Z(\Gamma)}
-%    {\card{\Aut\Gamma}}.
-%  \end{equation}
   
 \everyxy={/r24pt/:} % riportiamo la scala per i diagrammi
 

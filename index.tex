@@ -151,8 +151,8 @@
 %%
 %% `csref' -- genera automaticamente il nome di un riferimento.
 %%
-%\usepackage[debug]{csref}
-\let\csref\autoref
+\usepackage[debug]{csref}
+%\let\csref\autoref
 
 %%%
 %%% Cominciamo...
@@ -162,11 +162,10 @@
 
 \include{title}
 \include{prelim}
-\include{ainfty}
 \include{gc}
 \include{fd}
 \include{kontsevich}
-\include{construction}
+\include{ainfty}
 
 \appendix
 \include{arrows}
