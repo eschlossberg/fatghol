@@ -98,8 +98,17 @@ def CyclicSequence(base, factory=None):
         ## equality predicates
         ##
         def __hash__(self):
-            return sum(hash(self[x:x+len(self)]) for x in xrange(len(self))) \
-                   % sys.maxint
+            """Return sum of items in the sequence.
+
+            This is invariant for all permutations, not just the
+            cyclic ones, but it is fast and easy to compute.
+            """
+            try:
+                # this works for numeric sequences
+                return int(sum(self))
+            except:
+                # slower but more general version works for all kinds of sequences
+                return reduce(operator.xor, [hash(x) for x in self])
         
         def __eq__(self, other):
             """Return `True` if `self` is linearly equal to `other`

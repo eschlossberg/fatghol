@@ -262,7 +262,7 @@ if 'shell' == args[0]:
     print ("""Starting interactive session (with PyDB %s).
     
     Any Python expression may be evaluated at the prompt.
-    All sumbols from modules `rg`, `homology`, `graph_homology`
+    All symbols from modules `rg`, `homology`, `graph_homology`
     have already been imported into the main namespace.
     
     """ % pydb.version)
@@ -294,12 +294,12 @@ elif 'selftest' == args[0]:
             # restore normal logging level
             logging.getLogger().setLevel(log_level)
             if failed>0:
-                logging.error("  module '%s' FAILED %d tests of %d." % (module, failed, tested))
-                print("Module '%s' FAILED %d tests of %d." % (module, failed, tested))
+                logging.error("  module '%s' FAILED %d tests out of %d." % (module, failed, tested))
+                print("Module '%s' FAILED %d tests out of %d." % (module, failed, tested))
             else:
                 if tested>0:
                     logging.debug("  OK - module '%s' passed all doctests." % module)
-                    print("Module '%s' passed all doctests." % module)
+                    print("Module '%s' OK, passed all doctests." % module)
                 else:
                     logging.warning("  module '%s' had no doctests." % module)
         finally:
