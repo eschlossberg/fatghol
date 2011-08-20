@@ -88,7 +88,7 @@ fatgraph allows us to apply the naive algorithm to topological
 fatgraphs, which cuts complexity down by a factor~$(n!)^2$.  The
 resulting matrix is then extended to numbered fatgraphs by the action
 of graph automorphism groups on the numberings of boundary cycles.
-This is the variant detailed in Section~\ref{sec:stage-ii}.
+This is the variant detailed in Section~\ref{sec:boundary-ops}.
 
 Stage~III is the simplest: by elementary linear algebra, the Betti
 numbers can be computed from the rank of matrices $D_k$ and the
@@ -99,8 +99,9 @@ available in the form of function libraries, ready for use. It should
 be noted, however, that this is the step that consumes more computer
 time (except for the very simple cases $2g+n<5$).
 
-\section[Stage I]{Stage I: generate the fatgraphs complex}
-\label{sec:stage-i}
+
+\section[Generation of fatgraphs]{Generation of all Fatgraphs in $\R_{g,n}$}
+\label{sec:generation}
 
 Exposition of the Stage~I code will proceed in a \emph{top-down}
 fashion: we shall work our way from the topmost function, which
@@ -109,13 +110,10 @@ computer representation of a fatgraph.  This way, requirements that
 functions and objects must satisfy become evident during the analysis,
 and implementation details are introduced only when needed.
 
-\subsection{Generation of all Fatgraphs in $\R_{g,n}$}
-\label{sec:stage1-all}
-
-Computations in Stage~I output the set of orientable fatgraphs
-$\R_{g,n}$ from the input pair $g, n$, with $2g +n - 2 > 0$.  The
-numbering will be added in Stage~II of the algorithm, so just the set
-of undecorated fatgraphs is output here.
+Computations in this first stage output the set of orientable
+fatgraphs $\R_{g,n}$ from the input pair $g, n$, with $2g +n - 2 > 0$.
+The numbering will be added in Stage~II of the algorithm, so just the
+set of undecorated fatgraphs is output here.
 
 Let "MgnGraphs" be the function which, given the two integers $g$,
 $n$ as input, and returns the collection of $\R_{g,n}$ graphs.  Let us
@@ -126,14 +124,14 @@ the list of graphs having $m - k$ edges.  There are algorithmic
 advantages in this subdivision, which are explained below.
 
 The Python implementation of the "MgnGraphs" function is as follows:
-\begin{lstlisting}[name=MgnGraphs,firstnumber=1]
+\begin{lstlisting}
 def MgnGraphs(g,n):
   """
   Return all connected fatgraphs having prescribed
   genus `g` and number of boundary cycles `n`.
   """
   # "graphs" is the function output; start with an empty list
-  graphs = []
+  graphs = [ ]
 
   # maximum number of edges
   m = 4*g + 2*n - 5
@@ -141,7 +139,7 @@ def MgnGraphs(g,n):
 Graphs with the maximal number of edges are trivalent graphs; they are
 computed by a separate function "MgnTrivalentGraphs", described in
 Section~\ref{sec:stage1-trivalent}.
-\begin{lstlisting}[name=MgnGraphs,firstnumber=11]
+\begin{lstlisting}
   # first item `graphs[0]` contains all 3-valent graphs
   graphs.append(list(MgnTrivalentGraphs(g,n)))
 \end{lstlisting}
@@ -150,56 +148,58 @@ contraction of regular edges: by contracting one edge in
 trivalent graphs we get the list "graphs[1]" of all graphs with
 $m-1$ edges; contracting one edge in $G \in $"graphs[1]", we
 get $F \in $"graphs[2]" with $m-2$ edges; and so on:
-\begin{lstlisting}[name=MgnGraphs,firstnumber=13]
-  for k in range(1,m):
-    graphs.append([]) # "graph[k]" starts as empty list
-    for G in graphs[k-1]:
-      for e in G.edge_orbits():
-        if not e.is_loop():
-          F = G.contract(e)
-          if F not in graphs[k]:
-            graphs[k].append(F)
+\begin{lstlisting}
+  for k in range(1,m):                         |\n{mgngraphs:1}|
+    graphs.append([]) # "graph[k]" starts as empty list |\n{mgngraphs:2}|
+    for G in graphs[k-1]:                      |\n{mgngraphs:3}|
+      for e in G.edge_orbits():                |\n{mgngraphs:4}|
+        if not e.is_loop():                    |\n{mgngraphs:5}|
+          F = G.contract(e)                    |\n{mgngraphs:6}|
+          if F not in graphs[k]:               |\n{mgngraphs:7}|
+            graphs[k].append(F)                |\n{mgngraphs:8}|
 \end{lstlisting}
 A line-by-line explanation follows.
 
-At line 13, the "range(1,m)" function sequentially generates all
-integers in the half-open range $[1, m)$; therefore, the "for"-loop
-body in lines 14--20 is executed $m-1$ times, with $k$ orderly taking
-the values $1$, ..., $m-1$.  Note that, by Python syntax, the loop
-body is indented w.r.t the loop head line.
+On line~\nr{mgngraphs:1}, the "range(1,m)" function sequentially
+generates all integers in the half-open range $[1, m)$; therefore, the
+"for"-loop body in lines \nr{mgngraphs:2}--\nr{mgngraphs:8} is
+executed $m-1$ times, with $k$ orderly taking the values $1$, ...,
+$m-1$.  Note that, by Python syntax, the loop body is indented w.r.t
+the loop head line.
 
-At line 14, "graph[k]" is initialized to an empty list: at the start
-of the loop body, the "graphs" list only has items "graphs[0]"
-through "graphs[k-1]".
+In the subsequent line, "graph[k]" is initialized to an empty list: at
+the start of the loop body, the "graphs" list only has items
+"graphs[0]" through "graphs[k-1]".
 
-Line 15 introduces a new loop: code in lines 16--20 will be executed
-once for each fatgraph "G" in "graphs[k-1]".
+Line~\nr{mgngraphs:3} introduces a new loop: code in lines
+\nr{mgngraphs:4}--\nr{mgngraphs:8} will be executed once for each
+fatgraph "G" in "graphs[k-1]".
 
-Line 16 starts the core of the function: contract edges of the
-fatgraph "G" to generate new fatgraphs with $m-k$ edges.  However,
-we need not contract every edge of a fatgraph: if $a \in \Aut(G)$ is
-an automorphism and $x \in E(G)$ is an edge, then the contracted
-graphs $G' = G/x$ and $G'' = G/a(x)$ are isomorphic.  Hence, we can
-restrict the computation to consider only one edge per orbit of the
-action induced by $\Aut(G)$ on the set $E(G)$. This is what the method
-call "G.edge_orbits()" provides: for each graph "G", it partitions
-the set of edges of "G" into orbits and returns one representative
-edge "e" for each one.
+Line~\nr{mgngraphs:4} starts the core of the function: contract edges
+of the fatgraph "G" to generate new fatgraphs with $m-k$ edges.
+However, we need not contract every edge of a fatgraph: if $a \in
+\Aut(G)$ is an automorphism and $x \in E(G)$ is an edge, then the
+contracted graphs $G' = G/x$ and $G'' = G/a(x)$ are isomorphic.
+Hence, we can restrict the computation to consider only one edge per
+orbit of the action induced by $\Aut(G)$ on the set $E(G)$. This is
+what the method call "G.edge_orbits()" provides: for each graph "G",
+it partitions the set of edges of "G" into orbits and returns one
+representative edge "e" for each one.
 
-Line 17 skips non-regular edges: the following code is executed if and
-only if "e" is not a loop.
+Line~\nr{mgngraphs:5} skips non-regular edges: the following code is
+executed if and only if "e" is not a loop.
 
-Line 18 computes the fatgraph "F" obtained by contracting the
-current edge "e" in "G": the "Fatgraph.contract(G,e)" invocation
-returns a \emph{new} fatgraph instance obtained by applying
+Line~\nr{mgngraphs:6} computes the fatgraph "F" obtained by
+contracting the current edge "e" in "G": the "Fatgraph.contract(G,e)"
+invocation returns a \emph{new} fatgraph instance obtained by applying
 topological contraction.
 
-Lines 19--20 add "F" to "graphs[k]" \emph{only if it is not
-  already there}.  This is actually very concise syntax for the most
-computationally expensive part of the "MgnGraphs" function: Python
-performs a comparison between "F" and each element in "graphs[k]";
-each comparison invokes the "Fatgraph.__eq__" method, which in turn
-invokes "Fatgraph.isomorphism".
+Lines~\nr{mgngraphs:7}--\nr{mgngraphs:8} add "F" to "graphs[k]"
+\emph{only if it is not already there}.  This is actually very concise
+syntax for the most computationally expensive part of the "MgnGraphs"
+function: Python performs a comparison between "F" and each element in
+"graphs[k]"; each comparison invokes the "Fatgraph.__eq__" method,
+which in turn invokes "Fatgraph.isomorphism".
 
 If $N_k = \text{\l{len(graph[k])}}$ is the number of elements in
 "graph[k]" and $T_\text{iso}$ is the average time needed to
@@ -216,7 +216,7 @@ time.)
 
 Finally, the function "MgnGraphs" exits and returns the list "graphs"
 to the caller:
-\begin{lstlisting}[name=MgnGraphs,firstnumber=21]
+\begin{lstlisting}
   # the list "graphs" is the final output of this function
   return graphs
 \end{lstlisting}
@@ -244,8 +244,8 @@ isomorphism.
 \end{proof}
 
 
-\subsection{Generation of Trivalent Fatgraphs}
-\label{sec:stage1-trivalent}
+\section{Generation of Trivalent Fatgraphs}
+\label{sec:trivalent}
 
 The generation of trivalent graphs can be tackled by an inductive
 procedure: given a trivalent graph, a new edge is added, which joins
@@ -259,7 +259,7 @@ Throughout this section, $V$ and $E$ stand for the number of vertices
 (resp.~edges) of a graph; it will be clear from the context, which
 exact graph they are invariants of.
 
-\subsubsection{Removal of edges}
+\subsection{Removal of edges}
 \label{sec:removal}
 
 Let $G \in \R_{g,n}$ be a \emph{connected} trivalent graph. Each edge
@@ -402,7 +402,7 @@ So that $g'_1 + g'_2 = g + 2$, $n'_1 + n'_2 = n+1$ and
 \end{equation}
 \end{enumerate}
 
-\subsubsection{Inverse construction}
+\subsection{Inverse construction}
 \label{sec:addition}
 
 If $x \in E(G)$ is an edge of fatgraph $G$, denote $\bar{x}$ and
@@ -522,12 +522,12 @@ $r$ is superfluous.
   disconnects.
 \end{proof}
 
-\subsubsection{The \protect\Verb`MgnTrivalentGraphs` algorithm}
+\subsection{The \protect\Verb`MgnTrivalentGraphs` algorithm}
 \label{sec:MgnTrivalentGraphs}
 
 The stage is now set for implementing the recursive generation of
 trivalent graphs.
-\begin{lstlisting}[name=MgnTrivalentGraphs,firstnumber=1]
+\begin{lstlisting}
 def MgnTrivalentGraphs(g, n):
   """
   Return a list of all connected trivalent fatgraphs with
@@ -548,10 +548,10 @@ start.  In particular, "MgnTrivalentGraphs" must:
 This is indeed realized in the following lines (the fatgraph
 representation as a Python ``"Fatgraph"'' object is discussed in
 Section~\ref{sec:stage1-fatgraphs}):
-\begin{lstlisting}[name=MgnTrivalentGraphs,firstnumber=6]
+\begin{lstlisting}
   # avoid infinite recursion in later statements
   if n==0 or (g,n)<(0,3):
-    return [] # return empty list
+    return [ ] # return empty list
 
   # $M_{0,3}$ --- induction base
   if (g,n) == (0,3):
@@ -581,10 +581,10 @@ for accumulating the results.  An helper function
 "add_if_admissible" is defined, to store only fatgraphs belonging in
 $\R_{g,n}$ into "result", and only one fatgraph per isomorphism
 class (the ``"G not in result"'' clause):
-\begin{lstlisting}[name=MgnTrivalentGraphs,firstnumber=22]
+\begin{lstlisting}
   # general case
   else:
-    result = [] # start with empty list
+    result = [ ] # start with empty list
 
     def add_if_admissible(G):
       if (G.genus, G.num_boundary_cycles) == (g,n) \
@@ -597,7 +597,7 @@ To invert construction {\slshape A)}, apply map $p$ to all fatgraphs $G \in
 \R_{g,n-1}$; if $a \in \Aut(G)$, then $p(a(G), a(x)) = p(G, x)$,
 therefore we may limit ourselves to one pair $(G,x)$ per orbit of the
 automorphism group, saving a few computational cycles:
-\begin{lstlisting}[name=MgnTrivalentGraphs,firstnumber=30]
+\begin{lstlisting}
     # case A: hang a circle to all edges of graphs in $M_{g,n-1}$
     for G in MgnTrivalentGraphs(g,n-1):
       for x in G.edge_orbits():
@@ -621,7 +621,7 @@ function can serve the whole fatgraph domain $\R = \cup
 is by construction invariant under $\Aut(G)$, we can again restrict
 to considering only one $(G, \bar{x}, \bar{y})$ per $\Aut(G)$-orbit;
 this is computed by the "G.edge_pair_orbits" function:
-\begin{lstlisting}[name=MgnTrivalentGraphs,firstnumber=35]
+\begin{lstlisting}
     # case B: bridge all edges of a single graph in $M_{g,n-1}$
     for G in MgnTrivalentGraphs(g,n-1):
       for (x,y) in G.edge_pair_orbits():
@@ -642,7 +642,7 @@ this is computed by the "G.edge_pair_orbits" function:
 
 Finally, the list of fatgraphs (one fatgraph per isomorphism class) is
 returned to the caller:
-\begin{lstlisting}[name=MgnTrivalentGraphs,firstnumber=50]
+\begin{lstlisting}
     return result
 \end{lstlisting}
 \FIXME{Serve qui un'analisi della complessit\`a dell'algoritmo?  In
@@ -651,13 +651,13 @@ returned to the caller:
   nessuno di questi \'e noto in anticipo.}
 
 
-\subsection{Computer representation of Fatgraphs}
-\label{sec:stage1-fatgraphs}
+\section{Computer representation of Fatgraphs}
+\label{sec:fatgraph-representation}
 
 The core of the computation lies in the representation of a fatgraph
 as an object in the programming language Python: according to the
 analysis of the graph generation algorithms in
-Sections \ref{sec:stage1-all}--\ref{sec:stage1-trivalent}, a
+Sections~\ref{sec:generation} and~\ref{sec:trivalent}, a
 ``"Fatgraph"'' class is needed, together with functions to contract an
 edge ("Fatgraph.contract"), compute orbits of edges under the action
 of fatgraph automorphisms ("Fatgraph.edge_orbits" and
@@ -674,7 +674,7 @@ generation algorithms are rather topological in nature and thus
 suggest an approach more directly related to the concrete realization
 of a fatgraph.
 
-\subsubsection{Vertices}
+\subsection{Vertices}
 \label{sec:vertices}
 
 Let $G$ be a fatgraph; assuming $G$ has $E = l+1$ edges, arbitrarily
@@ -777,7 +777,7 @@ not loops; therefore, in the following we shall slightly abuse the
 definition and speak of the attachment index of an edge at a vertex.
 
 
-\subsubsection{Edges}
+\subsection{Edges}
 \label{sec:edges}
 
 An edge is represented by its two endpoints; each endpoint has the
@@ -852,9 +852,7 @@ then "Edge.other_end(e,0,1)" returns "(1,3)" and
 \end{lstlisting}
 
 
-
-
-\subsubsection{Boundary Cycles}
+\subsection{Boundary Cycles}
 \label{sec:boundary-cycles}
 
 Boundary cycles are represented as cyclic sequences of ``corners'': a
@@ -937,7 +935,7 @@ referenced in each triplet by its index in the list of the ambient
 fatgraph vertices.
 
 
-\subsubsection{Fatgraphs}
+\subsection{Fatgraphs}
 \label{sec:fatgraphs}
 
 The stage is now set for the introduction of a computable
@@ -1017,7 +1015,7 @@ attribute of each instance), for speed and clarity of coding:
 
 \end{lstlisting}
 
-\paragraph{Adjacency list.}
+\subsubsection{Adjacency list.}
 The total number of edges (stored in "num_edges") can be computed by
 summing the valences of vertices.  It is needed to size the adjacency
 list, so must be computed early:
@@ -1083,7 +1081,7 @@ invariants are equal.
 \end{lstlisting}
 
 
-\paragraph{Orientation.}
+\subsubsection{Orientation.}
 According to Definition~\ref{dfn:orientation}, orientation is given by an
 ordering of the edges (which directly translates into an orientation
 of the associated orbifold cell).
@@ -1131,7 +1129,7 @@ enumerating all automorphims:
 \end{lstlisting}
 
 
-\subsubsection{Computation of boundary cycles}
+\subsection{Computation of boundary cycles}
 \label{sec:compute-boundary-cycles}
 
 The computation of boundary cycles is separated from the object
@@ -1196,7 +1194,7 @@ to loop over all indexes in the "corners" list, and quit looping as
 soon as "corners[v][i]" is not "None" (line~\nr{bcy-quit-ffwd});
 Python retains the value of "v" and "i" outside the loop.
 \begin{lstlisting}
-    result = []
+    result = [ ]
     while True:                                 |\n{bcy-main-loop}|
       # fast-forward to the first unused corner
       for v in xrange(self.num_vertices):
@@ -1224,7 +1222,7 @@ out of the "corners" list by replacing them with the special value
 "None" (line~\nr{bcy-mark-used}).
 \begin{lstlisting}
       start = (v,i)
-      triples = []
+      triples = [ ]
       while (v,i) != start or len(triples) == 0:         |\n{bcy-loop2}|
         triples.append(corners[v][i])
         j = corners[v][i][2]                           |\n{bcy-follow1}|
@@ -1254,7 +1252,7 @@ This section lists the methods implemented in the "Fatgraph" class to
 create new graphs out of existing ones by applying concrete
 topological constructions.
 
-\subsubsection{Contraction of an edge}
+\subsection{Contraction of an edge}
 \label{sec:contract}
 
 Recall from the definition in Section~\ref{sec:contractions}) that
@@ -1423,7 +1421,7 @@ default orientation:
 \end{lstlisting}
 
 
-\subsubsection{The map $q(G,x,y)$: bridging two edges of a fatgraph}
+\subsection{The map $q(G,x,y)$: bridging two edges of a fatgraph}
 \label{sec:bridge}
 
 The method "Fatgraph.bridge" implements the construction $q(G,x,y)$
@@ -1607,7 +1605,7 @@ computational efficiency):
 \end{lstlisting}
 
 
-\subsubsection{The map $p(G,x)$: add a simple boundary cycle}
+\subsection{The map $p(G,x)$: add a simple boundary cycle}
 \label{sec:hangcircle}
 
 The method "Fatgraph.bridge" implements the construction $q(G,x,y)$
@@ -1719,7 +1717,7 @@ computational efficiency):
 \end{lstlisting}
 
 
-\subsubsection{Fatgraphs isomorphism and equality testing}
+\subsection{Fatgraphs isomorphism and equality testing}
 \label{sec:isomorphism}
 
 The isomorphism problem on computer representations of fatgraphs
@@ -2031,7 +2029,7 @@ edge appear at the same attachment index is computed as difference
 between "dst_a" and "src_a" (line~\nr{neighbors:7}).
 \begin{lstlisting}
     def neighbors(pv, pe, G1, v1, G2, v2):
-      result = []
+      result = [ ]
       for x in G1.vertices[v1]:                      |\n{neighbors:1}|
         if G1.edges[x].is_loop():                    |\n{neighbors:2}|
           continue # with next edge "x"
@@ -2248,7 +2246,7 @@ case, "__ne__" just returns the opposite of "__eq__":
 \end{lstlisting}
 
 
-\subsubsection{Complementary methods}
+\subsection{Complementary methods}
 \label{sec:complementary}
 
 This section briefly lists those methods of the "Fatgraph" class that
@@ -2283,7 +2281,7 @@ un-numbered "Fatgraph".
 \end{lstlisting}
 
 
-\paragraph{Orbits under automorphisms}
+\subsubsection{Orbits under automorphisms}
 The "edge_orbits" function computes orbits of the edges under the
 action of graph automorphism group, and a representative for each
 orbit.  It returns a Python dictionary, whose keys are the
@@ -2355,7 +2353,7 @@ algorithm works exactly the same.
 \end{lstlisting}
 
 
-\paragraph{Printed representation.}
+\subsubsection{Printed representation.}
 On "Fatgraph" objects, both "__repr__" and "__str__" return the
 same string, i.e., the constructor invocation with the vertex list,
 which is guaranteed to produce an isomorphic "Fatgraph" instance.
@@ -2369,7 +2367,7 @@ which is guaranteed to produce an isomorphic "Fatgraph" instance.
 \end{lstlisting}
 
 
-\subsubsection{Isomorphism objects}
+\subsection{Isomorphism objects}
 \label{sec:iso}
 
 The following "Isomorphism" class defines common operations that one
@@ -2428,7 +2426,7 @@ graph.  Recall that "BoundaryCycle" instances are defined as list of
 by transforming each corner according to a graph isomorphism.
 \begin{lstlisting}
   def transform_boundary_cycle(self, bcy):
-    triples = []
+    triples = [ ]
 \end{lstlisting}
 Indeed, "transform_boundary_cycle" is straightforward loop over the
 corners making up the given boundary cycle "bcy":
@@ -2458,16 +2456,664 @@ Finally, a new "BoundaryCycle" object is constructed with the list of
 new triples:
 \begin{lstlisting}
     return BoundaryCycle(triples, self.target)
+    # end of "transform_boundary_cycle"
+  # end of "Isomorphism" class
 \end{lstlisting}
 
 
+\section{A framework for computing homology}
+\label{sec:homology}
 
-\section[Stage II]{Stage II: compute boundary operator matrices}
-\label{sec:stage-ii}
+Before proceeding to the computation of Betti numbers of the numbered
+fatgraph complex $\R_{g,n}$, we present a small framework for computing
+homology (over $\setQ$) of any differential complex $(W_*, d_*)$, given a
+basis of the graded vector space $W_*$.  This abstract setting lends
+itself to a particularly simple implementation; homology computations
+of $\R_{g,n}$ will follow as a particular case.
 
-\section[Stage III]{Stage III: compute Betti numbers of $\M_{g,n}$}
-\label{sec:stage-iii}
+The Betti numbers of a complex $(W_*, d_*)$ can be reckoned (via a
+little linear algebra) from the matrix form $D_k$ of the boundary
+operators $d_k$.  In order to compute the matrices $D_k$, we need to
+compute the coordinate vector of $d_ke^{(k)}_j$ for all vectors
+$e^{(k)}_j$ in a basis of $W_k$.
 
+The "VectorSpace" class provides a method to compute the coordinate
+vector, w.r.t. a given basis, of any linear combination of elements of
+that basis.
+\begin{lstlisting}
+class VectorSpace(object):
+    """
+    Represent the vector space freely generated 
+    by the given `base` vectors.
+    """
+\end{lstlisting}
+A "VectorSpace" object is constructed out of a list\footnote{To be
+  precise: from any Python sequence that supports \Verb'len' and
+  \Verb'index' operators with the same semantics as \Verb'list'
+  objects.} of basis elements; any Python object can be a basis
+element, as long as it can be used as a dictionary key and is distinct
+from all other basis elements.
+\begin{lstlisting}
+    def __init__(self, base):
+        """Constructor, taking list of base vectors."""
+        self.base = base
+
+\end{lstlisting}
+The dimension of the vector space is available via the "dimension"
+method, which just returns the number of basis elements:
+\begin{lstlisting}
+    def dimension(self):
+        return len(self.base)
+
+\end{lstlisting}
+
+A linear combination (of vectors in the given basis) is represented
+with a Python sequence of pairs "(v,c)" where "v" is a basis vector
+and "c" is a coefficient.  A given vector "v" may appear in several
+pairs. 
+
+The "coordinates" method returns a (sparse) coordinate vector of the
+given linear combination.  The sparse coordinate vector is implemented
+as a Python "defaultdict":  it associates an index $n$ with the
+coefficient of the $n$-th basis vector; any vector not appearing in
+the linear combination will have the default coefficient $0$.
+\begin{lstlisting}
+    def coordinates(self, combo):
+        """Return the (sparse) coordinate vector of "combo"."""
+        coordinates = defaultdict(lambda: 0) 
+        for (vector, coefficient) in iter(combo):
+            coordinates[self.base.index(vector)] += coefficient
+        return coordinates
+    # end of class "VectorSpace"
+
+\end{lstlisting}
+
+The "ChainComplex" class represents a (finite) chain complex over
+$\setQ$, and provides methods to compute the ranks of the homology
+modules.
+
+A "ChainComplex" instance "C" of length $l+1$ comprises vector spaces
+"C.module[i]" and differentials "C.differential[i]"; the "i" index
+runs from "0" to $l$.  
+
+Creating a "ChainComplex" instance requires only the complex length as
+parameter; differentials and vector spaces are initially set to null.
+(In othe words, "ChainComplex(l)" creates the null chain complex $0
+\to 0 \to \cdots \to 0$.)
+\begin{lstlisting}
+class ChainComplex(object):
+    """Represents a (finite-length) chain (homology) complex."""
+
+    def __init__(self, length):
+        """Create a chain complex of specified length."""
+        self.length = length
+        self.module = length * [ VectorSpace() ]
+        def null_differential(vector):
+          return [ ] # null linear combination
+        self.differential = length * [ null_differential ]
+
+\end{lstlisting}
+A "ChainComplex" instance must be initialized by assigning
+"VectorSpace" instances into each "C.module[i]" (for "i" in the range
+$0 \ldots l$), and appropriate maps into "C.differential[i]" (with "i"
+ranging from 1 to $l$).  Each "C.module[i]" represents the degree "i"
+slice of the graded vector space "C".  The map "C.differential[i]"
+sends (linear combinations of) elements in vector space "C.module[i]"
+to linear combinations of vectors in "C.module[i-1]".
+
+The following example Python code builds a "ChainComplex" object that
+computes the homology of a closed interval:
+\begin{codexmp}
+  C = ChainComplex(2)
+  C.module[1] = VectorSpace(['a'])
+  C.module[0] = VectorSpace(['b0', 'b1'])
+  C.differential[1] = lambda a: [('b0',1), ('b1', -1)]
+\end{codexmp}
+The variable "C" is initialized with a "ChainComplex" of length 2,
+thus comprising "VectorSpace" instances "C.module[1]" (generated by
+the unique 1-dimensional cell, here represented by the Python string
+"'a'"), and "C.module[0]" (generated by two 0-dimensional cells,
+represented by Python strings "'b0'" and "'b1'").  The unique
+non-trivial differential "C.differential[1]" is set to the map $a
+\mapsto b_0 - b_1$, sending the unique 1-cell into the difference of
+the two 0-cells.
+
+
+The method "compute_homology_ranks" returns a list of integers: item
+at index "n" is the rank of the "n"-th homology module of a chain
+complex.  Since the chain complex has finite length, homology group
+indices can only run from 0 to the length of the complex (all other
+groups being, trivially, null).
+\begin{lstlisting}
+
+    def compute_homology_ranks(C):
+        """Compute and return (list of) homology group ranks."""
+
+\end{lstlisting}
+The ranks of the boundary operators are accumulated into a list
+"ranks".  The "compute_boundary_operators" method returns an list of
+triplets "(A, ddim, cdim)" where "A" is the matrix form of a boundary
+operator, "ddim" is the dimension of its domain, and "cdim" the
+dimension of the codomain; i.e., if "A" is the matrix form of
+differential $d_i: C_i \to C_{i-1}$, then "ddim" is $\dim C_i$ and
+"cdim" is $\dim C_{i-1}$.
+\begin{lstlisting}
+        ranks = [ ]
+        bds = C.compute_boundary_operators()
+        for (A, ddim, cdim) in bds:
+            ranks.append(A.rank())
+
+\end{lstlisting}
+The objects representing matrices have a "rank()" method that computes
+the rank.  Algorithms for computing the rank of matrices are
+well-known\FIXME{reference!} and fast implementations are available in
+the form of programming libraries; on these grounds, no implementation
+of the "rank" function is given here, the production version of the
+program used the freely-available LinBox C++ library\FIXME{reference!}
+for representing matrices and computing their rank. However, except
+for trivial cases (very small $g,n$), computation of the rank is the
+most time-consuming part of the whole algorithm.
+
+Computing the Betti numbers is now just a matter of basic linear algebra.
+By the rank-nullity theorem, if $A:V\to W$ is a linear map,
+then $\dim\Ker(A) =  \dim(V) - \rk(A)$; hence, if $d_i: C_i \to
+C_{i-1}$ is the $i$-th differential, $Z_i = \Ker(d_i)$ and $B_i =
+d_i(C_i) \subseteq C_{i-1}$, then:
+\begin{align*}
+  \dim(Z_i) &= \dim\Ker(d_i) = \dim(C_i) - rk(d_i) 
+  \\
+  \dim(B_i) &= \rk(d_{i+1})
+\end{align*}
+Therefore:
+\begin{equation*}
+  \dim(H_i) = \dim(Z_i / B_i) = \dim(Z_i) - \dim(B_i)
+            = \dim(C_i) - \rk(d_i) - \rk(d_{i+1}).
+\end{equation*}
+The above formula can be simultanously applied to all indices $i$
+using Python's ``list comprehension'' syntax:
+\begin{lstlisting}
+        ranks.append(0) # augment complex with the null map.
+        return [ (C.module[i].dimension() - ranks[i] - ranks[i+1])
+                 for i in range(C.length)) ]
+        # end of "compute_homology_ranks"
+
+\end{lstlisting}
+
+A method to compute the matrix form of the boundary operators $d_i$ is
+the only missing piece for the generic homology framework:
+\begin{lstlisting}
+    def compute_boundary_operators(C):
+        """Compute and return matrix form of boundary operators."""
+
+\end{lstlisting}
+The "compute_boundary_operators" function returns a list of
+"SimpleMatrix" instances.  
+
+The "SimpleMatrix" class is just an interface to the matrix storage
+provided by the C++ library LinBox\FIXME{reference!}.  LinBox provides
+a optimized function library for linear algebra on matrices with
+entries in $\setZ$, $\setQ$ or a finite field.  Since computation of
+the rank is the most time-consuming part of the whole algorithm, and
+linear algebra algorithms have been extensively
+studied,\FIXME{reference!} we shall not present the implementation of
+"SimpleMatrix" here, nor discuss in detail how the functionality of
+LinBox is used.  
+
+It suffices to describe the methods of "SimpleMatrix" that are
+actually used:
+\begin{itemize}
+\item The constructor "SimpleMatrix(p,q)" that returns a $p \times q$
+  matrix with null entries.
+\item The method "A.addToEntry(i,j,c)" that adds (integer) "c" to the
+  entry on row "i" and column "j" of matrix "A".
+\item The method "A.rank()" that returns the rank of matrix "A".
+\end{itemize}
+
+Contrary to usual notation, we stipulate that the matrix form of
+boundary operators operates on \emph{column} vectors: the "i"-th
+differential "D[i]" is "dim C.module[i-1]" rows (range) by "dim
+C.module[i]" columns (domain).
+
+The body of "compute_boundary_operators" is quite straightforward: a
+list "D" is created to hold the result, and initialized with a null
+matrix (corresponding to the differential $d_0: C_0 \to 0$); for each
+degree of the complex, a matrix "d_i" is constructed, such that the
+entry at the $k$-th column and $j$-th row of "d_i" contains the
+component of $de^{(i)}_j$ w.r.t. the $k$-th basis vector $e^{(i-1)}_k$
+of $C_{i-1}$.
+\begin{lstlisting}
+        NullMatrix = SimpleMatrix(0,0)
+        D = [ ]                                           |\n{bds:1}|
+        D.append( (NullMatrix, 0, C.module[0].dimension()) )
+        for i in range(1, C.length):
+            d_i = SimpleMatrix(C.module[i-1].dimension(),
+                               C.module[i].dimension())
+            for j in range(C.module[i].dimension()):
+                for (k, c) in C.module[i-1].coordinates(C.differential[i](C.module[i].base[j])).items():
+                    d_i.addToEntry(k, j, c)
+            D.append( (d_i, C.module[i-1].dimension(), 
+                          C.module[i].dimension()) )
+        return D
+
+\end{lstlisting}
+
+
+\section{The homology complex of numbered fatgraphs}
+\label{sec:homology-numbered-fatgraphs}
+
+The code in the previous section, while perfectly working, is not
+efficient in the case of fatgraphs, as the inner loop of method
+"compute_boundary_operators" is executed once for each graph, and has
+to perform several costly lookups in "C.base" to find out the
+coordinate vector of $de^{(i)}_j$.  In the case of the complex $W_*$
+of orientable fatgraphs, we can take a shortcut: if two topological
+fatgraphs $G$ and $G'$ are not isomorphic, so are any two numbered
+fatgraphs $(G,\nu)$ and $(G',\nu')$.  There are $n! / |Aut(G)|$
+numbered fatgraphs per given topological fatgraph $G$, so this
+approach can cut the complexity down by a factor of $O((n!)^2)$.
+
+Recall that a numbered fatgraph automorphism $a: (G,\nu) \to (G,\nu)$
+must satisfy the following diagram:
+\begin{equation*}
+  \xymatrix{%
+    \Holes{G} &  & \Holes{G}
+    \\
+    & &
+    \\
+    & \{ 1, \ldots, n \} &
+    \ar^{\Holes{a}} "1,1";"1,3"
+    \ar_{\nu} "1,1";"3,2"
+    \ar_{\nu} "1,3";"3,2"
+  }%
+\end{equation*}
+Therefore $\Holes{a} = \id_{\Holes{G}}$, i.e., $a$ induces the
+identity map on the boundary cycles of $G$.
+
+Let $(G, \nu_0)$ be a chosen numbered fatgraph.  Define a group
+homomorphism $\Phi: \Aut(G) \ni a \mapsto \nu_0 \comp \Holes{a} \comp
+\nu_0^{-1} \in \Sym{n}$; then $P = \Phi(\Aut G)$ is a subgroup of
+$\Sym{n}$.
+\begin{lemma}
+  There is a bijective correspondence between (isomorphism classes of)
+  numbered fatgraphs over the same underlying topological fatgraph $G$
+  and cosets of $P$ within $\Sym{n}$.
+\end{lemma}
+\begin{proof}
+  Let $\sigma \in \Sym{n}$ be such that $\sigma P = P$; then there
+  exist $a, a' \in \Aut G$ such that:
+  \begin{equation*}
+    \sigma \comp \nu_0 \comp \Holes{a'} \comp \nu_0^{-1}
+    = \nu_0 \comp \Holes{a} \comp \nu_0^{-1}
+  \end{equation*}
+  whence:
+  \begin{equation*}
+    (\sigma \comp \nu_0) \comp \Holes{a' \comp a^{-1}} \comp
+    \nu_0^{-1} = \id
+  \end{equation*}
+  therefore $a' \comp a^{-1}$ is a numbered fatgraph isomorphism
+  between $(G, \nu)$ and $(G, \sigma \comp \nu)$.
+
+  Viceversa, assume $(G, \nu_0)$ and $(G, \nu_1)$ are isomorphic as
+  numbered fatgraphs: then there exists $a \in \Aut G$ such that
+  $\nu_1 \comp \Holes{a} \comp \nu_0^{-1}$ is the identity on
+  $\Sym{n}$.  Let $\sigma = \nu_0 \comp \nu_1^{-1}$; given any $P \ni
+  \pi = \nu_0 \comp \Holes{a'} \comp \nu_0^{-1}$ we have:
+  \begin{multline*}
+    \nu_0 \comp \Holes{a'} \comp \nu_0^{-1} 
+    = (\nu_0 \comp \nu_1) \comp \nu_1^{-1} \comp (\nu_1 \comp
+      \Holes{a} \comp \nu_0^{-1}) \comp \nu_0 \comp \Holes{a^{-1} \comp
+      a'} \comp \nu_0^{-1}
+    = (\nu_0 \comp \nu_1) \comp \nu_1^{-1} \comp \nu_0 \comp
+      \Holes{a^{-1} \comp a'} \comp \nu_0^{-1}
+    \in \sigma P,
+  \end{multline*}
+  therefore $P = \sigma P$.
+\end{proof}
+
+Crucial to this is the representation of numbered fatgraphs
+(cf.~\ref{sec:numbered-rg}).  
+A numbered fatgraph can be constructed
+from a "Fatgraph" instance (called the \emph{underlying graph}) and a
+numbering (i.e., a bijective map assigning an integer to each boundary
+components of the underlying graph).
+The ``numbering'' is represented with a Python dictionary mapping a
+"BoundaryCycle" instance "bcy" to the integer "n".
+
+\begin{lstlisting}
+class NumberedFatgraphPool(object):
+    """An immutable virtual collection of "NumberedFatgraph"s.
+    Items are all distinct (up to isomorphism) decorations of a
+    "Fatgraph" instance "graph" with a numbering of the boundary
+    cycles.
+
+    Implements object lookup by index and iteration over the whole list.
+
+       
+    Note that, when only one numbering out of many possible ones is
+    returned because of isomorphism, the returned numbering may not be
+    the trivial one (it is infact the first permutation of 0..n
+    returned by "InplacePermutationIterator")::
+
+    When the graph has only one boundary component, there is only one
+    possible numbering, which is actually returned::
+    """
+    def __init__(self, graph):
+        bc = graph.boundary_cycles
+        n = len(bc) # == graph.num_boundary_cycles
+        orientable = True
+
+        ## Find out which automorphisms permute the boundary cycles among
+        ## themselves.
+        P = []  #: permutation of boundary cycles induced by "a \in Aut(G)"
+        P_ = [] #: corresponding graph automorphisms: "P[i]" is induced by "P_[i]"
+        automorphisms = [] # numbered fatgraph automorphisms
+        for a in graph.automorphisms():
+            p = Permutation()
+            for src in range(n):
+                dst_cy = a.transform_boundary_cycle(bc[src])
+                try:
+                    dst = bc.index(dst_cy)
+                except ValueError:
+                    # "dst_cy" not in "bc"
+                    break # continue with next "a"
+                p[src] = dst
+            if len(p) != n: # not all "src" were mapped to a "dst"
+                continue # with next "a"
+            if p.is_identity():
+                # "a" preserves the boundary cycles pointwise,
+                # so it induces an automorphism of the numbered graph
+                automorphisms.append(a)
+                if a.compare_orientations() == -1:
+                    orientable = False
+            if p not in P:
+                # "a" induces permutation "p" on the set "bc"
+                P.append(p)
+                P_.append(a)
+
+        ## There will be as many distinct numberings as there are cosets
+        ## of "P" in $\Sym n$
+        if len(P) > 1:
+            def unseen(candidate, P, already):
+                """
+                Return "False" iff any of the images of "candidate" by an
+                element of group "P" is contained in set "already".
+                """
+                for p in P:
+                    if p.rearranged(candidate) in already:
+                        return False
+                return True
+            numberings = []
+            for candidate in InplacePermutationIterator(range(n)):
+                if unseen(candidate, P, numberings):
+                    numberings.append(copy(candidate))
+        else:
+            # if "P" is the one-element group, then all orbits are trivial
+            numberings = [ copy(p) for p in InplacePermutationIterator(range(n)) ]
+
+        # things to remember
+        self.graph = graph
+        self.is_orientable = orientable
+        self.P = P
+        self.P_ = P_
+        self.numberings = numberings
+        self.num_automorphisms = len(automorphisms)
+
+
+    def __len__(self):
+        return len(self.numberings)
+
+
+    def facets(self, edge, other):
+        """Iterate over facets obtained by contracting "edge" and
+        projecting onto "other".
+
+        Each returned item is a triple "(j, k, s)", where:
+          - "j" is the index of a "NumberedFatgraph" in "self";
+          - "k" is the index of a "NumberedFatgraph" in "other";
+          - "s" is the sign by which "self[j].contract(edge)" projects onto "other[k]".
+        Only triples for which "s != 0" are returned.
+
+        Examples::
+        
+          >>> p0 = NumberedFatgraphPool(Fatgraph([Vertex([1, 2, 0, 1, 0]), Vertex([3, 3, 2])]))
+          >>> p1 = NumberedFatgraphPool(Fatgraph([Vertex([0, 1, 0, 1, 2, 2])]))
+          >>> list(NumberedFatgraphPool.facets(p0, 2, p1))
+          [(0, 0, 1), (1, 1, 1)]
+        """
+        def push_fwd(f, g1, g2):
+            """Return a "Permutation" instance corresponding to the
+            map induced by ismorphism "f" on the boundary cycles, or
+            "None" if no such map exists.
+
+            Indeed, there are cases (see examples in the
+            "Fatgraph.__eq__" docstring), in which the
+            "Fatgraph.isomorphisms" algorithm may find a valid
+            mapping, changing from "g1" to an *alternate*
+            representation of "g2" - these should fail as they don't
+            preserve the boundary cycles.
+            """
+            result = Permutation() #: map induced by "f" on boundary cycles
+            for (src, bc1) in enumerate(g1.boundary_cycles):
+                bc2 = f.transform_boundary_cycle(bc1)
+                try:
+                    result[src] = g2.boundary_cycles.index(bc2)
+                except KeyError:
+                    return None
+            return result
+
+        def compute_nb_map(pull_back_bcy_map, src, dst):
+            """
+            Return a pair of "dict" instances:
+              - the first maps (indices of ) numberings in
+                "NumberedFatgraphPool" instance "src" to corresponding
+                (indices of) numberings in "NumberedFatgraphPool"
+                instance "dst".
+
+              - the second maps the same indices into the
+                automorphism "a" of "dst.graph" such that::
+
+                  src.numberings[i] = pull_back(<permutation induced by a applied to> dst.numberings[i])
+
+            Raises "KeyError" if no such mapping could be found.
+
+            Indices must be "int"s here, as "list"s cannot be used as
+            dictionary keys.
+            """
+            nb_map = dict()
+            a_map = dict()
+            for (i, nb) in enumerate(src.numberings):
+                (i_, k) = dst._index(pull_back_bcy_map(nb))
+                nb_map[i] = i_
+                a_map[i] = k
+            return (nb_map, a_map)
+
+        g0 = self.graph
+        g1 = g0.contract(edge)
+        g2 = other.graph
+        assert len(g1.boundary_cycles) == len(g2.boundary_cycles)
+        
+        ## 1. compute map induced on "g0.boundary_cycles" from the
+        ##    graph map "f0" which contracts "edge".
+        (e1, e2) = g0.endpoints(edge)
+        f0_push_fwd = Permutation(enumerate(
+            g1.boundary_cycles.index(g0.contract_boundary_cycle(bcy, e1, e2))
+            for bcy in g0.boundary_cycles
+            ))
+
+        ## 2. compute isomorphism map "f1" from "other.graph" to "self.graph.contract(edge)";
+        ##    if there is no such isomorphisms, then stop iteration.
+        ##    The reason for having this map go in the opposite direction as "f0"
+        ##    is to avoid inverting its push-forward.  (Thus saving a little complexity.)
+
+        # if there is no isomorphism from "g2" to "g1", the "for" loop
+        # down here will not run, so we need a way to detect that a
+        # valid isomorphism has been found.
+        f1_found = False
+        for f1 in Fatgraph.isomorphisms(g2, g1):
+            f1_push_fwd = push_fwd(f1, g2, g1)
+            if f1_push_fwd is None:
+                continue # with next isomorphism
+            # now check that every numbering of "g0" can be mapped to
+            # a numbering on "g2" through the composite map "f1^(-1) * f0"
+            def pull_back(nb): return f1_push_fwd.rearranged(f0_push_fwd.inverse().rearranged(nb))
+            try:
+                nb_map, a_map = compute_nb_map(pull_back, self, other)
+            except KeyError:
+                continue # with next isomorphism
+            # if we got to this point, the "f1" is a graph
+            # automorphism that induces a map on the boundary cycles
+            f1_found = True
+            break # correct "f1" found
+        if not f1_found:
+            # no isomorphism between "g1" and "g2", stop here.
+            raise StopIteration
+
+        ## For every numbering "nb" on "g0", compute the (index of)
+        ## corresponding numbering on "g2" (under the composition map
+        ## "f1^(-1) * f0") and return the triple "(index of nb, index of
+        ## push-forward, sign)".
+        for (j, nb) in enumerate(self.numberings):
+            k = nb_map[j]
+            a = a_map[j]
+            ## there are three components to the sign "s":
+            ##   - the sign given by the ismorphism "f1"
+            ##   - the sign of the automorphism of "g2" that transforms the
+            ##     push-forward numbering into the chosen representative in the same orbit
+            ##   - the alternating sign from the homology differential
+            s = f1.compare_orientations() \
+                * a.compare_orientations() \
+                * minus_one_exp(g0.edge_numbering[edge])
+            yield (j, k, s)
+
+    def _index(self, numbering):
+        """
+        """
+        for (i, p) in enumerate(self.P):
+            try:
+                j = self.numberings.index(p.rearranged(numbering))
+                # once a "p" has matched, there's no reason to try others
+                return (j, self.P_[i])
+            except ValueError:
+                pass # ignore errors if "p" is not included in "self.numberings"
+\end{lstlisting}
+
+The overall purpose of "NumberedFatgraphPool" objects is to not
+enumerate numbered fatgraphs explicitly, but rather take advantage of
+the similar properties that all numbered fatgraphs with the same
+underlying topological fatgraph have, to aggregate them into a single
+lump.   The "VectorSpace" class previously introduced requires a basis
+to be spelt out in full, so we need to provide a specialized version
+that knows that a single "NumberedFatgraphPool" instance may actually
+represent several numbered fatgraphs.  
+
+The "dimension" method must thus be corrected: the number of
+generators of the vector space is the total number of numbered
+fatgraphs, i.e., each "NumberedFatgraphPool" must contribute for the
+total number of numbered fatgraphs it aggregates (gotten by the Python
+"len" operator):
+\begin{lstlisting}
+class MgnVectorSpace(VectorSpace):
+    """A vector space with a basis of `NumberedFatgraphPool` elements."""
+    def dimension(self):
+        return sum(len(pool) for pool in self.base)
+
+\end{lstlisting}
+If we were using the naive "compute_homology_ranks" method provided by
+the "ChainComplex" class, we would need to override also the
+"coordinate" method to account for the use of "NumberedFatgraphPool"
+aggregates in the basis; the following specialized "MgnChainComplex"
+class uses a (slightly) different "compute_boundary_operator"
+algorithm which renders this unneeded.
+
+\begin{lstlisting}
+class MgnChainComplex(ChainComplex):
+    """A specialized "ChainComplex"."""
+    def __init__(self, length):
+        ChainComplex.__init__(self, length)
+        for i in range(length):
+            self.module[i] = AggregateList()
+
+    def compute_boundary_operators(C):
+        #: Matrix form of boundary operators; the "i"-th differential
+        #: "D[i]" is "dim C[i-1]" rows (range) by "dim C[i]" columns
+        #: (domain).
+        m = C.module # micro-optimization
+        D = DifferentialComplex()
+        D.append(NullMatrix, 0, len(m[0]))
+        for i in range(1, len(C)):
+            p = len(m[i-1]) # == dim C[i-1]
+            q = len(m[i])   # == dim C[i]
+            d = SimpleMatrix(p, q)
+            j0 = 0
+            for pool1 in m[i]:
+                k0 = 0
+                for pool2 in m[i-1]:
+                    for edgeno in range(pool1.graph.num_edges):
+                        if pool1.graph.is_loop(edgeno):
+                            continue # with next "edgeno"
+                        for (j, k, s) in NumberedFatgraphPool.facets(pool1, edgeno, pool2):
+                            d.addToEntry(k+k0, j+j0, s)
+                    k0 += len(pool2)
+                j0 += len(pool1)
+            D.append(d, p, q)
+        return D
+
+\end{lstlisting}
+
+\section{Putting it all together}
+\label{sec:algorithm-finale}
+
+Everything is now set for presenting the final piece of code, that
+uses all the classes and functions defined so far to actually compute
+the Betti numbers of the homology complex of numbered fatgraphs.
+
+The following "FatgraphComplex" function returns an "MgnChainComplex"
+instance, populated with all orientable numbered fatgraph of the given
+genus "g" and number of boundary cycles "n".  
+\begin{lstlisting}
+def FatgraphComplex(g, n):
+    """
+    Return the fatgraph complex for given genus "g" and number of
+    boundary components "n".
+    """
+\end{lstlisting}
+The maximum number of edges is reached in graphs with all vertices
+tri-valent, so, combining Euler's formula with $3V = 2E$, we
+get: $E = 6g + 3n - 6$.  These are also graphs corresponding
+to top-dimensional cells.
+\begin{lstlisting}
+    top_dimension = 6*g + 3*n - 6
+
+\end{lstlisting}
+Construction of the complex of numbered fatgraphs is
+straightforward: a null complex is initialized and stored in the
+variable "C" (line~\nr{finale:1}); then a loop is run over all the
+graphs in $\R_{g,n}$ (lines~\nr{finale:2}--\nr{finale:6}); for each of
+the topological fatgraphs, a corresponding numbered fatgraph pool is
+created (line~\nr{finale:3}) and immediately discarded if none of the
+numbered fatgraphs in it is orientable
+(lines~\nr{finale:4}--\nr{finale:5}); finally, orientable numbered
+graphs are aggregated to the degree $E-1$ vector space of the complex
+"C" (line~\nr{finale:6}).
+\begin{lstlisting}
+    C = MgnChainComplex(top_dimension)      |\n{finale:1}|
+    for graph in MgnGraphsIterator(g,n):    |\n{finale:2}|
+        pool = NumberedFatgraphPool(graph)  |\n{finale:3}|
+        if not pool.is_orientable:          |\n{finale:4}|
+            continue # with next "graph"    |\n{finale:5}|
+        grade = graph.num_edges - 1
+        C.module[grade].aggregate(pool)     |\n{finale:6}|
+        
+    return C # end of "FatgraphComplex"
+\end{lstlisting}
+
+Computing homology ranks is then just a matter of invoking the method
+"compute_homology_ranks()" on the resulting complex "C":
+\begin{lstlisting}
+(g, n) = (2, 1)
+C = FatgraphComplex(g,n)
+print (C.compute_homology_ranks())
+\end{lstlisting}
 
 
 %%% Local Variables: 

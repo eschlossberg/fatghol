@@ -1,7 +1,7 @@
 %auto-ignore
 
 
-\chapter{The Fatraph Complex}
+\chapter{The Fatgraph Complex}
 \label{cha:ribbon-graph-complex}
 
 In \cite{kontsevich;1993} and \cite{kontsevich;feynman}, M. Kontsevich
@@ -331,14 +331,28 @@ of edges incident to it.
 \label{sec:numbered-rg}
 
 \begin{definition}
-  A fatgraph $G$ is \emph{numbered} when it is endowed with a
-  bijection $\{1,\ldots, n\} \to \Holes{G}$.
+  A \emph{numbered fatgraph} is a fatgraph $G$ endowed with a
+  bijection $\nu: \Holes{G} \to \{1,\ldots, n\}$.
 
-  It is understood that morphisms of numbered fatgraphs respect the
-  numbering of boundary components.
+  A morphism $f: G_1 \to G_2$ of numbered fatgraphs must preserve the
+  numbering of boundary components:
+  \begin{equation*}
+    \xymatrix{%
+      \Holes{G_1} &  & \Holes{G_2}
+      \\
+      & &
+      \\
+      & \{ 1, \ldots, n \} &
+      \ar^{f} "1,1";"1,3"
+      \ar_{\nu_1} "1,1";"3,2"
+      \ar_{\nu_2} "1,3";"3,2"
+    }%
+  \end{equation*}
 \end{definition}
 From this point onwards, \emph{all fatgraphs are equipped with a
-  numbering}.
+  numbering}. By a slight abuse of language, we shall usually omit
+mention of the numbering $\nu$ and just speak of ``the numbered
+fatgraph $G$''.
 
 The correspondence between fatgraphs and Riemann surfaces allows
 us to give the following.
