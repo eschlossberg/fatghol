@@ -594,21 +594,13 @@ class Fatgraph(object):
         return list(CyclicTuple(bc) for bc in result)
         
 
-    def _cmp_orient(self, other, iso):
-        pe = iso[2]
-        image_edge_numbering = Permutation(dict((self.edge_numbering[x],
-                                                 other.edge_numbering[pe[x]])
-                                                for x in xrange(self.num_edges)))
-        return image_edge_numbering.sign()
-
-
-    def connect(self, edge1, side1, edge2, side2):
+    def bridge(self, edge1, side1, edge2, side2):
         """Return a new `Fatgraph`, formed by inserting trivalent
         vertices in the middle of edges `edge1` and `edge2` and
         connecting them with a new edge.
 
           >>> g = Fatgraph([Vertex([0,1,2]), Vertex([0,2,1])])
-          >>> g1 = g.connect(0, 0, 1, 1)
+          >>> g1 = g.bridge(0, 0, 1, 1)
           >>> g1 is g
           False
           >>> g1 == g
@@ -620,8 +612,8 @@ class Fatgraph(object):
         be given::
         
           >>> g = Fatgraph([Vertex([0,1,2]), Vertex([0,2,1])])
-          >>> g1 = g.connect(0, 0, 1, 0)
-          >>> g2 = g.connect(0, 1, 1, 0)
+          >>> g1 = g.bridge(0, 0, 1, 0)
+          >>> g2 = g.bridge(0, 1, 1, 0)
           >>> g1 == g2
           False
 
@@ -649,33 +641,33 @@ class Fatgraph(object):
         and `edge2, side2` can be swapped and the result stays the
         same::
 
-          >>> g3 = g.connect(1, 0, 0, 0)
+          >>> g3 = g.bridge(1, 0, 0, 0)
           >>> g1 == g3
           True
 
-          >>> g4 = g.connect(1, 0, 0, 1)
+          >>> g4 = g.bridge(1, 0, 0, 1)
           >>> g2 == g4
           True
 
         Examples::
         
-        1) Connecting different sides of the same edge may yield
+        1) Bridging different sides of the same edge may yield
         different results::
         
-          >>> g.connect(0, 0, 1, 0)  == Fatgraph([Vertex([0,1,2]), Vertex([4,2,5]), Vertex([0,4,3]), Vertex([1,5,3])])
+          >>> g.bridge(0, 0, 1, 0)  == Fatgraph([Vertex([0,1,2]), Vertex([4,2,5]), Vertex([0,4,3]), Vertex([1,5,3])])
           True
           
-          >>> g.connect(0, 1, 1, 0) == Fatgraph([Vertex([0,1,2]), Vertex([4,2,5]), Vertex([4,0,3]), Vertex([1,5,3])])
+          >>> g.bridge(0, 1, 1, 0) == Fatgraph([Vertex([0,1,2]), Vertex([4,2,5]), Vertex([4,0,3]), Vertex([1,5,3])])
           True
 
         2) One can connect an edge to itself on different sides::
         
-          >>> g.connect(0, 0, 0, 1) == Fatgraph([Vertex([0,1,2]), Vertex([5,2,1]), Vertex([0,4,3]), Vertex([5,4,3])])
+          >>> g.bridge(0, 0, 0, 1) == Fatgraph([Vertex([0,1,2]), Vertex([5,2,1]), Vertex([0,4,3]), Vertex([5,4,3])])
           True
 
         3) And also with both ends on the same side::
         
-          >>> g.connect(0, 0, 0, 0) == Fatgraph([Vertex([0,1,2]), Vertex([5,2,1]), Vertex([0,4,3]), Vertex([4,5,3])])
+          >>> g.bridge(0, 0, 0, 0) == Fatgraph([Vertex([0,1,2]), Vertex([5,2,1]), Vertex([0,4,3]), Vertex([4,5,3])])
           True
           
         """
@@ -775,6 +767,14 @@ class Fatgraph(object):
                      )
     
     
+    def _cmp_orient(self, other, iso):
+        pe = iso[2]
+        image_edge_numbering = Permutation(dict((self.edge_numbering[x],
+                                                 other.edge_numbering[pe[x]])
+                                                for x in xrange(self.num_edges)))
+        return image_edge_numbering.sign()
+
+
     @cache
     def contract(self, edgeno):
         """Return new `Fatgraph` obtained by contracting the specified edge.
