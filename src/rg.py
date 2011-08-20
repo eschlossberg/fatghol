@@ -508,12 +508,6 @@ def all_graphs(vertex_valences):
 
     total_edges = sum(vertex_valences) / 2
 
-    ## pass 1: gather all canonical graphs built from edge sequences
-    graphs = list(all_canonical_decorated_graphs(vertex_valences, total_edges))
-    if len(graphs) == 0:
-        return []
-
-    ## pass 2: filter out sequences representing isomorphic graphs
     def vertex_permutations(valence_spectrum):
         """Return all permutations of vertices that preserve valence.
         (A permutation `p` preserves vertex valence if vertices `v`
@@ -546,19 +540,22 @@ def all_graphs(vertex_valences):
             for ps in enumerate_set_product(permutations_of_vertices_of_same_valence)
             ]
         return (vertex_to_vertex_mappings, vertex_to_vertex_mapping_domain)
+
+    # we need the first graph in list to pre-compute some structural constants
+    graph_iterator = all_canonical_decorated_graphs(vertex_valences, total_edges)
+    graphs = [ graph_iterator.next() ]
+
     # the valence spectrum is the same for all graphs in the list
     vertex_to_vertex_mappings, vertex_to_vertex_mapping_domain = \
                                vertex_permutations(graphs[0].valence_spectrum())
-    
-    pos = 0
-    while pos < len(graphs):
-        current = graphs[pos]
-        pos2 = pos+1
-        while pos2 < len(graphs):
-            candidate = graphs[pos2]
-            candidate_is_isomorphic_to_current = False
+
+    # now walk down the list and remove isomorphs
+    for current in graph_iterator:
+        current_is_not_isomorphic_to_already_found = True
+        for candidate in graphs:
             if candidate == current:
-                candidate_is_isomorphic_to_current = True
+                current_is_not_isomorphic_to_already_found = False
+                break
             else:
                 for vertex_index_map in vertex_to_vertex_mappings:
                     morphism = Mapping(total_edges)
@@ -581,16 +578,13 @@ def all_graphs(vertex_valences):
                             break
                     if morphism and morphism.is_complete():
                         # the two graphs are isomorphic
-                        candidate_is_isomorphic_to_current = True
-            if candidate_is_isomorphic_to_current:
-                # delete candidate; do *not* advance `pos2`, as the
-                # list would be shifted up because of the deletion in
-                # the middle.
-                del graphs[pos2]
-            else:
-                # advance to next candidate
-                pos2 += 1
-        pos += 1
+                        current_is_not_isomorphic_to_already_found = False
+                        break
+        if current_is_not_isomorphic_to_already_found:
+            # add current to graph list
+            graphs.append(current)
+
+    # return list of non-isomorphic graphs
     return graphs
 
 
