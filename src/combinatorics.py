@@ -9,7 +9,7 @@ import itertools
 
 
 from cache import (
-    cache1,
+    fcache,
     )
 
 
@@ -431,7 +431,7 @@ class Permutation(dict):
         return True
 
 
-@cache1
+@fcache
 def _factorial(n):
     assert isinstance(n, (int, long)), \
            "_factorial(): argument `%s` is no `int` nor `long`" % n

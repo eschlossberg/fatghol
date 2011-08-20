@@ -18,7 +18,7 @@ from iterators import Iterator
 from persist import PersistedIterator
 
 
-## main content
+## auxiliary classes
 
 class _TimeBasedUnique(Iterator):
     """Return a new unique ID at each iteration step.
@@ -39,6 +39,58 @@ class _TimeBasedUnique(Iterator):
         return int(time() * 1000000)
 
 _unique = _TimeBasedUnique()
+
+
+class _IteratorRecorder(object):
+    """Cache results from a given iterator.  Client classes provided
+    by the `replay()` method will then replay the iterator history;
+    multiple players can replay from one recorded source
+    independently.
+
+    **WARNING:** This is not thread-safe!
+    """
+    
+    def __init__(self, iterable):
+        self.iterable = iterable
+        self.history = []
+        #Cacheable.__init__(self)
+
+    def __iter__(self):
+        return self.replay()
+
+    def advance(self):
+        """Record next item from the source iterator."""
+        self.history.append(self.iterable.next())
+
+    def replay(self):
+        """Return a new player."""
+        return _IteratorReplayer(self)
+    
+
+class _IteratorReplayer(Iterator):
+    """Replay values recorded into a given `_IteratorRecorder` class;
+    multiple players can replay from one recorded source
+    independently.
+
+    **WARNING:** This is not thread-safe!
+    """
+    
+    def __init__(self, master):
+        self.master = master
+        self.pos = -1
+        self.done = False
+
+    def next(self):
+        if self.done:
+            raise StopIteration
+        try:
+            if self.pos == len(self.master.history) - 1:
+                self.master.advance()
+            self.pos += 1
+            return self.master.history[self.pos]
+        except StopIteration:
+            self.done = True
+            raise
 
 
 class Cacheable(object):
@@ -94,151 +146,147 @@ def cache_id(o):
 
 
 
-__cache1 = {}
+## caching functions
+
 @decorator
-def cache1(func, obj):
-    """Cache result of a 1-ary object method.
+def fcache(func, *args):
+    """Cache result of a generic function.
 
-    This decorator can cache results of calls `obj.method()` or
-    `func(obj)`; it will yield possibly incorrect results in any other
-    case.
+    This decorator can cache results of calls `func(*args)`.
 
-    Unlike the `memoize` decorator, it can also work with objects that
-    use a `__slots__` declaration.
+    CAVEAT: The result cache is held in the function object itself, so
+    any object present in the cache will *not* be garbage collected!
     """
-    rcache = __cache1.setdefault(func.func_name, {})
-    key = cache_id(obj)
-    if key in rcache:
+    try:
+        rcache = func._cache
+    except AttributeError:
+        func._cache = rcache = {}
+    key = (args,)
+    try:
         return rcache[key]
-    else:
+    except KeyError:
+        result = func(*args)
+        rcache[key] = result
+        return result
+
+
+@decorator
+def fcache_iterator(func, *args):
+    """Cache results of a function returning an iterator/generator.
+
+    Iterator results cannot be cached like any other object, because
+    they need to return the same set of values each time the
+    generating function is invoked.
+    """
+    try:
+        rcache = func._cache
+    except AttributeError:
+        rcache = func._cache = {}
+    key = (func.func_name, args)
+    try:
+        return rcache[key].replay()
+    except KeyError:
+        result = _IteratorRecorder(func(*args))
+        rcache[key] = result
+        return result.replay()
+
+
+
+@decorator
+def ocache0(func, obj):
+    """Cache result of a nullary object method.
+
+    This decorator can cache results of calls `obj.method()`. The
+    result cache is held in the object itself; therefore, to cache
+    result from methods of objects using a '__slots__' declaration, a
+    '_cache' slot must be present and writable.
+    """
+    try:
+        rcache = obj._cache
+    except AttributeError:
+        obj._cache = rcache = {}
+    key = func.func_name
+    try:
+        return rcache[key]
+    except KeyError:
         result = func(obj)
         rcache[key] = result
-        if isinstance(obj, Cacheable): obj.referenced(rcache, key)
         return result
 
 
-__cache2 = {}
 @decorator
-def cache(func, obj, *args):
+def ocache_weakref(func, obj, *args):
     """Cache result of a generic object method.
 
-    This decorator can cache results of calls `obj.method(*args)` or
-    `func(obj, *args)`.
-
-    Unlike the `memoize` decorator, it can also work with objects that
-    use a `__slots__` declaration.
+    This decorator can cache results of calls `obj.method()`. The
+    result cache is held in the object itself; therefore, to cache
+    result from methods of objects using a '__slots__' declaration, a
+    '_cache' slot must be present and writable.
     """
-    rcache = __cache2.setdefault(func.func_name, {})
-    oid = cache_id(obj)
-    key = (oid, args)
-    if key in rcache:
-        return rcache[key]
-    else:
+    try:
+        rcache = obj._cache
+    except AttributeError:
+        obj._cache = rcache = {}
+    key = (func.func_name, args)
+    try:
+        result = rcache[key]()
+    except KeyError:
         result = func(obj, *args)
-        rcache[key] = result
-        if isinstance(obj, Cacheable): obj.referenced(rcache, key)
-        return result
+        def cleanup(ref): del rcache[key]
+        rcache[key] = weakref.ref(result, cleanup)
+    return result
 
 
-__cache_symmetric = {}
 @decorator
-def cache_symmetric(func, o1, o2):
+def ocache_symmetric(func, o1, o2):
     """Cache result of 2-ary symmetric method.
 
-    This decorator can cache results of `obj1.method(obj2)` or
-    `func(obj1, obj2)` invocations, subject to the constraint that
-    swapping `obj1` and `obj2` gives the *same result* (e.g., equality
-    tests).
+    This decorator can cache results of calls `obj1.method(obj2)`,
+    subject to the constraint that swapping `obj1` and `obj2` gives
+    the *same result* (e.g., equality tests).  When
+    `obj1.method(obj2)` is first called, the result is also stored in
+    the location corresponding to `obj2.method(obj1)`.
 
-    Unlike the `memoize` decorator, it can also work with objects that
-    use a `__slots__` declaration.
+    The result cache is held in the object itself; therefore, to cache
+    result from methods of objects using a '__slots__' declaration, a
+    '_cache' slot must be present and writable.
     """
-    rcache = __cache_symmetric.setdefault(func.func_name, {})
-    key = frozenset([cache_id(o1),
-                     cache_id(o2)])
-    if key in rcache:
-        return rcache[key]
-    else:
+    try:
+        rcache1 = o1._cache
+    except AttributeError:
+        o1._cache = rcache1 = {}
+    try:
+        rcache2 = o2._cache
+    except AttributeError:
+        o2._cache = rcache2 = {}
+    key = (func.func_name, cache_id(o2))
+    try:
+        result = rcache1[key]
+    except KeyError:
         result = func(o1, o2)
-        rcache[key] = result
-        if isinstance(o1, Cacheable): o1.referenced(rcache, key)
-        if isinstance(o2, Cacheable): o2.referenced(rcache, key)
-        return result
+        rcache1[key] = result
+        rcache2[(func.func_name, cache_id(o1))] = result
+    return result
 
 
-class _IteratorRecorder(Cacheable):
-    """Cache results from a given iterator.  Client classes provided
-    by the `replay()` method will then replay the iterator history;
-    multiple players can replay from one recorded source
-    independently.
-
-    **WARNING:** This is not thread-safe!
-    """
-    
-    def __init__(self, iterable):
-        self.iterable = iterable
-        self.history = []
-        Cacheable.__init__(self)
-
-    def __iter__(self):
-        return self.replay()
-
-    def advance(self):
-        """Record next item from the source iterator."""
-        self.history.append(self.iterable.next())
-
-    def replay(self):
-        """Return a new player."""
-        return _IteratorReplayer(self)
-    
-
-class _IteratorReplayer(Iterator):
-    """Replay values recorded into a given `_IteratorRecorder` class;
-    multiple players can replay from one recorded source
-    independently.
-
-    **WARNING:** This is not thread-safe!
-    """
-    
-    def __init__(self, master):
-        self.master = master
-        self.pos = -1
-        self.done = False
-
-    def next(self):
-        if self.done:
-            raise StopIteration
-        try:
-            if self.pos == len(self.master.history) - 1:
-                self.master.advance()
-            self.pos += 1
-            return self.master.history[self.pos]
-        except StopIteration:
-            self.done = True
-            raise
-
-
-__cache_iterator = {}
 @decorator
-def cache_iterator(func, obj, *args):
+def ocache_iterator(func, obj, *args):
     """Cache results of a method or function returning an iterator/generator.
 
     Iterator results cannot be cached like any other object, because
     they need to return the same set of values each time the
     generating function is invoked.
     """
-    rcache = __cache_iterator.setdefault(func.func_name, {})
-    oid = cache_id(obj)
-    key = (oid, args)
-    if key in rcache:
+    try:
+        rcache = obj._cache
+    except AttributeError:
+        rcache = obj._cache = {}
+    key = (func.func_name, args)
+    try:
         return rcache[key].replay()
-    else:
+    except KeyError:
         result = _IteratorRecorder(func(obj, *args))
         rcache[key] = result
-        try:
-            if isinstance(obj, Cacheable): obj.referenced(rcache, key)
-        except AttributeError:
-            pass
         return result.replay()
 
 
