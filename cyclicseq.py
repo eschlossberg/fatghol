@@ -5,6 +5,8 @@
 __docformat__ = 'reStructuredText'
 
 
+from sys import maxint as SYS_MAXINT
+
 
 def CyclicSequence(base, factory=None):
     if factory is None:
@@ -31,28 +33,64 @@ def CyclicSequence(base, factory=None):
         ## slice accessors
         ##    
         def __delslice__(self, i, j):
-            i = max(i, 0); j = max(j, 0)
-            base.__delslice__(self, i%len(self), j%len(self))
+            if SYS_MAXINT == j:
+                # __delslice__ is passed `sys.maxint` as second value
+                # when taking slices of the form `[n:]`.  In this
+                # case, just fall back to standard Python operation.
+                return base.__setslice__(self, i, j, other)
+            l = len(self)
+            #: sup of the range
+            a = max(i,j)
+            #: inf of the range
+            b = min(i,j)
+            #: highest multiple of `l` below `a`
+            c = l*(a/l)
+            a -= c
+            b -= c
+            return base.__delslice__(self, b, a, other)
+
         def __getslice__(self, i, j):
-            """Return [i:j] slice, as a `"""+base.__class__.__name__+"""` instance."""
-            i = max(i, 0); j = max(j, 0); l = len(self)
-            if abs(i-j) < l:
-                return base.__getslice__(self, i%l, j%l)
+            """Return [i:j] slice as a base class instance."""
+            if j == SYS_MAXINT:
+                # __getslice__ is passed `sys.maxint` as second value
+                # when taking slices of the form `[n:]`.  In this
+                # case, just fall back to standard Python operation.
+                return base.__getslice__(self, i, j)
+            l = len(self)
+            #: sup of the range
+            a = max(i,j)
+            #: inf of the range
+            b = min(i,j)
+            if (b >= 0) and (a-b < l):
+                #: highest multiple of `l` below `a`
+                c = l*(a/l)
+                a -= c
+                b -= c
+                return base.__getslice__(self, b, a)
             else:
-                a = max(i,j)
-                b = min(i,j)
-                c = l*(a/l)     # nearest multiple of l below a
-                d = l*(b/l + 1) # nearest multiple of l above b
-                n = (a/l) - (b/l + 1) # how many times the whole seq is repeated in the middle
+                #: how many times the whole seq is repeated in the middle
+                n = (a/l) - (b/l + 1) 
                 return base.__getslice__(self, b%l,l) \
                        + (n * base.__getslice__(self, 0,l)) \
                        + base.__getslice__(self, 0,a%l)
+
         def __setslice__(self, i, j, other):
-            i = max(i, 0); j = max(j, 0); l = len(self)
-            if isinstance(other, base):
-                base.__setslice__(self, i%len(self), j%len(self), other)
-            else:
-                base.__setslice__(self, i%len(self), j%len(self), list(other))
+            if SYS_MAXINT == j:
+                # __setslice__ is passed `sys.maxint` as second value
+                # when taking slices of the form `[n:]`.  In this
+                # case, just fall back to standard Python operation.
+                return base.__setslice__(self, i, j, other)
+                j = l
+            l = len(self)
+            #: sup of the range
+            a = max(i,j)
+            #: inf of the range
+            b = min(i,j)
+            #: highest multiple of `l` below `a`
+            c = l*(a/l)
+            a -= c
+            b -= c
+            return base.__setslice__(self, b, a, other)
 
         ## equality predicates
         ##
@@ -140,20 +178,15 @@ def CyclicSequence(base, factory=None):
           of the linearized sequences starting at index `anchor`.
           
           Examples::
-            >>> c=CyclicList([1,2,3])
-            >>> _repetition_pattern(c)
+            >>> CyclicList([1,2,3]).repetition_pattern()
             (1, [1, 1, 1])
-            >>> c=CyclicList([4,4,4])
-            >>> _repetition_pattern(c)
+            >>> CyclicList([4,4,4]).repetition_pattern()
             (0, [3])
-            >>> c=CyclicArray([4,4,4,1])
-            >>> _repetition_pattern(c, CyclicArray)
-            (3, array('i', [1, 3]))
-            >>> c=CyclicList([1,4,4,4,1])
-            >>> _repetition_pattern(c, CyclicArray)
-            (1, array('i', [3, 2]))
-            >>> c=CyclicArray([4,4,4,3,3])
-            >>> _repetition_pattern(c)
+            >>> CyclicList([4,4,4,1]).repetition_pattern()
+            (3, [1, 3])
+            >>> CyclicList([1,4,4,4,1]).repetition_pattern()
+            (1, [3, 2])
+            >>> CyclicList([4,4,4,3,3]).repetition_pattern()
             (3, [2, 3])
           """
           if self._repetition_pattern is None:
@@ -180,7 +213,21 @@ def CyclicSequence(base, factory=None):
               self._repetition_pattern = (b, result)
               
           return self._repetition_pattern
-            
+      
+        def rotate(self, n):
+            """Rotate sequence leftwards by `n` positions, *in-place*.
+
+            Examples::
+              >>> a=CyclicList([3,2,1])
+              >>> a.rotate(1)
+              >>> a
+              [2, 1, 3]
+              >>> a.rotate(-1)
+              >>> a
+              [3, 2, 1]
+            """
+            self[:] = self[n:] + self[:n]
+          
     return type("Cyclic" + str(base.__name__).capitalize(),
                 (_CyclicSequence, base) + base.__bases__,
                 dict(_CyclicSequence.__dict__))
@@ -203,3 +250,4 @@ CyclicList = CyclicSequence(list)
 if "__main__" == __name__:
     import doctest
     doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE)
+    
