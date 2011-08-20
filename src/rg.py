@@ -6,6 +6,8 @@ __docformat__ = 'reStructuredText'
 
 
 import debug
+import pydb, sys
+sys.excepthook = pydb.exception_hook
 
 from combinatorics import (
     InplacePermutationIterator,
@@ -26,7 +28,9 @@ from itertools import chain,count,izip
 class VertexCache(object):
     """A caching factory of `Vertex` objects.
     """
-    __slots__ = ('cache',)
+    __slots__ = [
+        'cache',
+        ]
     def __init__(self):
         self.cache = {}
     def __call__(self, edge_seq):
@@ -121,7 +125,7 @@ class Graph(object):
     """
     # the only reason to use `__slots__` here is to keep a record of
     # all instance attribute names.
-    __slots__ = (
+    __slots__ = [
         '_boundary_components',
         '_genus',
         '_num_boundary_components',
@@ -129,14 +133,13 @@ class Graph(object):
         '_vertex_factory',
         '_vertex_valences',
         'edge_seq',
-        'edge_seq_aliases',
         'endpoints',
         'numbering',
         'num_edges',
         'num_external_edges',
         'num_vertices',
         'vertices',
-        )
+        ]
 
     def __init__(self, vertices, vertex_factory=Vertex, **kwargs):
         """Construct a `Graph` instance, taking list of vertices.
@@ -205,11 +208,6 @@ class Graph(object):
         #: Factory method to make a `Vertex` instance from a linear
         #  list of incident edge colorings.
         self._vertex_factory = vertex_factory
-        
-        if 'edge_seq_aliases' not in kwargs:
-            #: edge sequence(s) identifying this graph; `self.edge_seq`
-            #  always counts as an alias.
-            self.edge_seq_aliases = kwargs.get('edge_seq_aliases', set(self.edge_seq))
         
         if 'endpoints' not in kwargs:
             #: Adjacency list of this graph.  For each edge, store a pair
@@ -307,17 +305,24 @@ class Graph(object):
                 == Graph([Vertex([2, 2, 1, 1, 0, 0])], numbering=[0, 1, 3, 2])
           False
         
+          >>> Graph([Vertex([1, 0, 0, 2, 2, 1])], numbering=[0, 1, 3, 2]) \
+                == Graph([Vertex([2, 2, 1, 1, 0, 0])], numbering=[3, 0, 2, 1])
+          True
+        
           """
         assert isinstance(other, Graph), \
                "Graph.__eq__:" \
                " called with non-Graph argument `other`: %s" % other
         # shortcuts
-        if self._vertex_valences != other._vertex_valences:
+        if ((self.num_edges != other.num_edges)
+            or (self.num_vertices != other.num_vertices)
+            or (self._vertex_valences != other._vertex_valences)
+##             or (self._boundary_components != other._boundary_components)
+            ):
             return False
-        # if there is any representative edge sequence in common,
-        # then these must be different presentations of the same graph
-        #if 0 != len(self.edge_seq_aliases.intersection(other.edge_seq_aliases)):
-        #    return True
+        if (self.vertices == other.vertices) \
+           and (self.numbering == other.numbering):
+            return True
 
         # else, go the long way: try to find an explicit isomorphims
         # between graphs `self` and `other`
@@ -352,24 +357,6 @@ class Graph(object):
     
     def __str__(self):
         return repr(self)
-
-    def add_alias(self, alias):
-        """Add an edge sequence alias.
-        """
-        assert isinstance(alias, tuple), \
-               "Graph.add_alias:" \
-               " first argument `alias` must be tuple," \
-               " but got `%s` instead." % alias
-        assert sum(self._vertex_valences) == len(alias), \
-               "Graph.add_alias:" \
-               " `alias` length (%d) does not match the number of" \
-               " edges in this graph (%d)." \
-               % (sum(self._vertex_valences), len(alias))
-        assert debug.is_sequence_of_integers(alias), \
-               "Graph.add_alias:" \
-               " first argument `alias` must be a sequence of integers," \
-               " but got `%s` instead." % alias
-        self.edge_seq_aliases.add(alias)
 
     def automorphisms(self):
         """Enumerate automorphisms of this `Graph` object.
@@ -479,7 +466,7 @@ class Graph(object):
                 pos += 1
 
             # save result for later reference
-            self._boundary_components = [ CyclicTuple(bc) for bc in result ]
+            self._boundary_components = set(CyclicTuple(bc) for bc in result)
         
         # that's all, folks!
         return self._boundary_components
@@ -593,18 +580,26 @@ class Graph(object):
             new_endpoints[edge] = tuple(itranslate({i2:i1}, new_endpoints[edge]))
         del new_endpoints[edgeno]
         
+        numbering = None
+        if self.numbering is not None:
+            numbering = dict((CyclicTuple(itranslate(renumber_edges, c)), n)
+                             for (c,n) in self.numbering.iteritems())
+        
         bc = None
         if self._boundary_components is not None:
-            bc = [ CyclicTuple(itranslate(renumber_edges, c))
-                   for c in self._boundary_components ]
-        
+            if numbering is not None:
+                bc = set(numbering.iterkeys())
+            else:
+                bc = set(CyclicTuple(itranslate(renumber_edges, c))
+                          for c in self._boundary_components)
+
         # build new graph in canonical form
         return Graph([ v.make_canonical() for v in new_vertices ],
                      vertex_factory=self._vertex_factory,
                      endpoints = new_endpoints,
                      num_edges = self.num_edges - 1,
                      num_external_edges = self.num_external_edges,
-                     numbering = self.numbering,
+                     numbering = numbering,
                      _boundary_components = bc)
 
         
@@ -810,6 +805,28 @@ class Graph(object):
 
         return self._num_boundary_components
 
+    def projection(self, other):
+        """Return the component of the projection of `self` on the
+        basis vector `other`.
+        """
+        assert isinstance(other, Graph), \
+               "Graph.__eq__:" \
+               " called with non-Graph argument `other`: %s" % other
+        isomorphisms = MorphismIteratorFactory(self.valence_spectrum())
+        try:
+            # if there is any morphism, then return `True`
+            iso = isomorphisms(self, other).next()
+            pv = iso[0]
+            result = pv.sign()
+            for (e0, e1) in [ (pv[e[0]], pv[e[1]])
+                              for e in self.endpoints ]:
+                if e0 > e1:
+                   result = -result 
+            return result
+        except StopIteration:
+            # list of morphisms is empty, graphs are not equal.
+            return 0
+
     def valence_spectrum(self):
         """Return a dictionary mapping valences into vertex indices.
 
@@ -892,9 +909,9 @@ class MorphismIteratorFactory(object):
       []
     """
 
-    __slots__ = (
+    __slots__ = [
         '_candidate_pvs',
-        )
+        ]
 
     def __init__(self, valence_spectrum):
         """Constructor, taking graph valence spectrum.
@@ -925,7 +942,6 @@ class MorphismIteratorFactory(object):
 
     def __call__(self, g1, g2):
         """Return iterator over all isomorphisms from `g1` to `g2`."""
-##        pydb.debugger()
         # use "repetition patterns" to avoid mapping loop-free
         # vertices into vertices with loops, and viceversa.
         # FIXME: as loop-free vertices are much more common than
@@ -986,12 +1002,10 @@ class MorphismIteratorFactory(object):
                         assert len(g1.numbering) == len(g2.numbering), \
                                "MorphismIteratorFactory: " \
                                "Arguments differ in number of boundary components."
-                        bc1 = g1.boundary_components()
-                        bc2 = g2.boundary_components()
                         pe_does_not_preserve_bc = False
-                        for i in xrange(g1.num_boundary_components()):
-                            if g1.numbering[i] != \
-                               g2.numbering[bc2.index(CyclicList(pe.itranslate(bc1[i])))]:
+                        for bc in g1.boundary_components():
+                            if g1.numbering[bc] != \
+                                   g2.numbering[CyclicTuple(pe.itranslate(bc))]:
                                 pe_does_not_preserve_bc = True
                                 break
                         if pe_does_not_preserve_bc:
@@ -1030,23 +1044,22 @@ def MakeNumberedGraphs(graph):
       
     """
     graphs = []
+    bc = list(bcy for bcy in graph.boundary_components())
+    n = graph.num_boundary_components()
+
     for numbering in \
-            InplacePermutationIterator(range(graph.num_boundary_components())):
-        # make a copy of `g` with the given numbering
+            InplacePermutationIterator(range(n)):
+        # make a copy of `graph` with the given numbering
         g = copy(graph)
-        g.numbering = numbering[:]
+        g.numbering = dict((bc[x], numbering[x]) for x in xrange(n))
 
         # only add `g` to list if it is *not* isomorphic to a graph
         # already in the list
-        add_g_to_list = True
-        for gg in graphs:
-            if g == gg:
-                add_g_to_list = False
-                break
-        if add_g_to_list:
+        if g not in graphs:
             graphs.append(g)
 
     return graphs
+
 
 class ConnectedGraphsIterator(BufferingIterator):
     """Iterate over all connected numbered graphs having vertices of
@@ -1087,9 +1100,9 @@ class ConnectedGraphsIterator(BufferingIterator):
 
     """
 
-    __slots__ = (
+    __slots__ = [
         '_graphs',
-        )
+        ]
 
     def __init__(self, vertex_valences, vertex_factory=VertexCache()):
         assert debug.is_sequence_of_integers(vertex_valences), \
@@ -1145,13 +1158,13 @@ class GivenValenceGraphsIterator(object):
 
     """
 
-    __slots__ = (
+    __slots__ = [
         'graphs',
         'vertex_factory',
         '_edge_seq_iterator',
         '_morphism_factory',
         '_vertex_valences',
-        )
+        ]
 
     def __init__(self, vertex_valences, vertex_factory=VertexCache()):
         assert debug.is_sequence_of_integers(vertex_valences), \
@@ -1377,7 +1390,7 @@ class MgnGraphsIterator(BufferingIterator):
 
     """
 
-    __slots__ = (
+    __slots__ = [
         '_morphism_factory',
         '_roses',
         '_vertex_factory',
@@ -1387,7 +1400,7 @@ class MgnGraphsIterator(BufferingIterator):
         'max_valence',
         'n',
         'trees',
-        )
+        ]
 
     def __init__(self, g, n, vertex_factory=VertexCache()):
         assert n > 0, \
@@ -1438,7 +1451,7 @@ class MgnGraphsIterator(BufferingIterator):
         for rose in self._roses:
             if (rose.genus() != self.g) \
                    or (rose.num_boundary_components() != self.n) \
-                   or rose in self.already_found_roses:
+                   or (rose in self.already_found_roses):
                 continue
             self.already_found_roses.append(rose)
 
