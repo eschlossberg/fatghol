@@ -93,8 +93,12 @@ inline
 unsigned long
 SimpleMatrix::rank()
 {
-  unsigned long r;
-  return LinBox::rank(r, m);
+  if (num_rows == 0 or num_columns == 0)
+    return 0;
+  else {
+    unsigned long r;
+    return LinBox::rank(r, m);
+  }
 }
 
 

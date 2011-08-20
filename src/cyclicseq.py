@@ -60,12 +60,6 @@ def CyclicSequence(base, factory=None):
 
         __slots__ = []
 
-        def __init__(self, sequence=None):
-            if sequence is None:
-                base.__init__(self)
-            else:
-                base.__init__(self, sequence)
-
         def __repr__(self):
             return "%s(%s)" % (self.__class__.__name__,
                                base.__repr__(self))
