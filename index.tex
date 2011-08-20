@@ -1,6 +1,6 @@
 %%% index.tex -- Generico contenitore per matematica in lingua inglese.
 %%%
-%%% $Id: index.tex,v 1.5 2006/05/13 16:34:34 rmurri Exp $
+%%% $Id: index.tex,v 1.6 2006/05/18 08:07:29 rmurri Exp $
 %%%
 \documentclass[a4paper,reqno,openany,draft]{amsbook}
 
@@ -135,13 +135,13 @@
 %%
 %% `csref' -- genera automaticamente il nome di un riferimento.
 %%
-\usepackage[debug]{csref}
-
+%\usepackage[debug]{csref}
+\let\csref\autoref
 
 %%%
 %%% Cominciamo...
 %%%
-%\includeonly{kontsevich,construction}
+\includeonly{kontsevich,construction}
 \begin{document}
 
 \include{title}

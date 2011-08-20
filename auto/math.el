@@ -1,8 +1,8 @@
 (TeX-add-style-hook "math"
- (function
-  (lambda ()
+ (lambda ()
     (LaTeX-add-bibitems
      "QFS"
+     "eilenberg-kelly;closed-categories"
      "arbarello-cornalba"
      "baez-dolan;finite-sets"
      "bakalov-kirillov"
@@ -58,5 +58,10 @@
      "weinberg;qft1"
      "witten;kontsevich-model"
      "yetter;braided-deformations"
-     "zinn-justin-zuber;counting-tangles"))))
+     "zinn-justin-zuber;counting-tangles"
+     "conant;fusion-and-fission"
+     "conant-vogtmann"
+     "penkava;graph-complexes"
+     "penakava;l-infinity"
+     "penkava-schwarz")))
 

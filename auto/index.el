@@ -43,9 +43,9 @@
      "Lb"
      "Hn"
      "rel"
-     "xyc")
+     "xyc"
+     "csref")
     (TeX-run-style-hooks
-     "csref"
      "graphicx"
      "final"
      "hyperref"
