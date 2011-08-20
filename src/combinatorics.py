@@ -442,6 +442,15 @@ class PermutationList(object):
       [0, 1, 2]
       >>> ps[5]
       [2, 1, 0]
+
+      >>> for n in range(6):
+      ...   print len(PermutationList(n+1))
+      1
+      2
+      6
+      24
+      120
+      720
     """
     def __init__(self, order):
         self.__order = order
@@ -484,7 +493,16 @@ class PermutationIterator(object):
       [2, 1, 3]
       >>> p.next()
       [3, 2, 1]
-    """
+
+      >>> for n in range(6):
+      ...   print len(list(PermutationIterator(range(n+1))))
+      1
+      2
+      6
+      24
+      120
+      720
+      """
     def __init__(self, seq, initial=0):
         self.seq = seq
         self.rank = initial
