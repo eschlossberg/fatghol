@@ -63,11 +63,11 @@ def graph_homology_differential(graph):
     contractions of all non-loop edges of the given graph.
     """
     result = []
-    for l in xrange(graph.num_edges()):
+    for l in xrange(graph.num_edges):
         if not graph.is_loop(l):
-            g = graph.contract(l)
-            if g.is_oriented():
-                result.append((g, sign1(l)))
+            dg = graph.contract(l)
+            if dg.is_oriented():
+                result.append((dg, sign1(l)))
     return result
         
 

@@ -208,7 +208,7 @@ class ChainComplex(object):
         ##
         #: ranks of `D[n]` matrices, for 0 <= n < len(self); the differential
         #: `D[0]` is the null map.
-        ranks = [ 0 ]  
+        ranks = [ 0 ]
         for n in xrange(len(D)):
             A = D[n]            # micro-optimization (saves a few lookups)
             columns = len(A)    #: number of columns
@@ -229,7 +229,7 @@ class ChainComplex(object):
               if A[pivot_column][i] != 0:
                 rank += 1
                 # swap columns `j` and `pivot_column`
-                self[pivot_column], self[j] = self[j], self[pivot_column]
+                A[pivot_column], A[j] = A[j], A[pivot_column]
                 # divide each entry in column `j` by `A[j][i]`
                 lead = A[j][i]
                 for ii in xrange(rows):
