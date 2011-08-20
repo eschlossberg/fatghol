@@ -396,7 +396,18 @@ class Graph(object):
                                   (3, CyclicTuple((3, 0, 2))), \
                                   (1, CyclicTuple((2, 1))) ])
           True
-          
+
+        Examples::
+
+          >>> Graph.__eq__(Graph([Vertex([0, 1, 2, 0, 2, 1])],
+          ...                    numbering={CyclicTuple((0,)): 1,
+          ...                               CyclicTuple((1, 2, 0, 1, 2)): 0}),
+          ...              Graph([Vertex([0, 1, 2, 0, 2, 1])],
+          ...                    numbering={CyclicTuple((0,)): 0,
+          ...                               CyclicTuple((1, 2, 0, 1, 2)): 1}))
+          False
+
+
         """
         assert isinstance(other, Graph), \
                "Graph.__eq__:" \
@@ -666,9 +677,17 @@ class Graph(object):
                " must be in range 0..%d" \
                % (edgeno, self.num_edges)
 
+        # store endpoints and arrow on the edge-to-be-contracted, and
+        # possibly swap endpoints so that `i1 < i2`
+        i1 = self.endpoints[edgeno][0]
+        i2 = self.endpoints[edgeno][1]
+        if i1 > i2:
+            arrow = -1
+            i1, i2 = i2, i1
+        else:
+            arrow = +1
+
         # store position of the edge to be contracted at the endpoints
-        i1 = min(self.endpoints[edgeno])
-        i2 = max(self.endpoints[edgeno])
         pos1 = self.vertices[i1].index(edgeno)
         pos2 = self.vertices[i2].index(edgeno)
 
@@ -676,37 +695,30 @@ class Graph(object):
         # shifting all indices above:
         #   - edges numbered 0..edgeno-1 are unchanged;
         #   - edges numbered `edgeno+1`.. are renumbered, 
-        #     shifting the number down one position.
+        #     shifting the number down one position;
+        #   - edge `edgeno` is kept intact, will be removed by mating
+        #     operation (see below).
         renumber_edges = dict((i+1,i)
                               for i in xrange(edgeno, self.num_edges))
-        #   - edge `edgeno` is removed (subst with `None`)
-        renumber_edges[edgeno] = None  
         # See `itranslate` in utils.py for how this prescription is
         # encoded in the `renumber_edges` mapping.
         new_vertices = [ self._vertextype(itranslate(renumber_edges, v))
                          for v in self.vertices ]
 
         # Mate endpoints of contracted edge:
-        # 0. make copies of vertices `v1`, `v2` so that subsequent
-        #    operations do not alter the (possibly) shared `Vertex`
-        #    object.
-        v1 = copy(new_vertices[i1])
-        v2 = copy(new_vertices[i2])
         # 1. Rotate endpoints `v1`, `v2` so that the given edge
         #    appears *last* in `v1` and *first* in `v2` (*Note:*
         #    the contracted edge has already been deleted from
-        #    `v1` and `v2`, so index positions need to be adjusted):
-        if (0 < pos1) and (pos1 < len(v1)):
-            v1.rotate(pos1)
-        if (0 < pos2) and (pos2 < len(v2)):
-            v2.rotate(pos2)
+        #    `v1` and `v2`, so index positions need to be adjusted);
         # 2. Join vertices by concatenating the list of incident
-        # edges:
-        v1.extend(v2)
-
-        # set new `v1` vertex in place of old first endpoint, 
-        new_vertices[i1] = v1
-        # and remove second endpoint from list of new vertices
+        #    edges;
+        # 3. Set new `i1` vertex in place of old first endpoint:
+        new_vertices[i1] = self._vertextype(
+            new_vertices[i1][pos1+1:] + new_vertices[i1][:pos1]
+            +
+            new_vertices[i2][pos2+1:] + new_vertices[i2][:pos2]
+            )
+        # 4. Remove second endpoint from list of new vertices:
         del new_vertices[i2]
 
         # vertices with index above `i2` are now shifted down one place
@@ -714,22 +726,41 @@ class Graph(object):
                                  for i in xrange(i2, self.num_vertices))
         # vertex `i2` is mapped to vertex `i1`
         renumber_vertices[i2] = i1
-        new_endpoints = [ tuple(itranslate(renumber_vertices, ep))
+        new_endpoints = [ list(itranslate(renumber_vertices, ep))
                           for ep in  self.endpoints ]
         del new_endpoints[edgeno]
 
+        # if the contracted edge had a negative sign, then swap
+        # orientation on the first edge of contracted graph, to
+        # compensate
+        if arrow == -1:
+            new_endpoints[0] = tuple(new_endpoints[0][1], new_endpoints[0][0])
+
         numbering = None
+        bc = None
+        #   - edge `edgeno` is removed (subst with `None`)
+        renumber_edges[edgeno] = None  
         if self.numbering is not None:
             numbering = [ (n, CyclicTuple(itranslate(renumber_edges, bcy)))
                           for (bcy, n) in self.numbering.iteritems() ]
+            bc = [ bcy for (n,bcy) in numbering ]
+        elif self._boundary_components is not None:
+            bc = [ CyclicTuple(itranslate(renumber_edges, bcy))
+                   for bcy in self._boundary_components ]
 
-        bc = None
-        if self._boundary_components is not None:
+        # consistency check
+        if __debug__:
+            assert len(new_endpoints) == self.num_edges - 1
+            g = Graph(new_vertices,
+                 vertextype = self._vertextype,
+                 endpoints = new_endpoints,
+                 num_edges = self.num_edges - 1,
+                 num_external_edges = self.num_external_edges,
+                 )
+            assert g.num_boundary_components() == self.num_boundary_components()
             if numbering is not None:
-                bc = [ bcy for (n,bcy) in numbering ]
-            else:
-                bc = [ CyclicTuple(itranslate(renumber_edges, bcy))
-                       for bcy in self._boundary_components ]
+                assert set(bcy for (n,bcy) in numbering) \
+                       == set(g.boundary_components())
 
         # build new graph 
         return Graph(new_vertices,
@@ -741,11 +772,7 @@ class Graph(object):
                      _boundary_components = bc,
                      )
             
-        
-    def edges(self):
-        """Iterate over edge colorings."""
-        return xrange(0, self.num_edges)
-    
+
     def genus(self):
         """Return the genus g of this `Graph` object."""
         # compute value if not already done
@@ -970,6 +997,8 @@ class Graph(object):
           >>> list(g1.isomorphisms(g3))
           []
 
+        Examples::
+
         """
         ## Compute all permutations of vertices that preserve valence.
         ## (A permutation `p` preserves vertex valence if vertices `v`
@@ -1024,7 +1053,8 @@ class Graph(object):
                     vertex_mapping_is_good_candidate = False
                     break
             if vertex_mapping_is_good_candidate:
-                candidate_pvs.append(Permutation(dict((src_indices[i], dst_indices[i])
+                candidate_pvs.append(Permutation(dict((src_indices[i],
+                                                       dst_indices[i])
                                                       for i in xrange(n))))
 
         ## Browse the list of vertex-to-vertex mappings; for each one, check:
@@ -1071,9 +1101,18 @@ class Graph(object):
                                "Graph.isomorphisms: " \
                                "Numbered and un-numbered graphs mixed in arguments."
                         pe_does_not_preserve_bc = False
-                        for bc in self.boundary_components():
-                            if self.numbering[bc] != \
-                                   other.numbering[CyclicTuple(pe.itranslate(bc))]:
+                        for bc1 in self.boundary_components():
+                            bc2 = CyclicTuple(pe.itranslate(bc1))
+                            # there are cases (see examples in the
+                            # `Graph.__eq__` docstring, in which the
+                            # above algorithm may find a valid
+                            # mapping, changing from `g1` to an
+                            # *alternate* representation of `g2` -
+                            # these should fail as they don't preserve
+                            # the boundary cycles, so we catch them
+                            # here.
+                            if (bc2 not in other.numbering) \
+                               or (self.numbering[bc1] != other.numbering[bc2]):
                                 pe_does_not_preserve_bc = True
                                 break
                         if pe_does_not_preserve_bc:
