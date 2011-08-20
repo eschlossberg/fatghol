@@ -126,14 +126,14 @@ class Graph(object):
         '_boundary_components',
         '_genus',
         '_num_boundary_components',
-        '_num_edges',
-        '_num_vertices',
         '_valence_spectrum',
         '_vertex_factory',
         '_vertex_valences',
         'edge_seq',
         'edge_seq_aliases',
         'endpoints',
+        'num_edges',
+        'num_vertices',
         'vertices',
         )
 
@@ -222,8 +222,8 @@ class Graph(object):
 
         # init code common to both ctor variants:
 
-        self._num_edges = sum(self._vertex_valences) / 2
-        self._num_vertices = len(self.vertices)
+        self.num_edges = sum(self._vertex_valences) / 2
+        self.num_vertices = len(self.vertices)
         # these values will be computed on-demand
         self._boundary_components = None
         self._num_boundary_components = None
@@ -238,7 +238,7 @@ class Graph(object):
         # `self.endpoints` is the adjacency list of this graph.  For
         # each edge, store a pair `(v1, v2)` where `v1` and `v2` are
         # indices of endpoints.
-        self.endpoints = [ [] for dummy in xrange(self._num_edges) ]
+        self.endpoints = [ [] for dummy in xrange(self.num_edges) ]
         for current_vertex_index in xrange(len(self.vertices)):
             for edge in self.vertices[current_vertex_index]:
                 self.endpoints[edge].append(current_vertex_index)
@@ -342,7 +342,7 @@ class Graph(object):
         # otherwise, compute it now...
         
         # micro-optimizations
-        L = self.num_edges()
+        L = self.num_edges
         ends = self.endpoints
 
         # pass1: build a "copy" of `graph`, replacing each edge
@@ -455,7 +455,7 @@ class Graph(object):
         subst = { edgeno:None } # delete specified edge
         for i in xrange(0, edgeno):
             subst[i] = i        # edges with lower color index are unchanged
-        for i in xrange(edgeno+1, self._num_edges+1):
+        for i in xrange(edgeno+1, self.num_edges+1):
             subst[i] = i-1       # edges with higher color index are shifted down
         new_vertices = [ self._vertex_factory(itranslate(subst, v))
                          for v in self.vertices ]
@@ -489,15 +489,15 @@ class Graph(object):
         
     def edges(self):
         """Iterate over edge colorings."""
-        return xrange(0, self.num_edges())
+        return xrange(0, self.num_edges)
     
     def genus(self):
         """Return the genus g of this `Graph` object."""
         # compute value if not already done
         if (self._genus is None):
             n = self.num_boundary_components()
-            K = self.num_vertices()
-            L = self.num_edges()
+            K = self.num_vertices
+            L = self.num_edges
             # by Euler, K-L+n=2-2*g
             self._genus = (L - K - n + 2) / 2
         return self._genus
@@ -588,7 +588,7 @@ class Graph(object):
 ##                 return +1
 ##             else:
 ##                 return -1
-##         for x in xrange(self.num_edges()):
+##         for x in xrange(self.num_edges):
 ##             result *= is_increasing(* self.endpoints[x]) \
 ##                       * is_increasing(pv[self.endpoints[x][0]],
 ##                                       pv[self.endpoints[x][1]])
@@ -639,12 +639,6 @@ class Graph(object):
             self._num_boundary_components = len(self.boundary_components())
 
         return self._num_boundary_components
-
-    def num_edges(self):
-        return self._num_edges
-
-    def num_vertices(self):
-        return self._num_vertices
 
     def valence_spectrum(self):
         """Return a dictionary mapping valences into vertex indices.
@@ -751,15 +745,15 @@ class MorphismIteratorFactory(object):
                             rps1,
                             (rps2[i] for i in vertex_index_map)):
                 # Items in pvrots are lists (of length
-                # `g1.num_vertices()`), composed of tuples
+                # `g1.num_vertices`), composed of tuples
                 # `(i1,b1+s,i2,b2,s)`, meaning that vertex at index
                 # `i1` in `g1` should be mapped to vertex at index
                 # `i2` in `g2` with shift `s` and bases `b1` and `b2`
                 # (that is, `g1.vertices[i1][b1+s:b1+s+len]` should be
                 # mapped linearly onto `g2.vertices[i2][b2:b2+len]`).
-                # `rp1` is a kind of "derivative" of `v1`; we gather the
-                # displacement `b1+s` for `v1` by summing elements of
-                # rp1 up to -but not including- `rp_shift`.
+                # `rp1` is a kind of "derivative" of `v1`; we gather
+                # the displacement `b1+s` for `v1` by summing elements
+                # of rp1 up to -but not including- `rp_shift`.
                 pvrots[j].extend([ (j,b1+sum(rp1[:s]),vertex_index_map[j],b2)
                                    for s
                                    in rp1.all_shifts_for_linear_eq(rp2) ])
@@ -787,9 +781,9 @@ class MorphismIteratorFactory(object):
                     #   - *copy* the objects to pass through `pv.translate`,
                     #     as `pv.translate` does in-place modify of its argument.
                     if 0 != cmp([ set(g2.endpoints[pe[x]])
-                                  for x in xrange(g2.num_edges()) ],
+                                  for x in xrange(g2.num_edges) ],
                                 [ set(pv.translate(copy(g1.endpoints[x])))
-                                  for x in xrange(g1.num_edges()) ]):
+                                  for x in xrange(g1.num_edges) ]):
                         # continue with next `pvrot`
                         continue
                     rots = tuple(t[1]-t[3] for t in pvrot)
