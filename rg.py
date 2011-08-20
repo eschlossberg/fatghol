@@ -33,7 +33,20 @@ def vertex_valences_for_given_g_and_n(g,n):
         L = 2*g + n + K - 2
     return result
 
-    
+
+class VertexCache(object):
+    __slots__ = ('cache',)
+    def __init__(self):
+        self.cache = {}
+    def __call__(self, edge_seq, start=0, end=None):
+        if end is None:
+            end = len(edge_seq)
+        key = tuple(edge_seq[start:end])
+        if not self.cache.has_key(key):
+            self.cache[key] = Vertex(key)
+        return self.cache[key]
+
+
 class Vertex(CyclicList):
     """A (representative of) a vertex of a ribbon graph.
 
@@ -42,37 +55,16 @@ class Vertex(CyclicList):
     (read-only) sequence interface.
     """
 
-    __slots__ = ('_repetition_pattern',)
-
-    def __init__(self, edge_seq, start=0, end=None):
-        """Create `Vertex` instance by excerpting the slice `[start:end]` in `edge_seq`.
-        """
-        if end is None:
-            end = len(edge_seq)
-        CyclicList.__init__(self, edge_seq[start:end])
-
-        # the following values will be computed when they are first requested
-        self._repetition_pattern = None
 ##     def __new__(cls, edge_seq, start=0, end=None):
 ##         """Create `Vertex` instance by excerpting the slice `[start:end]` in `edge_seq`.
 ##         """
 ##         if end is None:
 ##             end = len(edge_seq)
-##         return CyclicArray.__new__(cls, edge_seq[start:end])
+##         return CyclicTuple.__new__(cls, edge_seq[start:end])
 ##     def __init__(self, *args, **kwargs):
 ##         # the following values will be computed when they are first requested
 ##         self._repetition_pattern = None
-
         
-    def __iter__(self):
-        """Return iterator over edges."""
-        return list.__iter__(self)
-
-    #def __repr__(self):
-    #    return str(self._edges)
-    #def __str__(self):
-    #    return str(self._edges)
-    
     def is_maximal_representative(self):
         """Return `True` if this `Vertex` object is maximal among
         representatives of same cyclic sequence.
@@ -101,15 +93,6 @@ class Vertex(CyclicList):
                     return False
                 # else, continue comparing
         return True
-
-    def repetition_pattern(self):
-        """Return the repetition pattern of this `Vertex` object.
-        Same as calling `repetition_pattern(this._edges)` but caches
-        results.
-        """
-        if self._repetition_pattern is None:
-            self._repetition_pattern = CyclicList.repetition_pattern(self) 
-        return self._repetition_pattern
 
 
 class Graph(object):
@@ -625,7 +608,7 @@ def all_connected_graphs(vertex_valences):
            "all_connected_graphs: sum of vertex valences must be divisible by 2"
 
     total_edges = sum(vertex_valences) / 2
-    vertex_factory=Vertex
+    vertex_factory=VertexCache()
 
     graphs = []
     for edge_seq in all_edge_seq(total_edges):
