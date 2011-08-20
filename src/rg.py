@@ -576,24 +576,11 @@ class Fatgraph(object):
         return list(CyclicTuple(bc) for bc in result)
         
 
-##     def clone(self):
-##         """Return a new `Fatgraph` instance, sharing all attribute values
-##         with this one.
-##         """
-##         return Fatgraph(self.vertices,
-##                      endpoints = (self.endpoints_v, self.endpoints_i),
-##                      num_edges = self.num_edges,
-##                      num_vertices = self.num_vertices,
-##                      orientation = self.edge_numbering,
-##                      vertextype = self._vertextype,
-##                      _vertex_valences = self._vertex_valences,
-##                      )
-
     def _cmp_orient(self, other, iso):
         pe = iso[2]
         image_edge_numbering = Permutation(dict((self.edge_numbering[x],
-                                           other.edge_numbering[pe[x]])
-                                          for x in xrange(self.num_edges)))
+                                                 other.edge_numbering[pe[x]])
+                                                for x in xrange(self.num_edges)))
         return image_edge_numbering.sign()
         
 
@@ -1006,15 +993,13 @@ class Fatgraph(object):
         # will always return them in the same order
         vsk = vs1.keys()
 
-        assert set(vsk) == set(vs2.keys()), \
-               "Fatgraph.isomorphisms: "\
-               " graphs `%s` and `%s` differ in vertex valences: `%s` vs `%s`" \
-               % (self, other, vsk, vs2.keys())
-        assert dict((val, len(vs1[val])) for val in vsk) \
-               == dict((val, len(vs2[val])) for val in vsk), \
-               "Fatgraph.isomorphisms: graphs `%s` and `%s`" \
-               " have unequal vertex distribution by valence: `%s` vs `%s`" \
-               % (self, other, vs1, vs2)
+        # graphs differ in vertex valences, no isomorphisms
+        if not set(vsk) == set(vs2.keys()):
+            return
+        # graphs have unequal vertex distribution by valence, no isomorphisms
+        if not  dict((val, len(vs1[val])) for val in vsk) \
+               == dict((val, len(vs2[val])) for val in vsk):
+            return
 
         src_indices = concat([ vs1[val] for val in vsk ])
         permutations_of_vertices_of_same_valence = [
@@ -1118,7 +1103,7 @@ class Fatgraph(object):
 
         If the two graphs are not isomorphic, then the result is 0::
 
-          >>> g1 = Fatgraph([Vertex([0,1,2]), Vertex([0,2,1])])
+          >>> g1 = Fatgraph([Vertex([0,1,2,0,1,2])])
           >>> g2 = Fatgraph([Vertex([0,1,2]), Vertex([0,1,2])])
           >>> Fatgraph.projection(g1, g2)
           0
@@ -1131,18 +1116,24 @@ class Fatgraph(object):
         Flipping the orientation on an edge reverses the coefficient
         sign::
 
-          >>> g2 = Fatgraph(g1)
-          >>> Fatgraph.projection(g1, g2)
+          >>> g3 = Fatgraph(g2)
+          >>> Fatgraph.projection(g2, g3)
           1
-          >>> g2.edge_numbering[0], g2.edge_numbering[1] = \
-              g2.edge_numbering[1], g2.edge_numbering[0]
-          >>> Fatgraph.projection(g1, g2)
+          >>> g3.edge_numbering[0], g3.edge_numbering[1] = \
+              g3.edge_numbering[1], g3.edge_numbering[0]
+          >>> Fatgraph.projection(g2, g3)
           -1
           
         """
         assert isinstance(other, Fatgraph), \
                "Fatgraph.__eq__:" \
                " called with non-Fatgraph argument `other`: %s" % other
+        assert self.is_oriented(), \
+               "Fatgraph.projection: cannot project non-orientable graph: %s" \
+               % self
+        assert other.is_oriented(), \
+               "Fatgraph.projection: cannot project non-orientable graph: %s" \
+               % other
         try:
             iso = self.isomorphisms(other).next()
             return Fatgraph._cmp_orient(self, other, iso)
@@ -1986,6 +1977,39 @@ class _MgnGraphsIterator(BufferingIterator):
         return next_batch
 
 MgnGraphsIterator = persist.PersistedIterator(_MgnGraphsIterator)
+
+
+
+class _MgnNumberedGraphsIterator(BufferingIterator):
+    """Iterate over all connected numbered fatgraphs having the
+    prescribed genus `g` and number of boundary cycles `n`.
+    
+    Examples::
+
+      >>> for g in MgnNumberedGraphsIterator(0,3): print g
+      NumberedFatgraph(Fatgraph([Vertex([1, 2, 1]), Vertex([2, 0, 0])]), numbering={CyclicTuple((2, 0, 2, 1)): 2, CyclicTuple((0,)): 1, CyclicTuple((1,)): 0})
+      NumberedFatgraph(Fatgraph([Vertex([1, 2, 1]), Vertex([2, 0, 0])]), numbering={CyclicTuple((2, 0, 2, 1)): 0, CyclicTuple((0,)): 2, CyclicTuple((1,)): 1})
+      NumberedFatgraph(Fatgraph([Vertex([1, 2, 1]), Vertex([2, 0, 0])]), numbering={CyclicTuple((2, 0, 2, 1)): 1, CyclicTuple((0,)): 0, CyclicTuple((1,)): 2})
+      NumberedFatgraph(Fatgraph([Vertex([1, 0, 2]), Vertex([2, 0, 1])]), numbering={CyclicTuple((2, 0)): 1, CyclicTuple((0, 1)): 2, CyclicTuple((1, 2)): 0})
+      NumberedFatgraph(Fatgraph([Vertex([1, 1, 0, 0])]), numbering={CyclicTuple((0,)): 1, CyclicTuple((1, 0)): 0, CyclicTuple((1,)): 2})
+      NumberedFatgraph(Fatgraph([Vertex([1, 1, 0, 0])]), numbering={CyclicTuple((0,)): 2, CyclicTuple((1, 0)): 1, CyclicTuple((1,)): 0})
+      NumberedFatgraph(Fatgraph([Vertex([1, 1, 0, 0])]), numbering={CyclicTuple((0,)): 1, CyclicTuple((1, 0)): 2, CyclicTuple((1,)): 0})
+
+      >>> for g in MgnNumberedGraphsIterator(1,1): print g
+      NumberedFatgraph(Fatgraph([Vertex([1, 0, 2]), Vertex([2, 1, 0])]), numbering={CyclicTuple((1, 0, 2, 1, 0, 2)): 0})
+      NumberedFatgraph(Fatgraph([Vertex([1, 0, 1, 0])]), numbering={CyclicTuple((1, 0, 1, 0)): 0})
+
+    """
+
+    def __init__(self, g, n, vertextype=VertexCache()):
+        self.__naked_graphs_iterator = MgnGraphsIterator(g, n, vertextype)
+        BufferingIterator.__init__(self)
+
+    def refill(self):
+        return MakeNumberedGraphs(self.__naked_graphs_iterator.next())
+
+MgnNumberedGraphsIterator = persist.PersistedIterator(_MgnNumberedGraphsIterator)
+
 
 
 ## main: run tests

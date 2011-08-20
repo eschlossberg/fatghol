@@ -13,7 +13,7 @@ import logging
 ## application-local imports
 
 from homology import *
-from rg import MakeNumberedGraphs, MgnGraphsIterator, Fatgraph, Vertex
+from rg import MgnNumberedGraphsIterator, Fatgraph, Vertex
 from valences import vertex_valences_for_given_g_and_n
 
 
@@ -44,12 +44,11 @@ def FatgraphComplex(g, n):
 
     # gather graphs
     _grade = None
-    for graph in MgnGraphsIterator(g,n):
+    for graph in MgnNumberedGraphsIterator(g,n):
         grade = graph.num_edges - 1
-        for ng in MakeNumberedGraphs(graph):
-            if not ng.is_oriented():
-                continue
-            generators[grade].append(ng)
+        if not graph.is_oriented():
+            continue
+        generators[grade].append(graph)
 
         # since `MgnGraphsIterator` returns graphs in blocks with
         # equal number of edges, we can use that for logging purposes
