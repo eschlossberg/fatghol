@@ -148,25 +148,6 @@ class BoundaryCycle(frozenset):
                        % (corner, count, new_bcy)
         return BoundaryCycle(new_bcy, graph)
 
-    def transform(self, iso, graph):
-        """Return a new `BoundaryCycle` instance, obtained by
-        transforming each corner according to a graph isomorphism.
-        """
-        assert self.graph is not None
-        (pv, rots, pe) = iso
-        triples = []
-        for (v, i, j) in self:
-            l = len(self.graph.vertices[v])
-            # create transformed triple 
-            v_ = pv[v]
-            i_ = (i + rots[v]) % l # XXX: is it `-` or `+`?
-            j_ = (j + rots[v]) % l
-            # ensure the contract is honored, that `j` is the
-            # index _following_ `i` in the cyclic order
-            if i_ == 0 and j_ == l:
-                i_, j_ = j_, i_
-            triples.append((v_, i_, j_))
-        return BoundaryCycle(triples, graph)
 
 
 class Vertex(CyclicList):
@@ -223,6 +204,9 @@ class Edge(object):
     `Fatgraph`s that are created by contraction or other geometrical
     operations.
     """
+
+    __slots__ = [ 'endpoints' ]
+    
     def __init__(self, va1, va2):
         if va1[0] < va2[0]:
             self.endpoints = (va1, va2)
@@ -271,6 +255,72 @@ class Edge(object):
             return self.endpoints[1]
         else:
             return self.endpoints[0]
+
+
+class Isomorphism(object):
+    """An isomorphism of `Fatgraphs`.
+    """
+
+    __slots__ = [
+        'pe',
+        'pv',
+        'rot',
+        'source',
+        'target',
+        ]
+    
+    def __init__(self, source, target, pv, rot, pe):
+        # sanity checks
+        assert len(pv) == source.num_vertices
+        assert len(pv) == target.num_vertices
+        assert len(pe) == source.num_edges
+        assert len(pe) == target.num_edges
+        assert set(pv.keys()) == set(range(source.num_vertices))
+        assert set(pv.values()) == set(range(target.num_vertices))
+        assert set(pe.keys()) == set(range(source.num_edges))
+        assert set(pe.values()) == set(range(target.num_edges))
+
+        self.source = source
+        self.target = target
+        self.pe = pe
+        self.rot = rot
+        self.pv = pv
+
+    def __str__(self):
+        return "(%s, %s, %s)" % (self.pv, self.rot, self.pe)
+
+    def compare_orientations(self):
+        """Return +1 or -1 depending on whether the orientations of
+        the target Fatgraph pulls back to the orientation of the
+        source Fatgraph via this `Isomorphism`.
+        """
+        image_edge_numbering = Permutation((self.source.edge_numbering[x],
+                                            self.target.edge_numbering[self.pe[x]])
+                                           for x in xrange(self.source.num_edges))
+        return image_edge_numbering.sign()
+
+    def is_orientation_reversing(self):
+        """Return `True` if this `Isomorphism` reverses orientation on
+        the source and target `Fatgraph` instances."""
+        return (-1 == self.compare_orientations())
+
+    def transform_boundary_cycle(self, bcy):
+        """Return a new `BoundaryCycle` instance, obtained by
+        transforming each corner according to a graph isomorphism.
+        """
+        triples = []
+        for (v, i, j) in bcy:
+            l = len(self.source.vertices[v])
+            # create transformed triple 
+            v_ = self.pv[v]
+            i_ = (i + self.rot[v]) % l # XXX: is it `-` or `+`?
+            j_ = (j + self.rot[v]) % l
+            # ensure the contract is honored, that `j` is the
+            # index _following_ `i` in the cyclic order
+            if i_ == 0 and j_ == l:
+                i_, j_ = j_, i_
+            triples.append((v_, i_, j_))
+        return BoundaryCycle(triples, self.target)
 
 
 
@@ -952,14 +1002,6 @@ class Fatgraph(EqualIfIsomorphic):
                         )
 
 
-    def _cmp_orient(self, other, iso):
-        pe = iso[2]
-        image_edge_numbering = Permutation((self.edge_numbering[x],
-                                            other.edge_numbering[pe[x]])
-                                           for x in xrange(self.num_edges))
-        return image_edge_numbering.sign()
-
-
     @maybe(ocache_weakref)
     def contract(self, edgeno):
         """Return new `Fatgraph` obtained by contracting the specified edge.
@@ -1119,11 +1161,10 @@ class Fatgraph(EqualIfIsomorphic):
         """
         orbits = dict( (x, set([x])) for x in xrange(self.num_edges) )
         for a in self.automorphisms():
-            edge_permutation = a[2]
             for x in xrange(self.num_edges):
                 if x not in orbits:
                     continue
-                y = edge_permutation[x]
+                y = a.pe[x]
                 if y not in orbits:
                     continue
                 # `x` and `y` are in the same orbit, only keep the one
@@ -1162,11 +1203,10 @@ class Fatgraph(EqualIfIsomorphic):
                        for y in xrange(self.num_edges) ]
         orbits = dict( (p, set([p])) for p in edge_pairs )
         for a in self.automorphisms():
-            edge_permutation = a[2]
             for p in edge_pairs:
                 if p not in orbits:
                     continue
-                q = (edge_permutation[p[0]], edge_permutation[p[1]])
+                q = (a.pe[p[0]], a.pe[p[1]])
                 if q not in orbits:
                     continue
                 # `p` and `q` are in the same orbit, only keep the one
@@ -1294,12 +1334,6 @@ class Fatgraph(EqualIfIsomorphic):
         return self.edges[edge].is_loop()
         
 
-    def is_orientation_reversing(self, automorphism):
-        """Return `True` if `automorphism` reverses orientation of
-        this `Fatgraph` instance."""
-        return (-1 == Fatgraph._cmp_orient(self, self, automorphism))
-
-
     def is_oriented(self):
         """Return `True` if `Fatgraph` is orientable.
 
@@ -1340,37 +1374,37 @@ class Fatgraph(EqualIfIsomorphic):
         """
         ## Try to find an orientation-reversing automorphism the hard way
         for a in self.automorphisms():
-            if self.is_orientation_reversing(a):
+            if a.is_orientation_reversing():
                 return False
         # no orientation reversing automorphism found
         return True
 
 
     @maybe(ocache_iterator)
-    def isomorphisms(g1, g2):
-        """Iterate over `Fatgraph` isomorphisms from `g1` to `g2`.
+    def isomorphisms(G1, G2):
+        """Iterate over `Fatgraph` isomorphisms from `G1` to `G2`.
 
         An isomorphism is represented by a tuple `(pv, rot, pe)` where:
 
           - `pv` is a permutation of ther vertices: the `i`-th vertex
-            of `g1` is sent to the `pv[i]`-th vertex of `g2`, rotated
+            of `G1` is sent to the `pv[i]`-th vertex of `G2`, rotated
             by `rot[i]` places leftwards;
 
-          - `pe` is a permutation of the edges: edge `i` in `g1` is
-            mapped to edge `pe[i]` in `g2`.
+          - `pe` is a permutation of the edges: edge `i` in `G1` is
+            mapped to edge `pe[i]` in `G2`.
 
         This method can iterate over the automorphism group of a
         graph::
 
-          >>> g1 = Fatgraph([Vertex([2, 1, 1]), Vertex([2, 0, 0])])
-          >>> for f in g1.isomorphisms(g1): print f
+          >>> G1 = Fatgraph([Vertex([2, 1, 1]), Vertex([2, 0, 0])])
+          >>> for f in G1.isomorphisms(G1): print f
           ({0: 0, 1: 1}, [0, 0], {0: 0, 1: 1, 2: 2})
           ({0: 1, 1: 0}, [0, 0], {0: 1, 1: 0, 2: 2})
 
         Or it can find the isomorphisms between two given graphs::
 
-          >>> g2 = Fatgraph([Vertex([2, 2, 0]), Vertex([1, 1, 0])])
-          >>> for f in g1.isomorphisms(g2): print f
+          >>> G2 = Fatgraph([Vertex([2, 2, 0]), Vertex([1, 1, 0])])
+          >>> for f in G1.isomorphisms(G2): print f
           ({0: 0, 1: 1}, [2, 2], {0: 1, 1: 2, 2: 0})
           ({0: 1, 1: 0}, [2, 2], {0: 2, 1: 1, 2: 0})
 
@@ -1378,7 +1412,7 @@ class Fatgraph(EqualIfIsomorphic):
         item is returned by the iterator::
 
           >>> g3 = Fatgraph([Vertex([2, 1, 0]), Vertex([2, 0, 1])])
-          >>> list(g1.isomorphisms(g3))
+          >>> list(G1.isomorphisms(g3))
           []
         """
         
@@ -1437,20 +1471,19 @@ class Fatgraph(EqualIfIsomorphic):
             """
             pass
 
-        def extend_map(m, g1, i1, r, g2, i2):
-            """Extend map `m` by mapping the `i1`-th vertex in `g1` to
-            the `i2`-th vertex in `g2` (and rotating the source vertex
-            by `r` places leftwards).  Return the extended map `(pv,
-            rot, pe)`.
+        def extend_map(pv, rots, pe, G1, i1, r, G2, i2):
+            """Extend map `(pv, rots, pe)` by mapping the `i1`-th
+            vertex in `G1` to the `i2`-th vertex in `G2` (and rotating
+            the source vertex by `r` places leftwards).  Return the
+            extended map `(pv, rot, pe)`.
 
-            The partial map `m` is represented as a triple `(pv, rot,
-            pe)` as in `Fatgraph.isomorphism` (which see), with the
-            additional proviso that unassigned items in `rot` are
-            represented by `None`.
+            The partial map is a triple `(pv, rot, pe)` as in
+            `Fatgraph.isomorphism` (which see), with the additional
+            proviso that unassigned items in `rot` are represented by
+            `None`.
             """
-            (pv, rots, pe) = m
-            v1 = g1.vertices[i1]
-            v2 = g2.vertices[i2]
+            v1 = G1.vertices[i1]
+            v2 = G2.vertices[i2]
             if not compatible(v1, v2):
                 raise CannotExtendMap
 
@@ -1463,7 +1496,7 @@ class Fatgraph(EqualIfIsomorphic):
                     raise CannotExtendMap
                 else:
                     # this pair has already been added
-                    return m
+                    return (pv, rots, pe)
 
             pv[i1] = i2
             rots[i1] = r
@@ -1475,96 +1508,87 @@ class Fatgraph(EqualIfIsomorphic):
 
             return (pv, rots, pe)
 
-        def neighbors(m, g1, v1, g2, v2):
-            """List of vertex-to-vertex mappings that extend map `m`
+        def neighbors(pv, pe, G1, v1, G2, v2):
+            """List of vertex-to-vertex mappings that extend map `pv`
             in the neighborhood of vertices `v1` (in the domain) and
             `v2` (in the codomain).
 
             Return a list of triplets `(src, dst, rot)`, where:
-               * `src` is the index of a vertex in `g1`,
+               * `src` is the index of a vertex in `G1`,
                  connected to `v1` by an edge `x`;
-               * `dst` is the index of a vertex in `g2`,
-                 connected to `v2` by the image (according to `m`)
+               * `dst` is the index of a vertex in `G2`,
+                 connected to `v2` by the image (according to `pe`)
                  of edge `x`;
-               * `rot` is the rotation to be applied to `g1[src]`
+               * `rot` is the rotation to be applied to `G1[src]`
                  so that edge `x` and its image appear
                  at the same index position;
             """
-            assert v2 == m[0][v1]
+            assert v2 == pv[v1]
             result = []
-            for x in g1.vertices[v1]:
-                if g1.edges[x].is_loop():
+            for x in G1.vertices[v1]:
+                if G1.edges[x].is_loop():
                     continue # with next edge `x`
-                ((s1, a1), (s2, a2)) = g1.edges[x].endpoints
+                ((s1, a1), (s2, a2)) = G1.edges[x].endpoints
                 src_v = s2 if (s1 == v1) else s1
                 # ignore vertices that are already in the domain of `m`
-                if src_v in m[0]:
+                if src_v in pv:
                     continue # to next `x`
                 src_i = a2 if (s1 == v1) else a1
-                ((d1, b1), (d2, b2)) = g2.edges[m[2][x]].endpoints
+                ((d1, b1), (d2, b2)) = G2.edges[pe[x]].endpoints
                 dst_v, dst_i = (d2,b2) if (d1 == v2) else (d1,b1)
                 # array of (source vertex index, dest vertex index, rotation)
                 result.append((src_v, dst_v, dst_i-src_i))
             return result
             
         # if graphs differ in vertex valences, no isomorphisms
-        vs1 = g1.valence_spectrum()
-        vs2 = g2.valence_spectrum()
+        vs1 = G1.valence_spectrum()
+        vs2 = G2.valence_spectrum()
         if not set(vs1.keys()) == set(vs2.keys()):
             return # StopIteration
         # if graphs have unequal vertex distribution by valence, no isomorphisms
-        for val in g1.vertex_valences():
+        for val in G1.vertex_valences():
             if len(vs1[val]) != len(vs2[val]):
                 return # StopIteration
 
-        (val, vs) = starting_vertices(g1)
+        (val, vs) = starting_vertices(G1)
         src0 = vs[0]
-        v1 = g1.vertices[src0]
-        for dst0 in admissible_vertex_mappings(v1, g2, vs2[val]):
+        V1 = G1.vertices[src0]
+        for dst0 in admissible_vertex_mappings(V1, G2, vs2[val]):
             for rot0 in xrange(val):
                 try:
-                    # pass 0: init new (pv, rot, pe) triple
+                    # pass 0: init new (pv, rots, pe) triple
                     pv = Permutation()
-                    rot = [ None for x in xrange(g1.num_vertices) ]
+                    rots = [ None for x in xrange(G1.num_vertices) ]
                     pe = Permutation()
 
-                    # pass 1: map `v1` to `v2` and build map
+                    # pass 1: map `V1` to `v2` and build map
                     # of neighboring vertices for next pass
                     pv[src0] = dst0
-                    rot[src0] = rot0
-                    if not pe.extend(v1, g2.vertices[dst0][rot0:rot0+val]):
+                    rots[src0] = rot0
+                    if not pe.extend(V1, G2.vertices[dst0][rot0:rot0+val]):
                         continue # to next `rot0`
                     if __debug__:
-                        for x in v1:
-                            assert x in pe, "Edge `%d` of vertex `%s` (in graph `%s`) not mapped to any edge of graph `%s` (at line 1740, `pe=%s`)" % (x, v1, g1, g2, pe)
+                        for x in V1:
+                            assert x in pe, "Edge `%d` of vertex `%s` (in graph `%s`) not mapped to any edge of graph `%s` (at line 1740, `pe=%s`)" % (x, V1, G1, G2, pe)
 
                     # pass 2: extend map to neighboring vertices
-                    m = (pv, rot, pe)
-                    nexts = neighbors(m, g1, src0, g2, dst0)
-                    while len(m[0]) < g1.num_vertices:
+                    nexts = neighbors(pv, pe, G1, src0, G2, dst0)
+                    while len(pv) < G1.num_vertices:
                         neighborhood = []
                         for (i1, i2, r) in nexts:
-                            m = extend_map(m, g1, i1, r, g2, i2)
+                            (pv, rots, pe) = extend_map(pv, rots, pe, G1, i1, r, G2, i2)
                             if __debug__:
-                                for x in g1.vertices[i1]:
-                                    assert x in m[2], "Edge `%d` of vertex `%s` (in graph `%s`) not mapped to any edge of graph `%s` (at line 1751, `pe=%s`)" % (x, g1.vertices[i1], g1, g2, m[2])
-                            neighborhood += neighbors(m, g1, i1, g2, i2)
+                                for x in G1.vertices[i1]:
+                                    assert x in pe, "Edge `%d` of vertex `%s` (in graph `%s`) not mapped to any edge of graph `%s` (at line 1751, `pe=%s`)" % (x, G1.vertices[i1], G1, G2, pe)
+                            neighborhood += neighbors(pv, pe, G1, i1, G2, i2)
                         nexts = neighborhood
 
                 # extension failed in the above block, continue with next candidate
                 except CannotExtendMap:
                     continue # to next `rot0`
 
-                # sanity checks
-                assert len(m[0]) == g1.num_vertices
-                assert len(m[2]) == g1.num_edges
-                assert set(m[0].keys()) == set(range(g1.num_vertices))
-                assert set(m[0].values()) == set(range(g2.num_vertices))
-                assert set(m[2].keys()) == set(range(g1.num_edges))
-                assert set(m[2].values()) == set(range(g2.num_edges))
-
                 # finally
-                yield m
+                yield Isomorphism(G1, G2, pv, rots, pe)
 
 
     def num_automorphisms(self):
@@ -1865,16 +1889,16 @@ class NumberedFatgraph(Fatgraph):
         
 
     #@maybe(ocache_iterator)
-    def isomorphisms(self, other):
-        """Iterate over isomorphisms from `self` to `other`.
+    def isomorphisms(G1, G2):
+        """Iterate over isomorphisms from `G1` to `G2`.
 
         See `Fatgraph.isomrphisms` for a discussion of the
         representation of isomorphisms and example usage.
         """
-        for (pv, rot, pe) in Fatgraph.isomorphisms(self.underlying, other.underlying):
+        for iso in Fatgraph.isomorphisms(G1.underlying, G2.underlying):
             pe_does_not_preserve_bc = False
-            for bc1 in self.underlying.boundary_cycles:
-                bc2 = bc1.transform((pv, rot, pe), other.underlying)
+            for bc1 in G1.underlying.boundary_cycles:
+                bc2 = iso.transform_boundary_cycle(bc1)
                 # there are cases (see examples in the
                 # `Fatgraph.__eq__` docstring, in which the
                 # above algorithm may find a valid
@@ -1883,13 +1907,13 @@ class NumberedFatgraph(Fatgraph):
                 # these should fail as they don't preserve
                 # the boundary cycles, so we catch them
                 # here.
-                if (bc2 not in other.numbering) \
-                       or (self.numbering[bc1] != other.numbering[bc2]):
+                if (bc2 not in G2.numbering) \
+                       or (G1.numbering[bc1] != G2.numbering[bc2]):
                     pe_does_not_preserve_bc = True
                     break
             if pe_does_not_preserve_bc:
                 continue # to next underlying graph isomorphism
-            yield (pv, rot, pe)
+            yield iso
 
 
 
