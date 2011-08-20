@@ -5,7 +5,7 @@
 __docformat__ = 'reStructuredText'
 
 
-from sys import maxint as SYS_MAXINT
+import sys
 
 
 def CyclicSequence(base, factory=None):
@@ -37,7 +37,7 @@ def CyclicSequence(base, factory=None):
         ## slice accessors
         ##    
         def __delslice__(self, i, j):
-            if SYS_MAXINT == j:
+            if sys.maxint == j:
                 # __delslice__ is passed `sys.maxint` as second value
                 # when taking slices of the form `[n:]`.  In this
                 # case, just fall back to standard Python operation.
@@ -55,7 +55,7 @@ def CyclicSequence(base, factory=None):
 
         def __getslice__(self, i, j):
             """Return [i:j] slice as a base class instance."""
-            if j == SYS_MAXINT:
+            if j == sys.maxint:
                 # __getslice__ is passed `sys.maxint` as second value
                 # when taking slices of the form `[n:]`.  In this
                 # case, just fall back to standard Python operation.
@@ -79,7 +79,7 @@ def CyclicSequence(base, factory=None):
                        + base.__getslice__(self, 0,a%l)
 
         def __setslice__(self, i, j, other):
-            if SYS_MAXINT == j:
+            if sys.maxint == j:
                 # __setslice__ is passed `sys.maxint` as second value
                 # when taking slices of the form `[n:]`.  In this
                 # case, fall back to standard Python operation.
@@ -99,7 +99,7 @@ def CyclicSequence(base, factory=None):
         ##
         def __hash__(self):
             return sum(hash(self[x:x+len(self)]) for x in xrange(len(self))) \
-                   % SYS_MAXINT
+                   % sys.maxint
         
         def __eq__(self, other):
             """Return `True` if `self` is linearly equal to `other`
