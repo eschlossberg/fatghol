@@ -961,10 +961,6 @@ class Fatgraph(EqualIfIsomorphic):
         ((v1, pos1), (v2, pos2)) = self.edges[edge].endpoints
         assert v1 < v2
 
-        # save highest-numbered index of vertices to be contracted
-        l1 = len(self.vertices[v1]) - 1
-        l2 = len(self.vertices[v2]) - 1
-
         # Build new list of vertices, removing the contracted edge and
         # shifting all indices above:
         #   - edges numbered 0..edge-1 are unchanged;
@@ -989,10 +985,12 @@ class Fatgraph(EqualIfIsomorphic):
         # 2. Join vertices by concatenating the list of incident
         #    edges;
         # 3. Set new `i1` vertex in place of old first endpoint:
+        def rotated(L, p):
+            return L[p+1:] + L[:p]
         new_vertices[v1] = Vertex(
-            new_vertices[v1][pos1+1:] + new_vertices[v1][:pos1]
+            rotated(new_vertices[v1], pos1)
             +
-            new_vertices[v2][pos2+1:] + new_vertices[v2][:pos2]
+            rotated(new_vertices[v2], pos2)
             )
         # 4. Remove second endpoint from list of new vertices:
         del new_vertices[v2]
