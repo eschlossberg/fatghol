@@ -974,8 +974,8 @@ class Fatgraph(EqualIfIsomorphic):
         #     shifting the number down one position;
         #   - edge `edgeno` is kept intact, will be removed by mating
         #     operation (see below).
-        renumber_edges = dict((i+1,i)
-                              for i in xrange(edgeno, self.num_edges))
+        renumber_edges = dict((i,i-1)
+                              for i in xrange(edgeno+1, self.num_edges))
         # See `itranslate` in utils.py for how this prescription is
         # encoded in the `renumber_edges` mapping.
         new_vertices = [ Vertex(itranslate(renumber_edges, V))
