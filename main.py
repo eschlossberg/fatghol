@@ -70,7 +70,7 @@ def graph_to_xypic(graph, g=None, n=None, orientable=None):
                       % (v1+1, vertex_label(v1),
                          v2+1, vertex_label(v2),
                          v1+1, 1+graph.vertices[v1].index(l),
-                         v2+1, 1+graph[v2].index(l), graph.orient_e[l]) \
+                         v2+1, 1+graph[v2].index(l), graph.edge_numbering[l]) \
                       + '%\n'
         else:
             h = graph.vertices[v1].index(l)
@@ -78,7 +78,7 @@ def graph_to_xypic(graph, g=None, n=None, orientable=None):
                       % (v1+1, vertex_label(v1),
                          v2+1, vertex_label(v2),
                          v1+1, h+1, v2+1, 1+graph.vertices[v1].index(l,h+1),
-                         graph.orient_e[l]) \
+                         graph.edge_numbering[l]) \
                       + '%\n'
 
     # cross-out graph, if not orientable
@@ -340,7 +340,7 @@ elif "graphs" == args[0]:
                         for (bcy, nr) in sorted(graph.numbering.iteritems(), cmp=cmp_):
                             outfile.write(r"\textsl{%s} & (%s) \\ " % (
                                 fmt_(nr),
-                                str.join(",", [str(graph.orient_e[edge])
+                                str.join(",", [str(graph.edge_numbering[edge])
                                                for edge in bcy]),
                                 )
                                 + '\n')
