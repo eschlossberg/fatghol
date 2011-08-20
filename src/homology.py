@@ -197,7 +197,7 @@ class ChainComplex(object):
         """
         ## pass 1: compute boundary operators in matrix form
         #
-        logging.debug("Computing matrix form of boundary operator ...")
+        logging.info("Computing matrix form of boundary operator ...")
         
         #: Matrix form of boundary operators; the `i`-th differential
         #: `D[i]` is `dim C[i-1]` rows (range) by `dim C[i]` columns
@@ -221,7 +221,7 @@ class ChainComplex(object):
             else:
                 d = None
             D.append(d)
-            logging.debug("  Computed %dx%d matrix D[%d]",
+            logging.info("  Computed %dx%d matrix D[%d]",
                          len(self.module[i-1].base),
                          len(self.module[i].base),
                          i)
@@ -234,12 +234,13 @@ class ChainComplex(object):
         
         ## pass 2: compute rank and nullity of boundary operators
         #
-        logging.debug("Computing ranks of boundary operator matrices ...")
+        logging.info("Computing ranks of boundary operator matrices ...")
         
         #: ranks of `D[n]` matrices, for 0 <= n < len(self); the differential
         #: `D[0]` is the null map.
         ranks = [ (A.rank() if A else 0) for A in D ]
-        
+        for (i, r) in enumerate(ranks):
+            logging.info("  rank D[%d]=%d", i, r)
 
         ## pass 3: compute homology group ranks from rank and nullity
         ##         of boundary operators.
