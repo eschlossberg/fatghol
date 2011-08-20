@@ -11,6 +11,115 @@ import itertools
 from cache import (
     fcache,
     )
+import operator
+from rational import Rational
+
+
+def bernoulli(n):
+    """Return the `n`-th Bernoulli number.
+
+    The convention used here is that B(0)=1 and that B(n) is the n-th
+    term of the Taylor-McLaurin series of the generating function `x /
+    (exp x - 1)`.
+
+    Computation uses a recursive formula which is unsuitable for
+    anything but small values of `n`.
+
+    The returned object is a `rational.Rational`, even in the case of
+    integer Bernoulli numbers::
+    
+      >>> bernoulli(0)
+      Rational(1, 1)
+      >>> bernoulli(1)
+      Rational(-1, 2)
+
+    Examples::
+
+      >>> for n in range(19): print bernoulli(n)
+      1
+      -1/2
+      1/6
+      0
+      -1/30
+      0
+      1/42
+      0
+      -1/30
+      0
+      5/66
+      0
+      -691/2730
+      0
+      7/6
+      0
+      -3617/510
+      0
+      43867/798
+    """
+    assert n >=0
+    # B(0) = 1
+    if n == 0:
+        return Rational(1)
+    # B(n) = 0 for all odd n other than 1.
+    if (n % 2) != 0 and n>1:
+        return 0
+    # compute B(n) by the recursive formula:
+    #   \sum_{k=0,...,m} \choose{m+1}{k} B(k) = 0
+    return Rational(-1, n+1) * reduce(operator.add,
+                                      (choose(n+1,k)*bernoulli(k) for k in range(n)))
+
+
+
+@fcache
+def choose(n,k):
+    """Return `\choose{n}{k}`.
+
+    The returned object is a `rational.Rational`::
+
+      >>> choose(2,0)
+      Rational(1, 1)
+      >>> choose(2,1)
+      Rational(2, 1)
+
+    Examples::
+    
+      # Pascal's triangle
+      >>> for n in range(4): print str.join(" ", [choose(n,k) for k in range(n+1)])
+      1 1
+      1 2 1
+      1 3 3 1
+      1 4 6 4 1
+    """
+    return Rational(factorial(n), factorial(k) * factorial(n-k))
+    
+
+
+@fcache
+def factorial(n):
+    """Return the factorial of `n`.
+
+    Argument `n` must be a non-negative integer.
+
+    Examples::
+
+      >>> for n in range(7): print factorial(n)
+      1
+      1
+      2
+      6
+      24
+      120
+      720
+    """
+    assert isinstance(n, (int, long)), \
+           "factorial(): argument `%s` is no `int` nor `long`" % n
+    assert n >= 0, \
+           "factorial(): argument should be a non-negative number, but got %d" % n
+    if n < 2:
+        return 1
+    else:
+        return n*factorial(n-1)
+    
 
 
 class OrderedSetPartitionsIterator(object):
@@ -431,16 +540,6 @@ class Permutation(dict):
         return True
 
 
-@fcache
-def _factorial(n):
-    assert isinstance(n, (int, long)), \
-           "_factorial(): argument `%s` is no `int` nor `long`" % n
-    if n < 2:
-        return 1
-    else:
-        return n*_factorial(n-1)
-    
-
 class PermutationList(object):
     """Simulate a (read-only) list of all permutations of a prescribed order.
 
@@ -479,18 +578,18 @@ class PermutationList(object):
         n = self.__order
         if r < 0:
             r %= n
-        if r >= _factorial(n):
+        if r >= factorial(n):
             raise IndexError
         perm = [ x for x in xrange(0, n) ]
         for i in xrange(0, n):
-            j = (r / _factorial(n-i-1)) % (n-i)
+            j = (r / factorial(n-i-1)) % (n-i)
             temp = perm[i+j]
             perm[i+1 : i+j+1] = perm[i : i+j]
             perm[i] = temp
         return perm
     
     def __len__(self):
-        return _factorial(self.__order)
+        return factorial(self.__order)
 
 
 class PermutationIterator(object):
@@ -532,7 +631,7 @@ class PermutationIterator(object):
     def next(self):
         """Return next permutation of initially given `sequence`."""
         i = self.rank
-        if i >= _factorial(self.order):
+        if i >= factorial(self.order):
             raise StopIteration
         seq = self.seq[:]
         for j in xrange(2, self.order+1):
