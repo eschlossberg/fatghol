@@ -12,6 +12,12 @@ import logging
 
 ## application-local imports
 
+from combinatorics import (
+    Rational,
+    bernoulli,
+    factorial,
+    sign_exp,
+    )
 from utils import positive_int
 
 
@@ -117,8 +123,35 @@ def do_homology(g, n):
     graph_complex = FatgraphComplex(g,n)
 
     logging.debug("Computing homology ranks ...")
-    hs = graph_complex.compute_homology_ranks()
+    hs = list(reversed(graph_complex.compute_homology_ranks()))
 
+    # compare orbifold Euler characteristics
+    chi = graph_complex.orbifold_euler_characteristics
+    logging.info("  Computed orbifold Euler characteristics: %s" % chi)
+    if g==0:
+        chi_hz = factorial(n-3) * sign_exp(n-3)
+    elif g==1:
+        chi_hz = Rational(sign_exp(n), 12) * factorial(n-1)
+    else: # g > 1
+        chi_hz = bernoulli(2*g) * factorial(2*g+n-3) / (factorial(2*g-2) * 2*g) * sign_exp(n)
+    logging.info("  Expected orbifold Euler characteristics (according to Harer): %s", chi_hz)
+    if chi != chi_hz:
+        logging.error("Expected and computed orbifold Euler characteristics do not match!"
+                      " (computed: %s, expected: %s)" % (chi, chi_hz))
+
+    # perform more self-consistency checks
+    if g>0:
+        # from Harer's SLN1337, Theorem 7.1
+        if hs[1] != 0:
+            logging.error("Harer's Theorem 7.1 requires h_1=0 when g>0")
+        # From Harer's SLN1337, Theorem 7.2
+        if g==1 or g==2:
+            if hs[2] != n:
+                logging.error("Harer's Theorem 7.2 requires h_2=%d when g=1 or g=2" % n)
+        elif g>2:
+            if hs[2] != n+1:
+                logging.error("Harer's Theorem 7.2 requires h_2=%d when g>2" % n)
+            
     return hs
 
 
@@ -609,7 +642,7 @@ elif 'homology' == args[0]:
         sys.exit(1)
 
     # compute graph complex and its homology ranks
-    hs = list(reversed(do_homology(g, n)))
+    hs = do_homology(g, n)
 
     # print results
     if not options.silent:
@@ -636,6 +669,7 @@ else:
     sys.stderr.write("Unknown action `%s`, aborting.\n" % args[0])
     sys.exit(1)
 
+
 # try to print profiling information, but ignore failures
 # (profiling might not have been requested, in the first place...)
 try:
@@ -650,4 +684,4 @@ try:
 except:
     pass
 
-logging.debug("Done.")
+logging.debug("Done: %s" % str.join(" ", sys,argv))
