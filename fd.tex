@@ -1,4 +1,4 @@
-\RCSID $Id: fd.tex,v 1.1 2002/01/10 10:01:51 ri Exp $
+\RCSID $Id: fd.tex,v 1.2 2003/06/23 17:38:08 murri Exp $
 %auto-ignore
 
 
@@ -12,7 +12,7 @@ graphical calculus on symmetric categories.  Depending on the nature
 of the integral, this formula will hold as a strict equality or in the
 sense of asymptotic expansions. In particle physics, Gaussian
 integrals and their Feynman diagrams expansions are used to describe
-bosonic statistics.
+Bosonic statistics.
 
 The first description of Feynman diagrams via Graphical Calculus is
 apparently due to R.~Oeckl \cite{oeckl;braided-qft}; the exposition
@@ -22,42 +22,42 @@ here, however, comes from joint work with D.~Fiorenza
 
 \section{Gaussian measures and the Wick's lemma} 
 
-Let \(V\) be a finite dimensional Euclidean space,
-with inner product \(\inner{-}{-}\). If \(\{e_i\}\) is a basis of
-\(V\), we denote the \emph{coordinate} maps relative to this basis as
-\(e^i\colon V\to\setR\), and write \(v^i\) for the pairing
-\(\pairing{e^i}{v}\).  The matrix associated to \(\inner{-}{-}\) with
-respect to the basis \(\{e_i\}\) is given by
+Let $V$ be a finite dimensional Euclidean space,
+with inner product $\inner{-}{-}$. If $\{e_i\}$ is a basis of
+$V$, we denote the \emph{coordinate} maps relative to this basis as
+$e^i\colon V\to\setR$, and write $v^i$ for the pairing
+$\pairing{e^i}{v}$.  The matrix associated to $\inner{-}{-}$ with
+respect to the basis $\{e_i\}$ is given by
 \begin{equation*}
   g_{ij} \joinrel:= \inner{e_i}{e_j}.
 \end{equation*}
-As customary, we set \(g^{ij} \joinrel:= (g^{-1})_{ij} = \inner{e^i}{e^j}\).
+As customary, we set $g^{ij} \joinrel:= (g^{-1})_{ij} = \inner{e^i}{e^j}$.
 
-Let now \(\ud v\) be a (non trivial) translation invariant measure on
-\(V\). The function \(\E^{-\onehalf\inner{v}{v}}\) is positive and
-integrable with respect to \(\ud v\).
+Let now $\ud v$ be a (non trivial) translation invariant measure on
+$V$. The function $\E^{-\onehalf\inner{v}{v}}$ is positive and
+integrable with respect to $\ud v$.
 \begin{definition}\label{dfn:gaussian-measure}
-  The probability measure on \(V\) defined by
+  The probability measure on $V$ defined by
   \begin{equation*}
     \ud\mu(v) \joinrel:= \frac{1}{C} \E^{-\onehalf\inner{v}{v}} \ud v, 
     \qquad
     C := {\int_V \E^{-\onehalf\inner{v}{v}} \ud v},
   \end{equation*}
-  is called the \emph{Gaussian measure} on \(V\).
+  is called the \emph{Gaussian measure} on $V$.
 \end{definition}
-Since a non-trivial translation invariant measure on \(V\) is unique up
-to a scalar factor, \(\ud\mu\) is actually independent of the chosen
-\(\ud v\).
+Since a non-trivial translation invariant measure on $V$ is unique up
+to a scalar factor, $\ud\mu$ is actually independent of the chosen
+$\ud v$.
 
-The symbol \(\avg{f}\) denotes the \emph{average} of a function \(f\)
+The symbol $\avg{f}$ denotes the \emph{average} of a function $f$
 with respect to the Gaussian measure, i.e.,
 \begin{equation*}
   \avg{f} \joinrel:= \int_V f(v)\ud\mu(v).
 \end{equation*}
 
 \begin{lemma}[Wick]
-  Polynomial functions of the coordinates \(v^i\) are integrable with
-  respect to \(\ud\mu\) and:
+  The polynomial functions of the coordinates $v^i$ are integrable
+  with respect to $\ud\mu$ and:
   \begin{align}
     \tag{W1}
     \avg{v^{i_1}v^{i_2}\cdots
@@ -73,18 +73,18 @@ with respect to the Gaussian measure, i.e.,
     g^{i_{s_{2n-1}} i_{s_{2n}}}, 
   \end{align}
   where the sum ranges over all distinct pairings of the set of
-  indices \(\{i_1,\dots,i_{2n}\}\), i.e., over the set of all
-  partitions \(\{\{i_{s_1},i_{s_2}\},\{i_{s_3},i_{s_4}\},\dots\}\) of
-  \(\{i_1,i_2,\dots,i_{2n}\}\) into 2-element subsets.
+  indices $\{i_1,\dots,i_{2n}\}$, i.e., over the set of all
+  partitions $\{\{i_{s_1},i_{s_2}\},\{i_{s_3},i_{s_4}\},\dots\}$ of
+  $\{i_1,i_2,\dots,i_{2n}\}$ into 2-element subsets.
 \end{lemma}
 For a proof of Wick's lemma see, for instance,
 \cite{bessis-itzykson-zuber;graphical-enumeration}.
 
-The inner product \(\inner{-}{-}\) extends uniquely to a Hermitian
-product on the complex vector space \(\cplx{V} \joinrel:= V \otimes \setC\).
-Identify \(V\) with the subspace \(V \otimes \{1\}\) of real vectors in
-\(\cplx{V}\); \(\{ e_i \}\) is a real basis for the complex vector
-space \(\cplx{V}\). Extend \(\avg{-}\) to tensor powers of real
+The inner product $\inner{-}{-}$ extends uniquely to a Hermitian
+product on the complex vector space $\cplx{V} \joinrel:= V \otimes \setC$.
+Identify $V$ with the subspace $V \otimes \{1\}$ of real vectors in
+$\cplx{V}$; $\{ e_i \}$ is a real basis for the complex vector
+space $\cplx{V}$. Extend $\avg{-}$ to tensor powers of real
 vectors by
 \begin{equation*}
   \label{eq:avg-x}
@@ -107,14 +107,14 @@ so Wick's lemma can be recast this way:
   \otimes e_{i_{2n-1}} \otimes e_{i_{2n}},
 \end{align}
 where the last sum ranges over all distinct pairings of indices in the
-set \(\{i_1, \dots, i_{2n}\}\).
+set $\{i_1, \dots, i_{2n}\}$.
 
 
 \section{From Wick's lemma to Feynman diagrams}
 \label{sec:wick-to-fd}
 
 The right-hand side of (\ref{eq:W2}) is the Casimir element
-$\gamma_{\cplx{V}}$ of \(\{\cplx{V}, \inner{-}{-}\}\); in
+$\gamma_{\cplx{V}}$ of $\{\cplx{V}, \inner{-}{-}\}$; in
 Reshetikhin-Turaev's graphical notation, we can rewrite
 \eqref{eq:W2} as
 \begin{equation*}
@@ -142,12 +142,12 @@ The graphical notation becomes particularly suggestive
       }\quad,
   \end{split}
 \end{equation}
-the last sum ranging over all possible configurations of \(n\) Casimir
-elements and the braiding being the trivial one: \(x\otimes y\mapsto
-y\otimes x\).  
+the last sum ranging over all possible configurations of $n$ Casimir
+elements and the braiding being the trivial one: $x\otimes y\mapsto
+y\otimes x$.  
 
-In addition, assume we have, for any \(k\), a cyclically invariant
-\(k\)-tensor
+In addition, assume we have, for any $k$, a cyclically invariant
+$k$-tensor
 \begin{equation*}
   T_{k}:\cplx{V}{}\tp{k} \to \setC;
 \end{equation*}
@@ -164,34 +164,34 @@ which has the graphical representation
     "v";"b"**\dir{-},
     "v";"d"**\dir{-},
     "c"*\txt{\ldots},
-    "w"*\txt{\(T_{k}\)},
+    "w"*\txt{$T_{k}$},
     "v"*{\bullet}
     \endxy}_{k}
 \end{equation*}
 
-The data \((V, \inner{-}{-}, T_1, T_2, \dots)\) define a cyclic
+The data $(V, \inner{-}{-}, T_1, T_2, \dots)$ define a cyclic
 algebra structure, so we can use Reshetikhin-Turaev's graphical
-calculus \(\Gamma\mapsto Z(\Gamma)\) to compute averages
+calculus $\Gamma\mapsto Z(\Gamma)$ to compute averages
 \begin{equation*}
   \bigl\langle T_1(v)^{l_1} T_2(v\tp{ 2})^{l_2} \cdots
   T_{k}(v\tp{ k})^{l_k} \bigr\rangle.
 \end{equation*}
 \begin{lemma}\label{thm:feynman-avg-gc}
-  Any average \(\bigl\langle T_1(v)^{l_1} T_2(v\tp{ 2})^{l_2}
-  \cdots T_{k}(v\tp{ k})^{l_k} \bigr\rangle\) is a linear
-  combination \(\sum \alpha_\Gamma Z(\Gamma)\) where \(\Gamma\) runs
-  in the set of ribbon graphs of type (0,0) with \(l_i\) vertices of
-valence \(i\), for \(i=1,\dots,k\).
+  Any average $\bigl\langle T_1(v)^{l_1} T_2(v\tp{ 2})^{l_2}
+  \cdots T_{k}(v\tp{ k})^{l_k} \bigr\rangle$ is a linear
+  combination $\sum \alpha_\Gamma Z(\Gamma)$ where $\Gamma$ runs
+  in the set of ribbon graphs of type (0,0) with $l_i$ vertices of
+valence $i$, for $i=1,\dots,k$.
 \end{lemma}
 \begin{proof}
-  By linearity of the \(T_k\)'s and \eqref{eq:avg-x},
+  By linearity of the $T_k$'s and \eqref{eq:avg-x},
   \begin{equation*}
     \avg{T_1(v)^{l_1} \cdots T_{k}(v\tp{ k})^{l_k}} = 
     \bigl(T_1\tp{l_1} \otimes \cdots \otimes T_{k}\tp{l_k} \bigr)
     \avg{v\tp{\sum_i il_i}}.
   \end{equation*}
-  If \(\sum il_i\) is odd, \(\avg{v\tp{\sum il_i}}\) is zero, and the set
-  of graphs considered in the statement is empty. If \(\sum il_i\) is
+  If $\sum il_i$ is odd, then $\avg{v\tp{\sum il_i}}$ is zero, and the set
+  of graphs considered in the statement is empty. If $\sum il_i$ is
   even, according to graphical calculus rules, $\bigotimes_{i=1}^k
   T_i\tp{l_i}$ corresponds to the juxtaposition of $l_1$ univalent
   vertices, $l_2$ bivalent vertices, etc., up to $l_k$ vertices of
@@ -238,7 +238,7 @@ valence \(i\), for \(i=1,\dots,k\).
 \end{example}
 
 \begin{lemma}\label{thm:feynman-avg-coeff}
-  The coefficient \(\alpha_\Gamma\) appearing in
+  The coefficient $\alpha_\Gamma$ appearing in
   \csref{thm:feynman-avg-gc} is an integer given by:
   \begin{equation*}
     \alpha_\Gamma =
@@ -247,20 +247,20 @@ valence \(i\), for \(i=1,\dots,k\).
   \end{equation*}
 \end{lemma}
 \begin{proof}
-  Let \(X\) be the set of all ribbon graphs obtained by:
+  Let $X$ be the set of all ribbon graphs obtained by:
   \begin{inparaenum}
-  \item juxtaposing \(l_1\) vertices of valence \(1\), \(l_2\)
-    vertices of valence \(2\), etc., up to \(l_k\) vertices of valence
-    \(k\), and,
+  \item juxtaposing $l_1$ vertices of valence $1$, $l_2$
+    vertices of valence $2$, etc., up to $l_k$ vertices of valence
+    $k$, and,
   \item connecting them in all possible ways by means of arcs.
   \end{inparaenum}
-  The constant \(\alpha_\Gamma\) counts the number of occurrences of graphs
-  isomorphic to \(\Gamma\) in the set \(X\).
+  The constant $\alpha_\Gamma$ counts the number of occurrences of graphs
+  isomorphic to $\Gamma$ in the set $X$.
   
-  The semi-direct product \(K = \prod_{i=1}^k(\Perm{l_i} \rtimes
-(\setZ/i\setZ)^{l_i})\)
-  acts on \(X\) as follows: the image of a graph
-  \(\Phi\) is obtained by permuting vertices of the same valence and
+  The semi-direct product $K = \prod_{i=1}^k(\Perm{l_i} \rtimes
+(\setZ/i\setZ)^{l_i})$
+  acts on $X$ as follows: the image of a graph
+  $\Phi$ is obtained by permuting vertices of the same valence and
   rotating edges incident to each vertex. Since this action is
   transitive on isomorphism classes,
   \begin{equation*}
@@ -274,8 +274,8 @@ valence \(i\), for \(i=1,\dots,k\).
 \end{proof}
 
 \begin{theorem}[Feynman-Reshetikhin-Turaev]\label{thm:FRT}
-  Let \(Z_{x_*}\) be the graphical calculus for the cyclic algebra
-  \(A(x_*) \joinrel:= (V_{\setC}, \inner{-}{-}, x_1T_1, x_2T_2, \dots)\), where
+  Let $Z_{x_*}$ be the graphical calculus for the cyclic algebra
+  $A(x_*) \joinrel:= (V_{\setC}, \inner{-}{-}, x_1T_1, x_2T_2, \dots)$, where
   $x_1,x_2,\dots$ are complex variables. Then, the following
   asymptotic expansion holds:
   \begin{equation}
@@ -324,7 +324,7 @@ A similar argument yields:
     = \sum_{\Gamma} \frac{Z_{x_*}(\Gamma)}{\card{\Aut\Gamma}}
 \end{equation}
 where the sum in the right-hand side ranges over all ribbon graphs
-having $l_i$ ``special'' \(i\)-valent vertices (for $i=1\dots,k$), and
+having $l_i$ ``special'' $i$-valent vertices (for $i=1\dots,k$), and
 $\Aut(\Gamma)$ is the group of automorphisms that map the set of special
 vertices to itself. In \eqref{eq:FRT2}, the graphical calculus
 $Z_{x_*}$ interprets each $i$-valent special vertex as the operator
@@ -335,7 +335,7 @@ This is the same as considering graphs with two sorts of vertices (see
 (call them ``ordinary'').
 
 %\begin{rem} Notice that we can recast the cyclical invariance of the
-%  tensors \(T_k\) by saying \(\Aut(T_k)=\setZ/k\setZ\). The statement of
+%  tensors $T_k$ by saying $\Aut(T_k)=\setZ/k\setZ$. The statement of
 %  \csref{thm:FRT} can be rewritten as
 %\begin{equation}\label{eq:FRTeqbis}
 %    \int_V \exp \biggl\{ \sum_{k=1}^\infty x_k
@@ -359,10 +359,10 @@ This is the same as considering graphs with two sorts of vertices (see
 %\end{rem}
 
 \csref{thm:FRT} can be straightforwardly adapted to a symmetric
-algebra \((V, \inner{-}{-},\break S_1, S_2, \dots)\).
+algebra $(V, \inner{-}{-},\break S_1, S_2, \dots)$.
 \begin{theorem}[Feynman-Reshetikhin-Turaev]\label{thm:FRTsym}
-  Let \(Z_{x_*}\) be the graphical calculus for the symmetric algebra
-  \((V_{\setC}, \inner{-}{-}, x_1S_1, x_2S_2, \dots)\), where
+  Let $Z_{x_*}$ be the graphical calculus for the symmetric algebra
+  $(V_{\setC}, \inner{-}{-}, x_1S_1, x_2S_2, \dots)$, where
 $x_1,x_2,\dots$ are
   complex variables. The following asymptotic expansion holds:
   \begin{equation*}
@@ -376,7 +376,7 @@ $x_1,x_2,\dots$ are
 \end{theorem}
 
 \begin{example} 
-  Let \(\phi\) be an analytic function defined in the whole \(V\). The
+  Let $\phi$ be an analytic function defined in the whole $V$. The
   Taylor expansion formula
 \begin{equation*}
 \phi(v)=\phi(0)+\sum_{n=1}^{\infty}\frac{D^n\phi\vert_0(v^{\otimes
@@ -390,8 +390,8 @@ together with \csref{thm:FRTsym}  gives
 \end{equation}
 \end{example}
 
-%\begin{rem} Since the tensors \(S_k\) are symmetric,
-%  \(\Aut(S_k)=\Perm{k}\), so we can write the analogues of formulas
+%\begin{rem} Since the tensors $S_k$ are symmetric,
+%  $\Aut(S_k)=\Perm{k}$, so we can write the analogues of formulas
 %  \eqref{eq:FRTeqbis} and \eqref{eq:feynmanturaevduebis}:
 %  \begin{gather}
 %    \label{eq:FRTsymeqbis}
@@ -421,11 +421,11 @@ together with \csref{thm:FRTsym}  gives
 %\end{rem}
 
 \begin{remark}[Generalized Gaussian integrals]
-  Denote by $Q(v)$ the Gaussian weight \(\E^{-1/2(v,v)}\), and let
-  \(g^\sharp\colon V\to V^\lor\) be the isomorphism induced by the
-  non-degenerate pairing \(g\colon V\otimes V\to\fk\). Moreover, let
-  \(m\) be the usual multiplication on the space \(K \joinrel:=
-  \fk[[V^\lor]]\) of formal power series on \(V\).  In
+  Denote by $Q(v)$ the Gaussian weight $\E^{-1/2(v,v)}$, and let
+  $g^\sharp\colon V\to V^\lor$ be the isomorphism induced by the
+  non-degenerate pairing $g\colon V\otimes V\to\fk$. Moreover, let
+  $m$ be the usual multiplication on the space $K \joinrel:=
+  \fk[[V^\lor]]$ of formal power series on $V$.  In
   \cite{oeckl;braided-qft}, Robert Oeckl shows that the graphical
   version of Wick's lemma is a formal consequence of the following
   properties:
@@ -433,17 +433,17 @@ together with \csref{thm:FRTsym}  gives
 \item\label{G1} a ``braided Leibniz rule'' for derivations:
 \[\partial_w\circ m=m\bigl((\partial_w\otimes
 \Id)+\tau^{-1}_{K, K}\circ(\partial_w\otimes\Id) \circ \tau^{}_{K,
-  K}\bigr),\] for any \(w\in V\) and any \(\phi, \psi\in K\);
-\item\label{G2} \(\partial_w Q = -g^\sharp(w)\cdot Q\), for all \(w\in V\);
-\item\label{G3} \(g^\sharp\) is an isomorphism and
-\(\ev_V\circ(\Id_V\otimes g^\#)=\ev_V\circ(\Id_V\otimes
-g^\#)\circ\tau_{V,V}\);
+  K}\bigr),\] for any $w\in V$ and any $\phi, \psi\in K$;
+\item\label{G2} $\partial_w Q = -g^\sharp(w)\cdot Q$, for all $w\in V$;
+\item\label{G3} $g^\sharp$ is an isomorphism and
+$\ev_V\circ(\Id_V\otimes g^\#)=\ev_V\circ(\Id_V\otimes
+g^\#)\circ\tau_{V,V}$;
 \item\label{G4} 
-%there exists an integral \(\displaystyle{\int (\phi\cdot
-%    Q)\ud v}\) such that 
-\(\displaystyle{\int\partial_w(\phi\cdot Q)\ud
-v=0}\), for
-  any \(w\in V\) and any polynomial \(\phi\in K\);
+%there exists an integral $\displaystyle{\int (\phi\cdot
+%    Q)\ud v}$ such that 
+$\displaystyle{\int\partial_w(\phi\cdot Q)\ud
+v=0}$, for
+  any $w\in V$ and any polynomial $\phi\in K$;
 \end{enumerate}
 Equations (G\ref{G1}-G\ref{G4}) can be used to \emph{define} Gaussian
 integrals in the context of \emph{arbirtary} braided monoidal categories.
@@ -455,8 +455,8 @@ will be available for these generalized Gaussian integrals, too.
 A remarkable by-product of this general
 theory is that the Berezin super-integrals of fermionic statistics are
 simply obtained as ``braided
-Gaussian integrals'' for a vector space \(V\) endowed with the non-trivial
-braiding \(x\otimes y\mapsto -y\otimes x\) (the pairing \(g\) must,
+Gaussian integrals'' for a vector space $V$ endowed with the non-trivial
+braiding $x\otimes y\mapsto -y\otimes x$ (the pairing $g$ must,
 consequently, be antisymmetric). Therefore, in the particular case
 of the symmetric category of super vector spaces (with the usual graded
 symmetric braiding), ``braided Gaussian integrals'' provide an unified
@@ -464,15 +464,15 @@ language for both statistics encountered in standard quantum field theory:
 bosons correspond to even vectors and fermions correspond to odd vectors
 \cite[Sections~3.3 and~3.4]{oeckl;spin-and-statistics}.
 \end{remark}
-%Note that (G\ref{G1}) and (G\ref{G2}) hold for any pairing \(g\);
-%(G\ref{G3}) is equivalent to \(g\) being non-degenerate; 
-%(G\ref{G4}) holds if and only if \(g\) is positive
+%Note that (G\ref{G1}) and (G\ref{G2}) hold for any pairing $g$;
+%(G\ref{G3}) is equivalent to $g$ being non-degenerate; 
+%(G\ref{G4}) holds if and only if $g$ is positive
 %definite.  
 %
 %Therefore, given an arbitrary non-degenerate bilinear form $g$, the
 %whole machinery of Wick's lemma (and graph expansions, consequently)
-%will be available if only we can define an ``integral'' \(\int(\ -\ )
-%\ud v\) according to (G\ref{G4}).  The most important example of such
+%will be available if only we can define an ``integral'' $\int(\ -\ )
+%\ud v$ according to (G\ref{G4}).  The most important example of such
 %``generalized Gaussian integrals'' is the Berezin super-integral.
 %
 %These issues have been addressed by R. Oeckl in the setting of a  
@@ -490,7 +490,7 @@ bosons correspond to even vectors and fermions correspond to odd vectors
 %  We want to show how this machinery can be used to derive a
 %  graph expansion formula cited in the introduction to
 %  \cite{getzler-kapranov}. If we are given several symmetric tensors
-%  \(\{S_{k,\alpha_k}\}_{\alpha_k\in I_k}\) for any index \(k\), the formula in
+%  $\{S_{k,\alpha_k}\}_{\alpha_k\in I_k}$ for any index $k$, the formula in
 %  \csref{thm:FRTsym} generalizes to
 %  \begin{equation}
 %    \label{eq:FRTeqter}
@@ -501,7 +501,7 @@ bosons correspond to even vectors and fermions correspond to odd vectors
 %    = \sum_{\Gamma \in \SG^I(0,0)} \frac {Z_{x_*,y_*}(\Gamma)}
 %{\card{\Aut\Gamma}}.
 %\end{equation}
-%where \(\SG^I(0,0)\) denotes the set of isomorphism classes of (possibly
+%where $\SG^I(0,0)$ denotes the set of isomorphism classes of (possibly
 %disconnected) graphs whose $k$-valent vertices are decorated by
 %elements of the set $I_k$. 
 
@@ -554,7 +554,7 @@ whereas expansion of the free energy involves only \emph{connected}
 ones.
 
 \begin{lemma}\label{thm:feynman-of-Z}
-  The free energy \(F(x_*)\joinrel:= \log Z(x_*)\) admits a
+  The free energy $F(x_*)\joinrel:= \log Z(x_*)$ admits a
   Feynman-Reshetikhin-Turaev expansion in ribbon (resp. ordinary)
   graphs, given by:
   \begin{equation}

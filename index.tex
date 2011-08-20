@@ -1,8 +1,8 @@
 %%% index.tex -- Generico contenitore per matematica in lingua inglese.
 %%%
-%%% $Id: index.tex,v 1.1 2002/01/10 10:01:51 ri Exp $
+%%% $Id: index.tex,v 1.2 2003/06/23 17:38:08 murri Exp $
 %%%
-\documentclass[a4paper,reqno,openany,draft]{amsbook}
+ \documentclass[a4paper,reqno,openany,draft]{amsbook}
 
 %%%
 %%% DEBUG!
@@ -20,6 +20,7 @@
 %% Theorems, Lemmas, and the like...
 %%
 \usepackage{amsthm}
+\providecommand{\theoremname}{Theorem}
 
 \newtheorem{theorem}{Theorem}[chapter]
 \newtheorem*{theorem*}{Theorem}
@@ -143,7 +144,7 @@
 %%%
 %%% Cominciamo...
 %%%
-%\includeonly{fd,kontsevich}
+%\includeonly{kontsevich}
 \begin{document}
 
 \include{title}

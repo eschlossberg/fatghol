@@ -1,4 +1,4 @@
-\RCSID $Id: rt.tex,v 1.1 2002/01/10 10:01:51 ri Exp $
+\RCSID $Id: rt.tex,v 1.2 2003/06/23 17:38:08 murri Exp $
 %auto-ignore
 
 
@@ -497,14 +497,18 @@ A_1^{\varepsilon_1} \otimes \cdots \otimes A_r^{\varepsilon_r}$.
   analogously and are denoted $\Src_\A(\Gamma)$ and $\Tgt_\A(\Gamma)$ respectively.
 \end{definition}
 It is trivial to generalize \csref{dfn:diagrams-category} to
-$\A$-colored RT-diagrams; call $\RTD[\A]$ the category of
-$\A$-colored RT diagrams. $\Src{}_{\A}(\Gamma)$ and $\Tgt{}_{\A}(\Gamma)$ are
-objects of $\freemsc{\A}$ for each $\A$-colored RT-diagram.
-Obviously, $\circ$ and $\otimes$ are bilinear with respect to the vector space
-structure on the $\Hom$-sets of $\RTD[\A]$. Any $\A$-colored
-RT-diagram can be seen as the planar projection of an $\A$-colored
-RT-graph and the following analogue of lemmas \ref{thm:generators}
-and \ref{thm:moves} hold.
+$\A$-colored RT-diagrams.
+\begin{definition}
+  The category of $\A$-colored RT diagrams $\RTD[\A]$  has
+  $\freemsc{A}$ as its set of objects and $\A$-colored RT-diagrams as
+  morphisms. 
+\end{definition}
+For each $\A$-colored RT-diagram $\Gamma$, $\Src{}_{\A}(\Gamma)$ and
+$\Tgt{}_{\A}(\Gamma)$ are objects of $\freemsc{\A}$.  Obviously, $\circ$ and
+$\otimes$ are bilinear with respect to the vector space structure on the
+$\Hom$-sets of $\RTD[\A]$. Any $\A$-colored RT-diagram can be seen as
+the planar projection of an $\A$-colored RT-graph and the following
+analogue of lemmas \ref{thm:generators} and \ref{thm:moves} hold.
 \begin{proposition}
 \label{thm:rt1}
 The set $\Hom\RTD[\A]$ of $\A$-colored RT-diagrams is generated thorugh
@@ -555,7 +559,7 @@ taking $\category{B}=\A$ we find the following.
   \label{thm:rt2}
   For any autonomous balanced braided tensor category $\A$, there is a
   tensor functor $Z_{\A}: \RTD[\A] \to \A$, mapping an object $(A_1,
-  \ldots, A_r; \varepsilon_1, \ldots, \varepsilon_k) \in \RTD[\A]$ to $A_1^{\varepsilon_1} \otimes \dots \otimes
+  \ldots, A_k; \varepsilon_1, \ldots, \varepsilon_k) \in \RTD[\A]$ to $A_1^{\varepsilon_1} \otimes \dots \otimes
   A_k^{\varepsilon_k} \in \A$, and defined on generators of morphisms in
   $\RTD[\A]$ by
 \begin{center}

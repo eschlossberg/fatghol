@@ -1,6 +1,6 @@
 ;; RefTeX parse info file
 ;; File: /home/ri/mat/dott/index.tex
-;; User: ri (Riccardo)
+;; User: ri (Riccardo Murri)
 
 (set reftex-docstruct-symbol '(
 
@@ -46,6 +46,8 @@
 ("eq:ksz" "e" "\\epsilon(\\sigma; x_1, \\dots, x_n) x_1 \\otimes \\dots \\otimes x_n = \\tau_\\sigma (x_1 \\otimes \\dots \\ot" "/home/ri/mat/dott/prelim.tex" nil)
 
 ("eq:aksz" "e" "\\chi(\\sigma; x_1, \\dots, x_n) x_1 \\otimes \\dots \\otimes x_n = (-1)^\\sigma \\tau_\\sigma (x_1 \\otimes \\" "/home/ri/mat/dott/prelim.tex" nil)
+
+("dfn:graded-sym-map" "d" "A map $f: M^{\\otimes n} \\to N$ is graded symmetric iff \\begin{equation*} f(x_1, \\dots, x_n) = \\epsil" "/home/ri/mat/dott/prelim.tex" nil "")
 
 (toc "toc" "    1.4 Braided symmetric categories of vector spaces" "/home/ri/mat/dott/prelim.tex" nil 2 "1.4" "\\section{Braided symmetric categories of vector spaces}" 8441)
 

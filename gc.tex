@@ -1,4 +1,4 @@
-\RCSID $Id: gc.tex,v 1.1 2002/01/10 10:01:51 ri Exp $
+\RCSID $Id: gc.tex,v 1.2 2003/06/23 17:38:08 murri Exp $
 %auto-ignore
 
 
@@ -15,9 +15,9 @@ to Penrose's \cite{penrose;negative-dimensional-tensors}--- could be
 given firm grounds and a well-defined meaning.
 
 This line of research culminated in
-\cite{joyal-street;tensor-calculus}, where it is shown how
-the gradually enriching the structure of a category beyond the
-braiding leads to gradually enriching the corresponding graphs, and
+\cite{joyal-street;tensor-calculus}, where it is shown how one can
+parallely enrich the structure of a category beyond the braiding and
+add more decorations on the corresponding graphs, and
 \cite{reshetikhin-turaev;ribbon-graphs}, where the final case of
 autonomous tortile categories is settled.
 
@@ -78,7 +78,8 @@ Let $\A$ be a symmetric autonomous tortile category. For an object $A
   \item an object of $\A$;
   \item a sign $\varepsilon_\ell$, that is, an orientation;
   \item a framing, that is, a map $N_\ell: [0,1] \to S^1$ such that
-    $N_\ell(0) = N_\ell(1) = 1$.
+    $N_\ell(0) = N_\ell(1) = 1$ (see \csref{sec:tortile} in
+    \csref{cha:btc} for motivation).
   \end{itemize}
   
   Additionally, each piece of type (f) is decorated by a morphism $f
@@ -112,12 +113,12 @@ is required in this case. We have the following
 \begin{align}
   \label{eq:src-comp-otimes}
   \Src(\Gamma_1 \circ \Gamma_2) &= \Src(\Gamma_2), 
-  &&
+  &&&
   \Src(\Gamma_1 \otimes \Gamma_2) &= \Src(\Gamma_1) \otimes \Src(\Gamma_2),
   \\
   \label{eq:tgt-comp-otimes}
   \Tgt(\Gamma_1 \circ \Gamma_2) &= \Tgt(\Gamma_1),
-  &&
+  &&&
   \Tgt(\Gamma_1 \otimes \Gamma_2) &= \Tgt(\Gamma_1) \otimes \Tgt(\Gamma_2).
 \end{align}
 
@@ -125,7 +126,7 @@ We give the definition of the category of graphs in the arrows-only
 form (see \csref{cha:arrows}). 
 \begin{definition}
   The $\A$-colored diagrams category $\RTD[\A]$ is the category whose
-  morphisms are generated from $\A$-colored elementary pieces thorugh
+  morphisms are generated from $\A$-colored elementary pieces through
   the operations of graph composition and tensor product, defined as
   in figures~\ref{fig:gc-graph-composition}
   and~\ref{fig:gc-graph-otimes}.
@@ -216,7 +217,9 @@ object if the sign $\varepsilon$ on the corresponding edge is $-1$.
 The tensor functor $Z_\A$ is invariant by the
 Reidmeister-Reshetikhin-Turaev moves (RRT1)--(RRT8), so it induces a
 tortile braided functor $Z_\A: \RTE[\A] \to \A$.
-\end{theorem}
+\end{theorem}%
+\nx{Z_\A}{Reshetikhin-Turaev graphical calculus functor on the
+  category $\A$}
 By definition of a symmetric category,
 \begin{equation*}
   \tau_{AB} = \tau_{BA}\inv,
@@ -256,7 +259,8 @@ more relation
 Since $\Hom\RTE[\A]$ is the set of all isotopy classes of RT-graphs
 embedded in 3-space, then $\Hom\RTG[\A]$ is the set of all (abstract)
 $1$-dimensional CW-complexes equipped with the additional data
-defining an $\A$-colored RT-graph, that is, for each edge $\ell$:
+defining an $\A$-colored RT-graph (see \csref{cha:rt}), that is, for
+each edge $\ell$:
 \begin{inparaenum}
 \item an object $A_\ell \in \A$,
 \item an orientation $\varepsilon_\ell$ of $\ell$,
@@ -288,7 +292,7 @@ faithful\footnote{With the proviso that one should always choose the
       \textsl{(b)}
       &
       {\xyc 
-        (0.5,0.5)*[F]{\scriptstyle \tau_{AB}}="o",%
+        (0.5,0.5)*+[F]{\scriptstyle \tau_{AB}}="o",%
         "o";(0,1)*{B}**\dir{-},%
         "o";(1,1)*{A}**\dir{-},%
         "o";(0,0)*{A}**\dir{-},%
@@ -337,7 +341,12 @@ the particular realization chosen.
   \end{enumerate}
   The linear spans $\RG(p,q)$ of ribbon graphs of type $(p,q)$ define the
   $\Hom$-spaces of the category $\RG$ of ribbon graphs.
-\end{definition}
+\end{definition}%
+\nx{$\Gamma$}{Generic ribbon graph}%
+\nx{$\In(\Gamma)$}{Input legs of graph $\Gamma$}%
+\nx{$\Out(\Gamma)$}{Output legs of graph $\Gamma$}%
+\nx{$\RG$}{Category of ribbon graphs}%
+\nx{$\RG(p,q)$}{Linear span of ribbon graphs of type $(p,q)$}%
 
 Ribbon graphs arose in connection with a certain cellular
 decomposition of the moduli space of smooth complex curves (see
@@ -354,7 +363,9 @@ of $S(\Gamma)$. By abuse of language, we shall call these $1$-cycles
 ``boundary components'' or ``holes'', for short.
 
 Denote $\Vertices{\Gamma}$, $\Edges{\Gamma}$ and $\Holes{\Gamma}$ the
-sets of vertices, edges and holes of a graph $\Gamma$.
+sets of vertices, edges and holes of a graph $\Gamma$.%
+\nx{$\Vertices{\Gamma}$, $\Edges{\Gamma}$, $\Holes{\Gamma}$}{Sets of vertices,
+  edges, and boundary components of the ribbon graph $\Gamma$}%
 
 The number $n$ of boundary components and the genus $g$ of the ribbon
 graph $\Gamma$ are defined to be those of the surface $S(\Gamma)$.
@@ -448,10 +459,10 @@ $V\tp{p}$ is a self-dual object.
 \begin{definition}
   \label{dfn:rg-algebra}
   An $\RG$-agebra structure on $V$ is given by a tortile braided
-  monoidal functor $F:\RG \to \freemc{V}$ which restricts to a
-  bijection on the set of objects.
+  monoidal functor $F:\RG \to \btpc{V,b}$ which is bijective on the set
+  of objects.
 \end{definition}
-More generally, one can define $\category{C}$-algebra structure, for
+More generally, one can define a $\category{C}$-algebra structure, for
 an arbitrary tortile braided tensor category $\category{C}$.
 
 By definition, in any autonomous symmetric tensor category $\A$ there
@@ -513,6 +524,12 @@ invariance guarantees that $T_{p,q}$ does not depend on the
 particular sequence of isomorphisms \csref{eq:right-rot} and
 \csref{eq:left-rot}: any one yielding the right source and
 target is good.
+\begin{remark}
+  The tensors $T_r$ are \emph{generators} of the $\RG$-algebra
+  structure on $V$; as such, they are independent and need not satisfy
+  any further compatibility relation. For instance, cyclic algebras
+  need not be associative.
+\end{remark}
 
 \begin{theorem}\label{thm:gc-cyc}
   Let $V$ be a vector space. Then the following data are equivalent:
@@ -521,7 +538,7 @@ target is good.
   \item $\RG$-algebra structures on $V$.
   \end{enumerate}
 \end{theorem}
-\begin{proof} Let $Z\colon\RG\to\btpc{V,b}$ be an $\RG$-algebra strcuture.
+\begin{proof} Let $Z\colon\RG\to\btpc{V,b}$ be an $\RG$-algebra structure.
   Then
   \begin{align*}
     b &\joinrel:= Z\left(\xy*!LC\xybox{%
@@ -593,12 +610,6 @@ target is good.
   Therefore, $Z(\Gamma)\joinrel:=Z_{\btpc{V,b}}(\hat\Gamma_V)$ is a well
   defined $\RG$-algebra structure on $V$.
 \end{proof}
-\begin{remark}
-  The tensors $T_r$ are \emph{generators} of the $\RG$-algebra
-  structure on $V$; as such, they are independent and need not satisfy
-  any further compatibility relation. For instance, cyclic algebras
-  need not be associative.
-\end{remark}
 
 
 \section{Graphical calculus for ordinary graphs}
@@ -661,12 +672,12 @@ algebra structure.
 \end{proof}
 \begin{remark}
   \label{rem:many-sorted-graphs}
-  So far, we have considered cyclic (resp. symmetric) algebras with
+  So far, we have considered cyclic (resp.\ symmetric) algebras with
   only one $r$-ary operation for any $r\in\setN$. The graphical calculus
-  formalism immediately generalizes to cyclic (resp. symmetric)
+  formalism immediately generalizes to cyclic (resp.\ symmetric)
   algebras with a family of cyclic tensors $\{T_{r,\alpha}\}_{\alpha\in
     I_r}$
-  (resp. a family of symmetric tensors $\{S_{r,\alpha}\}_{\alpha\in
+  (resp.\ a family of symmetric tensors $\{S_{r,\alpha}\}_{\alpha\in
     I_r}$);
   in fact, we only ought to consider graphs whose $r$-valent vertices
   are decorated with labels from $I_r$.

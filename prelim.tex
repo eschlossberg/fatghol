@@ -1,10 +1,10 @@
-\RCSID $Id: prelim.tex,v 1.1 2002/01/10 10:01:51 ri Exp $
+\RCSID $Id: prelim.tex,v 1.2 2003/06/23 17:38:08 murri Exp $
 %auto-ignore
 
 
 \chapter{Preliminaries and Notation}
 
-This chapter deals fixes some notations on differential graded modules
+This chapter fixes some notations on differential graded modules
 and miscellaneous categories.\FIXME{Bof!} 
 
 When $\A$ is a category, we shall use Eilenberg's $\A(A, B)$ in place
@@ -13,7 +13,7 @@ of the more verbose $\Hom \A(A, B)$; also, the words ``morphism'',
 notation, we write $A \in \A$ to mean that ``$A$ is an object of
 $\A$''. Often, the notation $\Hom\A$ will be used for the union of all
 the $\Hom$-sets of the category $\A$, i.e., $\Hom\A := \bigcup_{A,B \in \A}
-\Hom\A(A,B)$.
+\A(A,B)$.
 
 The symbol $\Perm{k}$ stands for the group of permutations on $k$
 letters.
@@ -21,7 +21,7 @@ letters.
 The degree $i$ component of a graded object $M$ will be denoted
 $M^i$; the grading group will always be $\setZ$. Elements of a graded
 object appearing as exponents to a number will stand for their degree,
-i.e., $(-1)^a = (-1)^{\deg a}$; therefore, $(-1)^{ab} \not=
+i.e., $(-1)^a := (-1)^{\deg a}$; therefore, $(-1)^{ab} \not=
 (-1)^{\deg (ab)} = (-1)^{\deg a + \deg b}$.
 
 
@@ -31,8 +31,8 @@ i.e., $(-1)^a = (-1)^{\deg a}$; therefore, $(-1)^{ab} \not=
 Let $\fk$ be a fixed field of characteristics $0$; later on, we shall
 assume $\fk = \setC$.
 \begin{definition}
-  A dg-algebra $K$ is the data of a graded vector space $K\#$
-  over $\fk$, a $\fk$-bilinear associative product, and a
+  A dg-algebra $K$ is given by the following data of a graded vector
+  space $K^\#$ over $\fk$, a $\fk$-bilinear associative product, and a
   $\fk$-linear map $\ud: K\to K$ such that:
   \begin{enumerate}
   \item $K^i \cdot K^j \subset K^{i+j}$;
@@ -49,7 +49,7 @@ Any dg-algebra is a (graded) associative commutative algebra; write
 $\#$ for the underlying functor that ``forgets the differential''.
 
 \begin{definition}
-  An $K$-dg-module $M$ is a $K$-bimodule such that:
+  A $K$-dg-module $M$ is a $K$-bimodule such that:
   \begin{enumerate}
   \item $K^i M^j \subset M^{i+j}$, $M^i K^j \subset M^{i+j}$;
   \item $\lambda x = (-1)^{\lambda x} x\lambda$, for all homogeneous
@@ -107,10 +107,10 @@ braided symmetric category is an easy calculation.  The usual
 definition of the dual object $\rdl{M} := \Hom_K(M, K)$ gives an
 obvious evaluation map $\ev_M : M \otimes \rdl{M} \ni m \otimes \rdl{m} \mapsto
 \pairing{m}{\rdl{m}} \in K$, but we cannot guarantee the existence of a
-matching $\coev$ unless $M$ is a free module.
+matching coevaluation morphism unless $M$ is a free module.
 
 The above structure maps
-\eqref{eq:dgm-braiding}--~\eqref{eq:dgm-balancing} induce a balanced
+\eqref{eq:dgm-braiding}--\eqref{eq:dgm-balancing} induce a balanced
 symmetric braided category structure on the subcategory $\catMod_K$ of
 degree $0$ $K$-bimodules; note that the braiding on $\catMod_K$ is the
 trivial one: $\tau_{MN}: m\otimes n \mapsto n\otimes m$.
@@ -119,12 +119,12 @@ trivial one: $\tau_{MN}: m\otimes n \mapsto n\otimes m$.
   show that there are just two possible braidings on $\catMod_K^\setZ$:
   the trivial one given by
   \begin{equation*}
-    \tau_{MN}' : m\otimes n \mapsto n\otimes m,
+    \tau_{MN}^+ : m\otimes n \mapsto n\otimes m,
   \end{equation*}
   which is the usual braiding on categories of non-graded modules and
   vector spaces, and and that of \eqref{eq:dgm-braiding},
   \begin{equation*}
-    \tau_{MN}'' : m\otimes n \mapsto (-1)^{mn} n\otimes m,
+    \tau_{MN}^- : m\otimes n \mapsto (-1)^{mn} n\otimes m,
   \end{equation*}
   which is the usual one on categories of graded modules.
 \end{remark}
@@ -143,7 +143,7 @@ non-trivial (yet involutive) twisting isomorphism
 for all objects $M_1$, $M_2$. For any
 $\sigma\in\Perm{n}$, there's an isomorphism $\tau_\sigma$ between
 $M_1\otimes \dots \otimes M_n$ and $M_{\sigma_1} \otimes \dots
-\otimes M_{\sigma_n}$ made up of twists $T_{(ij)}$; since the
+\otimes M_{\sigma_n}$ made up of twists $\tau_{(ij)}$; since the
 category of graded modules is \emph{symmetric}, any two such
 compositions are equal, that is, $\tau_\sigma$ depends only on
 $\sigma\in\Perm{n}$.
@@ -168,17 +168,17 @@ We shall omit $x_1, \dots, x_n$ from the above when it will be clear
 from the context which elements $\epsilon$ or $\chi$ are being
 applied to.
 
-\begin{definition}
+\begin{definition}\label{dfn:graded-sym-map}
   A map $f: M^{\otimes n} \to N$ is graded symmetric iff
   \begin{equation*}
     f(x_1, \dots, x_n) = \epsilon(\sigma) f(x_{\sigma_1}, \dots,
-    x_{\sigma_n}) \qquad \forall x_1, \dots, x_n \in M
+    x_{\sigma_n}) \qquad \forall x_1, \dots, x_n \in M.
   \end{equation*}
   It is graded antisymmetric iff
   \begin{equation*}
     f(x_1, \dots, x_n) = \chi(\sigma) f(x_{\sigma_1}, \dots,
-    x_{\sigma_n}) \qquad \forall x_1, \dots, x_n \in M
-  \end{equation*}.
+    x_{\sigma_n}) \qquad \forall x_1, \dots, x_n \in M.
+  \end{equation*}
 \end{definition}
 
 Since permutation of factors in a tensor product may change the sign,
@@ -234,12 +234,13 @@ define evaluation and coevaluation maps
   \label{eq:vec-coevaluation}
   \coev_V &: 1 \mapsto \sum_i \rdl{v_i} \otimes v_i,
 \end{align}
-which make $\catVect^\setZ$ into an autonomous category. The balancing
+which make $\catVect^\setZ$ into an autonomous category; these morphisms
+are actually independent of the chosen basis $(v_i)$. The balancing
 map \eqref{eq:dgm-balancing} is compatible with taking duals, so
 $\catVect^\setZ$ is a tortile category.
 \begin{remark}\label{rem:ev-rev}
-  Please note that, although $\rdl{\rdl{V}} \simeq V$, the reverse-order
-  evaluation and coevaluation maps $\ev'_V$, $\coev'_V$ differ from
+  Note that, although $V^{\lor\lor} \simeq V$, the reverse-order evaluation
+  and coevaluation maps $\ev'_V$, $\coev'_V$ differ from
   $\ev_{\rdl{V}}$ and $\coev_{\rdl{V}}$ by a sign, because of the
   non-trivialness of $\tau_{V,\rdl{V}}$; indeed, according to
   \ref{thm:ev-rev},
@@ -259,6 +260,7 @@ $\catVect^\setZ$, but the braiding restricts to the trivial one.
 
 \subsection{The category of Bosonic states}
 \label{sec:bosonic}
+\nx{\btpc{V,b}}{Category of Bosonic states}
 
 Let $V$ be a $\fk$-vector space equipped with a bilinear
 \emph{symmetric} non-degenerate form $b: V\tp{2} \to \fk$. Let
@@ -282,9 +284,10 @@ integrals --- see \cite[sec.\
 
 \subsection{The category of Fermionic states}
 \label{sec:fermionic}
+\nx{\btpc{V,a}}{Category of Fermionic states}
 
 Let $V \in \catVect[\fk]^\setZ$ be equipped with a bilinear \emph{alternating}
-non-degenerate form $a: V\tp{2} \to \fk$. Let $\ftpc{V,b}$ be the full
+non-degenerate form $a: V\tp{2} \to \fk$. Let $\ftpc{V,a}$ be the full
 subcategory of $\catVect^\setZ$ which has tensor powers $V\tp{p}$ as
 objects; $\ftpc{V,a}$ inherits a balanced symmetric tensor structure
 from $\catVect$. For each $V\tp{p} \in \ftpc{V,a}$ define maps
