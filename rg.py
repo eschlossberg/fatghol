@@ -1547,6 +1547,16 @@ class Fatgraph(EqualIfIsomorphic, PermanentID):
                     vs = vs_
                     n = n_
             return (val, vs)
+
+        def compatible(v1, v2):
+            """Return `True` if vertices `v1` and `v2` are compatible.
+            (i.e., same valence and number of loops - one *could* be
+            mapped onto the other.)
+            """
+            if len(v1) == len(v2) and v1.num_loops() == v2.num_loops():
+                return True
+            else:
+                return False
                 
         def admissible_vertex_mappings(v, g, ixs):
             """Iterate over all (indices of) vertices in `g`, which
@@ -1557,9 +1567,7 @@ class Fatgraph(EqualIfIsomorphic, PermanentID):
             subset of vertex indices in `g`.
             """
             for i in ixs:
-                dest_v = g.vertices[i]
-                if len(v) == len(dest_v) \
-                   and v.num_loops() == dest_v.num_loops():
+                if compatible(v, g.vertices[i]):
                     yield i
 
         class CannotExtendMap(Exception):
@@ -1582,6 +1590,10 @@ class Fatgraph(EqualIfIsomorphic, PermanentID):
             (pv, rots, pe) = m
             v1 = g1.vertices[i1]
             v2 = g2.vertices[i2]
+            if not compatible(v1, v2):
+                raise CannotExtendMap
+
+            # XXX: rotation has to be >=0 for the [r:r+..] shift below to work
             if r < 0:
                 r += len(v2)
 
@@ -2730,11 +2742,13 @@ class MgnGraphsIterator(BufferingIterator):
                     if dg not in next_batch:
                         # put graph back into next batch for processing
                         next_batch.append(dg)
+                    else:
+                        discarded += 1
         self._batch = next_batch
         self._num_vertices -= 1
 
         logging.debug("  Found %d distinct unique graphs with %d vertices, discarded %d.",
-                     len(next_batch), self._num_vertices, discarded)
+                     len(next_batch), 1+self._num_vertices, discarded)
         return next_batch
 
 #MgnGraphsIterator = persist.PersistedIterator(_MgnGraphsIterator)
