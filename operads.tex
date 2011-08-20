@@ -1,0 +1,603 @@
+\RCSID $Id: operads.tex,v 1.1 2006/05/25 07:02:56 rmurri Exp $
+%auto-ignore
+
+
+
+\chapter{Operads}
+\label{cha:operads}
+
+Fix a differential graded $\k$-algebra $K$; the category of
+$K$-dg-modules and their morphisms (not necessarily commuting with the
+differential) is Abelian and symmetric monoidal with the tensor product
+$\otimes := - \otimes_K -$.  In this section, we mainly follow
+\cite{kriz-may;operads} for the definition of an operad.
+\begin{definition}
+  \label{dfn:operad}
+  An operad ${\Oo}$ is a collection of $K$-modules $\{{\Oo}(n)\}_{n\geq0}$
+  together with 
+  \begin{enumerate}[i)]
+  \item a unit map $\eta:K \to {\Oo}(1)$; 
+  \item a right action of the symmetric group $\Perm{n}$ on ${\Oo}(n)$,
+    for all $n\geq0$;
+  \item composition maps ${\Oo}(n)\otimes{\Oo}(k_1)\otimes\cdots\otimes{\Oo}(k_n) \xrightarrow{\gamma_{n;
+        k_1, \ldots, k_n}} {\Oo}(k)$ for all $n\geq0$ and $k = \sum k_s$; $\deg \gamma
+    = 0$ as a map of graded modules.
+  \end{enumerate}
+  These data are required to satisfy the following compatibility
+  relations.
+  \begin{enumerate}
+  \item\label{o-ass} The following \emph{associativity} diagrams
+    commute, for all $n\geq0$, $k_s \geq0$, $j_{sr}\geq0$:
+    \begin{equation}
+      {\xymatrix{%
+          {\Oo}(n) \otimes \bigl( \bigotimes_{s=1}^n {\Oo}(k_n) \bigr) \otimes \bigl( \bigotimes_{s=1}^n
+          \bigotimes_{r=1}^{k_s} {\Oo}(j_{sr}) \bigr) 
+          &
+          {\Oo}(k) \otimes \bigl(\bigotimes_{s=1}^n \bigotimes_{r=1}^{k_s} {\Oo}(j_{sr}) \bigr)
+          &
+          k := \sum_s k_s
+          \\
+          &
+          {\Oo}(j)
+          \\
+          {\Oo}(n) \otimes \biggl( \bigotimes_{s=1}^n \Bigl( {\Oo}(k_s) \otimes \bigl(
+          \bigotimes_{r=1}^{k_s} {\Oo}(j_{sr}) \bigr) \Bigr) \biggr)
+          &
+          {\Oo}(n) \otimes \bigl( \bigotimes_{s=1}^n {\Oo}(j_s) \bigr)
+          &
+          j_r := \sum_{r=1}^{k_s} j_{sr}
+          %%
+          \ar@{<->}  "1,1";"3,1" _{\txt{signed \\ reordering}} 
+          \ar "1,1";"1,2" ^{\gamma_{n; k_1, \ldots, k_n} \otimes \id}
+          \ar "3,1";"3,2" ^{\id \otimes \bigotimes_{s=1}^n \gamma_{k_s; j_{s1}, \ldots,
+              j_{sk_s}}} 
+          \ar "1,2";"2,2" ^{\gamma_{k; j_{11}, \ldots, j_{nk_n}}}
+          \ar "3,2";"2,2" _{\gamma_{n; j_1, \ldots, j_n}}
+          }}
+      \label{eq:o-ass}
+    \end{equation}
+    where the ``signed reordering'' acts is the appropriate
+    composition of commutators in the symmetric category.
+  \item\label{o-unit} The following \emph{unit} diagrams commute.
+    \begin{equation}
+      {\xymatrix{%
+          {\Oo}(n)\otimes K\tp{n}
+          \\
+          & {\Oo}(n)
+          \\
+          {\Oo}(n) \otimes {\Oo}(1)\tp{n}
+          \ar "1,1";"3,1" _{\id \otimes \eta\tp{n}}
+          \ar "1,1";"2,2" 
+          \ar "3,1";"2,2" _{\gamma_{n; 1, \ldots, 1}}
+          }
+        \qquad
+        \xymatrix{%
+          K \otimes {\Oo}(n)
+          \\
+          & {\Oo}(n)
+          \\
+          {\Oo}(1) \otimes {\Oo}(n)
+          \ar "1,1";"3,1" _{\eta \otimes \id}
+          \ar "1,1";"2,2" 
+          \ar "3,1";"2,2" _{\gamma_{1; n}}
+          }}
+      \label{eq:o-unit}
+    \end{equation}
+  \item\label{o-perm} The following \emph{equivariance} diagrams
+    commute, for $\sigma \in \Perm{n}$ and $\tau_s \in \Perm{k_s}$, the
+    permutation $\sigma(k_1, \ldots, k_n) \in \Perm{k}$ permutes blocks of
+    lengths $k_1$, \ldots, $k_n$ like $\sigma$ permutes letters; $\tau_1 \oplus \cdots
+    \oplus \tau_n$ permutes letters in the $s$-th block as $\tau_s$ does:
+    \begin{equation}
+      {\xymatrix@C=36pt{%
+          {\Oo}(n) \otimes {\Oo}(k_1) \otimes \cdots \otimes {\Oo}(k_n)
+          & 
+          {\Oo}(n) \otimes {\Oo}(k_{\sigma_1}) \otimes \cdots \otimes {\Oo}(k_{\sigma_n})
+          \\
+          {\Oo}(k)
+          &
+          {\Oo}(k)
+          \ar "1,1";"1,2" ^{\sigma \otimes T_{\sigma^{-1}}}
+          \ar "1,1";"2,1" _{\gamma_{n; k_1, \ldots, k_n}}
+          \ar "1,2";"2,2" ^{\gamma_{n; k_{\tau_1}, \ldots, k_{\tau_n}}}
+          \ar "2,1";"2,2" ^{\sigma(k_{\sigma_1}, \ldots, k_{\sigma_n})}
+          }}
+      \label{eq:o-perm1}
+    \end{equation}
+    and
+    \begin{equation}
+      {\xymatrix@C=48pt{%
+          {\Oo}(n) \otimes {\Oo}(k_1) \otimes \cdots \otimes {\Oo}(k_n)
+          & 
+          {\Oo}(k)
+          \\
+          {\Oo}(n) \otimes {\Oo}(k_1) \otimes \cdots \otimes {\Oo}(k_n)
+          &
+          {\Oo}(k)
+          \ar "1,1";"1,2" ^(.70){\gamma_{n; k_1, \ldots, k_n}}
+          \ar "2,1";"2,2" _(.70){\gamma_{n; k_1, \ldots, k_n}}
+          \ar "1,1";"2,1" _{\id \oplus (\tau_1 \otimes \cdots \otimes \tau_n)}
+          \ar "1,2";"2,2" ^{\tau_1 \oplus \cdots \oplus \tau_n}
+          }}
+      \label{eq:o-perm2}
+    \end{equation}
+  \end{enumerate}
+\end{definition}
+Operads may be defined in any symmetric tensor category. For our
+purposes, it will suffice to restrict always to the category of
+$K$-dg-modules.
+
+The prototypical operad is the \emph{endomorphism operad} $\EndOp[M]$ of some
+$K$-dg-module $M$, which is defined by:
+\begin{equation*}
+  \EndOp[M](n) := \Hom( M\tp{n}, M).
+\end{equation*}
+The unit is given by the identity map $\id_M \in \Hom(M,M) =
+\EndOp[M](1)$; the $\Perm{n}$-action is the (signed) permutation of
+tensor product factors, and, finally, the maps $\gamma_{n; k_1, \ldots, k_n}$
+are given by 
+\begin{equation*}
+  {\xymatrix{%
+      \Hom(M\tp{n}, M) \otimes \Hom(M\tp{k_1}, M) \otimes \cdots \otimes \Hom(M\tp{k_n},
+      M)
+      \\
+      \Hom(M\tp{n}, M) \otimes \Hom(M\tp{k}, M\tp{n})
+      \\
+      \Hom(M\tp{k}, M)
+      \ar "1,1";"2,1" ^{\id \otimes (\text{$n$-fold tensor product of
+          maps})}
+      \ar "2,1";"3,1" ^{\circ}
+      }}
+\end{equation*}
+It is trivial to verify that $\EndOp[M]$ is an operad.
+
+A \emph{morphism of operads} $\phi: {\Oo}' \to {\Oo}''$ is a collection of
+$K$-dg-modules morphisms $\{\phi_n: {\Oo}'(n) \to {\Oo}''(n)\}$ satisfying the
+obvious compatibility conditions coming from diagrams
+\eqref{eq:o-ass}--\eqref{eq:o-perm2}. 
+
+\subsubsection{Signs in operads}
+\label{sec:signs-operads}
+The ``signed reordering'' of diagram \eqref{eq:o-ass} may appear as to
+introduce an unnatural sign: infact it is not so, the reason being
+that a Koszul sign is hidden into the $\gamma$'s, as the following example
+shows.
+
+Let $M$ be an $K$-dg-module, $A \in \Hom(M\tp{2}, M)$, $B_1 \in
+\Hom(M,M)$ and $B_2 \in \Hom(M\tp2, M)$. According to the definition of
+operad, $\gamma_{2; 1,2}(A \otimes B_1 \otimes B_2) \in \Hom(M\tp3, M)$, so we pick
+$x_1 \otimes x_2 \otimes x_3 \in M\tp3$ and reckon:
+\begin{equation*}
+  y := (A \otimes B_1 \otimes B_2) (x_1 \otimes x_2 \otimes x_3) = A \otimes \bigl( (B_1 \otimes B_2)
+  (x_1 \otimes x_2 \otimes x_3) \bigr),
+\end{equation*}
+so, by the Koszul sign convention,
+\begin{multline*}
+  y = A \otimes \bigl( (-1)^{x_1 B_2} B_1(x_1) \otimes B_2(x_2 \otimes x_3) \bigr) \\ 
+  = (-1)^{x_1 B_2} A\bigl( (-1)^{x_1 B_2} B_1(x_1) \otimes B_2(x_2 \otimes x_3)
+  \bigr).
+\end{multline*}
+Therefore,
+\begin{equation}
+  \label{eq:1}
+  \gamma(A \otimes B_1 \otimes B_2) (x_1 \otimes x_2 \otimes x_3) = (-1)^{x_1B_2}  A\bigl( (-1)^{x_1 B_2} B_1(x_1) \otimes B_2(x_2 \otimes x_3) \bigr).
+\end{equation}
+
+Let us apply this to a particular case of \eqref{eq:o-ass}: pick $C_1,
+C_2, C_3 \in \Hom(M,M)$, then use \eqref{eq:1} to walk \eqref{eq:o-ass}
+bottom-up: first on the left-side path,
+\begin{multline*}
+  A\Bigl( B_1\bigl( C_1(x_1) \bigr), B_2\bigl(C_2(x_2), C_3(x_3)\bigr)
+  \Bigr)  \\ = (-1)^{(x_1 + C_1)B_2} \gamma(A \otimes B_1 \otimes B_2) \bigl( C_1(x_1)
+  \otimes C_2(x_2) \otimes C_3(x_3) \bigr)  \\ = (-1)^{C_1B_2 + x_1B_2 + x_1(C_2 +
+    C_3) + x_2C_3}  \times \\ \gamma\bigl( \gamma(A \otimes B_1 \otimes B_2) \otimes C_1 \otimes C_2 \otimes C_3
+  \bigr) (x_1 \otimes x_2 \otimes x_3),
+\end{multline*}
+then on the right-side path,
+\begin{multline*}
+  A\Bigl( B_1\bigl( C_1(x_1) \bigr), B_2\bigl(C_2(x_2), C_3(x_3)\bigr)
+  \Bigr) \\ = (-1)^{x_2 C_3} A\bigl( \gamma(B_1 \otimes C_1) (x_1), \gamma(B_2 \otimes C_2
+  \otimes C_3) (x_2 \otimes x_3) \bigr) \\ = (-1)^{x_2 C_3 + x_1(B_2 + C_2 + C_3)}
+  \times \\ \gamma\bigl( A \otimes \gamma(B_1 \otimes C_1) \otimes \gamma(B_2 \otimes C_2 \otimes C_3) \bigr) (x_1 \otimes
+  x_2 \otimes x_3).
+\end{multline*}
+Now we see that the sign $(-1)^{B_2C_1}$ coming from the reordering
+\begin{equation*}
+T_{(34)}: A \otimes B_1 \otimes B_2 \otimes C_1 \otimes C_2 \otimes C_3 \mapsto (-1)^{B_2 C_1} A \otimes
+B_1 \otimes C_1 \otimes B_2 \otimes C_2 \otimes C_3
+\end{equation*}
+is the one needed to make diagram \eqref{eq:o-ass} commute.
+
+
+\subsection{Algebras over operads}
+\label{sec:algebras-over-operads}
+
+Let $X$ be an $K$-dg-module, and ${\Oo}$ a fixed operad.
+\begin{definition}
+  A structure of ${\Oo}$-algebra on $X$ is an operad morphism ${\Oo} \to
+  \EndOp[X]$ of ${\Oo}$ into the endomorphism operad of $X$. 
+\end{definition}
+So, elements in ${\Oo}(n)$ are interpreted as maps $X\tp{n} \to X$, that
+is, they are $n$-ary operations on $X$. In the sequel we shall see how
+to give a operadic formulation of common algebraic structures.
+
+The following proposition encodes many well-known structure transfer
+theorems. 
+\begin{theorem}
+  \label{prop:structure-transfer}
+  Any morphism ${\Oo}\to{\Oo}'$ induces an ${\Oo}$-algebra structure on every
+  ${\Oo}'$-algebra $X$, by means of the composition ${\Oo} \to {\Oo}'
+  \to\EndOp[X]$.
+\end{theorem}
+
+In an equivalent manner, an ${\Oo}$-algebra structure on $X$, is given by
+maps
+\begin{equation*}
+  \phi_n : {\Oo}(n) \otimes X\tp{n} \to X,
+\end{equation*}
+which satisfy associativity, unit and equivariance conditions coming
+from diagrams \eqref{eq:o-ass}--\eqref{eq:o-perm2}, that we can
+express by requiring the following diagrams to commute:
+\begin{gather}
+  \label{eq:o-alg}
+  {\xyc\xymatrix{%
+      {\Oo}(n) \otimes {\Oo}(k_1) \otimes \cdots \otimes {\Oo}(k_n) \otimes X\tp{k}
+      &
+      {\Oo}(k) \otimes X\tp{k}
+      \\
+      &
+      X
+      \\
+      {\Oo}(n) \otimes \bigl({\Oo}(k_1) \otimes X\tp{k_1}) \otimes \cdots \otimes \bigl({\Oo}(k_n) \otimes
+      X\tp{k_n})
+      &
+      {\Oo}(n) \otimes X\tp{n} 
+      %%
+      \ar@{<->} "1,1";"3,1"  _{\txt{signed \\ reordering}}
+      \ar "1,1";"1,2" ^(.65){\gamma \otimes \id}
+      \ar "1,2";"2,2" ^{\phi_k}
+      \ar "3,2";"2,2" _{\phi_n}
+      \ar "3,1";"3,2" _(.75){\id \otimes \phi\tp{k}}
+      }\endxyc}
+  \\
+  {\xyc\xymatrix@C=36pt{%
+      {\Oo}(n) \otimes X\tp{n}
+      &
+      {\Oo}(n) \otimes X\tp{n}
+      \\
+      {\Oo}(n) \otimes X\tp{n}
+      & 
+      X
+      %%
+      \ar "1,1";"1,2" ^{\id \otimes \varepsilon(\sigma)}
+      \ar "1,1";"2,1" _{\sigma \otimes \id\tp{n}}
+      \ar "1,2";"2,2" ^{\phi_n}
+      \ar "2,1";"2,2" _{\phi_n}
+      }\endxyc}
+  \\
+  {\xyc\xymatrix{%
+      X
+      &
+      {\Oo}(1) \otimes X
+      &
+      X
+      %%
+      \ar "1,1";"1,2" ^(.35){\eta \otimes \id}
+      \ar "1,2";"1,3" ^(.60){\phi_1}
+      \ar@/_1pc/ "1,1";"1,3" _{\id_X}
+      }\endxyc}
+\end{gather}
+
+\begin{example}[Free algebras over an operad] Fix an operad ${\Oo}$, and an
+  $K$-dg-module $V$. Define the free ${\Oo}$-algebra $X := F_{\Oo}(V)$ by:
+  \begin{equation*}
+    X^p := {\Oo}(p) \otimes V.
+  \end{equation*}
+  In order to define the structure maps $\phi$, observe that 
+  \begin{multline*}
+    \bigl( {\Oo}(n) \otimes X\tp{n} \bigr)^p = {\Oo}(p) \otimes \bigoplus_{p_1 + \cdots + p_n =
+      p} \bigl( ({\Oo}(p_1) \otimes X^{p_1}) \otimes \cdots \otimes ({\Oo}(p_n) \otimes X^{p_n})
+    \bigr) 
+    \\
+    \simeq \bigl( {\Oo}(p) \otimes \bigoplus_{p_1 + \cdots + p_n =
+      p} ({\Oo}(p_1) \otimes \cdots \otimes {\Oo}(p_n)) \bigr) \otimes (X\tp{n})^p,
+  \end{multline*}
+  so a direct sum of the maps $\gamma_{n; p_1, \ldots, p_n}$ will do the job.
+\end{example}
+
+
+\subsubsection{The operad of associative algebras}
+\label{sec:operad-assoc}
+If $X$ is an associative algebra, then a map $m: X\tp2 \to X$ is
+defined, which satisfies the constraint
+\begin{equation}
+  \label{eq:ass}
+  m(x_1, m(x_2, x3)) = m(m(x_1, x_2), x_3).
+\end{equation}
+Let us define an operad $\Ao$ which governs associative algebras; we
+need an element $\mu \in \Ao(n)$ for every $n$-ary operation on $X$. Now,
+the product of two elements $x_1 \otimes x_2 \mapsto m(x_1, x_2) =: x_1x_2$ is a
+binary operation, but also the product in reverse order ($x_1 \otimes x_2
+\mapsto m(x_2, x_1) =: x_2x_1$) is; moreover, we can form $n$-ary
+operations composing product maps (e.g., $x_1 \otimes x_2 \otimes x_3 \otimes x_4 \mapsto
+m(m(x_1, x_2), m(x_4, x_3)) = (x_1x_2)(x_3x_4)$).  The associativity
+relation \eqref{eq:ass} tells us that any monomial $x_{\sigma_1} x_{\sigma_2}
+\cdots x_{\sigma_n}$ defines a $n$-ary operation by composition of binary
+products, independently of the way we put parentheses in it.
+Therefore, we can state that $\Ao(n)$ is the $K$-module freely
+generated by the set of all possible products of symbols $x_1, \ldots,
+x_n$ with every $x_j$ appearing once and once only; for example,
+\begin{equation*}
+  \Ao(1) := K,
+  \quad \Ao(2) := \lspan{ x_1x_2, x_2x_1}_K, 
+  \quad \Ao(3) := \lspan{ x_{\sigma_1}x_{\sigma_2}x_{\sigma_3} : \sigma \in \Perm{3}}_K.
+\end{equation*}
+The $\Perm{n}$-action on $\Ao(n)$ consists in permuting the $x_j$'s.
+The structure maps $\gamma_{n; k_1, \ldots, k_n}: \Ao(n) \otimes \Ao(k_1) \otimes \cdots \otimes
+\Ao(k_n) \to \Ao(k_1 + \cdots + k_n)$ replace the $x_j$ in $\mu \in \Ao(n)$ by a
+monomial $\mu_j \in \Ao(k_j)$, simultaneously replacing $x_l$ in $\mu_j$
+with $x_{k_1 + \cdots + k_{j-1} + l}$.
+  
+The operad $\Ao$ is most easily described using a graphical notation.
+Depict an element of $\Ao(n)$ as a \emph{binary} tree having $n$ leaves
+(inputs) and one root (the output); the leaves are numbered, and
+$\Perm{n}$ acts by permuting numbers on leaves. Such trees can be
+easily seen to correspond to the meaningful insertion of $n-2$ pairs
+of parentheses into a monomial $\mu \in \Ao(n)$.
+\begin{center}
+  \begin{tabular}{ccc}
+    \begin{xytree}
+      \branch{%
+        \leaf{1}
+        \leaf{2}
+        }
+    \end{xytree}
+    &
+    \begin{xytree}
+      \branch{%
+        \leaf{1}
+        \branch{%
+          \leaf{2}
+          \leaf{3}
+          }
+        }
+    \end{xytree}
+    &
+    \begin{xytree}
+      \branch{%
+        \branch{%
+          \leaf{1}
+          \leaf{3}
+          }
+        \branch{%
+          \leaf{2}
+          \leaf{4}
+          }
+        }
+    \end{xytree}
+    \\
+    $x_1x_2$
+    &
+    $x_1(x_2x_3)$
+    &
+    $(x_1x_3)(x_2x_4)$
+  \end{tabular}
+\end{center}
+The structure map $\gamma_{n; k_1, \ldots, k_n}$ simply grafts the tree $t_j
+\in {\Oo}(k_j)$ onto the $j$-th input of $t \in {\Oo}(n)$ and renumbers the
+leaves of $t_j$; for example,
+\begin{equation*}
+  \gamma \left\lgroup 
+    \xytreec
+      \branch{%
+        \leaf{1}
+        \leaf{2}
+        }
+    \endxytreec
+    \otimes
+    \xytreec
+      \branch{%
+        \branch{%
+          \leaf{2}
+          \leaf{3}
+          }
+        \leaf{1}
+        }
+    \endxytreec
+    \otimes
+    \xytreec
+      \branch{%
+        \branch{%
+          \leaf{1}
+          \leaf{3}
+          }
+        \branch{%
+          \leaf{2}
+          \leaf{4}
+          }
+        }
+    \endxytreec
+  \right\rgroup
+  =
+  \xytreec
+    \branch{%
+      \branch{%
+        \branch{%
+          \leaf{2}
+          \leaf{3}
+          }
+        \leaf{1}
+        }
+      \branch{%
+        \branch{%
+          \leaf{4}
+          \leaf{6}
+          }
+        \branch{%
+          \leaf{5}
+          \leaf{7}
+          }
+        }
+      }
+  \endxytreec
+\end{equation*}
+  
+The whole family of numbered binary trees is generated by elements in
+$\Ao(2)$ via the composition maps $\gamma$; infact,
+\begin{equation*}
+  \Ao(2) = \lspan{%
+    \xytreec
+      \branch{%
+        \leaf{1}
+        \leaf{2}
+        }
+    \endxytreec
+    ,
+    \xytreec 
+      \branch{%
+        \leaf{2}
+        \leaf{1}
+        }
+    \endxytreec
+    }.
+\end{equation*}
+What is more, the associativity relation \eqref{eq:ass} can be
+rewritten as:
+\begin{equation}
+  \label{eq:ass-tree}
+  \xytreec
+    \branch{%
+      \leaf{1}
+      \branch{%
+        \leaf{2}
+        \leaf{3}
+        }
+      }
+  \endxytreec
+  =
+  \xytreec
+    \branch{%
+      \branch{%
+        \leaf{1}
+        \leaf{2}
+        }
+      \leaf{2}
+      }
+  \endxytreec
+\end{equation}
+So, the operad $\Ao$ is the quotient of the family of binary
+trees by relations of the form:
+\begin{equation*}
+  \gamma \left\lgroup
+    T_0 \otimes \left\lgroup
+  \xytreec
+    \branch{%
+      \leaf{1}
+      \branch{%
+        \leaf{2}
+        \leaf{3}
+        }
+      }
+  \endxytreec
+  -
+  \xytreec
+    \branch{%
+      \branch{%
+        \leaf{1}
+        \leaf{2}
+        }
+      \leaf{3}
+      }
+  \endxytreec
+  \right\rgroup
+  \otimes T_1 \otimes T_2 \otimes T_3 \right\rgroup 
+\end{equation*}
+where $T_0$, $T_1$, $T_2$ and $T_3$ are arbitrary binary trees.  It is
+easy to check that these relations imply that any tree in $\Ao$ has
+a representative such that left-wing branches have no ramification;
+such trees will be called \emph{regular trees} in the sequel.
+
+\begin{definition}
+  The space $\Ao(n)$ is the $K$-linear span of the set of regular
+  binary trees.  It is a dg-module with the trivial differential $D =
+  0$.
+
+  The collection $\{\Ao(n)\}$ forms an operad with the structure maps
+  given by the grafting operation $\gamma$ and  the obvious $\Perm{n}$ action.
+\end{definition}
+It is an easy exercise to check the following.
+\begin{theorem}
+  Any associative algebra is an algebra over $\Ao$, and vice-versa.
+\end{theorem}
+
+
+\subsection{Modules over an operad algebra}
+\label{sec:modules}
+Fix an operad ${\Oo}$ and an ${\Oo}$-algebra $X$, and an $K$-module $M$. 
+\begin{definition}
+  A structure of $({\Oo}, X)$-module on $M$ is given by a collection of
+  maps $\psi_n: {\Oo}(n+1) \otimes X\tp{n} \otimes M \to M$ which satisfy the following
+  compatibility relations.
+\begin{gather}
+  \label{eq:o-2}
+  {\xyc\xymatrix{%
+      {\Oo}(n) \otimes {\Oo}(k_1) \otimes \cdots \otimes {\Oo}(k_n) \otimes X\tp{k-1} \otimes M & {\Oo}(k) \otimes
+      X\tp{k-1} \otimes M
+      \\
+      {{\Oo}(n) \otimes \bigotimes_{j=1}^{n-1}\bigl({\Oo}(k_j) \otimes X\tp{k_j}) \otimes {\Oo}(k_n) \otimes
+        X\tp{k_n-1} \otimes M}
+      \\
+      {\Oo}(n) \otimes X\tp{n-1} \otimes M & X
+      %%
+      \ar@{<->} "1,1";"2,1"  _{\txt{signed \\ reordering}}
+      \ar "1,1";"1,2" ^(.65){\gamma \otimes \id_X\tp{k-1} \otimes \id_M}
+      \ar "1,2";"3,2" ^{\psi_k}
+      \ar "3,1";"3,2" _{\psi_n}
+      \ar "2,1";"3,1" _(.75){\id \otimes \phi\tp{k-1} \otimes \psi_{k_n-1}}
+      }\endxyc}
+  \\
+  {\xyc\xymatrix@C=48pt{%
+      {\Oo}(n) \otimes X\tp{n-1} \otimes M
+      &
+      {\Oo}(n) \otimes X\tp{n-1} \otimes M
+      \\
+      {\Oo}(n) \otimes X\tp{n-1} \otimes M
+      & 
+      X
+      %%
+      \ar "1,1";"1,2" ^{\id_{\Oo} \otimes \varepsilon(\sigma) \otimes \id_M}
+      \ar "1,1";"2,1" _{\sigma \otimes \id_X\tp{n-1} \otimes \id_M}
+      \ar "1,2";"2,2" ^{\psi_n}
+      \ar "2,1";"2,2" _{\psi_n}
+      }\endxyc}
+  \\
+  {\xyc\xymatrix{%
+      M
+      &
+      {\Oo}(1) \otimes M
+      &
+      M
+      %%
+      \ar "1,1";"1,2" ^(.35){\eta \otimes \id_M}
+      \ar "1,2";"1,3" ^(.60){\psi_1}
+      \ar@/_1pc/ "1,1";"1,3" _{\id_M}
+      }\endxyc}
+\end{gather}
+\end{definition}
+
+It is easy to check that modules over an $\Ao$-algebra are the usual
+modules over an associative algebra.
+
+Furthermore, one can define a notion of ``universal enveloping
+algebra'' in an operadic context; the category of modules over an
+${\Oo}$-algebra $X$ is naturally equivalent to that of modules over
+the universal enveloping algebra $U_{\Oo}(X)$. As one would expect,
+for $\Ao$ one gets the same standard notions of enveloping algebras.
+
+
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "index"
+%%% End: 

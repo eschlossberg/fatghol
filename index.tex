@@ -1,6 +1,6 @@
 %%% index.tex -- Generico contenitore per matematica in lingua inglese.
 %%%
-%%% $Id: index.tex,v 1.6 2006/05/18 08:07:29 rmurri Exp $
+%%% $Id: index.tex,v 1.7 2006/05/25 07:02:56 rmurri Exp $
 %%%
 \documentclass[a4paper,reqno,openany,draft]{amsbook}
 
@@ -47,14 +47,22 @@
 %%
 \usepackage{miscmath} % simboli vari
 
-\renewcommand\k\fk
-\renewcommand\d\ud
+\providecommand{\textsubscript}[1]{$\sb{#1}$}
+\providecommand{\textsuperscript}[1]{$\sp{#1}$}
+
+\renewcommand\k\fk % campo k
+\renewcommand\d\ud % differenziale d
+
+\newcommand{\ksz}{\epsilon} % segno di koszul
+\newcommand{\aksz}{\chi}    % segno di koszul alternante
 
 \newcommand{\A}{\category{A}}     % generic category A
 \newcommand{\B}{\category{B}}     % generic category B
 \newcommand{\rev}{\sptext{rev}}
 \newcommand{\catN}{\category{N}}        % generic category N
+
 \newcommand{\Oo}[1][]{\operad{O}_{#1}}  % generic operad O
+\newcommand{\Ao}{\operad{A}}            % associative operad A
 \newcommand{\RTD}[1][]{\operad{D}_{#1}} % operad of RT diagrams
 \newcommand{\RTE}[1][]{\operad{D}'_{#1}}% operad of embedded RT graphs
 \newcommand{\RTG}[1][]{\operad{G}_{#1}} % operad of RT graphs
@@ -64,13 +72,16 @@
 \newcommand{\freemsc}[1]{#1^{\Box}}     % free monoidal signed category 
 \newcommand{\tpc}[1]{\langle #1 \rangle}% tensor powers category
 \newcommand{\btpc}[1]{\langle#1\rangle^+}% (bosonic) tensor powers category
-\newcommand{\ftpc}[1]{\langle#1\rangle^-}% (fermiionic) tensor powers ctg.
 
 \newcommand{\Strebel}[1][]{\mathcal{S}_{#1}}
 \newcommand{\Conf}{\text{\rm Conf}}
 \newcommand{\T}{\mathcal{T}}
 \newcommand{\Lb}{\mathcal{L}}
 \newcommand{\Hn}{\mathcal{H}}
+
+\newcommand{\Harmonic}{\mathcal{H}} % space of harmonic functions
+
+\newcommand{\ad}{\textrm{ad}} % adjoint action ad[X,Y]
 
 % decomposizione cellulare dei grafi a nastro
 \newcommand{\Vertices}[1]{#1^{(0)}}
@@ -97,6 +108,11 @@
 \def\xyc#1\endxyc{\xy*!LC\xybox{#1}\endxy}
 
 \usepackage{rg} % vertici e buche di grafi a nastro
+
+\usepackage{xytree}
+\setlength{\treegap}{24pt}  
+\setlength{\treeheight}{18pt}
+
 
 %%
 %% `paralist' -- Miglior supporto per le liste
@@ -141,11 +157,12 @@
 %%%
 %%% Cominciamo...
 %%%
-\includeonly{kontsevich,construction}
+%\includeonly{kontsevich,construction}
 \begin{document}
 
 \include{title}
 \include{prelim}
+\include{ainfty}
 \include{gc}
 \include{fd}
 \include{kontsevich}
@@ -155,7 +172,7 @@
 \include{arrows}
 \include{btc}
 \include{rt}
-
+\include{operads}
 
 %%
 %% Bibliografia

@@ -1,6 +1,7 @@
 (TeX-add-style-hook "prelim"
  (lambda ()
     (LaTeX-add-labels
+     "cha:prelim"
      "sec:dg-things"
      "sec:btc+dg"
      "eq:dgm-braiding"

@@ -28,20 +28,26 @@
      '("Holes" 1)
      '("Edges" 1)
      '("Vertices" 1)
-     '("ftpc" 1)
      '("btpc" 1)
      '("tpc" 1)
      '("freemsc" 1)
      '("freemc" 1)
+     '("textsuperscript" 1)
+     '("textsubscript" 1)
      "theoremname"
+     "ksz"
+     "aksz"
      "A"
      "B"
      "rev"
      "catN"
+     "Ao"
      "Conf"
      "T"
      "Lb"
      "Hn"
+     "Harmonic"
+     "ad"
      "rel"
      "xyc"
      "csref")
@@ -55,6 +61,7 @@
      "paralist"
      "newenum"
      "newitem"
+     "xytree"
      "rg"
      "xy"
      "poly"
@@ -78,11 +85,13 @@
      "a4paper"
      "title"
      "prelim"
+     "ainfty"
      "gc"
      "fd"
      "kontsevich"
      "construction"
      "arrows"
      "btc"
-     "rt")))
+     "rt"
+     "operads")))
 
