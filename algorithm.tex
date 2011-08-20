@@ -1729,8 +1729,8 @@ Definition~\ref{dfn:fatgraphs}) or even the same fatgraph.  Indeed,
 the procedure for associating a "Fatgraph" instance to a fatgraph (see
 Section~\ref{sec:fatgraphs}) involves labelling all edges, choosing a
 starting edge (cilium) on each vertex and enumerating all vertices in
-a certain order; for each different choice, we get a different "Fatgraph"
-instance representing the same fatgraph.
+a certain order; for each choice, we get a different "Fatgraph"
+instance representing the same (abstract) fatgraph.
 
 \begin{definition}
   An isomorphism of "Fatgraph" objects "G1" and "G2" is a triple 
@@ -1757,7 +1757,7 @@ into the list "G1.vertices" and any valid index "j" into
   \text{\protect\Verb'G2.vertices[pv[i]][j+rot[i]] == pe[G1.vertices[i][j]]'}
 \end{equation}
 The above Formula~\eqref{eq:fg-iso} makes the parallel between "Fatgraph" object
-isomorphism and fatgraph maps (in the sense of
+isomorphisms and fatgraph maps (in the sense of
 Definition~\ref{dfn:fatgraphs}) explicit.
 
 \begin{definition}
@@ -1773,7 +1773,7 @@ vertex, proper) is really meant.
   Let $G_1$, $G_2$ be fatgraphs, represented respectively by "G1" and
   "G2". Every isomorphism of fatgraphs $f: G_1 \to G_2$ induces a
   corresponding isomorphism "f = (pv, rot, pe)" on the computer
-  representations, and, conversely, every triple "(pv, rot, pe)"
+  representations. Conversely, every triple "(pv, rot, pe)"
   representing an isomorphism between the "Fatgraph" instances can be
   lifted to a (possibly trivial) fatgraph isomorphism between $G_1$
   and $G_2$.
@@ -1800,30 +1800,52 @@ vertex, proper) is really meant.
   the image of cilium of the "i"-th source vertex is displaced
   "rot[i]" positions from the cilium of the target vertex.  The map
   $f_V$ can be glued to a global map $f: G_1 \to G_2$ if and only if
-  the adjacency relation is preserved.  This is guaranteed by the
+  the adjacency relation is preserved; this is guaranteed by the
   compatibility condition~\eqref{eq:fg-iso}.
 \end{proof}
 
-The general isomorphism problem for (ordinary) graphs is NP-complete
-one\FIXME{Verificare!! E aggiungere referenza!}  However, the
-situation is much simpler for fatgraphs, because of the following
-property.
+The general isomorphism problem for (ordinary) graphs is a well-known
+difficult problem. However, the situation is much simpler for
+fatgraphs, because of the following property.
 \begin{lemma}[Rigidity Property]\label{lemma:rigidity}
   Let $G_1$, $G_2$ be \emph{connected} fatgraphs, and $f: G_1 \to G_2$
   an isomorphism.  For any vertex $v \in V(G_1)$, and any small
   neighborhood $U$ of $v$, $f$ is uniquely determined (up to an
-  homotopy fixing the vertices of $G$) by its restriction to $V$.
+  homotopy fixing the vertices of $G$) by its restriction to $U$.
 \end{lemma}
 In particular, an isomorphism of graphs with ciliated vertices is
 completely determined once the image $w=f(v)$ of a vertex $v$ is
-known, and the displacement (relative to the cyclic order at $w$) of
-the image of the cilium of $v$ with respect to the cilium of the image
-vertex $w$.
+known, together with the displacement (relative to the cyclic order at
+$w$) of the image of the cilium of $v$ with respect to the cilium of
+the image vertex $w$.
 \begin{proof}
-  Let $w = f(v)$; then, $W = f(U)$ is a small neighborhood of $w$.
-  It is clear that $V \setminus \{v\}$
+  Let $w = f(v)$; it is clear that $W = f(U)$ is a small neighborhood
+  of $w$.  Consider $f$ as CW-complex morphism: $f = (f_0, f_1)$ where
+  $f_i$ is a continuous map on the set of $i$-dimensional cells.
+
+  Given $f|_U$, incrementally construct a CW-morphism $f': G_1 \to
+  G_2$ as follows. Set $f'_0(v) = w$, then for each edge $x$ attached
+  to $v$, let:
+  \begin{itemize}
+  \item $v'_x$ be the other endpoint of $x$,
+  \item $x' = f_1(x)$,
+  \item $w'_{x'}$ be the other endpoint of $x'$.
+  \end{itemize}
+  Since $f$ preserves the adjacency relation, we have $w'_{x'} =
+  f_0(v'_x)$; therefore the following assignments extend $f'$ in a way
+  that it still preserves adjacency relations and coincides with $f$
+  on its definition domain:
+  \begin{itemize}
+  \item $f'_0(v'_x) = w'_x$,
+  \item $f'_1(x) = f_1(x)$.
+  \end{itemize}
+
+  A simple connectedness argument proves that this procedure extends
+  $f'$ to a CW-morphism that agrees with $f$ on all of $G_1$.
 \end{proof}
 
+The stage is now set for presenting the algorithm to enumerate the
+fatgraph isomorphisms between two given instances.
 \begin{lstlisting}
   def isomorphisms(G1, G2):
     """
@@ -1835,48 +1857,38 @@ item is returned by the iterator.
 
 As this procedure is quite complex, we break it into a
 number of auxiliary functions.
+
+The auxiliary function "valence_spectrum", given a "Fatgraph" instance
+"G", returns a mapping (Python "dict" object) that associates to each
+valence the list of indices (within "G.vertices") of vertices with
+that valence.
 \begin{lstlisting}
-    def valence_spectrum(self):
-      """
-      Return a dictionary mapping valences into vertex indices.
-
-      Examples::
-
-         >>> Fatgraph([Vertex([1,1,0,0])]).valence_spectrum()
-         {4: [0]}
-
-         >>> Fatgraph([Vertex([1,1,0]), Vertex([2,2,0])]).valence_spectrum()
-         {3: [0, 1]}
-
-         >>> Fatgraph([Vertex([3, 1, 0, 1]), \
-              Vertex([4, 4, 0]), Vertex([3, 2, 2])]).valence_spectrum()
-         {3: [1, 2], 4: [0]}
-      """
-      result = {}
-      for (index, vertex) in enumerate(self.vertices):
+    def valence_spectrum(G):
+      result = defaultdict(list)
+      for (index, vertex) in enumerate(G.vertices):
         l = len(vertex)
-        if l in result:
-          result[l].append(index)
-        else:
-          result[l] = [ index ]
+        result[l].append(index)
       return result
 
-    def starting_vertices(graph):
-      """
-      Return the pair `(valence, vertices)`, which minimizes the
-      product of valence with the number of vertices of that
-      valence.
+\end{lstlisting}
 
-      Examples::
+Similarly, the function "vertex_valences" returns the set of all
+valences of vertices in fatgraph "G":
+\begin{lstlisting}
+  def vertex_valences(G):
+    return frozenset(len(v) for v in G.vertices)
+\end{lstlisting}
 
-        >>> g = Fatgraph([Vertex([0,1,2]), Vertex([0,2,3]), Vertex([3,4,4,5,5])])
-        >>> g.starting_vertices()
-        (5, [Vertex([3, 4, 4, 5, 5])])
-      """
-      val = max(graph.vertex_valences())
+For each pair $(n, L)$ in the valence spectrum, call \emph{intensity}
+the product $n \cdot L$ (valence times the number of vertices with
+that valence).  The function "starting_vertices" returns the pair that
+minimizes intensity.
+\begin{lstlisting}
+    def starting_vertices(G):
+      val = max(vertex_valences(G))
       vs = None
-      n = len(graph.vertices)+1
-      for (val_, vs_) in valence_spectrum(graph).iteritems():
+      n = len(G.vertices)+1
+      for (val_, vs_) in valence_spectrum(G).items():
         n_ = len(vs_)
         if (n_*val_ < n*val) \
              or (n_*val_ == n*val and val_<val):
@@ -1885,202 +1897,329 @@ number of auxiliary functions.
           n = n_
       return (val, vs)
 
+\end{lstlisting}
+
+The function "compatible" returns boolean "True" iff vertices "v1" and
+"v2" have the same valence and number of loops.  (This is used as a
+short-cut test to abandon a candidate mapping before trying more
+computationally expensive full adjacency list extension.)
+\begin{lstlisting}
     def compatible(v1, v2):
-      """Return `True` if vertices `v1` and `v2` are compatible.
-      (i.e., same valence and number of loops - one *could* be
-      mapped onto the other.)
-      """
       if len(v1) == len(v2) and v1.num_loops == v2.num_loops:
         return True
       else:
         return False
         
-    def admissible_vertex_mappings(v, g, ixs):
-      """Iterate over all (indices of) vertices in `g`, which
-      `v` *could* be mapped to (that is, the destination vertex
-      matches `v` in valence and number of loops.
+\end{lstlisting}
+Function "compatible_vertex_mappings" iterates over (indices of)
+vertices in "G" that are compatible with "v" (i.e., which "v" could be
+mapped to). Third argument "ixs" restricts the search to a given
+subset of vertex indices in "G".
+\begin{lstlisting}
+    def compatible_vertex_mappings(v, G, ixs):
+      for index in ixs:
+        if compatible(v, G.vertices[index]):
+          yield index
 
-      Third argument `ixs` restricts the search to the given
-      subset of vertex indices in `g`.
-      """
-      for i in ixs:
-        if compatible(v, g.vertices[i]):
-          yield i
+\end{lstlisting}
 
+The "CannotExtendMap" exception is used for error reporting by the
+"extend_map" function (see below); its code is just Python idiomatic
+way of creating a new custom error.
+\begin{lstlisting}
     class CannotExtendMap(Exception):
-      """Exception raised by `extend_map` on failure to extend a
-      partial map.
+      """
+      Exception raised by `extend_map` on failure
+      to extend a partial map.
       """
       pass
 
-    def extend_map(pv, rots, pe, G1, i1, r, G2, i2):
-      """Extend map `(pv, rots, pe)` by mapping the `i1`-th
-      vertex in `G1` to the `i2`-th vertex in `G2` (and rotating
-      the source vertex by `r` places leftwards).  Return the
-      extended map `(pv, rot, pe)`.
+\end{lstlisting}
 
-      The partial map is a triple `(pv, rot, pe)` as in
-      `Fatgraph.isomorphism` (which see), with the additional
-      proviso that unassigned items in `rot` are represented by
-      `None`.
-      """
+The following "extend_map" function alters the given "(pv,rots,pe)"
+triple by adding a mapping of the "i1"-th vertex of "G1" into the
+"i2"-th vertex of "G2" (and rotating the target vertex by "r" places
+rightwards).  If the extension is successful, it returns the extended
+map "(pv, rot, pe)"; otherwise an exception "CannotExtendMap" is
+raised.  A partial map is represented by a triple "(pv,rot,pe)" (just
+as a "Fatgraph" isomorphism), with the additional proviso that
+unassigned items in "rot" are represented by "None".
+\begin{lstlisting}
+    def extend_map(pv, rots, pe, G1, i1, r, G2, i2):
       v1 = G1.vertices[i1]
       v2 = G2.vertices[i2]
       if not compatible(v1, v2):
         raise CannotExtendMap
 
-      # XXX: rotation has to be >=0 for the [r:r+..] shift below to work
+      # rotation "r" has to be $\geq 0$ for the "[r:r+...]" shift below to work
       if r < 0:
         r += len(v2)
 
+\end{lstlisting}
+If vertex index "i1" already has a mapping according to "pv", then
+check whether the target is the same one that is currently being
+added: if yes, there is nothing more to do and the function can return
+immediately; if not, signal error condition "CannotExtendMap" to
+caller:
+\begin{lstlisting}
       if pv.has_key(i1):
-        if pv[i1] != i2 or (rots[i1] - r) % len(v2) != 0:
+        if pv[i1] != i2 or (rots[i1]-r) % len(v2) != 0:
           raise CannotExtendMap
         else:
-          # this pair has already been added
           return (pv, rots, pe)
 
-      pv[i1] = i2
-      rots[i1] = r
-
+\end{lstlisting}
+Check that the "pe" mapping of edge-labels can be extended by mapping
+labels of edges from "v1" to edges of "v2" (rotated rightwards "r"
+places).  Informally, the "pe.extend" function tries to alter "pe" so
+that labels of corresponding edges in "v1" and "v2" are mapped one to
+the other; more precisely, the label of the cilium at "v1" is mapped
+to the label of the cilum at "v2", the label of the successor is
+mapped to the label of the successor, and so on.  The function
+"pe.extend" returns "None" if "pe" could not be extended according to
+this procedure; in this case "extend_map" raises a "CannotExtendMap"
+exception again.
+\begin{lstlisting}
       # rotating "v1" leftwards is equivalent to rotating "v2" rightwards...
       v2 = v2[r:r+len(v2)]
       if not pe.extend(v1, v2):
         raise CannotExtendMap
+\end{lstlisting}
+Note that the Python object "v2" (alias for "G2.vertices[i2]") is
+modified \emph{in place}; however, due to the cyclical invariance of
+the fatgraph vertices, this does not change the (abstract) fatgraph
+that "G2" represents.
 
-      return (pv, rots, pe)
+Finally, since all compatibility checks have passed, add the mapping
+to "pv" and "rots" and return modified triple:
+\begin{lstlisting}
+      pv[i1] = i2
+      rots[i1] = r
+      return (pv, rots, pe) # end of "extend_map"
 
+\end{lstlisting}
+
+The following function "neighbors" lists vertex-to-vertex mappings
+that extend map "pv" in the neighborhood of vertices "v1" (in the
+domain) and "v2" (in the codomain).  It returns a list of triplets
+"(src, dst, rot)", where:
+\begin{itemize}
+\item "src" is the index of a vertex in "G1",
+   connected to "v1" by an edge "x";
+\item "dst" is the index of a vertex in "G2",
+   connected to "v2" by the image (according to "pe")
+   of edge "x";
+\item "rot" is the rotation to be applied to "G1[src]"
+   so that edge "x" and its image appear
+   at the same index position;
+\end{itemize}
+The algorithm is implemented by looping over the edges at vertex "v1"
+(line~\nr{neighbors:1}): for each edge "x", the variable "src_v"
+stores the vertex index of the endpoint of "x" different from "v1"
+(line~\nr{neighbors:3}), and "src_a" stores the attachment index of
+"x" at this other vertex (line~\nr{neighbors:5}). Looping edges are
+ignored (line~\nr{neighbors:2}), as well as vertices that have already
+been added to "pv" (line~\nr{neighbors:4}).  Similarly, the ``other''
+endpoint and the attachment index of the image of "x" are stored in
+variables "dst_v" and "dst_a" (line~\nr{neighbors:6}).  Finally, the
+rotation needed in mapping "v1" onto "v2" so that "x" and its image
+edge appear at the same attachment index is computed as difference
+between "dst_a" and "src_a" (line~\nr{neighbors:7}).
+\begin{lstlisting}
     def neighbors(pv, pe, G1, v1, G2, v2):
-      """List of vertex-to-vertex mappings that extend map `pv`
-      in the neighborhood of vertices `v1` (in the domain) and
-      `v2` (in the codomain).
-
-      Return a list of triplets `(src, dst, rot)`, where:
-         * `src` is the index of a vertex in `G1`,
-         connected to `v1` by an edge `x`;
-         * `dst` is the index of a vertex in `G2`,
-         connected to `v2` by the image (according to `pe`)
-         of edge `x`;
-         * `rot` is the rotation to be applied to `G1[src]`
-         so that edge `x` and its image appear
-         at the same index position;
-      """
       result = []
-      for x in G1.vertices[v1]:
-        if G1.edges[x].is_loop():
-          continue # with next edge `x`
-        ((s1, a1), (s2, a2)) = G1.edges[x].endpoints
-        src_v = s2 if (s1 == v1) else s1
-        # ignore vertices that are already in the domain of `m`
-        if src_v in pv:
-          continue # to next `x`
-        src_i = a2 if (s1 == v1) else a1
+      for x in G1.vertices[v1]:                      |\n{neighbors:1}|
+        if G1.edges[x].is_loop():                    |\n{neighbors:2}|
+          continue # with next edge "x"
+        ((s1, a1), (s2, a2)) = G1.edges[x].endpoints 
+        src_v = s2 if (s1 == v1) else s1             |\n{neighbors:3}|
+        if src_v in pv:                              |\n{neighbors:4}|
+          continue # to next "x"
+        src_a = a2 if (s1 == v1) else a1             |\n{neighbors:5}|
         ((d1, b1), (d2, b2)) = G2.edges[pe[x]].endpoints
-        dst_v, dst_i = (d2,b2) if (d1 == v2) else (d1,b1)
-        # array of (source vertex index, dest vertex index, rotation)
-        result.append((src_v, dst_v, dst_i-src_i))
-      return result
+        (dst_v,dst_a) = (d2,b2) if (d1 == v2) else (d1,b1) |\n{neighbors:6}|
+        result.append((src_v, dst_v, dst_a-src_a))   |\n{neighbors:7}|
+      return result  # end of "neighbors"
       
+\end{lstlisting}
+
+The body of the "Fatgraph.isomorphism" function begins here.
+
+Since the isomorphism computation is implemented as an exhaustive
+search, it is worth doing a few trivial checks to rule out simple
+cases (for efficiency reasons):
+\begin{lstlisting}
     # if graphs differ in vertex valences, no isomorphisms
     vs1 = valence_spectrum(G1)
     vs2 = valence_spectrum(G2)
     if not set(vs1.keys()) == set(vs2.keys()):
       return # StopIteration
     # if graphs have unequal vertex distribution by valence, no isomorphisms
-    for val in G1.vertex_valences():
+    for val in vertex_valences(G1):
       if len(vs1[val]) != len(vs2[val]):
         return # StopIteration
 
-    (val, vs) = starting_vertices(G1)
-    src0 = vs[0]
-    V1 = G1.vertices[src0]
-    for dst0 in admissible_vertex_mappings(V1, G2, vs2[val]):
-      for rot0 in range(val):
+\end{lstlisting}
+
+The main algorithm for enumerating isomorphisms can now be described.
+By the rigidity lemma~\ref{lemma:rigidity}, any fatgraph isomorphism
+is uniquely determined by the mapping of a small neighborhood of any
+vertex.  The overall strategy of the algorithm is thus to pick a pair
+of ``compatible'' vertices and try to extend the map as in the proof
+of of lemma~\ref{lemma:rigidity}.  This isomorphisms enumeration
+algorithm has thus quadratic complexity in the number of
+vertices.\FIXME{Example of fatgraph where the upper bound is actually
+  attained??}  For each pair of same-valence vertices and for each
+rotation displacement (up to the valence), an attempt to map one onto
+the other should be made.  
+
+Since an isomorphism is uniquely determined by its restriction to
+\emph{any one} vertex, one can restrict to considering just pairs of
+the form $(v_0, w)$ where $v_0$ is a chosen vertex in $G_1$.  It
+should be selected so to minimize the number of mapping attempts
+performed; this is currently done by minimizing the product of valence
+and number of vertices of that valence on $G_2$ (line~\nr{iso:1}), and
+then picking a random vertex of the chosen valence in $G_1$ as $v_0$
+(line~\nr{iso:2}).\footnote{The checks already performed ensure that
+  \Verb`G1` and \Verb`G2` have the same ``valence spectrum'', so
+  \Verb`G1` has at least one vertex of the chosen valence.}
+\begin{lstlisting}
+    (valence, indexes) = starting_vertices(G2)            |\n{iso:1}|
+    v0_index = vs1[valence][0]                            |\n{iso:2}|
+    v0 = G1.vertices[v0_index]
+\end{lstlisting}
+Now the algorithm tries all possible ways of mapping $v_0$ into a
+compatible vertex $w$ in $G_2$:
+\begin{lstlisting}
+    for w_index in compatible_vertex_mappings(v0, G2, indexes):
+      for rot in range(valence):
         try:
-          # pass 0: init new (pv, rots, pe) triple
+\end{lstlisting}
+The main part of the algorithm mimicks the construction in the proof
+of Lemma~\ref{lemma:rigidity}.  First, given a target vertex "w" and a
+rotation "rot", a new triple "(pv,rots,pe)" is created and set to
+represent the initial mapping of (a small neighborhood of) $v_0$ to (a
+small neighborhood of) $w$:
+\begin{lstlisting}
           pv = Permutation()
           rots = [ None for x in range(G1.num_vertices) ]
           pe = Permutation()
 
-          # pass 1: map `V1` to "v2" and build map
-          # of neighboring vertices for next pass
-          pv[src0] = dst0
-          rots[src0] = rot0
-          if not pe.extend(V1, G2.vertices[dst0][rot0:rot0+val]):
-            continue # to next `rot0`
+          pv[v0_index] = w_index
+          rots[v0_index] = rot
+          if not pe.extend(v0, G2.vertices[w_index][rot:rot+valence]):
+            continue # to next `rot`
 
-          # pass 2: extend map to neighboring vertices
-          nexts = neighbors(pv, pe, G1, src0, G2, dst0)
+\end{lstlisting}
+The invocation to "pe.extend" may fail if the edge labels on $v_0$ and
+$w$ (rotated by "rot") do not match, in which case execution jumps to
+the next candidate "rot".
+Elements in "rots" are initialized to "None", to mark that
+the triple only defines a ``partial map''.
+
+The map defined by "(pv,rots,pe)" is then extended to neighbors of the
+vertices already inserted:
+\begin{lstlisting}
+          nexts = neighbors(pv, pe, G1, v0_index, G2, w_index)   |\n{iso:3}|
           while len(pv) < G1.num_vertices:
             neighborhood = []
-            for (i1, i2, r) in nexts:
+            for (i1, i2, r) in nexts:                            |\n{iso:4}|
               (pv, rots, pe) = extend_map(pv, rots, pe, G1, i1, r, G2, i2)
-              neighborhood += neighbors(pv, pe, G1, i1, G2, i2)
+              neighborhood += neighbors(pv, pe, G1, i1, G2, i2)  |\n{iso:5}|
             nexts = neighborhood
 
-        # extension failed in the above block, continue with next candidate
+\end{lstlisting}
+Indeed:
+\begin{itemize}
+\item the variable "nexts" is loaded with a list of all possible
+  mappings of a vertex adjacent to $v_0$ onto a vertex adjacent to $w$
+  (line~\nr{iso:3});
+\item if any such mapping can extend the current "(pv,rots,pe)", the
+  neighbors of the newly-added vertex pair are appended to the
+  "neighborhood" list (lines~\nr{iso:4}--\nr{5});
+\item the contents of "neighborhood" are used to load the variable
+  "nexts" during the subsequent iteration:
+\end{itemize}
+
+If any "extend_map" failed in the above block, continue with next
+candidate "rot":
+\begin{lstlisting}
         except CannotExtendMap:
-          continue # to next "rot0"
+          continue # to next "rot"
 
-        # finally
+\end{lstlisting}
+If the execution flow ever reaches this point, then the current
+"(pv,rots,pe)" triple represents a bijective map on the vertices and
+edges, which preserves the adjacency relations.  It is thus an
+isomorphism and we can return it to the caller function:
+\begin{lstlisting}
         yield Isomorphism(G1, G2, pv, rots, pe)
+        # end of "Fatgraph.isomorphism"
 
+\end{lstlisting}
 
+Given the "Fatgraph.isomorphism" enumeration algorithm, it is trivial
+to provide a method for computing all automorphisms of a fatgraph:
+\begin{lstlisting}
+  def automorphisms(self):
+    return self.isomorphisms(self)
+
+\end{lstlisting}
+Unfortunately, there is no shortcut to computing the cardinality of
+the automorphism group, other than explicitly computing all the
+automorphisms and counting them:
+\begin{lstlisting}
+  def num_automorphisms(self):
+    return len(list(self.automorphisms()))
+
+\end{lstlisting}
+
+A comparison "G1 == G2" between two "Fatgraph" instances is internally
+translated by Python into a call to the following
+"Fatgraph.__eq__(G1,G2)" method.  The "__eq__" method shall return
+"True" when the two "Fatgraph" instances being compared are
+isomorphic, and "False" otherwise.
+\begin{lstlisting}
   # Instances of this class will compare equal if there is an
   # isomorphism mapping one to the other.
   def __eq__(self, other):
     """Return `True` if `self` and `other` are isomorphic."""
 
-    # shortcuts
+\end{lstlisting}
+Comparison of a few invariants is attempted before invoking the
+"isomorphism" method: if invariants do not compare equal, then the two
+fatgraphs are not isomorphic and we can bail out early:
+\begin{lstlisting}
     if self is other:
       return True
     if self.invariants != other.invariants:
       return False
 
-    # go the long way: try to find an explicit isomorphims
-    # between "self" and "other"
+\end{lstlisting}
+Otherwise, we have to go the long way and try to find an explicit
+isomorphism between "G1" and "G2".  Since we are not interested in the
+actual isomorphism, we just try getting one (line~\nr{fgeq:1}): if we
+succed, the isomorphisms exists and we return a positive answer to the
+equality question; else, Python signals a "StopIteration" exception to
+indicate that there are no results from the "isomorphism" iterator
+(line~\nr{fgeq:2}): so there are no isomorphisms between the given
+graphs and we can only return "False":
+\begin{lstlisting}
     try:
       # if there is any morphism, then return "True"
-      self.isomorphisms(other).next()
+      self.isomorphisms(other).next()         |\n{fgeq:1}|
       return True
-    except StopIteration:
+    except StopIteration:                     |\n{fgeq:2}|
       # list of morphisms is empty, objects are not equal.
       return False
 
-
-  # both "__eq__" and "__ne__" are needed 
-  # for testing equality of Python objects
+\end{lstlisting}
+Python's object comparison protocol states that a "__ne__" method
+should be provided, for inequality comparisons "G1 != G2"; in this
+case, "__ne__" just returns the opposite of "__eq__":
+\begin{lstlisting}
   def __ne__(self, other):
-    """The opposite of `__eq__` (which see)."""
     return not self.__eq__(other)
-
-
-  def automorphisms(self):
-    """Enumerate automorphisms of this `Fatgraph` object.
-
-    See `.isomorphisms()` for details of how a `Fatgraph`
-    isomorphism is represented.
-    """
-    return self.isomorphisms(self)
-
-
-  def num_automorphisms(self):
-    """Return the cardinality of the automorphism group of this
-    `Fatgraph` object.
-
-    Examples::
-
-      >>> Fatgraph([Vertex([0,1,2]), Vertex([0,2,1])]).num_automorphisms()
-      6
-      >>> Fatgraph([Vertex([0,1,1]), Vertex([0,2,2])]).num_automorphisms()
-      2
-    """
-    return len(list(self.automorphisms()))
-  
-
-  def vertex_valences(self):
-    return frozenset(len(v) for v in self.vertices)
-
 \end{lstlisting}
 
 
