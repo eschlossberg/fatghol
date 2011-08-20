@@ -1797,98 +1797,9 @@ class Fatgraph(EqualIfIsomorphic):
         spec = self.valence_spectrum()
         return dict((v, len(spec[v]))
                     for v in spec.iterkeys())
+
     
     
-def MakeNumberedGraphs(graph):
-    """Return all distinct (up to isomorphism) decorations of
-    `Fatgraph` instance `graph` with a numbering of the boundary
-    cycles.
-
-    Examples::
-    
-      >>> ug1 = Fatgraph([Vertex([2,0,0]), Vertex([2,1,1])])
-      >>> for g in MakeNumberedGraphs(ug1): print g
-      NumberedFatgraph(Fatgraph([Vertex([2, 0, 0]), Vertex([2, 1, 1])]),
-                       numbering={BoundaryCycle([(0, 2, 0), (1, 2, 0), (0, 0, 1), (1, 0, 1)]): 0,
-                                  BoundaryCycle([(1, 1, 2)]): 1,
-                                  BoundaryCycle([(0, 1, 2)]): 2})
-      NumberedFatgraph(Fatgraph([Vertex([2, 0, 0]), Vertex([2, 1, 1])]),
-                       numbering={BoundaryCycle([(0, 1, 2)]): 0,
-                                  BoundaryCycle([(0, 2, 0), (1, 2, 0), (0, 0, 1), (1, 0, 1)]): 1,
-                                  BoundaryCycle([(1, 1, 2)]): 2})
-      NumberedFatgraph(Fatgraph([Vertex([2, 0, 0]), Vertex([2, 1, 1])]),
-                       numbering={BoundaryCycle([(0, 1, 2)]): 0,
-                                  BoundaryCycle([(1, 1, 2)]): 1,
-                                  BoundaryCycle([(0, 2, 0), (1, 2, 0), (0, 0, 1), (1, 0, 1)]): 2})
-       
-    Note that, when only one numbering out of many possible ones is
-    returned because of isomorphism, the returned numbering may not be
-    the trivial one (it is infact the first permutation of 0..n
-    returned by `InplacePermutationIterator`)::
-      
-      >>> ug2 = Fatgraph([Vertex([2,1,0]), Vertex([2,0,1])])
-      >>> MakeNumberedGraphs(ug2)
-      [NumberedFatgraph(Fatgraph([Vertex([2, 1, 0]), Vertex([2, 0, 1])]),
-                        numbering={BoundaryCycle([(1, 2, 0), (0, 0, 1)]): 0,
-                                   BoundaryCycle([(0, 2, 0), (1, 0, 1)]): 1,
-                                   BoundaryCycle([(0, 1, 2), (1, 1, 2)]): 2})]
-
-    When the graph has only one boundary component, there is only one
-    possible numbering, which is actually returned::
-    
-      >>> ug3 = Fatgraph([Vertex([1,0,1,0])])
-      >>> MakeNumberedGraphs(ug3)
-      [NumberedFatgraph(Fatgraph([Vertex([1, 0, 1, 0])]),
-                        numbering={BoundaryCycle([(0, 3, 0), (0, 2, 3), (0, 1, 2), (0, 0, 1)]): 0})]
-      
-    """
-    bc = graph.boundary_cycles
-    n = len(bc) # == graph.num_boundary_cycles()
-
-    ## Find out which automorphisms permute the boundary cycles among
-    ## themselves.
-    # XXX: implement `Permutation.__hash__()` and turn `K` into a `set`.
-    K = []
-    for a in graph.automorphisms():
-        k = Permutation()
-        for src in xrange(n):
-            dst_cy = bc[src].transform(a, graph)
-            try:
-                dst = bc.index(dst_cy)
-            except ValueError: # `dst_cy` not in `bc`
-                break # continue with next `a`
-            k[src] = dst
-        if len(k) != n: # not every `src` was mapped to a `dst`
-            continue # with next `a`
-        if k not in K:
-            # `a` induces permutation `k` on the set `bc`
-            K.append(k)
-
-    ## There will be as many distinct numberings as there are cosets
-    ## of `K` in `Sym(n)`.
-    if len(K) > 1:
-        def unseen(candidate, K, already):
-            """Return `False` iff any of the images of `candidate` by an
-            element of group `K` is contained in set `already`.
-            """
-            for k in K:
-                if k.rearranged(candidate) in already:
-                    return False
-            return True
-        numberings = [ ]
-        for candidate in InplacePermutationIterator(range(n)):
-            if unseen(candidate, K, numberings):
-                numberings.append(copy(candidate))
-    else:
-        # if `K` is the one-element group, then all orbits are trivial
-        numberings = PermutationIterator(range(n))
-    
-    result = [ NumberedFatgraph(graph, zip(bc, numbering))
-               for numbering in numberings ]
-    return result
-
-
-
 class NumberedFatgraph(Fatgraph):
     """A `Fatgraph` decorated with a numbering of the boundary components.
 
@@ -2337,65 +2248,6 @@ class MgnGraphsIterator(BufferingIterator):
         return next_batch
 
 #MgnGraphsIterator = persist.PersistedIterator(_MgnGraphsIterator)
-
-
-
-class MgnNumberedGraphsIterator(BufferingIterator):
-    """Iterate over all connected numbered fatgraphs having the
-    prescribed genus `g` and number of boundary cycles `n`.
-    
-    Examples::
-
-      >>> for g in MgnNumberedGraphsIterator(0,3): print g
-      NumberedFatgraph(Fatgraph([Vertex([1, 2, 1]), Vertex([2, 0, 0])]),
-                       numbering={BoundaryCycle([(0, 1, 2), (1, 2, 0), (0, 0, 1), (1, 0, 1)]): 0,
-                                  BoundaryCycle([(1, 1, 2)]): 1,
-                                  BoundaryCycle([(0, 2, 0)]): 2})
-      NumberedFatgraph(Fatgraph([Vertex([1, 2, 1]), Vertex([2, 0, 0])]),
-                       numbering={BoundaryCycle([(0, 2, 0)]): 0,
-                                  BoundaryCycle([(0, 1, 2), (1, 2, 0), (0, 0, 1), (1, 0, 1)]): 1,
-                                  BoundaryCycle([(1, 1, 2)]): 2})
-      NumberedFatgraph(Fatgraph([Vertex([1, 2, 1]), Vertex([2, 0, 0])]),
-                       numbering={BoundaryCycle([(0, 2, 0)]): 0,
-                                  BoundaryCycle([(1, 1, 2)]): 1,
-                                  BoundaryCycle([(0, 1, 2), (1, 2, 0), (0, 0, 1), (1, 0, 1)]): 2})
-      NumberedFatgraph(Fatgraph([Vertex([1, 0, 2]), Vertex([2, 0, 1])]),
-                       numbering={BoundaryCycle([(0, 0, 1), (1, 1, 2)]): 0,
-                                  BoundaryCycle([(0, 2, 0), (1, 2, 0)]): 1,
-                                  BoundaryCycle([(0, 1, 2), (1, 0, 1)]): 2})
-      NumberedFatgraph(Fatgraph([Vertex([1, 1, 0, 0])]),
-                       numbering={BoundaryCycle([(0, 0, 1)]): 0,
-                                  BoundaryCycle([(0, 2, 3)]): 1,
-                                  BoundaryCycle([(0, 1, 2), (0, 3, 0)]): 2})
-      NumberedFatgraph(Fatgraph([Vertex([1, 1, 0, 0])]),
-                       numbering={BoundaryCycle([(0, 1, 2), (0, 3, 0)]): 0,
-                                  BoundaryCycle([(0, 0, 1)]): 1,
-                                  BoundaryCycle([(0, 2, 3)]): 2})
-      NumberedFatgraph(Fatgraph([Vertex([1, 1, 0, 0])]),
-                       numbering={BoundaryCycle([(0, 2, 3)]): 0,
-                                  BoundaryCycle([(0, 1, 2), (0, 3, 0)]): 1,
-                                  BoundaryCycle([(0, 0, 1)]): 2})
-     
-
-      >>> list(MgnNumberedGraphsIterator(1,1)) == [
-      ...     NumberedFatgraph(Fatgraph([Vertex([1, 0, 2]), Vertex([2, 1, 0])]),
-      ...                      numbering=[(Fatgraph.BoundaryCycle([(0, 2, 0), (1, 1, 2), (0, 1, 2),
-      ...                                                          (1, 0, 1), (0, 0, 1), (1, 2, 0)]), 0) ]),
-      ...     NumberedFatgraph(Fatgraph([Vertex([1, 0, 1, 0])]),
-      ...                      numbering=[(Fatgraph.BoundaryCycle([(0, 3, 0), (0, 2, 3),
-      ...                                                          (0, 1, 2), (0, 0, 1)]), 0) ])
-      ...  ]
-      True
-    """
-
-    def __init__(self, g, n):
-        self.__naked_graphs_iterator = MgnGraphsIterator(g, n)
-        BufferingIterator.__init__(self)
-
-    def refill(self):
-        return MakeNumberedGraphs(self.__naked_graphs_iterator.next())
-
-#MgnNumberedGraphsIterator = persist.PersistedIterator(_MgnNumberedGraphsIterator)
 
 
 
