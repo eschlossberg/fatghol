@@ -1086,36 +1086,37 @@ class Fatgraph(EqualIfIsomorphic):
         automorphism group, and a representative for each orbit.
         
         Returns a dictionary, whose keys are the representatives, and
-        whose values are the orbits.
-
-        Orbits are represented as Python `list` objects; the order the
-        items appear in a list `L` is the order the orbit is swept by
-        applying graph automorphisms to `L[0]`.
+        whose values are the orbits.  Orbits are represented as Python
+        `set` objects.
 
         Examples::
 
-          >>> g = Fatgraph([Vertex([0,1,2]), Vertex([0,1,2])])
-          >>> g.edge_orbits()
-          { 0: [0, 1, 2] }
+          >>> Fatgraph([Vertex([0,1,2]), Vertex([0,1,2])]).edge_orbits()
+          {0: set([0, 1, 2])}
+
+          >>> Fatgraph([Vertex([1, 0, 2]), Vertex([2, 1, 0])]).edge_orbits()
+          {0: set([0, 1, 2])}
           
         """
-        orbits = dict( (x,[x]) for x in xrange(self.num_edges) )
-        seen = set()
+        orbits = dict( (x, set([x])) for x in xrange(self.num_edges) )
         for a in self.automorphisms():
             edge_permutation = a[2]
             for x in xrange(self.num_edges):
-                if x in seen:
+                if x not in orbits:
                     continue
                 y = edge_permutation[x]
+                if y not in orbits:
+                    continue
                 # `x` and `y` are in the same orbit, only keep the one
                 # with lower abs. value, and remove the other.
-                if x < y:
-                    orbits[x].append(y)
-                    if y not in seen:
-                        del orbits[y]
-                        seen.add(y)
-                else: # x > y
-                    continue
+                if y > x:
+                    orbits[x].update(orbits[y])
+                    del orbits[y]
+        # check that all elements lie in some orbit
+        assert sum(len(set(o)) for o in orbits.itervalues()) == self.num_edges, \
+               "Fatgraph.edge_orbits():" \
+               " Computed orbits `%s` do not exhaust edge set `%s`" \
+               " [%s.edge_orbits() -> %s]" % (orbits, list(self.edges()), self, orbits)
         return orbits
 
 
@@ -1126,39 +1127,39 @@ class Fatgraph(EqualIfIsomorphic):
         orbit.
         
         Returns a dictionary, whose keys are the representatives, and
-        whose values are the orbits.
-
-        Orbits are represented as Python `list` objects; the order the
-        items appear in a list `L` is the order the orbit is swept by
-        applying graph automorphisms to `L[0]`.
+        whose values are the orbits.  Orbits are represented as Python
+        `set` objects.
 
         Examples::
 
-          >>> g = Fatgraph([Vertex([0,1,2]), Vertex([0,1,2])])
-          >>> g.edge_pair_orbits()
-          { 0:[0,1,2] }
+          >>> Fatgraph([Vertex([0,1,2]), Vertex([0,1,2])]).edge_pair_orbits()
+          {(0, 1): set([(0, 1), (1, 2), (2, 0)]),
+           (0, 0): set([(0, 0), (1, 1), (2, 2)]),
+           (0, 2): set([(1, 0), (0, 2), (2, 1)])}
           
         """
         edge_pairs = [ (x,y) 
                        for x in xrange(self.num_edges)
                        for y in xrange(self.num_edges) ]
-        orbits = dict( (p,[p]) for p in edge_pairs )
-        seen = set()
+        orbits = dict( (p, set([p])) for p in edge_pairs )
         for a in self.automorphisms():
             edge_permutation = a[2]
             for p in edge_pairs:
-                if p in seen:
+                if p not in orbits:
                     continue
                 q = (edge_permutation[p[0]], edge_permutation[p[1]])
+                if q not in orbits:
+                    continue
                 # `p` and `q` are in the same orbit, only keep the one
                 # with lower abs. value, and remove the other.
                 if p < q:
-                    orbits[p].append(q)
-                    if q not in seen:
-                        del orbits[q]
-                        seen.add(q)
-                else: # x > y
-                    continue
+                    orbits[p].update(orbits[q])
+                    del orbits[q]
+        # check that all elements lie in some orbit
+        assert sum(len(set(o)) for o in orbits.itervalues()) == len(edge_pairs), \
+               "Fatgraph.edge_pair_orbits():" \
+               " Computed orbits `%s` do not exhaust edge pairs set `%s`" \
+               " [%s.edge_pair_orbits() -> %s]" % (orbits, edge_pairs, self, orbits)
         return orbits
 
 
