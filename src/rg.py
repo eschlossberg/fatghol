@@ -12,6 +12,7 @@ import logging
 
 import debug, sys
 from copy import copy
+import operator
 from itertools import chain,count,izip
 import types
 
@@ -228,6 +229,10 @@ class Fatgraph(EqualIfIsomorphic, PermanentID):
               True
 
         """
+        # set this instance's _persistent_id
+        PermanentID.__init__(self)
+
+        # dispatch based on type of arguments passed
         if isinstance(g_or_vs, Fatgraph):
             # copy-constructor
             self._vertextype = vertextype
@@ -296,9 +301,6 @@ class Fatgraph(EqualIfIsomorphic, PermanentID):
             else:
                 self.edge_numbering = [ x for x in xrange(self.num_edges) ]
 
-        # set this instance's _persistent_id
-        PermanentID.__init__(self)
-        
         # before computing invariants, check that internal data
         # structures are in a consistent state
         assert self._ok()
@@ -308,7 +310,7 @@ class Fatgraph(EqualIfIsomorphic, PermanentID):
             self.num_vertices,
             self.num_edges,
             self.num_external_edges if self.num_external_edges > 0
-                                    else self.num_boundary_components(),
+                                    else self.num_boundary_cycles(),
             #self.vertex_valences(),
             #self.vertex_valence_distribution(),
             )
@@ -387,22 +389,29 @@ class Fatgraph(EqualIfIsomorphic, PermanentID):
         
         return True
 
+
     def __getitem__(self, index):
         return self.vertices[index]
+
 
     def __iter__(self):
         """Return iterator over vertices."""
         return iter(self.vertices)
 
+
     def __repr__(self):
         if hasattr(self, 'num_external_edges') and self.num_external_edges > 0:
             return "Fatgraph(%s, num_external_edges=%d)" \
                    % (repr(self.vertices), self.num_external_edges)
-        else:
+        elif hasattr(self, 'vertices'):
             return "Fatgraph(%s)" % repr(self.vertices)
+        else:
+            return "Fatgraph(<Initializing...>)"
+
     
     def __str__(self):
         return repr(self)
+
 
     def automorphisms(self):
         """Enumerate automorphisms of this `Fatgraph` object.
@@ -412,121 +421,131 @@ class Fatgraph(EqualIfIsomorphic, PermanentID):
         """
         return self.isomorphisms(self)
 
+
+    class BoundaryCycle(frozenset):
+        """A boundary cycle of a Fatgraph.
+
+        Boundary cycles are a cyclic sequence of 'corners': a corner
+        consists of a vertex `v` and (an unordered pair of) two
+        consecutive indices (in the cyclic order at `v`, so, either `j
+        == i+1` or `i` and `j` are the starting and ending indices).
+
+        Two boundary cycles are equal if they comprise the same
+        corners.
+        """
+        def __init__(self, triples, graph=None):
+            """Construct a `BoundaryCycle` instance from a sequence of
+            triples `(v, i, j)`, where `i` and `j` are consecutive (in
+            the cyclic order sense) indices at a vertex `v`.
+            """
+            self.origin = graph
+            frozenset.__init__(self, triples)
+            if __debug__:
+                if graph is not None:
+                    for (v, i, j) in self:
+                        l = len(graph.vertices[v])-1
+                        assert (abs(i-j) == 1) or (set((i,j)) == set((0,l))), \
+                               "Fatgraph.BoundaryCycle():" \
+                               " Non-consecutive indices in triple `%s`" \
+                               % ((v,i,j),)
+
+        def transform(self, iso):
+            """Return a new `BoundaryCycle` instance, obtained by
+            transforming each corner according to a graph isomorphism.
+            """
+            assert self.origin is not None
+            (pv, rots, pe) = iso
+            triples = []
+            for (v, i, j) in self:
+                l = len(self.origin.vertices[v])
+                # create transformed triple 
+                v_ = pv[v]
+                i_ = (i + rots[v]) % l # XXX: is it `-` or `+`?
+                j_ = (j + rots[v]) % l
+                # ensure the contract is honored, that `j` is the
+                # index _following_ `i` in the cyclic order
+                if i_ == 0 and j_ == l:
+                    i_, j_ = j_, i_
+                triples.append((v_, i_, j_))
+            return Fatgraph.BoundaryCycle(triples)
+                
+
     @cache
-    def boundary_components(self):
-        """Return the set of boundary components of this `Fatgraph` object.
+    def boundary_cycles(self):
+        """Return a list of boundary cycles of this `Fatgraph` object.
 
-        Each boundary component is represented by the list of (colored)
-        edges::
+        Boundary cycles are represented as a cyclic list of 'corners':
+        a corner is a triple `(v, i, j)` consisting of a vertex and
+        two consecutive indices (in the cyclic order, so, either `j ==
+        i+1` or `i` and `j` are the starting and ending indices)::
+        
+          >>> Fatgraph([Vertex([2,1,0]),Vertex([2,0,1])]).boundary_cycles()
+          [BoundaryCycle([(1, 0, 1), (0, 2, 0)]),
+           BoundaryCycle([(1, 1, 2), (0, 1, 2)]),
+           BoundaryCycle([(1, 2, 0), (0, 0, 1)])]
 
-          >>> Fatgraph([Vertex([2,1,0]),Vertex([2,0,1])]).boundary_components()
-          set([CyclicTuple((2, 0)), CyclicTuple((1, 2)), CyclicTuple((0, 1))])
+        This verbose representation allows one to distinguish the
+        boundary cycles made from the same set of edges::
 
-        If both sides of an edge belong to the same boundary
-        component, that edge appears twice in the list::
-
-          >>> Fatgraph([Vertex([2,1,1]),Vertex([2,0,0])]).boundary_components()
-          set([CyclicTuple((2, 0, 2, 1)), CyclicTuple((1,)), CyclicTuple((0,))])
-          
-          >>> Fatgraph([Vertex([2,1,0]),Vertex([2,1,0])]).boundary_components()
-          set([CyclicTuple((2, 1, 0, 2, 1, 0))])
-          
+          >>> Fatgraph([Vertex([0,1,2,0,1,2])]).boundary_cycles()
+          [BoundaryCycle([(0, 0, 1), (0, 2, 3), (0, 4, 5)]),
+           BoundaryCycle([(0, 0, 5), (0, 3, 4), (0, 1, 2)])]
         """
         assert self.num_external_edges == 0, \
-               "Fatgraph.boundary_components: "\
-               " cannot compute boundary components for" \
+               "Fatgraph.boundary_cycles: "\
+               " cannot compute boundary cycles for" \
                " a graph with nonzero external edges: %s" % self
-        
-        # micro-optimizations
-        L = self.num_edges
-        endpoints_v = self.endpoints_v
-        endpoints_i = self.endpoints_i
 
-        # pass1: build a "copy" of `graph`, replacing each edge
-        # coloring with a triplet `(other, index, edge)` pointing to
-        # the other endpoint of that same edge: the element at
-        # position `index` in vertex `other`.
-        pass1 = []
-        for (index_of_vertex_in_graph, vertex) in enumerate(self.vertices):
-            replacement = []
-            for (index_of_edge_in_vertex, edge) in enumerate(vertex):
-                (v1, v2) = endpoints_v[edge]
-                (i1, i2) = endpoints_i[edge]
-                if v1 != v2:
-                    if v1 == index_of_vertex_in_graph:
-                        other_end = v2
-                        other_index = i2
-                    else:
-                        other_end = v1
-                        other_index = i1
-                else:
-                    other_end = v1 # == v2, that is *this* vertex
-                    if index_of_edge_in_vertex == i1:
-                        other_index = i2
-                    else:
-                        other_index = i1
-                # replace other_index with index of *next* edge
-                # (in the vertex cyclic order)
-                if other_index == len(self.vertices[other_end])-1:
-                    other_index = 0
-                else:
-                    other_index += 1
-                replacement.append((other_end, other_index, edge))
-            pass1.append(replacement)
+        # auxiliary function
+        def other_end(graph, edge, vertex, attachment):
+            """Return the other endpoint of `edge` as a pair `(v, i)`.
+            """
+            ends = zip(graph.endpoints_v[edge], graph.endpoints_i[edge])
+            if ends[0] == (vertex, attachment):
+                return ends[1]
+            else:
+                return ends[0]
 
-        # pass2: now build a linear list, each element of the list
-        # corresponding to an half-edge, of triples `(pos, seen,
-        # edge)` where `pos` is the index in this list where the other
-        # endpoint of that edge is located, `seen` is a flag, set to
-        # `False` for half-edges that have not yet been walked
-        # through, and `edge` is the corresponding edge.
-        pass2 = []
-        # build indices to the where each vertex begins in the linear list
-        vi=[0]
-        for vertex in self.vertices:
-            vi.append(vi[-1]+len(vertex))
-        # build list from collapsing the 2-level structure
-        for vertex in pass1:
-            for triplet in vertex:
-                pass2.append([vi[triplet[0]]+triplet[1], False, triplet[2]])
+        # Build the collection of "corners" of `graph`,
+        # structured just like the set of vertices.
+        # By construction, `corners[v][i]` has the the
+        # form `(v,i,j)` where `j` is the index following
+        # `i` in the cyclic order.
+        corners = [ [ (v, i, (i+1)%len(self.vertices[v])) for i in xrange(len(self.vertices[v])) ]
+                    for v in xrange(self.num_vertices) ]
 
-        # pass3: pick up each element of the linear list, and follow it
-        # until we come to an already marked one.
         result = []
-        pos = 0
-        while pos < len(pass2):
-            # fast forward to an element that we've not yet seen
-            while (pos < len(pass2)) and (pass2[pos][1] == True):
-                pos += 1
-            if pos >= len(pass2):
+        while True:
+            # fast-forward to the first unused corner
+            for v in xrange(self.num_vertices):
+                for i in xrange(len(self.vertices[v])):
+                    if corners[v][i] is not None:
+                        break
+                if corners[v][i] is not None:
+                    break
+            if corners[v][i] is None:
                 break
-            # walk whole chain of edges
-            i = pos
-            result.append([]) # new boundary component
-            while pass2[i][1] == False:
-                result[-1].append(pass2[i][2])
-                pass2[i][1] = True
-                i = pass2[i][0]
-            pos += 1
 
-        # consistency check: each edge must occur two times
-        # (either twice in the same b.c., or in two distinct
-        # components)
-        if __debug__:
-            cnt = [0] * self.num_edges
-            for bc in result:
-                for edge in bc:
-                    cnt[edge] += 1
-            for x in xrange(len(cnt)):
-                assert cnt[x] == 2, \
-                       "Fatgraph.boundary_components:"\
-                       " edge %d occurs %d times "\
-                       " in boundary components `%s`"\
-                       " of graph `%s`"\
-                       % (x, cnt[x], result, self)
+            # build a list of corners comprising the same boundary
+            # cycle: start with one corner, follow the edge starting
+            # at the second delimiter of the corner to its other
+            # endpoint, and repeat until we come back to the starting
+            # point.  
+            corner = None
+            start = (v,i)
+            triples = []
+            while (v,i) != start or len(triples) == 0:
+                corner = corners[v][i]
+                corners[v][i] = None
+                triples.append(corner)
+                assert v == corner[0]
+                assert i == corner[1]
+                j = corner[2]
+                edge = self.vertices[v][j]
+                (v,i) = other_end(self, edge, v, j)
+            result.append(Fatgraph.BoundaryCycle(triples, graph=self))
 
-        # that's all, folks!
-        return list(CyclicTuple(bc) for bc in result)
+        return result
         
 
     def bridge(self, edge1, side1, edge2, side2):
@@ -888,26 +907,6 @@ class Fatgraph(EqualIfIsomorphic, PermanentID):
           Fatgraph([Vertex([0, 1, 0, 1])])
           >>> Fatgraph([Vertex([2,1,0]), Vertex([2,1,0])]).contract(2)
           Fatgraph([Vertex([1, 0, 1, 0])])
-
-        If boundary components have already been computed, they are
-        adapted and set in the contracted graph too::
-
-          >>> g1 = Fatgraph([Vertex([2,1,1]), Vertex([2,0,0])])
-          >>> g1.boundary_components() # compute b.c.'s
-          [CyclicTuple((2, 0, 2, 1)), CyclicTuple((1,)), CyclicTuple((0,))]
-          >>> g2 = g1.contract(2)
-          >>> g2.boundary_components()
-          [CyclicTuple((1, 0)), CyclicTuple((1,)), CyclicTuple((0,))]
-
-          >>> g1 = Fatgraph([Vertex([2,1,0]), Vertex([2,0,1])])
-          >>> g1.boundary_components() # compute b.c.'s
-          [CyclicTuple((2, 0)), CyclicTuple((1, 2)), CyclicTuple((0, 1))]
-          >>> g2 = g1.contract(2)
-          >>> g2.boundary_components()
-          [CyclicTuple((1,)), CyclicTuple((0, 1)), CyclicTuple((0,))]
-
-        In the above examples, notice that any reference to edge `2`
-        has been removed from the boundary cycles after contraction.
         """
         # check that we are not contracting a loop or an external edge
         assert not self.is_loop(edgeno), \
@@ -920,9 +919,7 @@ class Fatgraph(EqualIfIsomorphic, PermanentID):
                " must be in range 0..%d" \
                % (edgeno, self.num_edges)
 
-        ## To keep code simpler we plug the higher-numbered vertex
-        ## into the lower-numbered one, and possibly reverse the
-        ## orientation on the resulting graph.
+        ## Plug the higher-numbered vertex into the lower-numbered one.
         
         # store endpoints of the edge-to-be-contracted
         (v1, v2) = self.endpoints_v[edgeno]
@@ -1033,12 +1030,17 @@ class Fatgraph(EqualIfIsomorphic, PermanentID):
             for x in xrange(self.num_edges - 1):
                 assert 0 <= new_edge_numbering[x] < self.num_edges - 1
             g = Fatgraph(new_vertices,
-                 vertextype = self._vertextype,
-                 endpoints = (new_endpoints_v, new_endpoints_i),
-                 num_edges = self.num_edges - 1,
-                 num_external_edges = self.num_external_edges,
-                 )
-            assert g.num_boundary_components() == self.num_boundary_components()
+                         vertextype = self._vertextype,
+                         endpoints = (new_endpoints_v, new_endpoints_i),
+                         num_edges = self.num_edges - 1,
+                         num_external_edges = self.num_external_edges,
+                         orientation = new_edge_numbering,
+                         )
+            assert g.num_boundary_cycles() == self.num_boundary_cycles(), \
+                   "Fatgraph.contract(%s, %d):" \
+                   " Contracted graph `%s` does not have the same number" \
+                   " of boundary cycles of parent graph." \
+                   % (self, edgeno, g)
 
         # build new graph 
         return Fatgraph(new_vertices,
@@ -1139,7 +1141,7 @@ class Fatgraph(EqualIfIsomorphic, PermanentID):
     @cache
     def genus(self):
         """Return the genus g of this `Fatgraph` object."""
-        n = self.num_boundary_components()
+        n = self.num_boundary_cycles()
         K = self.num_vertices
         L = self.num_edges
         # by Euler, K-L+n=2-2*g
@@ -1608,19 +1610,19 @@ class Fatgraph(EqualIfIsomorphic, PermanentID):
 
 
     @cache1
-    def num_boundary_components(self):
+    def num_boundary_cycles(self):
         """Return the number of boundary components of this `Fatgraph` object.
 
         Each boundary component is represented by the list of (colored)
         edges.
 
         Examples::
-          >>> Fatgraph([Vertex([2,1,0]), Vertex([2,1,0])]).num_boundary_components()
+          >>> Fatgraph([Vertex([2,1,0]), Vertex([2,1,0])]).num_boundary_cycles()
           1
-          >>> Fatgraph([Vertex([2,1,0]), Vertex([2,0,1])]).num_boundary_components()
+          >>> Fatgraph([Vertex([2,1,0]), Vertex([2,0,1])]).num_boundary_cycles()
           3
         """
-        return len(self.boundary_components())
+        return len(self.boundary_cycles())
 
 
     ##@cache_symmetric -- not important, as comparisons are ever done one-way
@@ -1735,18 +1737,18 @@ def MakeNumberedGraphs(graph):
     
       >>> ug1 = Fatgraph([Vertex([2,0,0]), Vertex([2,1,1])])
       >>> for g in MakeNumberedGraphs(ug1): print g
-      NumberedFatgraph(Fatgraph([Vertex([2, 0, 0]), Vertex([2, 1, 1])]),    
-                       numbering={CyclicTuple((2, 1, 2, 0)): 0,   
-                                  CyclicTuple((1,)): 1,           
-                                  CyclicTuple((0,)): 2})
-      NumberedFatgraph(Fatgraph([Vertex([2, 0, 0]), Vertex([2, 1, 1])]),    
-                       numbering={CyclicTuple((0,)): 0,           
-                                  CyclicTuple((2, 1, 2, 0)): 1,   
-                                  CyclicTuple((1,)): 2})        
-      NumberedFatgraph(Fatgraph([Vertex([2, 0, 0]), Vertex([2, 1, 1])]),    
-                       numbering={CyclicTuple((0,)): 0,          
-                                  CyclicTuple((1,)): 1,
-                                  CyclicTuple((2, 1, 2, 0)): 2})
+      NumberedFatgraph(Fatgraph([Vertex([2, 0, 0]), Vertex([2, 1, 1])]),
+                       numbering={BoundaryCycle([(0, 2, 0), (1, 2, 0), (0, 0, 1), (1, 0, 1)]): 0,
+                                  BoundaryCycle([(1, 1, 2)]): 1,
+                                  BoundaryCycle([(0, 1, 2)]): 2})
+      NumberedFatgraph(Fatgraph([Vertex([2, 0, 0]), Vertex([2, 1, 1])]),
+                       numbering={BoundaryCycle([(0, 1, 2)]): 0,
+                                  BoundaryCycle([(0, 2, 0), (1, 2, 0), (0, 0, 1), (1, 0, 1)]): 1,
+                                  BoundaryCycle([(1, 1, 2)]): 2})
+      NumberedFatgraph(Fatgraph([Vertex([2, 0, 0]), Vertex([2, 1, 1])]),
+                       numbering={BoundaryCycle([(0, 1, 2)]): 0,
+                                  BoundaryCycle([(1, 1, 2)]): 1,
+                                  BoundaryCycle([(0, 2, 0), (1, 2, 0), (0, 0, 1), (1, 0, 1)]): 2})
        
     Note that, when only one numbering out of many possible ones is
     returned because of isomorphism, the returned numbering may not be
@@ -1755,35 +1757,22 @@ def MakeNumberedGraphs(graph):
       
       >>> ug2 = Fatgraph([Vertex([2,1,0]), Vertex([2,0,1])])
       >>> MakeNumberedGraphs(ug2)
-      [NumberedFatgraph(Fatgraph([Vertex([2, 1, 0]), Vertex([2, 0, 1])]), 
-                        numbering={CyclicTuple((2, 0)): 0,
-                                   CyclicTuple((0, 1)): 1,     
-                                   CyclicTuple((1, 2)): 2})]
+      [NumberedFatgraph(Fatgraph([Vertex([2, 1, 0]), Vertex([2, 0, 1])]),
+                        numbering={BoundaryCycle([(1, 2, 0), (0, 0, 1)]): 0,
+                                   BoundaryCycle([(0, 2, 0), (1, 0, 1)]): 1,
+                                   BoundaryCycle([(0, 1, 2), (1, 1, 2)]): 2})]
 
     When the graph has only one boundary component, there is only one
     possible numbering, which is actually returned::
     
       >>> ug3 = Fatgraph([Vertex([1,0,1,0])])
       >>> MakeNumberedGraphs(ug3)
-      [NumberedFatgraph(Fatgraph([Vertex([1, 0, 1, 0])]), 
-                        numbering={CyclicTuple((1, 0, 1, 0)): 0})]
+      [NumberedFatgraph(Fatgraph([Vertex([1, 0, 1, 0])]),
+                        numbering={BoundaryCycle([(0, 3, 0), (0, 2, 3), (0, 1, 2), (0, 0, 1)]): 0})]
       
     """
-    bc = graph.boundary_components()
-    n = len(bc) # == graph.num_boundary_components()
-
-    ## Build a map of "twin" b.c. indices, that is, if the same
-    ## b.c. appears at positions 3 and 5 in `bc`, then map 3 to 5 and
-    ## 5 to 3.
-    twin = {}
-    for cy in bc:
-        try:
-            i = bc.index(cy)
-            j = bc.index(cy, i+1)
-            twin[i] = j
-            twin[j] =i
-        except ValueError: # only one occurrence of `cy`
-            pass
+    bc = graph.boundary_cycles()
+    n = len(bc) # == graph.num_boundary_cycles()
 
     ## Find out which automorphisms permute the boundary cycles among
     ## themselves.
@@ -1791,38 +1780,19 @@ def MakeNumberedGraphs(graph):
     K = []
     for a in graph.automorphisms():
         k = Permutation()
-        doubles = []
         k_is_ok = True
         for src in xrange(n):
-            dst_cy = CyclicTuple(a[2].itranslate(bc[src]))
-            c = bc.count(dst_cy)
-            if c == 2:
-                src2 = twin[src]
-                if src2 < src:
-                    continue # add (src, src2, ...) to doubles only *once*
+            dst_cy = bc[src].transform(a)
+            try:
                 dst = bc.index(dst_cy)
-                dst2 = twin[dst]
-                doubles.append((src, src2, dst, dst2))
-            elif c == 1:
-                dst = bc.index(dst_cy)
-                k[src] = dst
-            else: # `dst_cy` not in `bc`
+            except ValueError:
+                # `dst_cy` not in `bc`
                 k_is_ok = False
                 break # continue with next `a`
+            k[src] = dst
         if k_is_ok and (k not in K):
             # `a` induces permutation `k` on the set `bc`
             K.append(k)
-    ## Augment `K` with the permutations that exchange repeated b.cycles
-    K_ = []
-    for (src, src2, dst, dst2) in doubles:
-        for k in K:
-            k[src] = dst
-            k[src2] = dst2
-            k_ = Permutation(k)  # copy constructor
-            k_[src] = dst2
-            k_[src2] = dst
-            K_.append(k_)
-    K.extend(K_)
 
     ## There will be as many distinct numberings as there are cosets
     ## of `K` in `Sym(n)`.
@@ -1843,7 +1813,8 @@ def MakeNumberedGraphs(graph):
         # if `K` is the one-element group, then all orbits are trivial
         numberings = PermutationIterator(range(n))
     
-    result = [ NumberedFatgraph(graph, zip(numbering, bc)) for numbering in numberings ]
+    result = [ NumberedFatgraph(graph, zip(bc, numbering))
+               for numbering in numberings ]
     return result
 
 
@@ -1858,8 +1829,10 @@ class NumberedFatgraph(Fatgraph):
 
     Examples::
 
+      >>> BoundaryCycle = Fatgraph.BoundaryCycle # shortcut
       >>> ug = Fatgraph([Vertex([1, 0, 1, 0])])  # underlying graph
-      >>> ng = NumberedFatgraph(ug, numbering={CyclicTuple((1, 0, 1, 0)): 0})
+      >>> ng = NumberedFatgraph(ug, \
+                 numbering=[(BoundaryCycle([(0,3,0), (0,2,3), (0,1,2), (0,0,1)]), 0)])
 
     Since `NumberedFatgraphs` are just decorated `Fatgraphs`, they
     only differ in the way two `NumberedFatgraph` instances are deemed
@@ -1869,12 +1842,12 @@ class NumberedFatgraph(Fatgraph):
     For example::
     
       >>> ug = Fatgraph([Vertex([1, 1, 0, 0])])
-      >>> ng1 = NumberedFatgraph(ug, numbering={CyclicTuple((0,)): 1,   \
-                                                CyclicTuple((1, 0)): 0, \
-                                                CyclicTuple((1,)): 2})
-      >>> ng2 = NumberedFatgraph(ug, numbering={CyclicTuple((0,)): 2,   \
-                                                CyclicTuple((1, 0)): 1, \
-                                                CyclicTuple((1,)): 0})
+      >>> ng1 = NumberedFatgraph(ug, numbering=[(BoundaryCycle([(0,3,0), (0,1,2)]), 0), \
+                                                (BoundaryCycle([(0,0,1)]), 1),          \
+                                                (BoundaryCycle([(0,2,3)]), 2)])
+      >>> ng2 = NumberedFatgraph(ug, numbering=[(BoundaryCycle([(0,3,0), (0,1,2)]), 1), \
+                                                (BoundaryCycle([(0,0,1)]), 0),          \
+                                                (BoundaryCycle([(0,2,3)]), 2)])
       >>> ng1 == ng2
       False
 
@@ -1883,72 +1856,70 @@ class NumberedFatgraph(Fatgraph):
       numbering on the source graph onto the numbering of the
       destination)::
 
-        >>> NumberedFatgraph(Fatgraph([Vertex([2,0,1]), Vertex([2,1,0])]), 
-        ...                  numbering=[(0, CyclicTuple((0,1))), 
-        ...                             (1, CyclicTuple((0,2))), 
-        ...                             (2, CyclicTuple((2,1))) ] ) \
-            == NumberedFatgraph( 
-        ...                  Fatgraph([Vertex([2,0,1]), Vertex([2,1,0])]), 
-        ...                  numbering=[(0, CyclicTuple((1,0))), 
-        ...                             (2, CyclicTuple((0,2))), 
-        ...                             (1, CyclicTuple((2,1))) ])
+        >>> NumberedFatgraph.__eq__(
+        ...     NumberedFatgraph(Fatgraph([Vertex([2,0,1]), Vertex([2,1,0])]), 
+        ...                      numbering=[(BoundaryCycle([(0,2,0), (1,0,1)]), 0), 
+        ...                                 (BoundaryCycle([(0,0,1), (1,2,0)]), 1), 
+        ...                                 (BoundaryCycle([(0,1,2), (1,1,2)]), 2) ] ),
+        ...     NumberedFatgraph(Fatgraph([Vertex([2,0,1]), Vertex([2,1,0])]), 
+        ...                      numbering=[(BoundaryCycle([(0,2,0), (1,0,1)]), 0), 
+        ...                                 (BoundaryCycle([(0,0,1), (1,2,0)]), 2), 
+        ...                                 (BoundaryCycle([(0,1,2), (1,1,2)]), 1) ] ) )
         True
 
-        >>> NumberedFatgraph(Fatgraph([Vertex([1, 0, 0, 2, 2, 1])]), 
-        ...                  numbering=[(0, CyclicTuple((2,))), 
-        ...                             (1, CyclicTuple((0,2,1))), 
-        ...                             (3, CyclicTuple((0,))), 
-        ...                             (2, CyclicTuple((1,))) ]) \
-            == NumberedFatgraph( 
-        ...                  Fatgraph([Vertex([2, 2, 1, 1, 0, 0])]), 
-        ...                  numbering=[(0, CyclicTuple((2,))), 
-        ...                             (1, CyclicTuple((0,))), 
-        ...                             (3, CyclicTuple((2,1,0))), 
-        ...                             (2, CyclicTuple((1,))) ])
+        >>> NumberedFatgraph.__eq__(
+        ...     NumberedFatgraph(Fatgraph([Vertex([1, 0, 0, 2, 2, 1])]), 
+        ...                      numbering=[(BoundaryCycle([(0,5,0)]), 0), 
+        ...                                 (BoundaryCycle([(0,0,1), (0,2,3), (0,4,5)]), 1), 
+        ...                                 (BoundaryCycle([(0,1,2)]), 3), 
+        ...                                 (BoundaryCycle([(0,3,4)]), 2) ]),
+        ...     NumberedFatgraph( 
+        ...                      Fatgraph([Vertex([2, 2, 1, 1, 0, 0])]), 
+        ...                      numbering=[(BoundaryCycle([(0,2,3)]), 0), 
+        ...                                 (BoundaryCycle([(0,3,4), (0,5,0), (0,1,2)]), 3), 
+        ...                                 (BoundaryCycle([(0,4,5)]), 1), 
+        ...                                 (BoundaryCycle([(0,0,1)]), 2) ]) )
         False
 
-        >>> NumberedFatgraph(Fatgraph([Vertex([1, 0, 0, 2, 2, 1])]), 
-        ...                  numbering=[(0, CyclicTuple((2,))), 
-        ...                             (1, CyclicTuple((0,2,1))), 
-        ...                             (3, CyclicTuple((0,))), 
-        ...                             (2, CyclicTuple((1,))) ]) \
-            == NumberedFatgraph( 
-        ...                  Fatgraph([Vertex([2, 2, 1, 1, 0, 0])]), 
-        ...                  numbering=[(3, CyclicTuple((2,))), 
-        ...                             (0, CyclicTuple((0,))), 
-        ...                             (2, CyclicTuple((2,1,0))), 
-        ...                             (1, CyclicTuple((1,))) ])
+        >>> NumberedFatgraph.__eq__(
+        ...     NumberedFatgraph(Fatgraph([Vertex([1, 0, 0, 2, 2, 1])]), 
+        ...                      numbering=[(BoundaryCycle([(0,5,0)]), 0), 
+        ...                                 (BoundaryCycle([(0,0,1), (0,2,3), (0,4,5)]), 1),
+        ...                                 (BoundaryCycle([(0,1,2)]), 3), 
+        ...                                 (BoundaryCycle([(0,3,4)]), 2) ]),
+        ...     NumberedFatgraph(Fatgraph([Vertex([2, 2, 1, 1, 0, 0])]), 
+        ...                      numbering=[(BoundaryCycle([(0,2,3)]), 3), 
+        ...                                 (BoundaryCycle([(0,3,4), (0,5,0), (0,1,2)]), 2), 
+        ...                                 (BoundaryCycle([(0,4,5)]), 0), 
+        ...                                 (BoundaryCycle([(0,0,1)]), 1) ]) )
         False
 
-        >>> NumberedFatgraph(Fatgraph([Vertex([3, 2, 2, 0, 1]), Vertex([3, 1, 0])]), 
-        ...                  numbering=[(0, CyclicTuple((2,))),  
-        ...                             (1, CyclicTuple((0, 1))),  
-        ...                             (2, CyclicTuple((3, 1))),  
-        ...                             (3, CyclicTuple((0, 3, 2))) ]) \
-            == NumberedFatgraph( 
-        ...                  Fatgraph([Vertex([2, 3, 1]), Vertex([2, 1, 3, 0, 0])]), 
-        ...                  numbering=[(0, CyclicTuple((0,))), 
-        ...                             (2, CyclicTuple((1, 3))), 
-        ...                             (3, CyclicTuple((3, 0, 2))), 
-        ...                             (1, CyclicTuple((2, 1))) ])
+        >>> NumberedFatgraph.__eq__(
+        ...     NumberedFatgraph(Fatgraph([Vertex([3, 2, 2, 0, 1]), Vertex([3, 1, 0])]), 
+        ...                      numbering=[(BoundaryCycle([(0,4,0), (1,0,1)]), 0),
+        ...                                 (BoundaryCycle([(0,0,1), (0,2,3), (1,2,0)]), 1),
+        ...                                 (BoundaryCycle([(0,1,2)]), 2),
+        ...                                 (BoundaryCycle([(0,3,4), (1,1,2)]), 3) ]),
+        ...     NumberedFatgraph(Fatgraph([Vertex([2, 3, 1]), Vertex([2, 1, 3, 0, 0])]), 
+        ...                      numbering=[(BoundaryCycle([(0,2,0), (1,0,1)]), 3),
+        ...                                 (BoundaryCycle([(0,0,1), (1,2,3), (1,4,0)]), 1),
+        ...                                 (BoundaryCycle([(0,1,2), (1,1,2)]), 0) ,
+        ...                                 (BoundaryCycle([(1,3,4)]), 2) ]) )
         True
 
-      Examples::
-
-        >>> NumberedFatgraph.__eq__(NumberedFatgraph(
-        ...                             Fatgraph([Vertex([0, 1, 2, 0, 2, 1])]),
-        ...                             numbering={CyclicTuple((0,)): 1,
-        ...                                        CyclicTuple((1, 2, 0, 1, 2)): 0}),
-        ...                         NumberedFatgraph(
-        ...                             Fatgraph([Vertex([0, 1, 2, 0, 2, 1])]),
-        ...                             numbering={CyclicTuple((0,)): 0,
-        ...                                        CyclicTuple((1, 2, 0, 1, 2)): 1}))
+        >>> NumberedFatgraph.__eq__(
+        ...     NumberedFatgraph(Fatgraph([Vertex([0, 1, 2, 0, 2, 1])]),
+        ...                      numbering=[(BoundaryCycle([(0,1,2), (0,4,5)]), 0),
+        ...                                 (BoundaryCycle([(0,5,0), (0,3,4), (0,2,3), (0,0,1)]), 1)]),
+        ...     NumberedFatgraph(Fatgraph([Vertex([0, 1, 2, 0, 2, 1])]),
+        ...                      numbering=[(BoundaryCycle([(0,1,2), (0,4,5)]), 1),
+        ...                                 (BoundaryCycle([(0,5,0), (0,3,4), (0,2,3), (0,0,1)]), 0)]) )
         False
       """
 
     def __init__(self, underlying, numbering, vertextype=Vertex):
         Fatgraph.__init__(self, underlying)
-        self.underlying = underlying # XXX: = self (?)
+        self.underlying = underlying
         self.numbering = numbering
 
 
@@ -1979,7 +1950,36 @@ class NumberedFatgraph(Fatgraph):
 
     @cache
     def contract(self, edgeno):
-        """Return new `NumberedFatgraph` obtained by contracting the specified edge."""
+        """Return a new `NumberedFatgraph` instance, obtained by
+        contracting the specified edge.
+
+        Examples::
+
+          >>> g0 = NumberedFatgraph(Fatgraph([Vertex([1, 2, 1]), Vertex([2, 0, 0])]),
+          ...                       numbering={BoundaryCycle([(0, 1, 2), (1, 2, 0),
+          ...                                                 (0, 0, 1), (1, 0, 1)]): 0,
+          ...                                  BoundaryCycle([(1, 1, 2)]): 1,
+          ...                                  BoundaryCycle([(0, 2, 0)]): 2})
+          >>> g0.contract(2)
+          NumberedFatgraph(Fatgraph([Vertex([1, 1, 0, 0])]),
+                           numbering={BoundaryCycle([(0, 3, 0), (0, 1, 2)]): 0,
+                                      BoundaryCycle([(0, 2, 3)]): 1,
+                                      BoundaryCycle([(0, 0, 1)]): 2})
+
+          >>> g1 = NumberedFatgraph(Fatgraph([Vertex([1, 0, 2]), Vertex([2, 1, 5]),
+          ...                                 Vertex([0, 4, 3]), Vertex([4, 5, 3])]),
+          ...                       numbering={BoundaryCycle([(0, 2, 0), (0, 1, 2), (0, 0, 1),
+          ...                                                 (1, 1, 2), (2, 0, 1), (3, 0, 1),
+          ...                                                 (1, 2, 0), (2, 2, 0), (1, 0, 1),
+          ...                                                                       (3, 1, 2)]): 0,
+          ...                                  BoundaryCycle([(3, 2, 0), (2, 1, 2)]): 1})
+          >>> g1.contract(0)
+          NumberedFatgraph(Fatgraph([Vertex([1, 0, 3, 2]), Vertex([1, 0, 4]), Vertex([3, 4, 2])]),
+                           numbering={BoundaryCycle([(2, 1, 2), (0, 1, 2), (0, 0, 1), (1, 1, 2),
+                                                     (0, 3, 0), (2, 0, 1), (1, 2, 0), (1, 0, 1)]): 0,
+                                      BoundaryCycle([(0, 2, 3), (2, 2, 0)]): 1})
+
+        """
         # check that we are not contracting a loop or an external edge
         assert not self.is_loop(edgeno), \
                "NumberedFatgraph.contract: cannot contract a loop."
@@ -1988,21 +1988,53 @@ class NumberedFatgraph(Fatgraph):
                " must be in range 0..%d" \
                % (edgeno, self.num_edges)
 
-        # Build new list of vertices, removing the contracted edge and
-        # shifting all indices above:
-        #   - edges numbered 0..edgeno-1 are unchanged;
-        #   - edges numbered `edgeno+1`.. are renumbered, 
-        #     shifting the number down one position;
-        #   - edge `edgeno` is kept intact, will be removed by mating
-        #     operation (see below).
-        renumber_edges = dict((i+1,i)
-                              for i in xrange(edgeno, self.num_edges))
-        #   - edge `edgeno` is removed (subst with `None`)
-        renumber_edges[edgeno] = None  
-        numbering = [ (n, CyclicTuple(itranslate(renumber_edges, bcy)))
-                      for (bcy, n) in self.numbering.iteritems() ]
+        # store endpoints of the edge-to-be-contracted
+        (v1, v2) = self.endpoints_v[edgeno]
+        (pos1, pos2) = self.endpoints_i[edgeno]
+        if v1 > v2:
+            # swap endpoints so that `v1 < v2`
+            v1, v2 = v2, v1
+            pos1, pos2 = pos2, pos1
+        l1 = len(self.vertices[v1])
+        l2 = len(self.vertices[v2])
+        
+        # transform corners according to contraction; see
+        # `Fatgraph.contract()` for an explanation of how the
+        # underlying graph is altered during contraction.
+        new_numbering = {}
+        for (bcy, n) in self.numbering.iteritems():
+            new_cy = []
+            for corner in bcy:
+                if corner[0] == v1:
+                    if pos1 == corner[1]:
+                        # skip this corner, keep only one of the
+                        # corners limited by the contracted edge
+                        continue
+                    else:
+                        i1 = (corner[1] - pos1 - 1) % l1
+                        i2 = (corner[2] - pos1 - 1) % l1
+                        new_cy.append((v1, i1, i2))
+                elif corner[0] == v2:
+                    if pos2 == corner[1]:
+                        # skip this corner, keep only one of the
+                        # corners limited by the contracted edge
+                        continue
+                    if pos2 == corner[2]:
+                        new_cy.append((v1, l1+l2-3, 0))
+                    else:
+                        i1 = l1-1 + ((corner[1] - pos2 - 1) % l2)
+                        i2 = l1-1 + ((corner[2] - pos2 - 1) % l2)
+                        new_cy.append((v1, i1, i2))
+                elif corner[0] > v2:
+                    # shift vertices after `v2` one position down
+                    new_cy.append((corner[0]-1, corner[1], corner[2]))
+                else:
+                    # pass corner unchanged
+                    new_cy.append(corner)
+            new_numbering[Fatgraph.BoundaryCycle(new_cy)] = n
 
-        return NumberedFatgraph(self.underlying.contract(edgeno), numbering)
+        return NumberedFatgraph(self.underlying.contract(edgeno),
+                                numbering=new_numbering)
         
 
     @cache_iterator
@@ -2014,8 +2046,8 @@ class NumberedFatgraph(Fatgraph):
         """
         for (pv, rot, pe) in Fatgraph.isomorphisms(self.underlying, other.underlying):
             pe_does_not_preserve_bc = False
-            for bc1 in self.underlying.boundary_components():
-                bc2 = CyclicTuple(pe.itranslate(bc1))
+            for bc1 in self.underlying.boundary_cycles():
+                bc2 = bc1.transform((pv, rot, pe))
                 # there are cases (see examples in the
                 # `Fatgraph.__eq__` docstring, in which the
                 # above algorithm may find a valid
@@ -2039,71 +2071,64 @@ class NumberedFatgraph(Fatgraph):
         """
         return self._numbering
 
-    def _numbering_set(self, tuples):
-        """Set the `.numbering` attribute from a sequence of tuples
-        `(n, bcy)`.  Each `n` is a non-negative integer, and each
-        `bcy` is an edge cycle representing a boundary component.
+    def _numbering_set(self, initializer):
+        """Set the `.numbering` attribute from a valid `dict`
+        initializer.
 
-        The numbering attribute is set to a dictionary mapping the
+        The initializer can be:
+          - either a sequence of tuples `(bcy, n)`, where each `n` is
+            a non-negative integer, and each `bcy` is a
+            `BoundaryCycle` instance,
+          - or a `dict` instance mapping `BoundaryCycle` instances to
+            `int`s.
+        In either case, an assertion is raised if:
+          - the number of pairs in the initializer does not match
+            the number of boundary cycles;
+          - the set of integer keys is not `[0 .. n]`;
+          - there are duplicate boundary cycles or integers
+            in the initializer;
+
+        The `numbering` attribute is set to a dictionary mapping the
         boundary cycle `bcy` to the integer `n`::
 
           >>> ug0 = Fatgraph([Vertex([1,2,0]), Vertex([1,0,2])])
-          >>> bc = ug0.boundary_components()  # three b.c.'s
-          >>> ng0 = NumberedFatgraph(ug0, enumerate(bc))
-          >>> ng0._numbering_get()             \
-              == { CyclicTuple((0, 2)): 2, \
-                   CyclicTuple((1, 0)): 0, \
-                   CyclicTuple((2, 1)): 1  }
+          >>> bc = ug0.boundary_cycles()  # three b.c.'s
+          >>> ng0 = NumberedFatgraph(ug0, [ (bcy,n) for (n,bcy) in enumerate(bc)])
+          >>> ng0.numbering == {
+          ...    Fatgraph.BoundaryCycle([(0,0,1), (1,2,0)]): 0, 
+          ...    Fatgraph.BoundaryCycle([(0,1,2), (1,1,2)]): 1, 
+          ...    Fatgraph.BoundaryCycle([(0,2,0), (1,0,1)]): 2,
+          ... }
           True
-
-        When two boundary components are represented by the same edge
-        cycle, that edge cycle is mapped to a `frozenset` instance
-        containing the (distinct) indices assigned to it::
-        
-          >>> ug1 = Fatgraph([Vertex([1,2,0,1,2,0])])
-          >>> bc = ug1.boundary_components()  # two b.c.'s
-          >>> ng1 = NumberedFatgraph(ug1, [(0, bc[1]), (1, bc[0])])
-          >>> ng1._numbering_get() \
-              == {CyclicTuple((1, 2, 0)): frozenset([0, 1])}
-          True
-          
-        By definition of a fatgraph, *at most* two boundary components
-        may be represented by the same boundary cycle.
-
         """
-        if tuples is None:
-            self._numbering = None
-            return
-        # allow also `.numbering_set({ bcy: n, ...})`
-        if isinstance(tuples, dict):
-            # XXX: support the `numbering = { CyclicTuple(..): 1, ..}` syntax.
-            # Is it used just by doctests of the `NumberedFatgraph` class?
-            # Or is it used also in quasi-copy constructors?
-            tuples = izip(tuples.itervalues(), tuples.iterkeys())
-        numbering = {}
-        for (n,bcy) in tuples:
-            assert type(n) is types.IntType, \
-                   "Fatgraph._numbering_set: 1st argument has wrong type:" \
-                   " expecting (Int, CyclicTuple) pair, got `(%s, %s)`." \
-                   " Reversed-order arguments?" \
-                   % (n, bcy)
-            assert isinstance(bcy, CyclicTuple), \
-                   "Fatgraph._numbering_set: 2nd argument has wrong type:" \
-                   " expecting (Int, CyclicTuple) pair, got `(%s, %s)`." \
-                   " Reversed-order arguments?" \
-                   % (n, bcy)
-            if bcy in numbering:
-                # a single boundary cycle can represent at most *two*
-                # boundary components
-                assert type(numbering[bcy]) is types.IntType, \
-                       "Inconsistent numbering: "\
-                       " Boundary cycle `%s` belongs to boundary"\
-                       " component numbered %d, but already tagged %s" \
-                       % (bcy, n, str.join(",",numbering[bcy]))
-                numbering[bcy] = frozenset((n, numbering[bcy]))
-            else:
-                numbering[bcy] = n
-        self._numbering = numbering
+        assert len(initializer) == self.num_boundary_cycles()
+        self._numbering = dict(initializer)
+        if __debug__:
+            count = [ 0 for x in xrange(self.num_boundary_cycles()) ]
+            for (bcy,n) in self._numbering.iteritems():
+                assert type(n) is types.IntType, \
+                       "NumberedFatgraph._numbering_set: 2nd argument has wrong type:" \
+                       " expecting (BoundaryCycle, Int) pair, got `(%s, %s)`." \
+                       " Reversed-order arguments?" \
+                       % (bcy, n)
+                assert isinstance(bcy, Fatgraph.BoundaryCycle), \
+                       "NumberedFatgraph._numbering_set: 1st argument has wrong type:" \
+                       " expecting (BoundaryCycle, Int) pair, got `(%s, %s)`." \
+                       " Reversed-order arguments?" \
+                       % (bcy, n)
+                assert bcy in self.boundary_cycles(), \
+                       "NumberedFatgraph._numbering_set():" \
+                       " Cycle `%s` is no boundary cycle of graph `%s` " \
+                       % (bcy, self.underlying)
+                count[n] += 1
+                if count[n] > 1:
+                    raise AssertionError("NumberedFatgraph._numbering_set():" \
+                                         " Duplicate key %d" % n)
+            assert sum(count) != self.num_boundary_cycles()-1, \
+                   "NumberedFatgraph._numbering_set():" \
+                   " Initializer does not exhaust range `0..%d`: %s" \
+                   % (self.num_boundary_cycles()-1, initializer)
+
 
     numbering = property(_numbering_get, _numbering_set)
     
@@ -2199,7 +2224,7 @@ def MgnTrivalentGraphsRecursiveGenerator(g, n):
         unique = []
         for G in graphs(g,n):
             # XXX: should this check be done in graphs(g,n)?
-            if (G.genus(), G.num_boundary_components()) != (g,n):
+            if (G.genus(), G.num_boundary_cycles()) != (g,n):
                 continue
             if G in unique:
                 continue
@@ -2297,43 +2322,47 @@ class MgnNumberedGraphsIterator(BufferingIterator):
 
       >>> for g in MgnNumberedGraphsIterator(0,3): print g
       NumberedFatgraph(Fatgraph([Vertex([1, 2, 1]), Vertex([2, 0, 0])]),
-                       numbering={CyclicTuple((1,)): 0,
-                                  CyclicTuple((0,)): 1,
-                                  CyclicTuple((2, 0, 2, 1)): 2})
+                       numbering={BoundaryCycle([(0, 1, 2), (1, 2, 0), (0, 0, 1), (1, 0, 1)]): 0,
+                                  BoundaryCycle([(1, 1, 2)]): 1,
+                                  BoundaryCycle([(0, 2, 0)]): 2})
       NumberedFatgraph(Fatgraph([Vertex([1, 2, 1]), Vertex([2, 0, 0])]),
-                       numbering={CyclicTuple((2, 0, 2, 1)): 0,
-                                  CyclicTuple((1,)): 1,
-                                  CyclicTuple((0,)): 2})
+                       numbering={BoundaryCycle([(0, 2, 0)]): 0,
+                                  BoundaryCycle([(0, 1, 2), (1, 2, 0), (0, 0, 1), (1, 0, 1)]): 1,
+                                  BoundaryCycle([(1, 1, 2)]): 2})
       NumberedFatgraph(Fatgraph([Vertex([1, 2, 1]), Vertex([2, 0, 0])]),
-                       numbering={CyclicTuple((0,)): 0,
-                                  CyclicTuple((2, 0, 2, 1)): 1,
-                                  CyclicTuple((1,)): 2})
+                       numbering={BoundaryCycle([(0, 2, 0)]): 0,
+                                  BoundaryCycle([(1, 1, 2)]): 1,
+                                  BoundaryCycle([(0, 1, 2), (1, 2, 0), (0, 0, 1), (1, 0, 1)]): 2})
       NumberedFatgraph(Fatgraph([Vertex([1, 0, 2]), Vertex([2, 0, 1])]),
-                       numbering={CyclicTuple((1, 2)): 0,
-                                  CyclicTuple((2, 0)): 1,
-                                  CyclicTuple((0, 1)): 2})
+                       numbering={BoundaryCycle([(0, 0, 1), (1, 1, 2)]): 0,
+                                  BoundaryCycle([(0, 2, 0), (1, 2, 0)]): 1,
+                                  BoundaryCycle([(0, 1, 2), (1, 0, 1)]): 2})
       NumberedFatgraph(Fatgraph([Vertex([1, 1, 0, 0])]),
-                       numbering={CyclicTuple((1, 0)): 0,
-                                  CyclicTuple((0,)): 1,
-                                  CyclicTuple((1,)): 2})
+                       numbering={BoundaryCycle([(0, 0, 1)]): 0,
+                                  BoundaryCycle([(0, 2, 3)]): 1,
+                                  BoundaryCycle([(0, 1, 2), (0, 3, 0)]): 2})
       NumberedFatgraph(Fatgraph([Vertex([1, 1, 0, 0])]),
-                       numbering={CyclicTuple((1,)): 0,
-                                  CyclicTuple((1, 0)): 1,
-                                  CyclicTuple((0,)): 2})
+                       numbering={BoundaryCycle([(0, 1, 2), (0, 3, 0)]): 0,
+                                  BoundaryCycle([(0, 0, 1)]): 1,
+                                  BoundaryCycle([(0, 2, 3)]): 2})
       NumberedFatgraph(Fatgraph([Vertex([1, 1, 0, 0])]),
-                       numbering={CyclicTuple((1,)): 0,
-                                  CyclicTuple((0,)): 1,
-                                  CyclicTuple((1, 0)): 2})
+                       numbering={BoundaryCycle([(0, 2, 3)]): 0,
+                                  BoundaryCycle([(0, 1, 2), (0, 3, 0)]): 1,
+                                  BoundaryCycle([(0, 0, 1)]): 2})
+     
 
-      >>> for g in MgnNumberedGraphsIterator(1,1): print g
-      NumberedFatgraph(Fatgraph([Vertex([1, 0, 2]), Vertex([2, 1, 0])]),
-                       numbering={CyclicTuple((1, 0, 2, 1, 0, 2)): 0})
-      NumberedFatgraph(Fatgraph([Vertex([1, 0, 1, 0])]),
-                       numbering={CyclicTuple((1, 0, 1, 0)): 0})
-
+      >>> list(MgnNumberedGraphsIterator(1,1)) == [
+      ...     NumberedFatgraph(Fatgraph([Vertex([1, 0, 2]), Vertex([2, 1, 0])]),
+      ...                      numbering=[(Fatgraph.BoundaryCycle([(0, 2, 0), (1, 1, 2), (0, 1, 2),
+      ...                                                          (1, 0, 1), (0, 0, 1), (1, 2, 0)]), 0) ]),
+      ...     NumberedFatgraph(Fatgraph([Vertex([1, 0, 1, 0])]),
+      ...                      numbering=[(Fatgraph.BoundaryCycle([(0, 3, 0), (0, 2, 3),
+      ...                                                          (0, 1, 2), (0, 0, 1)]), 0) ])
+      ...  ]
+      True
     """
 
-    def __init__(self, g, n, vertextype=VertexCache()):
+    def __init__(self, g, n):
         self.__naked_graphs_iterator = MgnGraphsIterator(g, n)
         BufferingIterator.__init__(self)
 
@@ -2345,6 +2374,9 @@ class MgnNumberedGraphsIterator(BufferingIterator):
 
 
 ## main: run tests
+
+#import pydb
+#pydb.debugger()
 
 if "__main__" == __name__:
     import doctest
