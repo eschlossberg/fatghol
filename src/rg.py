@@ -2213,26 +2213,26 @@ def MgnTrivalentGraphsRecursiveGenerator(g, n):
                         yield G.bridge(x,1, y,0)
                         yield G.bridge(x,1, y,1)
 
-            logging.debug("  MgnTrivalentGraphsRecursiveGenerator(%d,%d): "
-                          "pass 4: bridge two graphs of such that g_1+g_2=%d, n_1+n_2=%d ..." % (g,n, g,n+1)) 
-            def add_up_to(x, min=0):
-                if x == 0 and min == 0:
-                    yield (0,0)
-                elif x-min >= 0:
-                    for y in xrange(min, x-min+1):
-                        yield (y, x-y)
-            for (g1, g2) in add_up_to(g, min=0):
-                for (n1, n2) in add_up_to(n+1, min=1):
-                    if (g1, n1) < (0, 3) or (g2, n2) < (0,3):
-                        continue
-                    for G1 in MgnTrivalentGraphsRecursiveGenerator(g1,n1):
-                        for G2 in MgnTrivalentGraphsRecursiveGenerator(g2,n2):
-                            for x1 in G1.edge_orbits():
-                                for x2 in G2.edge_orbits():
-                                    yield Fatgraph.bridge2(G1, x1, 0, G2, x2, 0)
-                                    yield Fatgraph.bridge2(G1, x1, 0, G2, x2, 1)
-                                    yield Fatgraph.bridge2(G1, x1, 1, G2, x2, 0)
-                                    yield Fatgraph.bridge2(G1, x1, 1, G2, x2, 1)
+            ## logging.debug("  MgnTrivalentGraphsRecursiveGenerator(%d,%d): "
+            ##               "pass 4: bridge two graphs of such that g_1+g_2=%d, n_1+n_2=%d ..." % (g,n, g,n+1)) 
+            ## def add_up_to(x, min=0):
+            ##     if x == 0 and min == 0:
+            ##         yield (0,0)
+            ##     elif x-min >= 0:
+            ##         for y in xrange(min, x-min+1):
+            ##             yield (y, x-y)
+            ## for (g1, g2) in add_up_to(g, min=0):
+            ##     for (n1, n2) in add_up_to(n+1, min=1):
+            ##         if (g1, n1) < (0, 3) or (g2, n2) < (0,3):
+            ##             continue
+            ##         for G1 in MgnTrivalentGraphsRecursiveGenerator(g1,n1):
+            ##             for G2 in MgnTrivalentGraphsRecursiveGenerator(g2,n2):
+            ##                 for x1 in G1.edge_orbits():
+            ##                     for x2 in G2.edge_orbits():
+            ##                         yield Fatgraph.bridge2(G1, x1, 0, G2, x2, 0)
+            ##                         yield Fatgraph.bridge2(G1, x1, 0, G2, x2, 1)
+            ##                         yield Fatgraph.bridge2(G1, x1, 1, G2, x2, 0)
+            ##                         yield Fatgraph.bridge2(G1, x1, 1, G2, x2, 1)
 
         unique = []
         discarded = 0
@@ -2266,7 +2266,7 @@ class MgnGraphsIterator(BufferingIterator):
 
     """
 
-    def __init__(self, g, n, trivalent_graphs_generator=MgnTrivalentGraphsRecursiveGenerator):
+    def __init__(self, g, n):
         assert n > 0, \
                "MgnGraphsIterator: " \
                " number of boundary cycles `n` must be positive,"\
@@ -2284,7 +2284,7 @@ class MgnGraphsIterator(BufferingIterator):
         self.n = n
         
         # Gather all 3-valent graphs.
-        trivalent = list(trivalent_graphs_generator(g,n))
+        trivalent = list(MgnTrivalentGraphsRecursiveGenerator(g,n))
 
         #: Fatgraphs to be contracted at next `.refill()` invocation
         self._batch = trivalent
@@ -2307,7 +2307,7 @@ class MgnGraphsIterator(BufferingIterator):
         next_batch = []
         for graph in self._batch:
             # contract all edges
-            for edge in xrange(graph.num_edges):
+            for edge in graph.edge_orbits():
                 if not graph.is_loop(edge):
                     dg = graph.contract(edge)
                     if dg not in next_batch:
