@@ -41,7 +41,7 @@ def CyclicSequence(base, factory=None):
                 # __delslice__ is passed `sys.maxint` as second value
                 # when taking slices of the form `[n:]`.  In this
                 # case, just fall back to standard Python operation.
-                return base.__setslice__(self, i, j, other)
+                return base.__setslice__(self, i, j)
             l = len(self)
             #: sup of the range
             a = max(i,j)
@@ -51,7 +51,7 @@ def CyclicSequence(base, factory=None):
             c = l*(a/l)
             a -= c
             b -= c
-            return base.__delslice__(self, b, a, other)
+            return base.__delslice__(self, b, a)
 
         def __getslice__(self, i, j):
             """Return [i:j] slice as a base class instance."""
