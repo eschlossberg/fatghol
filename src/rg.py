@@ -8,6 +8,7 @@ __docformat__ = 'reStructuredText'
 from utils import *
 from cyclic import CyclicList,repetition_pattern
 
+from itertools import *
 import operator
 
 
@@ -32,9 +33,77 @@ def vertex_valences_for_given_g_and_n(g,n):
     return result
 
 
+class Vertex(CyclicList):
+    """A (representative of) a vertex of a ribbon graph.
+
+    A vertex is represented by the cyclically ordered list of its
+    (decorated) edges.  The edge colorings may be accessed through a
+    (read-only) sequence interface.
+    """
+    def __init__(self, edge_seq, start=0, end=None):
+        """Create `Vertex` instance by excerpting the slice `[start:end]` in `edge_seq`.
+        """
+        if end is None:
+            end = len(edge_seq)
+        CyclicList.__init__(self, edge_seq[start:end])
+
+        # the following values will be computed when they are first requested
+        self._repetition_pattern = None
+        
+    def __iter__(self):
+        """Return iterator over edges."""
+        return list.__iter__(self)
+
+    #def __repr__(self):
+    #    return str(self._edges)
+    #def __str__(self):
+    #    return str(self._edges)
+    
+    def is_maximal_representative(self):
+        """Return `True` if this `Vertex` object is maximal among
+        representatives of same cyclic sequence.
+        
+        Examples::
+          >>> Vertex([3,2,1]).is_maximal_representative()
+          True
+          >>> Vertex([2,1,3]).is_maximal_representative()
+          False
+          >>> Vertex([1,1]).is_maximal_representative()
+          True
+          >>> Vertex([1]).is_maximal_representative()
+          True
+        """
+        def wrap_index(i,l):
+            if i >= l:
+                return i % l
+            else:
+                return i
+        L = len(self)
+        for i in xrange(1,L):
+            for j in xrange(0,L):
+                if self[wrap_index(i+j,L)] < self[j]:
+                    # continue with next i
+                    break
+                elif self[wrap_index(i+j,L)] > self[j]:
+                    return False
+                # else, continue comparing
+        return True
+
+    def repetition_pattern(self):
+        """Return the repetition pattern of this `Vertex` object.
+        Same as calling `repetition_pattern(this._edges)` but caches
+        results.
+        """
+        if self._repetition_pattern is None:
+            self._repetition_pattern = repetition_pattern(self)
+        return self._repetition_pattern
+
 
 class Graph:
     """A fully-decorated ribbon graph.
+
+    Exports a (read-only) sequence interface, through which vertices
+    can be accessed.
     """
     def __init__(self, vertex_valences, edge_seq):
         assert is_sequence_of_integers(vertex_valences), \
@@ -46,7 +115,11 @@ class Graph:
                "sum of vertex valences must be even."
 
         self._num_edges = sum(self._vertex_valences) / 2
-
+        self._num_vertices = len(vertex_valences)
+        # these values will be computed on-demand
+        self._num_boundary_components = None
+        self._genus = None
+        
         assert is_sequence_of_integers(edge_seq), \
                "Graph.__init__: parameter `edge_seq` must be sequence of integers, "\
                "but got '%s' instead" % edge_seq
@@ -54,7 +127,6 @@ class Graph:
                "Graph.__init__: invalid parameter `edge_seq`:"\
                "Sequence of edges %s doesn't match number of edges %d" \
                % (edge_seq, self._num_edges)
-        self._edge_seq = edge_seq
         # Break up `edge_seq` into smaller sequences corresponding to vertices.
         self.vertices = []
         base = 0
@@ -63,18 +135,19 @@ class Graph:
             # FIXME: this results in `edge_seq` being copied into smaller
             # subsequences; can we avoid this by defining a list-like object
             # "vertex" as a "view" on a portion of an existing list?
-            self.vertices.append(edge_seq[base:base+VLEN])
+            self.vertices.append(Vertex(edge_seq, base, base+VLEN))
             base += VLEN
+
+    def __getitem__(self, index):
+        return self.vertices[index]
+
+    def __iter__(self):
+        """Return iterator over vertices."""
+        return iter(self.vertices)
 
     def __str__(self):
         return str(self.vertices)
             
-    def num_edges(self):
-        return self._num_edges
-
-    def num_vertices(self):
-        return len(self.vertices)
-
     def is_canonical(self):
         """Return `True` if this `Graph` object is canonical.
 
@@ -84,26 +157,159 @@ class Graph:
         2) Vertices are sorted in lexicographic order.
 
         Examples::
-          >>> is_canonical([[3,2,1],[3,2,1]])
+          >>> Graph([3,3],[[3,2,1],[3,2,1]]).is_canonical()
           True
-          >>> is_canonical([[3,2,1],[3,1,2]])
+          >>> Graph([3,3],[[3,2,1],[3,1,2]]).is_canonical()
           True
-          >>> is_canonical([[3,1,2],[3,2,1]])
+          >>> Graph([3,3],[[3,1,2],[3,2,1]]).is_canonical()
           False
-          >>> is_canonical([[1,2,3],[3,2,1]])
-          False
-          >>> is_canonical([[1,2],[3,2,1]])
-          False
+          >>> Graph([3,3],[[1,2,3],[3,2,1]]).is_canonical()
+          False 
         """
         previous_vertex = None
         for vertex in self.vertices:
-            if not is_maximal_representative(vertex):
+            if not vertex.is_maximal_representative():
                 return False
             if previous_vertex and (previous_vertex < vertex):
                 return False
             previous_vertex = vertex
         return True
     
+    def endpoints(self, n):
+        """Return the endpoints of edge `n`.
+    
+        The endpoints are returned as a pair (v1,v2) where `v1` and `v2`
+        are indices of vertices in this `Graph` object.
+        """
+        result = []
+        for vi in range(len(self.vertices)):
+            c = self.vertices[vi].count(n)
+            if 2 == c:
+                return (vi,vi)
+            elif 1 == c:
+                result.append(vi)
+        if 0 == len(result):
+            raise KeyError, "Edge %d not found in graph '%s'" % (n, repr(self))
+        return result
+    
+    def num_edges(self):
+        return self._num_edges
+
+    def num_vertices(self):
+        return self._num_vertices
+
+    def num_boundary_components(self):
+        """Return the number of boundary components of this `Graph` object.
+
+        Each boundary component is represented by the list of (colored)
+        edges.
+
+        Examples::
+          >>> Graph([3,3], [[3,2,1],[3,2,1]]).num_boundary_components()
+          1
+          >>> Graph([3,3], [[3,2,1],[3,1,2]]).num_boundary_components()
+          3
+        """
+        # try to return the cached value
+        if not (self._num_boundary_components is None):
+            return self._num_boundary_components
+
+        # otherwise, compute it now...
+        
+        L = self.num_edges() + 1
+        # for efficiency, gather all endpoints now
+        ends = [ endpoints(l) for l in xrange(1,L) ]
+
+        # pass1: build a "copy" of `graph`, replacing each edge coloring
+        # with a pair `(other, index)` pointing to the other endpoint of
+        # that same edge: the element at position `index` in vertex
+        # `other`.
+        pass1 = []
+        def other(pair, one):
+            """Return the member of `pair` not equal to `one`."""
+            if pair[0] == one:
+                return pair[1]
+            else:
+                return pair[0]
+        for (vertex, vertex_index) in izip(self.vertices, count(0)):
+            replacement = []
+            for (edge, current_index) in izip(vertex, count(0)):
+                (v1, v2) = ends[edge]
+                if v1 != v2:
+                    other_end = other(ends[edge], vertex_index)
+                    other_index = self.vertices[other_end].index(edge)
+                else:
+                    other_end = v1 # == v2, that is *this* vertex
+                    try:
+                        # presume this is the first occurrence of edge...
+                        other_index = vertex.index(edge, current_index+1)
+                    except ValueError:
+                        # it's not, take first
+                        other_index = vertex.index(edge)
+                # replace other_index with index of *next* edge
+                # (in the vertex cyclic order)
+                if other_index == len(self.vertices[other_end])-1:
+                    other_index = 0
+                else:
+                    other_index += 1
+                replacement.append((other_end, other_index))
+            pass1.append(replacement)
+
+        # pass2: now build a linear list, each element of the list
+        # corresponding to an edge, of `(pos, seen)` where `pos` is the
+        # index in this list where the other endpoint of that edge is
+        # located, and `seen` is a flag indicating whether this side of
+        # the edge has already been walked through.
+        pass2 = []
+        # build indices to the where each vertex begins in the linear list
+        vi=[0]
+        for vertex in self.vertices:
+            vi.append(vi[-1]+len(vertex))
+        # build list from collapsing the 2-level structure
+        for vertex in pass1:
+            for pair in vertex:
+                pass2.append([vi[pair[0]]+pair[1],False])
+
+        # pass3: pick up each element of the linear list, and follow it
+        # until we come to an already marked one.
+        result = 0
+        pos = 0
+        while pos < len(pass2):
+            # fast forward to an element that we've not yet seen
+            while (pos < len(pass2)) and (pass2[pos][1] == True):
+                pos += 1
+            if pos >= len(pass2):
+                break
+            # walk whole chain of edges
+            i = pos
+            while pass2[i][1] == False:
+                pass2[i][1] = True
+                i = pass2[i][0]
+            result += 1
+            pos += 1
+
+        # save result for later reference
+        self._num_boundary_components = result
+        
+        # that's all, folks!
+        return result
+
+    def genus(self):
+        """Return the genus g of this `Graph` object."""
+        # compute value if not already done
+        if (self._genus is None):
+            n = self.num_boundary_components()
+            K = self.num_vertices()
+            L = self.num_edges()
+            # by Euler, K-L+n=2-2*g
+            self._genus = (L - K - n + 2) / 2
+        return self._genus
+    
+    def classify(self):
+        """Return the pair (g,n) for this `Graph` object."""
+        return (self.genus(), self.num_boundary_components())
+
+
 
 def all_graphs(vertex_valences):
     """Return all graphs having vertices of the given valences.
@@ -120,6 +326,7 @@ def all_graphs(vertex_valences):
     assert is_sequence_of_integers(vertex_valences), \
            "all_graphs: parameter `vertex_valences` must be a sequence of integers, "\
            "but got %s" % vertex_valences
+
     total_edges = sum(vertex_valences) / 2
 
     ## pass 1: gather all canonical graphs built from edge sequences
@@ -131,8 +338,8 @@ def all_graphs(vertex_valences):
         current = graphs[pos]
         # slight optimization: since `current` is constant in the loop below,
         # pre-compute as much as we can...
-        current_cy = [CyclicList(v) for v in current.vertices]
-        current_b_rp = [repetition_pattern(v_cy) for v_cy in current_cy]
+        #current_cy = current.vertices
+        #current_b_rp = [repetition_pattern(v_cy) for v_cy in current_cy]
 
         pos2 = pos+1
         while pos2 < len(graphs):
@@ -145,9 +352,9 @@ def all_graphs(vertex_valences):
                 # FIXME: could save some processing time by caching
                 # the cyclic list of vertices) for any `candidate`, at
                 # the expense of memory usage...
-                for v1,b1,rp1,v2 in [(w1,b1,rp1,CyclicList(w2)) for (w1,(b1,rp1),w2)
-                              in map(None, current_cy, current_b_rp, candidate.vertices)]:
-                    (b2, rp2) = repetition_pattern(v2)
+                for v1,v2 in izip(current.vertices, candidate.vertices):
+                    (b1, rp1) = v1.repetition_pattern()
+                    (b2, rp2) = v2.repetition_pattern()
                     rp_shift = rp1.shift_for_list_eq(rp2)
                     if rp_shift is None:
                         # cannot map vertices, quit looping on vertices
@@ -193,152 +400,6 @@ def all_canonical_decorated_graphs(vertex_valences, total_edges):
         if g.is_canonical():
             yield g
             
-
-def is_maximal_representative(vertex):
-    """Return `True` if `vertex` is maximal among representatives of same cyclic sequence.
-
-    Examples:
-    >>> is_maximal_representative([3,2,1])
-    True
-    >>> is_maximal_representative([2,1,3])
-    False
-    >>> is_maximal_representative([1,1])
-    True
-    >>> is_maximal_representative([1])
-    True
-    """
-    def wrap_index(i,l):
-        if i >= l:
-            return i%l
-        else:
-            return i
-    l = len(vertex)
-    for i in range(1,l):
-        for j in range(0,l):
-            if vertex[wrap_index(i+j,l)] < vertex[j]:
-                # continue with next i
-                break
-            elif vertex[wrap_index(i+j,l)] > vertex[j]:
-                return False
-            # else, continue comparing
-    return True
-
-
-def num_edges(g):
-    """Return the total number of edges of graph `g`."""
-    return max(map(max,g))
-
-
-def endpoints(n,g):
-    """Return the endpoints of edge `n` in graph `g`.
-
-    The endpoints are returned as a pair (v1,v2) where `v1` and `v2`
-    are indices of vertices in `g`.
-    """
-    result = []
-    for v in range(0, len(g)):
-        c = g[v].count(n)
-        if 2 == c:
-            return (v,v)
-        elif 1 == c:
-            result.append(v)
-    if 0 == len(result):
-        raise KeyError, "Edge %d not found in graph '%s'" % (n, repr(g))
-    return result
-
-
-def num_boundary_components(graph):
-    """Return the number of boundary components of `graph`.
-
-    Each boundary component is represented by the list of (colored)
-    edges.
-
-    Examples:
-    >>> num_boundary_components([[3,2,1],[3,2,1]])
-    1
-    >>> num_boundary_components([[3,2,1],[3,1,2]])
-    3
-    """
-    L = num_edges(graph)+1
-    # for efficiency, gather all endpoints now
-    ends = L*[None]
-    for l in range(1,L):
-        ends[l] = endpoints(l, graph)
-
-    # pass1: build a "copy" of `graph`, replacing each edge coloring
-    # with a pair `(other, index)` pointing to the other endpoint of
-    # that same edge: the element at position `index` in vertex
-    # `other`.
-    pass1 = []
-    for (vertex, vertex_index) in map(None, graph, range(0,len(graph))):
-        replacement = []
-        for (edge, current_index) in map(None, vertex, range(0,len(vertex))):
-            (v1, v2) = ends[edge]
-            if v1 != v2:
-                other_end = other(ends[edge], vertex_index)
-                other_index = graph[other_end].index(edge)
-            else:
-                other_end = v1 # == v2, that is *this* vertex
-                try:
-                    # presume this is the first occurrence of edge...
-                    other_index = vertex.index(edge, current_index+1)
-                except ValueError:
-                    # it's not, take first
-                    other_index = vertex.index(edge)
-            # replace other_index with index of *next* edge
-            # (in the vertex cyclic order)
-            if other_index == len(graph[other_end])-1:
-                other_index = 0
-            else:
-                other_index += 1
-            replacement.append((other_end, other_index))
-        pass1.append(replacement)
-
-    # pass2: now build a linear list, each element of the list
-    # corresponding to an edge, of `(pos, seen)` where `pos` is the
-    # index in this list where the other endpoint of that edge is
-    # located, and `seen` is a flag indicating whether this side of
-    # the edge has already been walked by.
-    pass2 = []
-    # build indices to the where each vertex begins in the linear list
-    vi=[0]
-    for vertex in graph:
-        vi.append(vi[-1]+len(vertex))
-    # build list from collapsing the 2-level structure
-    for vertex in pass1:
-        for pair in vertex:
-            pass2.append([vi[pair[0]]+pair[1],False])
-
-    # pass3: pick up each element of the linear list, and follow it
-    # until we come to an already marked one.
-    result = 0
-    pos = 0
-    while pos < len(pass2):
-        # fast forward to an element that we've not yet seen
-        while (pos < len(pass2)) and (pass2[pos][1] == True):
-            pos += 1
-        if pos >= len(pass2):
-            break
-        # walk whole chain of edges
-        i = pos
-        while pass2[i][1] == False:
-            pass2[i][1] = True
-            i = pass2[i][0]
-        result += 1
-        pos += 1
-
-    # that's all, folks!
-    return result
-
-
-def classify(graph):
-    """Return the pair (g,n) for `graph`."""
-    n = num_boundary_components(graph)
-    K = len(graph)
-    L = num_edges(graph)
-    # by Euler, K-L+n=2-2*g
-    g = (L - K - n + 2) / 2
-    return (g,n)
 
 
 def all_automorphisms(graph):
