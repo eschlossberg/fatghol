@@ -14,15 +14,11 @@ isomorphic to the (co)homology of the moduli space of smooth punctured
 curves $\M_{g,n}$.
 
 Here we give a construction of the ribbon graph complex, deriving it
-as a relative of Harer's arc-system complex \cite{%
+as a relative of Thurston-Harer's arc-system complex \cite{%
   harer;cohomological-dimension,%
   harer;cohomology-of-moduli%
 },\FIXME{%
-  Non sono affatto sicuro che gli arc-system siano stati
-  introdotti da Harer.  Per\`o non \`e molto importante chi li ha
-  introdotti, quanto che qui si costruisce il complesso dei grafi a
-  nastro parallelamente a come Harer costruisce quello degli
-  arc-system.}
+  Rivedere attribuzione degli arc-system.}
 and prove the isomorphism of its homology with the
 rational (co)homology of $\M_{g,n}$.  The main ingredient of this
 construction is a cell decomposition of $\M_{g,n}$ based on a theorem
@@ -106,10 +102,15 @@ homeomorphic to a convex domain in $\setC^{3g - 3 + n}$.
 \label{sec:Mgn}
 
 \begin{definition}
-  The topological space $\M_{g,n} := \T_{g,n} / \Gamma_{g,n}$ is named the
+  The topological space $\M_{g,n} := \T_{g,n} / \Gamma_{g,n}$ is the
   moduli space of (smooth) $n$-pointed algebraic curves of genus $g$.
-  It parameterizes complex structures on $S$, up to
-  orientation-preserving diffeomorphisms fixing the $n$ marked points.
+  It parametrizes complex structures on $S$, up to
+  diffeomorphisms that:
+  \begin{inparaenum}
+  \item are homotopic to the identity mapping on $S$,
+  \item preserve the orientation of $S$, and
+  \item fix the $n$ marked points.
+  \end{inparaenum}
 \end{definition}
 Since $\T_{g,n}$ is an analytic variety and $\Gamma_{g,n}$ acts
 discontinuously with finite stabilizers, $\M_{g,n}$ inherits a
@@ -133,13 +134,11 @@ do \emph{not} permute the punctures, and repeat the same construction
 of the Teichm\"uller and the moduli space.  By the Riemann extension
 theorem, the two approaches turn out to be the same.
 
-Conversely, one may want to keep the complex structure on the surface
-fixed, while actually moving the punctures; still, this \emph{is} a
-way of varying the complex structure on $(C; x_1, \dots, x_n)$. This
-approach leads to the construction of $\M_{g,n}$ by equivalence
-classes of triples $(C, x, f)$ where $C$ is a complex curve, $x: \{1,
-\ldots, n\} \longrightarrow C$ a marking of points, and $f: C \to S$ a homeomorphism with a
-fixed reference topological Riemann surface $S$.
+Another approach leads to the construction of $\M_{g,n}$ by
+equivalence classes of triples $(C, x, f)$ where $C$ is a complex
+curve, $x: \{1, \ldots, n\} \longrightarrow C$ a marking of points,
+and $f: C \to S$ a homeomorphism with a fixed reference topological
+Riemann surface $S$.
 
 In the course of this chapter, we will make use of the description of
 $\M_{g,n}$ that best fits in the context, often without explicit
@@ -380,50 +379,44 @@ defined in \csref{dfn:ribbon-graphs}, as opposed to \emph{embedded}
 ribbon graphs as in \csref{dfn:embedded-rg} below.
 
 \begin{definition}\label{dfn:embedded-rg}
-  An embedded ribbon graph is an equivalence class, modulo the action
-  of $\Diff_0(S)$, of triples $[G, \iota, \{\psi_i\}_{i=1}^n]$ composed of a numbered
-  ribbon graph $G$, an embedding $\iota:G\to S$, and, for each connected
-  component $C_i$ of $S - \iota(G)$, a map $\psi_i: {\bar C_i} \to {\bar B}^\times$
-  such that
-  \begin{inparaenum}
-  \item $\psi_i$ is a homeomorphism of the interior of $C_i$ with the
-    punctured open unit disk $B^\times$;
-  \item $\psi_i$ restricts to $\iota^{-1}$ on the border $\partial C_i$.
-  \end{inparaenum}
-
-  A morphism $[f]$ from $[G, \iota, \psi_*]$ to $[G', \iota', \psi'_*]$ is given by
-  the following data:\FIXME{Alla lettera, questa definizione \`e
-    sbagliata: non importa quale sia l'omotopia tra $\iota$ e $\iota' \circ f$,
-    basta che ce ne sia una.  Ovvero, il morfismo esiste se ce n'\`e
-    almeno una, e tutte quelle che esistono sono equivalenti.}
-  \begin{itemize}
-  \item an abstract ribbon graph morphism $f:G\to G'$;
-  \item a homotopy $\eta:[0,1] \times S\to S$, such that $\eta(0,-) = \id_S$,
-    transforming $\iota$ into $\iota' \circ f$ and $\psi_i$ into $\psi'_i$.\FIXME{%
-      \`E meglio scrivere le condizioni esplicite $\eta(1, \iota(x)) = \iota' \circ f(x)$
-      e $\psi_i \circ \eta(1,y) = \psi'_i(y)$\ ?
-      }%
-  \end{itemize}
+  An embedded ribbon graph is a ribbon graph $G$ endowed with a
+  homeomorphism ${\tilde \iota}$ between $S(G)$ and the ambient
+  surface $S$, modulo the action of $\Diff^0(S)$.
 \end{definition}
-In other words, an embedded ribbon graph is a ribbon graph $G$ endowed
-with a homeomorphism ${\tilde \iota}$ between $S(G)$ and the ambient
-surface $S$ (modulo the action of $\Diff^0(S)$).\FIXME{%
-  Meglio usare questa come definizione, e usare la definizione
-  \ref{dfn:embedded-rg} come caratterizzazione?}%
+Spelling out all details, an embedded ribbon graph is an equivalence
+class, modulo the action of $\Diff_0(S)$, of triples $[G, \iota,
+\{\psi_i\}_{i=1}^n]$ composed of a numbered ribbon graph $G$, an
+embedding $\iota:G\to S$, and, for each connected component $C_i$ of
+$S - \iota(G)$, a map $\psi_i: {\bar C_i} \to {\bar B}^\times$ such
+that:
+\begin{inparaenum}
+\item $\psi_i$ is a homeomorphism of the interior of $C_i$ with the
+  punctured open unit disk $B^\times$;
+\item $\psi_i$ restricts to $\iota^{-1}$ on the border $\partial C_i$.
+\end{inparaenum}
+
+A morphism $[f]$ from $[G, \iota, \psi_*]$ to $[G', \iota', \psi'_*]$
+is given by the following data:
+\begin{itemize}
+\item an abstract ribbon graph morphism $f:G\to G'$;
+\item a homotopy $\eta:[0,1] \times S\to S$, such that $\eta(0,-) = \id_S$,
+  transforming $\iota$ into $\iota' \circ f$ and $\psi_i$ into $\psi'_i$.
+\end{itemize}
+
 Since a morphism $f:G\to G'$ of abstract ribbon graphs induces
-to a morphism $S(f):S(G)\to S(G')$, then a morphism of embedded
+a morphism $S(f):S(G)\to S(G')$, then a morphism of embedded
 ribbon graphs is determined by a homotopy connecting ${\tilde \iota}$ and
 ${\tilde \iota' \circ f}$.
 
 Embedded numbered ribbon graphs with their morphisms form a category
-$\ERG$, which is again disjoint union of categories $\ERG_{g,n}$.
+$\ERG$, which is again the disjoint union of categories $\ERG_{g,n}$.
 There is an obvious forgetful functor from the category of embedded
 ribbon graphs to the category of abstract numbered ribbon graphs,
 sending $[G, \iota] \mapsto G$ and $[f] \mapsto f$.
 
-The mapping class group $\Gamma_{g,n}$ acts functorially on $\ERG_{g,n}$ by
-changing the embedding: $\phi \in \Gamma_{g,n}$ sends $[G, \iota, \psi_*]$ into $[G, \iota
-\circ \phi, \phi \circ \psi_*]$.
+The mapping class group $\Gamma_{g,n}$ acts functorially on
+$\ERG_{g,n}$ by changing the embedding: $\phi \in \Gamma_{g,n}$ sends
+$[G, \iota, \psi_*]$ into $[G, \iota \circ \phi, \phi \circ \psi_*]$.
 
 \begin{lemma}
   \label{lemma:erg-no-aut}
@@ -662,20 +655,23 @@ $G$ by contracting the edge $\alpha$, then
 \begin{equation}\label{eq:embedding-cells}
   \Delta(G') = \{ \ell \in \Delta(G) | \ell_\alpha = 0 \}.
 \end{equation}
-By composing with the forgetful functor $[G, \iota, \psi_*] \mapsto G$ from
-embedded ribbon graphs to abstract ribbon graphs, we define a
-contravariant functor on the category of embedded ribbon graphs:
+By composing with the (covariant) forgetful functor $[G, \iota, \psi_*] \mapsto G$
+from embedded ribbon graphs to abstract ribbon graphs, we define a
+contravariant functor $T: \ERG_{g,n} \mapsto \category{Top}$ from the
+category of embedded ribbon graphs to the category of topological
+spaces.
 \begin{equation*}
   \label{eq:rg-cells-teichmueller}
   T[G, \iota, \psi_*] := \Delta(G).
 \end{equation*}
 
+The category $\ERG$ forms an inverse system over the set of its
+objects, by stipulating that $G' > G$ iff $G'$ is obtained from $G$ by
+(a sequence of) contraction of edges.  Therefore, the image $T\ERG$ is
+a direct system in $\category{Top}$, and we can form its direct limit.
 \begin{definition}
-  The combinatorial Teichm\"uller space is the direct limit of the
-  functor $T$:\FIXME{%
-    Penner costruisce questo spazio non come limite diretto, ma
-    incollando esplicitamente le celle.  C'\`e qualcosa di nascosto che
-    non funziona col limite diretto?  Mi sembra di no.}%
+  The combinatorial Teichm\"uller space is the limit of the direct
+  system $T\ERG_{g,n}$:
   \begin{equation*}
     \Tcomb_{g,n} := \varinjlim T[G, \iota, \psi_*],
   \end{equation*}
@@ -687,7 +683,7 @@ the boundary: if $[G', \iota', \psi'_*]$ is obtained from $[G, \iota, \psi_*]$ b
 contraction of an edge $\alpha$, then $\Delta(G')$ is identified with the face
 of $\Delta(G)$ where $\ell_\alpha = 0$ by \csref{eq:embedding-cells}.
 
-Elements of the topological space $\Tcomb_{g,n}$ are (equivalence
+Points of the topological space $\Tcomb_{g,n}$ are (equivalence
 classes of) metrized embedded ribbon graphs $[G, \iota, \psi_*, \ell]$, where $\ell
 \in T[G, \iota, \psi_*]$; it is easy to check that any $[G, \iota, \psi_*, \ell] \in
 \Tcomb_{g,n}$ has a unique representative such that $\ell_\alpha > 0$ for all
@@ -717,7 +713,7 @@ contrafunctor $\overline{M}(G)$ and a topological space:
 \end{equation*}
 $\Mbarcomb_{g,n}$ turns out to be a compactification of the orbifold
 $\Mcomb_{g,n}$, and a quotient of the Deligne-Mumford compactification
-$\Mbar_{g,n}$.
+$\Mbar_{g,n} \times \Delta$.
 
 \subsubsection{Homotopy equivalence with moduli spaces}
 \label{sec:homotopy-equiv}
@@ -1010,16 +1006,14 @@ then an order of the edges of ${\tilde G}$ is induced.
 
 \begin{lemma}
   \label{lemma:PL-face}
-  \begin{inparaenum}
-  \item There is a canonical PL isomorphism between $|U|$ and
-    $T({\tilde G}) = \Delta(G)$.
-  \item The above correspondence is compatible with the face
-    operations: if $U' \in X - X_\infty$ is a face of $U \in X - X_\infty$, then
-    the dual graph ${\tilde G}'$ is obtained from ${\tilde G}$ by
-    contraction of a non-loop edge, and the PL isomorphism $|U|
-    \isoarrow T({\tilde G})$ restricts to $|U'| \isoarrow T({\tilde
-      G}')$ on the faces.
-  \end{inparaenum}
+  There is a canonical PL isomorphism between $|U|$ and
+  $T({\tilde G}) = \Delta(G)$.
+
+  This correspondence is compatible with the face operations: if $U' \in
+  X - X_\infty$ is a face of $U \in X - X_\infty$, then the dual graph ${\tilde
+    G}'$ is obtained from ${\tilde G}$ by contraction of a non-loop
+  edge, and the PL isomorphism $|U| \isoarrow T({\tilde G})$ restricts
+  to $|U'| \isoarrow T({\tilde G}')$ on the faces.
 \end{lemma}
 By \csref{lemma:PL-face}, the face operators on the two set of
 simplices are compatible with this PL isomorphism, so we can glue
@@ -1044,7 +1038,7 @@ isomorphisms $|\langle u_*\rangle| \to |G|$ to form a PL isomorphism $|X - X_\in
 \begin{definition}\label{dfn:orientation}
   An orientation of a ribbon graph $G$ is an orientation of the vector
   space $\setQ\Edges{G}$, that is, the choice of an order of the edges of
-  $G$, up to an even number of exchanges.
+  $G$, up to even permutations.
 \end{definition}
 Giving an orientation on $G$ (resp.~${\tilde G}$) is the same as
 orienting the simplex $\Delta(G)$ (resp.~$T({\tilde G}$).
@@ -1119,7 +1113,7 @@ setting $\alpha_1 < \ldots < \alpha_p$.
 \end{theorem}
 \begin{proof}
   The genus and puncture number will be fixed throughout, so for
-  brevity, put $\Gamma := \Gamma_{g,n}$, $\T := \T\_{g,n}$ and $\Tcomb :=
+  brevity, put $\Gamma := \Gamma_{g,n}$, $\T := \T_{g,n}$ and $\Tcomb :=
   \Tcomb_{g,n}$.  By \csref{thm:HMT}, we have:
   \begin{equation*}
     H^\Gamma_*(\T, \setQ) = H^\Gamma_*(\Tcomb, \setQ). 
@@ -1238,7 +1232,7 @@ setting $\alpha_1 < \ldots < \alpha_p$.
 
   The vertical maps $\theta_p$, $\theta_{p-1}$ in \eqref{eq:13} are the chain
   isomorphisms underlying the $\Gamma$-module decomposition $C_p(\Tcomb, \setQ)
-  \cong \bigoplus_{G \in R_p} W_G$.  Forming the border of a cell $T{\tilde G} \subseteq
+  \cong \bigoplus_{G \in R_p} W_G$.  Taking the boundary of a cell $T{\tilde G} \subseteq
   \Tcomb$ commutes with the $\Gamma$-action: $\partial T(\tau \cdot {\tilde G}) = \tau \cdot \partial
   T({\tilde G})$.  Furthermore, $T({\tilde G}')$ is a cell in
   $\partial T({\tilde G})$ iff ${\tilde G}'$ is obtained from ${\tilde G}$ by
