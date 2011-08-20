@@ -24,6 +24,7 @@ from cache import (
     ocache_iterator,
     ocache_symmetric,
     ocache_weakref,
+    fcache_iterator,
     Cacheable,
     )
 from combinatorics import (
@@ -62,7 +63,7 @@ class VertexCache(object):
         return "rg.VertexCache"
 
 
-class Vertex(Cacheable, CyclicList):
+class Vertex(CyclicList):
     """A (representative of) a vertex of a ribbon graph.
 
     A vertex is represented by the cyclically ordered list of its
@@ -75,10 +76,8 @@ class Vertex(Cacheable, CyclicList):
     #   2) we could not implement `rotate()` and friends: tuples are
     #      immutable.
 
-    def __init__(self, seq=None):
-        Cacheable.__init__(self)
-        CyclicList.__init__(self, seq)
-        
+    __slots__ = []
+
     def __cmp__(self, other):
         """Return negative if x<y, zero if x==y, positive if x>y.
         Unlike standard Python sequence comparison, vertices with
@@ -126,10 +125,19 @@ class Vertex(Cacheable, CyclicList):
         return loops
 
 
-class EqualIfIsomorphic(object):
+class EqualIfIsomorphic(Cacheable):
     """Instances of this class will compare equal if there is an
     isomorphism mapping one to the other.
     """
+
+    __slots__ = [ 'invariants' ]
+
+
+    def __init__(self, invariants):
+        self.invariants = invariants
+        # set this instance's _persistent_id
+        Cacheable.__init__(self)
+
     
     @ocache_symmetric
     def __eq__(self, other):
@@ -164,7 +172,7 @@ class EqualIfIsomorphic(object):
 
 
 
-class Fatgraph(EqualIfIsomorphic, Cacheable):
+class Fatgraph(EqualIfIsomorphic):
     """A fully-decorated ribbon graph.
 
     Exports a (read-only) sequence interface, through which vertices
@@ -191,6 +199,19 @@ class Fatgraph(EqualIfIsomorphic, Cacheable):
             == Fatgraph([Vertex([1,1,0,0])])
       False
     """
+
+    __slots__ = [
+        '__weakref__',
+        '_vertextype',
+        'edge_numbering',
+        'endpoints_i',
+        'endpoints_v',
+        'invariants',
+        'num_edges',
+        'num_external_edges',
+        'num_vertices',
+        'vertices',
+        ]
 
     def __init__(self, g_or_vs, vertextype=Vertex, **kwargs):
         """Construct a `Fatgraph` instance, taking list of vertices.
@@ -229,9 +250,6 @@ class Fatgraph(EqualIfIsomorphic, Cacheable):
               True
 
         """
-        # set this instance's _persistent_id
-        Cacheable.__init__(self)
-
         # dispatch based on type of arguments passed
         if isinstance(g_or_vs, Fatgraph):
             # copy-constructor
@@ -306,14 +324,14 @@ class Fatgraph(EqualIfIsomorphic, Cacheable):
         assert self._ok()
 
         # used for isomorphism testing
-        self.invariants = (
+        EqualIfIsomorphic.__init__(self, (
             self.num_vertices,
             self.num_edges,
             self.num_external_edges if self.num_external_edges > 0
-                                    else self.num_boundary_cycles(),
+            else self.num_boundary_cycles(),
             #self.vertex_valences(),
             #self.vertex_valence_distribution(),
-            )
+            ))
 
 
     def _ok(self):
@@ -433,6 +451,9 @@ class Fatgraph(EqualIfIsomorphic, Cacheable):
         Two boundary cycles are equal if they comprise the same
         corners.
         """
+        
+        __slots__ = [ 'origin' ]
+        
         def __init__(self, triples, graph=None):
             """Construct a `BoundaryCycle` instance from a sequence of
             triples `(v, i, j)`, where `i` and `j` are consecutive (in
@@ -1914,7 +1935,9 @@ class NumberedFatgraph(Fatgraph):
         False
       """
 
-    def __init__(self, underlying, numbering, vertextype=Vertex):
+    __slots__ = [ 'underlying', '_numbering' ]
+    
+    def __init__(self, underlying, numbering):
         Fatgraph.__init__(self, underlying)
         self.underlying = underlying
         self.numbering = numbering
@@ -2034,7 +2057,7 @@ class NumberedFatgraph(Fatgraph):
                                 numbering=new_numbering)
         
 
-    @ocache_iterator
+    #@ocache_iterator
     def isomorphisms(self, other):
         """Iterate over isomorphisms from `self` to `other`.
 
@@ -2223,7 +2246,6 @@ def MgnTrivalentGraphsRecursiveGenerator(g, n):
             # XXX: should this check be done in graphs(g,n)?
             if (G.genus(), G.num_boundary_cycles()) != (g,n) \
                    or (G in unique):
-                G.release()
                 continue
             unique.append(G)
             yield G
@@ -2299,12 +2321,11 @@ class MgnGraphsIterator(BufferingIterator):
                         # put graph back into next batch for processing
                         next_batch.append(dg)
                     else:
-                        dg.release()
                         discarded += 1
         self._batch = next_batch
         self._num_vertices -= 1
 
-        logging.debug("  Found %d distinct unique graphs with %d vertices, discarded %d.",
+        logging.debug("  Found %d distinct unique fatgraphs with %d vertices, discarded %d.",
                      len(next_batch), 1+self._num_vertices, discarded)
         return next_batch
 
