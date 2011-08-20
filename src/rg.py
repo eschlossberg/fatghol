@@ -42,48 +42,6 @@ def dispo(l, n=None):
                 yield [s0]+tr(s1, [s0], [n])
 
 
-def rotate_to_max(s):
-    """Return the maximal element among all cyclic shifts of sequence `s`.
-
-    Examples:
-    >>> rotate_to_max([1,3,3])
-    [3, 3, 1]
-    >>> rotate_to_max([1,3,3,1])
-    [3, 3, 1, 1]
-    >>> rotate_to_max([1,3,3,1,2])
-    [3, 3, 1, 2, 1]
-    >>> rotate_to_max([1,2,2,1,3])
-    [3, 1, 2, 2, 1]
-    >>> rotate_to_max([1,2,3,3,3])
-    [3, 3, 3, 1, 2]
-    """
-    max = s
-    def rotate_index(i, shift, l=len(s)):
-        if i + shift >= l:
-            return i + shift - l
-        else:
-            return i + shift
-    for shift in range(1, len(s)):
-        # compare `max` with shifted string
-        ge = True
-        for i in range(0, len(s)):
-            a = max[i]
-            b = s[rotate_index(i, shift)]
-            if (a > b):
-                ge=True
-                break
-            elif (a < b):
-                ge=False
-                break
-            else:
-                # a==b, continue comparison
-                pass
-        if not ge:
-            # replace `max` with rotated sequence
-            max = s[shift:] + s[:shift]
-    return max
-
-
 class CyclicList(list):
     """List with indices wrapping around.
 
@@ -295,8 +253,7 @@ def all_edge_seq(n):
     each of which is repeated exactly twice.
     """
     for s in dispo(2*n):
-        for i in range(1,n+1):
-            s = tr(s, range(n+1,2*n+1), range(1,n+1))
+        s = tr(s, range(n+1,2*n+1), range(1,n+1))
         yield s
 
 
@@ -313,57 +270,64 @@ def vertices_from_edge_seq(edge_seq, vertex_list):
         del edge_seq[:v]
     return result
 
-def sort_vertices(vertex_spec):
-    """Sort list of vertices *in place*.
 
-    Vertices of higher valence come first; vertices of the same valence
-    are sorted lexicographically.
-
-    Example:
-    >>> g = [[1], [1, 2], [1, 3], [1, 2, 3]]
-    >>> sort_vertices(g); g
-    [[1, 2, 3], [1, 3], [1, 2], [1]]
-    """
-    def _sort_vertices_cmp(x,y):
-        if len(x) != len(y):
-            return -cmp(len(x), len(y))
-        else:
-            return -cmp(x,y)
-    vertex_spec.sort(cmp=_sort_vertices_cmp)
-
-
-def deep_cmp(s1,s2):
-    """Compare items in `s1` and `s2`, recursing into subsequences.
+def is_maximal_representative(vertex):
+    """Return `True` if `vertex` is maximal among representatives of same cyclic sequence.
 
     Examples:
-    >>> deep_cmp(1,1)
-    0
-    >>> deep_cmp([1],[1])
-    0
-    >>> deep_cmp([1,1],[1,1])
-    0
-    >>> deep_cmp([1,[1]],[1,[1]])
-    0
-    >>> deep_cmp([1,[1]],[1,[2]])
-    -1
+    >>> is_maximal_representative([3,2,1])
+    True
+    >>> is_maximal_representative([2,1,3])
+    False
+    >>> is_maximal_representative([1,1])
+    True
+    >>> is_maximal_representative([1])
+    True
     """
-    if not (type(s1) == type(s2)):
-        raise TypeError, \
-            "Comparing arguments of different type: %s vs %s" \
-            % (str(type(s1)), str(type(s2)))
-    else:
-        try:
-            # assume s1,s2 are sequences and recursively apply this
-            # function to pairs of corresponding elements...
-            def _first_nonzero(x,y):
-                if 0 != x:
-                    return x
-                else:
-                    return y
-            return reduce(_first_nonzero, map(deep_cmp, s1, s2), 0)
-        except TypeError:
-            # ...if s1,s2 are not sequences, then do a builtin comparison
-            return cmp(s1,s2)
+    def wrap_index(i,l):
+        if i >= l:
+            return i%l
+        else:
+            return i
+    l = len(vertex)
+    for i in range(1,l):
+        for j in range(0,l):
+            if vertex[wrap_index(i+j,l)] < vertex[j]:
+                # continue with next i
+                break
+            elif vertex[wrap_index(i+j,l)] > vertex[j]:
+                return False
+            # else, continue comparing
+    return True
+
+
+def is_canonical(graph):
+    """Return `True` if `graph` is canonical.
+    A graph is canonical iff:
+    1) Each vertex is represented by the maximal sequence, among all
+       sequences representing the same cyclic order.
+    2) Vertices are sorted in lexicographic order.
+
+    Examples:
+    >>> is_canonical([[3,2,1],[3,2,1]])
+    True
+    >>> is_canonical([[3,2,1],[3,1,2]])
+    True
+    >>> is_canonical([[3,1,2],[3,2,1]])
+    False
+    >>> is_canonical([[1,2,3],[3,2,1]])
+    False
+    >>> is_canonical([[1,2],[3,2,1]])
+    False
+    """
+    previous_vertex = None
+    for vertex in graph:
+        if not is_maximal_representative(vertex):
+            return False
+        if previous_vertex and (previous_vertex < vertex):
+            return False
+        previous_vertex = vertex
+    return True
 
 
 def all_graphs(vertex_list):
@@ -371,49 +335,47 @@ def all_graphs(vertex_list):
     """
     total_edges = sum(vertex_list) / 2
     # gather all distinct edge sequences
-    seen = {}
     graphs = []
-    def _hash(g, N=total_edges):
-        "Return hash number for graph g."
-        h=1
-        for x in g:
-            if type(x) is types.IntType:
-                h = h*N + x
-            else:
-                # assume it's a sequence
-                h = h*(N ** len(x)) + _hash(x)
-        return h
     for edge_seq in all_edge_seq(total_edges):
         g = vertices_from_edge_seq(edge_seq, vertex_list)
-        for i in range(0, len(g)):
-            g[i] = rotate_to_max(g[i])
-        sort_vertices(g)
-        if not seen.has_key(_hash(g)):
-            seen[_hash(g)] = True
+        if is_canonical(g):
             graphs.append(g)
     # filter out sequences representing isomorphic graphs
-    for current,pos in map(None, graphs, range(1,len(graphs)+1)):
-        for candidate in graphs[pos:]:
-            perm = Map(total_edges)
-            for v1,v2 in [(CyclicList(w1),CyclicList(w2)) for (w1,w2)
-                          in map(None, current, candidate)]:
-                (b1, rp1) = repetition_pattern(v1)
-                (b2, rp2) = repetition_pattern(v2)
-                rp_shift = rp1.shift_for_list_eq(rp2)
-                if rp_shift is None:
-                    # cannot map vertices, quit looping on vertices
-                    break
-                # rp1 is a kind of "derivative" of v1; we gather the
-                # displacement for v1 by summing elements of rp1 up to
-                # -but not including- `rp_shift`.
-                shift = sum(rp1[:rp_shift])
-                if not perm.extend(v1[b1+shift:b1+shift+len(v1)],v2[b2:b2+len(v2)]):
-                    # continue with next candidate
-                    perm = None
-                    break
-            if perm and perm.completed():
-                # the two graphs are isomorphic
-                graphs.remove(candidate)
+    pos = 0
+    while pos < len(graphs):
+        current = graphs[pos]
+        pos2 = pos+1
+        to_remove = []
+        while pos2 < len(graphs):
+            candidate = graphs[pos2]
+            if candidate == current:
+                to_remove.insert(0,pos2)
+            else:
+                perm = Map(total_edges)
+                for v1,v2 in [(CyclicList(w1),CyclicList(w2)) for (w1,w2)
+                              in map(None, current, candidate)]:
+                    (b1, rp1) = repetition_pattern(v1)
+                    (b2, rp2) = repetition_pattern(v2)
+                    rp_shift = rp1.shift_for_list_eq(rp2)
+                    if rp_shift is None:
+                        # cannot map vertices, quit looping on vertices
+                        break
+                    # rp1 is a kind of "derivative" of v1; we gather the
+                    # displacement for v1 by summing elements of rp1 up to
+                    # -but not including- `rp_shift`.
+                    shift = sum(rp1[:rp_shift])
+                    if not perm.extend(v1[b1+shift:b1+shift+len(v1)],v2[b2:b2+len(v2)]):
+                        # continue with next candidate
+                        perm = None
+                        break
+                if perm and perm.completed():
+                    # the two graphs are isomorphic
+                    to_remove.insert(0,pos2)
+            pos2 += 1
+        if len(to_remove) > 0:
+            for i in to_remove:
+                del graphs[i]
+        pos += 1
     return graphs
 
 
@@ -455,8 +417,10 @@ def num_boundary_components(graph):
     edges.
 
     Examples:
-    >>> boundary_components([[3,2,1],[3,2,1]])
-    >>> boundary_components([[3,2,1],[3,1,2]])
+    >>> num_boundary_components([[3,2,1],[3,2,1]])
+    1
+    >>> num_boundary_components([[3,2,1],[3,1,2]])
+    3
     """
     L = num_edges(graph)+1
     # for efficiency, gather all endpoints now
@@ -544,7 +508,7 @@ def graph_to_xypic(graph):
     r"""Print XY-Pic code snippet to render graph `graph`.
 
     Examples:
-    >>> print graph_to_xypic([[3,2,1],[3,1,2]])
+    #>>> print graph_to_xypic([[3,2,1],[3,1,2]])
     \xy 0;<2cm,0cm>:%
     (1,1)="v1",%
     (-1,1)="v2",%
@@ -556,7 +520,7 @@ def graph_to_xypic(graph):
     "v1";"v2"**\crv{"v1l2"&"v2l1"},%
     "v1";"v2"**\crv{"v1l1"&"v2l2"},%
     \endxy
-    >>> print graph_to_xypic([[1,2,3,1],[1,2,3,2],[1,2,3,3]])
+    #>>> print graph_to_xypic([[1,2,3,1],[1,2,3,2],[1,2,3,3]])
     \xy 0;<2cm,0cm>:%
     {\xypolygon3"v"{~={0}~>{}}},% mark v1,v2,v3
     "v1",{\xypolygon8"v1l"{~:{(1.20,0):}~={90}~>{}}},%
@@ -588,16 +552,10 @@ def graph_to_xypic(graph):
     # mark invisible "control points" for bezier curves connecting vertices
     def rotation_angle(K,k):
         return 90+(k-1)*360/K
-    def invert_base_for_bigons(K,k):
-        if (2 == K) and (1 == k):
-            return '(0,-1)::'
-        else:
-            return ''
     for k in range(1,K+1):
         # "vK",{\xypolygonL"vKl"{~{1.20,0):~={...}~>{}}},%
-        result += r'"v%d",{\xypolygon%d"v%dl"{~:{(1.20,0):%s}~={%d}~>{}}},%%' \
-                  % (k, 2*len(graph[k-1])-2, k, \
-                     invert_base_for_bigons(K,k), rotation_angle(K,k)) \
+        result += r'"v%d",{\xypolygon%d"v%dl"{~:{(1.20,0):}~={%d}~>{}}},%%' \
+                  % (k, 2*len(graph[k-1])-2, k, rotation_angle(K,k)) \
                   + '\n'
     for k in range(1,K+1):
         # "vK"*\txt{[...]},%
@@ -630,6 +588,9 @@ if "__main__" == __name__:
     parser.add_option("-v", "--verbose",
                       action='store_true', dest='verbose', default=False,
                       help="Report verbosely on progress.")
+    parser.add_option("-L", "--latex",
+                      action='store_true', dest='latex', default=False,
+                      help="Print Xy-Pic code to draw graphs.")
     parser.add_option("-o", "--output", dest="outfile", default=None,
                       help="Output file for `vertices` action.")
     (options, args) = parser.parse_args()
@@ -688,15 +649,20 @@ if "__main__" == __name__:
             graphs += all_graphs(vertex_list)
 
         # print latex code
-        outfile.write(r"""
+        if options.latex:
+            outfile.write(r"""
 \documentclass[a4paper,twocolumn]{article}
 \usepackage[curve,poly,xdvi]{xy}
 \begin{document}
 """)
         for g in graphs:
-            outfile.write(graph_to_xypic(g)+'\n')
+            if options.latex:
+                outfile.write(graph_to_xypic(g)+'\n')
+            else:
+                outfile.write("%s\n" % g)
         outfile.write("\n")
         outfile.write("Found %d graphs.\n" % len(graphs))
         outfile.write("\n")
-        outfile.write(r"\end{document}")
-        outfile.write("\n")
+        if options.latex:
+            outfile.write(r"\end{document}")
+            outfile.write("\n")
