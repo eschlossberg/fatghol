@@ -139,19 +139,71 @@ def do_homology(g, n):
         logging.error("Expected and computed orbifold Euler characteristics do not match!"
                       " (computed: %s, expected: %s)" % (chi, chi_hz))
 
-    # perform more self-consistency checks
+    # compare Euler characteristics
+    def e(g,n):
+        """Return Euler characteristics of `M_{g,n}`.
+        """
+        if g==0:
+            # according to Bini-Gaiffi-Polito arXiv:math/9806048, p.3
+            return factorial(n-3)*sign_exp(n-3)
+        elif g==1:
+            # according to Bini-Gaiffi-Polito, p. 15
+            if n>4:
+                return factorial(n-1)*Rational(sign_exp(n-1),12)
+            else:
+                es = [1,1,0,0]
+                return es[n-1] # no n==0 computed in [BGP]
+        elif g==2:
+            # according to Bini-Gaiffi-Polito, p. 14
+            if n>6:
+                return factorial(n+1)*Rational(sign_exp(n+1),240)
+            else:
+                es = [1,2,2,0,-4,0,-24]
+                return es[n]
+        elif g>2:
+            # according to Bini-Harer arXiv:math/0506083, p. 10
+            es = [None, # g==0 already done above
+                  None, 
+                  None,
+                  # n==1     2        3        4           5           6             7             8
+                  [    8,    6,       4,     -10,         30,       -660,         6540,        79200],
+                  [   -2,  -10,     -24,     -24,       -360,       2352,       -37296,       501984],
+                  [   12,   26,      92,     182,       1674,     -16716,       238980,     -3961440],
+                  [    0,  -46,    -206,     188,      -7512,     124296,     -2068392,     37108656],
+                  [   38,  120,     676,   -1862,      71866,   -1058676,     21391644,   -422727360],
+                  [ -166, -630,   -5362,   16108,    -680616,   12234600,   -259464240,   5719946400],
+                  [  748, 2132,   29632, -323546,    7462326, -164522628,   3771668220, -90553767840],
+                  [-1994, 6078, -213066, 4673496, -106844744, 2559934440, -64133209320,    1.664e+12],
+                  ]
+            return es[g][n]
+        else:
+            raise ValueError("No Euler characteristics known for M_{g,n},"
+                             " where g=%s and n=%s" % (g,n))
+
+    logging.info("Expected Euler characteristics: %s" % e(g,n))
+    e_ = 0
+    for i in xrange(len(hs)):
+        e_ += sign_exp(i)*hs[i]
+    logging.info("Computed Euler characteristics: %s" % e_)
+    if e_ != e(g,n):
+        logging.error("Computed and expected Euler characteristics do not match:"
+                      " %s vs %s" % (e_, e(g,n)))
+
+    # verify result against other known theorems
     if g>0:
         # from Harer's SLN1337, Theorem 7.1
         if hs[1] != 0:
             logging.error("Harer's Theorem 7.1 requires h_1=0 when g>0")
-        # From Harer's SLN1337, Theorem 7.2
-        if g==1 or g==2:
-            if hs[2] != n:
-                logging.error("Harer's Theorem 7.2 requires h_2=%d when g=1 or g=2" % n)
-        elif g>2:
-            if hs[2] != n+1:
-                logging.error("Harer's Theorem 7.2 requires h_2=%d when g>2" % n)
-            
+        ## DISABLED 2009-03-27: Harer's statement seems to be incorrect,
+        ## at least for low genus...
+        ## # From Harer's SLN1337, Theorem 7.2 
+        ## if g==1 or g==2:
+        ##     if hs[2] != n:
+        ##         logging.error("Harer's Theorem 7.2 requires h_2=%d when g=1 or g=2" % n)
+        ## elif g>2:
+        ##     if hs[2] != n+1:
+        ##         logging.error("Harer's Theorem 7.2 requires h_2=%d when g>2" % n+1)
+
     return hs
 
 
@@ -649,21 +701,6 @@ elif 'homology' == args[0]:
         for (i, h) in enumerate(hs):
             outfile.write("h_%d(M_{%d,%d}) = %d\n" % (i, g, n, h))
 
-    # perform some self-consistency checks
-    if g>0:
-        # from Harer's SLN1337, Theorem 7.1
-        if hs[1] != 0:
-            logging.error("Harer's Theorem 7.1 requires h_1=0 when g>0")
-        ## DISABLED 2009-03-27: Harer's statement seems to be incorrect,
-        ## at least for low genus...
-        ## # From Harer's SLN1337, Theorem 7.2 
-        ## if g==1 or g==2:
-        ##     if hs[2] != n:
-        ##         logging.error("Harer's Theorem 7.2 requires h_2=%d when g=1 or g=2" % n)
-        ## elif g>2:
-        ##     if hs[2] != n+1:
-        ##         logging.error("Harer's Theorem 7.2 requires h_2=%d when g>2" % n+1)
-            
 
 else:
     sys.stderr.write("Unknown action `%s`, aborting.\n" % args[0])
@@ -684,4 +721,4 @@ try:
 except:
     pass
 
-logging.debug("Done: %s" % str.join(" ", sys,argv))
+logging.debug("Done: %s" % str.join(" ", sys.argv))
