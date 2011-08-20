@@ -115,6 +115,15 @@ class Graph(object):
     Exports a (read-only) sequence interface, through which vertices
     can be accessed.
     """
+    __slots__ = (
+        '_num_boundary_components',
+        '_num_edges',
+        '_num_vertices',
+        '_genus',
+        '_valence_spectrum',
+        '_vertex_valences',
+        'vertices',
+        )
     def __init__(self, vertex_valences, edge_seq):
         assert is_sequence_of_integers(vertex_valences), \
                "Graph.__init__: parameter `vertex_valences` must be sequence of integers, "\
