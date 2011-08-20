@@ -98,8 +98,6 @@ def choose(n,k):
 def factorial(n):
     """Return the factorial of `n`.
 
-    Argument `n` must be a non-negative integer.
-
     Examples::
 
       >>> for n in range(7): print factorial(n)
@@ -110,15 +108,33 @@ def factorial(n):
       24
       120
       720
+
+    Argument `n` can also be a negative number::
+
+      >>> factorial(-5)
+      -120
+      >>> factorial(-2)
+      2
     """
     assert isinstance(n, (int, long)), \
            "factorial(): argument `%s` is no `int` nor `long`" % n
     assert n >= 0, \
            "factorial(): argument should be a non-negative number, but got %d" % n
+    if n < 0:
+        return sign_exp(n)*factorial(-n)
     if n < 2:
         return 1
     else:
         return n*factorial(n-1)
+
+    
+
+def sign_exp(m):
+    """Return (-1) to the power `m`. """
+    if (m % 2) == 0:
+        return +1
+    else:
+        return -1
     
 
 
