@@ -31,6 +31,7 @@
 #ifndef SIMPLE_HPP
 #define SIMPLE_HPP
 
+#include <cassert>
 
 //#include <linbox/blackbox/triplesbb.h>
 #include <linbox/field/PID-integer.h>
@@ -54,10 +55,15 @@ public:
   size_t const num_rows;
   size_t const num_columns;
 
+  /** Return `true` if product of given matrices is null */
+  friend bool is_null_product(const SimpleMatrix &M1, 
+                              const SimpleMatrix &M2);
+
 private:
   typedef LinBox::PID_integer _CoefficientRingType;
+  typedef LinBox::SparseMatrix<_CoefficientRingType> _MatrixType;
   _CoefficientRingType ZZ;
-  LinBox::SparseMatrix<_CoefficientRingType> m;
+  _MatrixType m;
 };
 
 
@@ -89,6 +95,40 @@ SimpleMatrix::rank()
 {
   unsigned long r;
   return LinBox::rank(r, m);
+}
+
+
+inline
+bool
+is_null_product(const SimpleMatrix &A, const SimpleMatrix &B)
+{
+  assert (A.m.coldim() == B.m.rowdim());
+  SimpleMatrix::_CoefficientRingType ZZ;
+  for(size_t i=0; i<A.m.rowdim(); i++) {
+    for (size_t j=0; j<B.m.coldim(); j++) {
+      SimpleMatrix::_CoefficientRingType::Element x;
+      ZZ.init(x, 0);
+      for (size_t k=0; k<A.m.coldim(); k++) 
+        x += A.m.getEntry(i,k) * B.m.getEntry(k,j);
+      if (not (x == 0))
+        return false;
+    }
+  }
+  return true;
+/*
+  LinBox::VectorDomain<SimpleMatrix::_CoefficientRingType> vector(ZZ);
+  LinBox::Transpose<SimpleMatrix::_MatrixType> b(B.m);
+  for(SimpleMatrix::_MatrixType::ConstRowIterator row = A.m.rowBegin(); 
+      row != A.m.rowEnd(); 
+      ++row) 
+    {
+      LinBox::Vector<SimpleMatrix::_CoefficientRingType>::SparseSeq result;
+      b.apply(result, *row);
+      if(not vector.isZero(result))
+        return false;
+    }
+  return true;
+*/
 }
 
 
