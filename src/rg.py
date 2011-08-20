@@ -123,6 +123,7 @@ class Graph(object):
     # the only reason to use `__slots__` here is to keep a record of
     # all instance attribute names.
     __slots__ = (
+        '_boundary_components',
         '_genus',
         '_num_boundary_components',
         '_num_edges',
@@ -224,6 +225,7 @@ class Graph(object):
         self._num_edges = sum(self._vertex_valences) / 2
         self._num_vertices = len(self.vertices)
         # these values will be computed on-demand
+        self._boundary_components = None
         self._num_boundary_components = None
         self._genus = None
         self._valence_spectrum = None
@@ -312,6 +314,109 @@ class Graph(object):
         isomorphism is represented.
         """
         return MorphismIteratorFactory(self.valence_spectrum())(self, self)
+
+    
+    def boundary_components(self):
+        """Return the number of boundary components of this `Graph` object.
+
+        Each boundary component is represented by the list of (colored)
+        edges::
+
+          >>> Graph([Vertex([2,1,0]),Vertex([2,0,1])]).boundary_components()
+          [[2, 0], [1, 2], [0, 1]]
+
+        If both sides of an edge belong to the same boundary
+        component, that edge appears twice in the list::
+
+          >>> Graph([Vertex([2,1,1]),Vertex([2,0,0])]).boundary_components()
+          [[2, 0, 2, 1], [1], [0]]
+          
+          >>> Graph([Vertex([2,1,0]),Vertex([2,1,0])]).boundary_components()
+          [[2, 1, 0, 2, 1, 0]]
+          
+        """
+        # try to return the cached value
+        if self._boundary_components is not None:
+            return self._boundary_components
+
+        # otherwise, compute it now...
+        
+        # micro-optimizations
+        L = self.num_edges()
+        ends = self.endpoints
+
+        # pass1: build a "copy" of `graph`, replacing each edge
+        # coloring with a triplet `(other, index, edge)` pointing to
+        # the other endpoint of that same edge: the element at
+        # position `index` in vertex `other`.
+        pass1 = []
+        for (vertex_index, vertex) in enumerate(self.vertices):
+            replacement = []
+            for (current_index, edge) in enumerate(vertex):
+                (v1, v2) = ends[edge]
+                if v1 != v2:
+                    if ends[edge][0] == vertex_index:
+                        other_end = ends[edge][1]
+                    else:
+                        other_end = ends[edge][0]
+                    other_index = self.vertices[other_end].index(edge)
+                else:
+                    other_end = v1 # == v2, that is *this* vertex
+                    # presume `current_index` is *not* the first
+                    # occurrence of edge
+                    other_index = vertex.index(edge)
+                    if other_index == current_index:
+                        # indeed it is, take next occurrence
+                        other_index = vertex.index(edge, current_index+1)
+                # replace other_index with index of *next* edge
+                # (in the vertex cyclic order)
+                if other_index == len(self.vertices[other_end])-1:
+                    other_index = 0
+                else:
+                    other_index += 1
+                replacement.append((other_end, other_index, edge))
+            pass1.append(replacement)
+
+        # pass2: now build a linear list, each element of the list
+        # corresponding to an half-edge, of triples `(pos, seen,
+        # edge)` where `pos` is the index in this list where the other
+        # endpoint of that edge is located, `seen` is a flag, set to
+        # `False` for half-edges that have not yet been walked
+        # through, and `edge` is the corresponding edge.
+        pass2 = []
+        # build indices to the where each vertex begins in the linear list
+        vi=[0]
+        for vertex in self.vertices:
+            vi.append(vi[-1]+len(vertex))
+        # build list from collapsing the 2-level structure
+        for vertex in pass1:
+            for triplet in vertex:
+                pass2.append([vi[triplet[0]]+triplet[1], False, triplet[2]])
+
+        # pass3: pick up each element of the linear list, and follow it
+        # until we come to an already marked one.
+        result = []
+        pos = 0
+        while pos < len(pass2):
+            # fast forward to an element that we've not yet seen
+            while (pos < len(pass2)) and (pass2[pos][1] == True):
+                pos += 1
+            if pos >= len(pass2):
+                break
+            # walk whole chain of edges
+            i = pos
+            result.append([]) # new boundary component
+            while pass2[i][1] == False:
+                result[-1].append(pass2[i][2])
+                pass2[i][1] = True
+                i = pass2[i][0]
+            pos += 1
+
+        # save result for later reference
+        self._boundary_components = result
+        
+        # that's all, folks!
+        return result
 
     def contract(self, edgeno):
         """Return new `Graph` obtained by contracting the specified edge.
@@ -515,6 +620,7 @@ class Graph(object):
                 return False
             previous_vertex = vertex
         return True
+
     
     def num_boundary_components(self):
         """Return the number of boundary components of this `Graph` object.
@@ -528,91 +634,11 @@ class Graph(object):
           >>> Graph([Vertex([2,1,0]), Vertex([2,0,1])]).num_boundary_components()
           3
         """
-        # try to return the cached value
-        if self._num_boundary_components is not None:
-            return self._num_boundary_components
+        # compute boundary components and cache result
+        if self._num_boundary_components is None:
+            self._num_boundary_components = len(self.boundary_components())
 
-        # otherwise, compute it now...
-        
-        L = self.num_edges()
-        # for efficiency, gather all endpoints now
-        ends = self.endpoints
-        for edge,endpoint in enumerate(ends):
-            assert 2 == len(endpoint), \
-                   "%s.num_boundary_components(): " \
-                   "self.endpoints[%d] = %s" \
-                   % (self, edge, endpoint)
-
-        # pass1: build a "copy" of `graph`, replacing each edge coloring
-        # with a pair `(other, index)` pointing to the other endpoint of
-        # that same edge: the element at position `index` in vertex
-        # `other`.
-        pass1 = []
-        for (vertex_index, vertex) in enumerate(self.vertices):
-            replacement = []
-            for (current_index, edge) in enumerate(vertex):
-                (v1, v2) = ends[edge]
-                if v1 != v2:
-                    if ends[edge][0] == vertex_index:
-                        other_end = ends[edge][1]
-                    else:
-                        other_end = ends[edge][0]
-                    other_index = self.vertices[other_end].index(edge)
-                else:
-                    other_end = v1 # == v2, that is *this* vertex
-                    try:
-                        # presume this is the first occurrence of edge...
-                        other_index = vertex.index(edge, current_index+1)
-                    except ValueError:
-                        # it's not, take first
-                        other_index = vertex.index(edge)
-                # replace other_index with index of *next* edge
-                # (in the vertex cyclic order)
-                if other_index == len(self.vertices[other_end])-1:
-                    other_index = 0
-                else:
-                    other_index += 1
-                replacement.append((other_end, other_index))
-            pass1.append(replacement)
-
-        # pass2: now build a linear list, each element of the list
-        # corresponding to an edge, of `(pos, seen)` where `pos` is the
-        # index in this list where the other endpoint of that edge is
-        # located, and `seen` is a flag indicating whether this side of
-        # the edge has already been walked through.
-        pass2 = []
-        # build indices to the where each vertex begins in the linear list
-        vi=[0]
-        for vertex in self.vertices:
-            vi.append(vi[-1]+len(vertex))
-        # build list from collapsing the 2-level structure
-        for vertex in pass1:
-            for pair in vertex:
-                pass2.append([vi[pair[0]]+pair[1],False])
-
-        # pass3: pick up each element of the linear list, and follow it
-        # until we come to an already marked one.
-        result = 0
-        pos = 0
-        while pos < len(pass2):
-            # fast forward to an element that we've not yet seen
-            while (pos < len(pass2)) and (pass2[pos][1] == True):
-                pos += 1
-            if pos >= len(pass2):
-                break
-            # walk whole chain of edges
-            i = pos 
-            while pass2[i][1] == False:
-                pass2[i][1] = True
-                i = pass2[i][0]
-            result += 1
-            pos += 1
-
-        # save result for later reference
-        self._num_boundary_components = result
-        
-        # that's all, folks!
-        return result
+        return self._num_boundary_components
 
     def num_edges(self):
         return self._num_edges
