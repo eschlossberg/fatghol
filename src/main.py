@@ -189,11 +189,14 @@ elif 'graphs' == args[0]:
     \usepackage[curve,poly,xdvi]{xy}
     \begin{document}
     """)
-        for g in graphs:
+        for graph in graphs:
             if options.latex:
-                outfile.write(graph_to_xypic(g)+'\n')
+                outfile.write(graph_to_xypic(graph)+'\n')
             else:
-                outfile.write("%s\n" % g)
+                outfile.write("%s\n" % ((graph,
+                                         graph.genus(),
+                                         graph.num_boundary_components(),
+                                         graph.has_orientation_reversing_automorphism()),))
         outfile.write("\n")
         outfile.write("Found %d graphs.\n" % len(graphs))
         outfile.write("\n")
