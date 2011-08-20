@@ -2114,9 +2114,22 @@ class NumberedFatgraph(Fatgraph):
             return
         # allow also `.numbering_set({ bcy: n, ...})`
         if isinstance(tuples, dict):
-            tuples = tuples.iteritems()
+            # XXX: support the `numbering = { CyclicTuple(..): 1, ..}` syntax.
+            # Is it used just by doctests of the `NumberedFatgraph` class?
+            # Or is it used also in quasi-copy constructors?
+            tuples = izip(tuples.itervalues(), tuples.iterkeys())
         numbering = {}
         for (n,bcy) in tuples:
+            assert type(n) is types.IntType, \
+                   "Fatgraph._numbering_set: 1st argument has wrong type:" \
+                   " expecting (Int, CyclicTuple) pair, got `(%s, %s)`." \
+                   " Reversed-order arguments?" \
+                   % (n, bcy)
+            assert isinstance(bcy, CyclicTuple), \
+                   "Fatgraph._numbering_set: 2nd argument has wrong type:" \
+                   " expecting (Int, CyclicTuple) pair, got `(%s, %s)`." \
+                   " Reversed-order arguments?" \
+                   % (n, bcy)
             if bcy in numbering:
                 # a single boundary cycle can represent at most *two*
                 # boundary components
