@@ -64,6 +64,10 @@ def enumerate_set_product(p):
     """Iterate over all elements in the cartesian products of elements of items in `p`.
 
     Examples::
+      >>> list(enumerate_set_product([]))
+      [[]]
+      >>> list(enumerate_set_product([[1]]))
+      [[1]]
       >>> list(enumerate_set_product([[1],[1]]))
       [[1, 1]]
       >>> list(enumerate_set_product([[1,2],[1]]))
@@ -92,26 +96,7 @@ def enumerate_set_product(p):
                     break
 
 
-def recursively_enumerate_set_product(p):
-    """Iterate over all elements in the cartesian products of elements of items in `p`.
-
-    Examples::
-      >>> list(recursively_enumerate_set_product([[1],[1]]))
-      [[1, 1]]
-      >>> list(recursively_enumerate_set_product([[1,2],[1]]))
-      [[1, 1], [2, 1]]
-      >>> list(recursively_enumerate_set_product([[1,2],[1,2]]))
-      [[1, 1], [2, 1], [1, 2], [2, 2]]
-    """
-    if len(p) == 0:
-        yield []
-    else:
-        for i in p[-1]:
-            for js in enumerate_set_product(p[:-1]):
-                yield js+[i]
-
-
-def is_sequence_of_type(t, seq):
+ is_sequence_of_type(t, seq):
     """Return `True` if all items of sequence `s` are of type `t`.
 
     Examples::
