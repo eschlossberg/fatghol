@@ -59,95 +59,17 @@ class BoundaryCycle(frozenset):
 
     Two boundary cycles are equal if they comprise the same
     corners.
+
+    A `BoundaryCycle` instance is constructed from a sequence of
+    triples `(v, i, j)`, where `i` and `j` are consecutive (in the
+    cyclic order sense) indices at a vertex `v`.  (Although no check
+    is performed in the constructor code.)
     """
 
-    __slots__ = [ 'graph' ]
+    __slots__ = [ ]
 
-    def __new__(cls, triples, graph=None):
-        # XXX: `graph` is required if `contract` is to be used,
-        # but it's handy not to have it for doctests, etc.
-        return frozenset.__new__(cls, triples)
-
-    def __init__(self, triples, graph=None):
-        """Construct a `BoundaryCycle` instance from a sequence of
-        triples `(v, i, j)`, where `i` and `j` are consecutive (in
-        the cyclic order sense) indices at a vertex `v`.
-        """
-        # use a weakref so not to create a reference cycle and ease GC
-        self.graph = weakref.proxy(graph) if graph else None
-        frozenset.__init__(self)
-        if __debug__:
-            if graph is not None:
-                for (v, i, j) in self:
-                    l = len(graph.vertices[v])
-                    assert i < l
-                    assert j < l
-                    assert (j-i)%l == 1, \
-                           "BoundaryCycle():" \
-                           " Non-consecutive indices in triple `%s` (corner at vertex `%s`)" \
-                           % ((v,i,j), graph.vertices[v])
-
-    def contract(self, vi1, vi2, graph):
-        """Return a new `BoundaryCycle` instance, image of the
-        topological map that contracts the edge with endpoints
-        `(v1,i1)` and `(v2,i2)` that are passed as first and
-        second argument.
-
-        Optional third argument `graph` is passed unchanged to the
-        `BoundaryCycle` constructor.
-
-        XXX: return `self` if neither `v1` nor `v2` are contained
-        here.
-        """
-        (v1, pos1) = vi1
-        (v2, pos2) = vi2
-        l1 = len(self.graph.vertices[v1])
-        l2 = len(self.graph.vertices[v2])
-        new_bcy = []
-        for corner in self:
-            if corner[0] == v1:
-                if pos1 == corner[1]:
-                    # skip this corner, keep only one of the
-                    # corners limited by the contracted edge
-                    continue
-                else: 
-                    i1 = (corner[1] - pos1 - 1) % l1
-                    i2 = (corner[2] - pos1 - 1) % l1
-                    assert (i1+1-i2) % l1 == 0 # i1,i2 denote successive indices
-                    assert i1 != l1-1 # would collide with contracted corners from `v2`
-                    new_bcy.append((v1, i1, i2))
-            elif corner[0] == v2:
-                if pos2 == corner[1]:
-                    # skip this corner, keep only one of the
-                    # corners limited by the contracted edge
-                    continue
-                if pos2 == corner[2]:
-                    new_bcy.append((v1, l1+l2-3, 0))
-                else:
-                    i1 = l1-1 + ((corner[1] - pos2 - 1) % l2)
-                    i2 = l1-1 + ((corner[2] - pos2 - 1) % l2)
-                    assert (i1+1-i2) % l1 == 0 # i1,i2 denote successive indices
-                    new_bcy.append((v1, i1, i2))
-            elif corner[0] > v2:
-                # shift vertices after `v2` one position down
-                new_bcy.append((corner[0]-1, corner[1], corner[2]))
-            else:
-                # pass corner unchanged
-                new_bcy.append(corner)
-        if __debug__:
-            cnt = {}
-            for corner in new_bcy:
-                try:
-                    cnt[corner] += 1
-                except KeyError:
-                    cnt[corner] = 1
-            for (corner, count) in cnt.iteritems():
-                assert count == 1, \
-                       "BoundaryCycle.contract():" \
-                       " Corner %s appears %d times in contracted boundary cycle %s" \
-                       % (corner, count, new_bcy)
-        return BoundaryCycle(new_bcy, graph)
-
+    # no code to be added to the `frozenset` base class
+    pass
 
 
 class Vertex(CyclicList):
@@ -320,7 +242,7 @@ class Isomorphism(object):
             if i_ == 0 and j_ == l:
                 i_, j_ = j_, i_
             triples.append((v_, i_, j_))
-        return BoundaryCycle(triples, self.target)
+        return BoundaryCycle(triples)
 
 
 
@@ -677,7 +599,7 @@ class Fatgraph(EqualIfIsomorphic):
                 j = corner[2]
                 edgeno = self.vertices[v][j]
                 (v,i) = self.edges[edgeno].other_end(v, j)
-            result.append(BoundaryCycle(triples, graph=self))
+            result.append(BoundaryCycle(triples))
 
         return result
         
@@ -1139,6 +1061,64 @@ class Fatgraph(EqualIfIsomorphic):
                         num_edges = self.num_edges-1,
                         orientation = new_edge_numbering,
                         )
+
+
+    def contract_boundary_cycle(self, bcy, vi1, vi2):
+        """Return a new `BoundaryCycle` instance, image of `bcy` under
+        the topological map that contracts the edge with endpoints
+        `(v1,i1)` and `(v2,i2)` that are passed as first and second
+        argument.
+
+        XXX: return `bcy` if neither `v1` nor `v2` are contained in it.
+        """
+        (v1, pos1) = vi1
+        (v2, pos2) = vi2
+        l1 = len(self.vertices[v1])
+        l2 = len(self.vertices[v2])
+        new_bcy = []
+        for corner in bcy:
+            if corner[0] == v1:
+                if pos1 == corner[1]:
+                    # skip this corner, keep only one of the
+                    # corners limited by the contracted edge
+                    continue
+                else: 
+                    i1 = (corner[1] - pos1 - 1) % l1
+                    i2 = (corner[2] - pos1 - 1) % l1
+                    assert (i1+1-i2) % l1 == 0 # i1,i2 denote successive indices
+                    assert i1 != l1-1 # would collide with contracted corners from `v2`
+                    new_bcy.append((v1, i1, i2))
+            elif corner[0] == v2:
+                if pos2 == corner[1]:
+                    # skip this corner, keep only one of the
+                    # corners limited by the contracted edge
+                    continue
+                if pos2 == corner[2]:
+                    new_bcy.append((v1, l1+l2-3, 0))
+                else:
+                    i1 = l1-1 + ((corner[1] - pos2 - 1) % l2)
+                    i2 = l1-1 + ((corner[2] - pos2 - 1) % l2)
+                    assert (i1+1-i2) % l1 == 0 # i1,i2 denote successive indices
+                    new_bcy.append((v1, i1, i2))
+            elif corner[0] > v2:
+                # shift vertices after `v2` one position down
+                new_bcy.append((corner[0]-1, corner[1], corner[2]))
+            else:
+                # pass corner unchanged
+                new_bcy.append(corner)
+        if __debug__:
+            cnt = {}
+            for corner in new_bcy:
+                try:
+                    cnt[corner] += 1
+                except KeyError:
+                    cnt[corner] = 1
+            for (corner, count) in cnt.iteritems():
+                assert count == 1, \
+                       "BoundaryCycle.contract():" \
+                       " Corner %s appears %d times in contracted boundary cycle %s" \
+                       % (corner, count, new_bcy)
+        return BoundaryCycle(new_bcy)
 
 
     @maybe(ocache0)

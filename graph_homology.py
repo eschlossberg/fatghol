@@ -363,7 +363,7 @@ class NumberedFatgraph(Fatgraph):
         contracted = self.underlying.contract(edgeno)
         new_numbering = dict()
         for (bcy, n) in self.numbering.iteritems():
-            new_cy = bcy.contract((v1,pos1), (v2,pos2), contracted)
+            new_cy = self.contract_boundary_cycle(bcy, (v1,pos1), (v2,pos2))
             new_numbering[new_cy] = n
         return NumberedFatgraph(contracted, numbering=new_numbering)
         
@@ -618,14 +618,15 @@ class NumberedFatgraphPool(object):
         ## 1. compute map induced on `g0.boundary_cycles` from the
         ##    graph map `f0` which contracts `edge`.
         (e1, e2) = g0.endpoints(edge)
-        assert set(g1.boundary_cycles) == set([ bcy.contract(e1, e2, g1) for bcy in g0.boundary_cycles ]), \
+        assert set(g1.boundary_cycles) == set([ g0.contract_boundary_cycle(bcy, e1, e2)
+                                                for bcy in g0.boundary_cycles ]), \
                "NumberedFatgraphPool.facets():" \
                " Boundary cycles of contracted graph are not the same" \
                " as contracted boundary cycles of parent graph:" \
-               " `%s` vs `%s`" % (g1.boundary_cycles, [ bcy.contract(e1, e2, g1)
+               " `%s` vs `%s`" % (g1.boundary_cycles, [ g0.contract_boundary_cycle(bcy, e1, e2)
                                                         for bcy in g0.boundary_cycles ])
         f0_push_fwd = Permutation(enumerate(
-            g1.boundary_cycles.index(bcy.contract(e1, e2, g1))
+            g1.boundary_cycles.index(g0.contract_boundary_cycle(bcy, e1, e2))
             for bcy in g0.boundary_cycles
             ))
         assert len(f0_push_fwd) == len(g1.boundary_cycles)
