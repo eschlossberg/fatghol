@@ -1,4 +1,10 @@
 
+# for debug:
+#CXXFLAGS=-O2 -g
+
+# for production runs:
+CXXFLAGS=-O2 -DNDEBUG
+
 default: python
 
 python: simplematrix.py _simplematrix.so
@@ -7,7 +13,7 @@ simplematrix.py simplematrix_wrap.cxx: simplematrix.i simplematrix.hpp
 _simplematrix.so: simplematrix_wrap.o
 	g++ -pthread -shared -Wl,-O1 -Wl,-Bsymbolic-functions simplematrix_wrap.o -o _simplematrix.so -L./lib -lgivaro -lgmp -llinbox
 simplematrix_wrap.o: simplematrix_wrap.cxx simplematrix.hpp
-	g++ -pthread -fno-strict-aliasing -DNDEBUG -g -fwrapv -O2 -Wall -fPIC -I/usr/include/python2.5 -I./include -c simplematrix_wrap.cxx -o simplematrix_wrap.o
+	g++ $(CXXFLAGS) -pthread -fno-strict-aliasing -fwrapv -Wall -fPIC -I/usr/include/python2.5 -I./include -c simplematrix_wrap.cxx -o simplematrix_wrap.o
 
 linbox:
 	cd linbox-1.1.6 && \
@@ -20,6 +26,9 @@ install: _simplematrix.so
 
 clean:
 	rm -f *~ \
-		_simplematrix.so
+		_simplematrix.so \
+		simplematrix.py \
+		simplematrix.pyo \
+		simplematrix.pyc \
 		simplematrix_wrap.o \
 		simplematrix_wrap.cxx
