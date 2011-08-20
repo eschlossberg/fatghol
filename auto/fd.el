@@ -1,7 +1,7 @@
 (TeX-add-style-hook "fd"
  (lambda ()
     (LaTeX-add-labels
-     "sec:fd"
+     "cha:fd"
      "dfn:gaussian-measure"
      "eq:avg-x"
      "eq:W1"

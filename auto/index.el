@@ -43,14 +43,11 @@
      "Lb"
      "Hn"
      "rel"
-     "xyc"
-     "nx")
+     "xyc")
     (TeX-run-style-hooks
+     "csref"
      "graphicx"
      "final"
-     "csref"
-     "nomencl"
-     "refpage"
      "hyperref"
      "url"
      "mdwtab"

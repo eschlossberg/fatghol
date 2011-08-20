@@ -1,6 +1,5 @@
 (TeX-add-style-hook "rt"
- (function
-  (lambda ()
+ (lambda ()
     (LaTeX-add-labels
      "cha:rt"
      "sec:rt-diagrams"
@@ -23,5 +22,5 @@
      "thm:rt"
      "sec:rt-gc"
      "thm:rt1"
-     "thm:rt2"))))
+     "thm:rt2")))
 
