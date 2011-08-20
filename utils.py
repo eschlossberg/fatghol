@@ -153,7 +153,7 @@ class Iterator(object):
         raise StopIteration
 
     
-class itranslate:
+class itranslate(object):
     """Return items from a sequence, substituting them as specified.
 
     First argument `subst` is a dictionary, specifying substitutions
