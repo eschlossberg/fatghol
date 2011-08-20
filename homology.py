@@ -12,7 +12,7 @@ import logging
 
 ## stdlib imports
 
-import types
+from collections import defaultdict
 
 
 ## application-local imports
@@ -53,15 +53,18 @@ class VectorSpace(object):
     def __str__(self):
         return "<Vector space with base %s>" % self.base
     
-    def coordinates(self, element):
-        """Return the coordinate vector of `element`.
+    def coordinates(self, combo):
+        """Return the (sparse) coordinate vector of `combo`.
 
-        Argument `element` represents a linear combination as a list
+        Argument `combo` represents a linear combination as a list
         of pairs `(vector, coefficient)`, where `vector` is an item in
         the `base` (specified when constructing this object).
+
+        Return value is a sequence of pairs `(i, c)`, meaning
+        `combo` has component `c` in the `i`-th basis vector.
         """
-        coordinates = [ 0 ] * self.dimension
-        for (vector, coefficient) in iter(element):
+        coordinates = defaultdict(lambda: 0) 
+        for (vector, coefficient) in iter(combo):
             coordinates[self.base.index(vector)] += coefficient
         return coordinates
 
@@ -196,11 +199,6 @@ class ChainComplex(object):
         #
         logging.debug("Computing matrix form of boundary operator ...")
         
-        # FIXME: since we're only interested in computing the
-        # rank, should we instanciate the matrix as row-major or
-        # column-major, depending on which dimension is lesser?
-        # (For doing Gaussian elimination on a smaller set.)
-
         #: Matrix form of boundary operators; the `i`-th differential
         #: `D[i]` is `dim C[i-1]` rows (range) by `dim C[i]` columns
         #: (domain), stored in column-major format: that is, if `A =
@@ -208,23 +206,20 @@ class ChainComplex(object):
         #: to `self.module[i].dimension` (domain) and `k` varying in the
         #: range `0..self.module[i-1].dimension` (codomain, row).
         #
-        # In order to properly log progress, we cannot use the following
-        # compact one-liner to compute D::
-        #
-        #   D = [ [ self.module[i-1].coordinates(self.differential[i](b))
-        #           for b in self.module[i].base ]
-        #         for i in xrange(1, self.length)
-        #         ]
-        #
-        D = []
+        D = [ None ]
         for i in xrange(1, self.length):
-            d = SimpleMatrix(self.module[i].dimension,
-                             self.module[i-1].dimension)
-            for j in xrange(self.module[i].dimension):
-                # a = self.module[i][j]
-                for (b, c) in self.differential[i](self.module[i].base[j]):
-                    if c != 0:
-                        d.entry(j, self.module[i-1].base.index(b), c)
+            # XXX: LinBox segfaults if asked to compute the rank of a 0xL matrix
+            if self.module[i].dimension > 0 and self.module[i-1].dimension > 0:
+                d = SimpleMatrix(self.module[i-1].dimension,
+                                 self.module[i].dimension)
+                for j in xrange(self.module[i].dimension):
+                    # a = self.module[i].base[j]
+                    for (k, c) in self.module[i-1].coordinates(
+                                       self.differential[i](
+                                            self.module[i].base[j])).iteritems():
+                        d.addToEntry(k, j, c)
+            else:
+                d = None
             D.append(d)
             logging.debug("  Computed %dx%d matrix D[%d]",
                          len(self.module[i-1].base),
@@ -234,22 +229,17 @@ class ChainComplex(object):
         # XXX: check that the differentials form a complex
         #if __debug__:
         #    for i in xrange(1, self.length - 1):
-        #        assert is_null_matrix(matrix_product(D[i-1], D[i]))
+        #        assert is_null_matrix(matrix_product(DD[i-1], DD[i]))
 
         
         ## pass 2: compute rank and nullity of boundary operators
         #
         logging.debug("Computing ranks of boundary operator matrices ...")
         
-        ## We reduce (destructively) every boundary operator matrix to
-        ## column Echelon form by Gaussian elimination, computing the
-        ## rank in the process.
-        ##
         #: ranks of `D[n]` matrices, for 0 <= n < len(self); the differential
         #: `D[0]` is the null map.
-        ranks = [ 0 ]
-        for A in D:
-            ranks.append(A.rank())
+        ranks = [ (A.rank() if A else 0) for A in D ]
+        
 
         ## pass 3: compute homology group ranks from rank and nullity
         ##         of boundary operators.
@@ -265,7 +255,7 @@ class ChainComplex(object):
         ranks.append(0) # augment complex with the null map.
         return [ (self.module[i].dimension - ranks[i] - ranks[i+1])
                  for i in xrange(self.length) ]
-    
+
 
 ## main: run tests
 

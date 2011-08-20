@@ -36,6 +36,7 @@
 #include <linbox/field/PID-integer.h>
 #include <linbox/blackbox/sparse.h>
 #include <linbox/solutions/rank.h>
+#include <linbox/solutions/methods.h>
 
 
 class SimpleMatrix {
@@ -44,8 +45,8 @@ public:
   SimpleMatrix(size_t const m, size_t const n);  
 
   /** Add an entry. */
-  void entry(size_t const i, size_t const j, 
-             int const value);
+  void addToEntry(size_t const i, size_t const j, 
+                  int const value);
 
   /** Return rank of this matrix. */
   unsigned long rank(void);
@@ -67,15 +68,15 @@ SimpleMatrix::SimpleMatrix(size_t const m, size_t const n):
 }
 
 
+#include <iostream>
 inline 
 void
-SimpleMatrix::entry(size_t const i, size_t const j,
+SimpleMatrix::addToEntry(size_t const i, size_t const j,
                       int const value)
 {
   _CoefficientRingType::Element a;
   ZZ.init(a, value);
-  //m.addEntry(a, i, j);
-  m.refEntry(i, j) = a;
+  m.refEntry(i, j) += a;
 }
 
 
