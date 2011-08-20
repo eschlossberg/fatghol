@@ -24,6 +24,7 @@
      '("RTD" ["argument"] 0)
      '("Oo" ["argument"] 0)
      '("vv" 1)
+     '("expval" 1)
      '("Holes" 1)
      '("Legs" 1)
      '("Edges" 1)
@@ -58,6 +59,11 @@
      "Mcomb"
      "Mbarcomb"
      "R"
+     "negquad"
+     "negqquad"
+     "X"
+     "dec"
+     "res"
      "rel"
      "xyc")
     (TeX-run-style-hooks
@@ -100,6 +106,7 @@
      "fd"
      "ainfty"
      "kontsevich"
+     "dfiz"
      "arrows"
      "btc"
      "rt"

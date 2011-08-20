@@ -6,7 +6,7 @@
 
 
 In the famous paper \cite{witten;intersection-theory}, E.~Witten
-related two models of two-dimensional quantum gravity, one based on
+related two models of two-dimensional quantum gravity: one based on
 matrix integrals and random surfaces, and one that used supersymmetry
 to reduce the action integral to a computation of intersection numbers
 on the Deligne-Mumford moduli space of stable curves. The partition
@@ -20,8 +20,9 @@ curves.
 In this form, the conjecture appeared as an infinite hierarchy of
 recursion relations among these intersection numbers; Witten himself
 proved the first cases using techniques of algebraic geometry.
-Surprisingly, Kontsevich' proof of the full conjecture took an
-entirely different route, steering towards Feynman diagrams and a
+Surprisingly, Kontsevich' proof
+\cite{kontsevich;intersection-theory;1992} of the full conjecture took
+an entirely different route, steering towards Feynman diagrams and a
 combinatorial description of the moduli space; what is more, it
 provided a model for 2D quantum gravity, which had not been devised
 before!  The later paper \cite{witten;kontsevich-model} established
@@ -57,20 +58,29 @@ classes are rational cohomology classes.
   c_1({\Lb}_i)$.
 \end{definition}
 
-For non-negative integers $\nu_1, \ldots, \nu_n$, define\FIXME{Controllare la notazione!!}
+For non-negative integers $\nu_1, \ldots, \nu_n$, define
 \begin{equation}
   \label{eq:intersection-index}
   \langle \tau_{\nu_1} \cdots \tau_{\nu_n} \rangle_{g,n} := \int_{\Mbar_{g,n}} \psi_1^{\nu_1} \cdots \psi_n^{\nu_n}.
 \end{equation}
-The integral on right-hand side can be nonzero only if $\nu_1 + \cdots + \nu_n = 3g
-- 3 + n$; notice that $g$ is uniquely determined, given $n$ and
-$\nu_1$, \ldots, $\nu_n$. Therefore, we drop the subscript $g,n$ in
-the equation above, since no confusion can occur. Mumford
+The integral on right-hand side can be nonzero only if $\nu_1 + \cdots + \nu_n
+= 3g - 3 + n$; notice that $g$ is uniquely determined, given $n$ and
+$\nu_1$, \ldots, $\nu_n$. Therefore, we drop the subscript $g,n$ in the
+equation above, since no confusion can occur. Mumford
 \cite{mumford;enumerative-geometry} remarked that, by a theorem of
 Arakelov,
 \begin{equation}
   \label{eq:positive-intersection}
   \langle\tau_{\nu_1} \cdots \tau_{\nu_n}\rangle \geq 0.
+\end{equation}
+Thus the permutation group $\Perm{n}$ acts trivially on
+$\Htop(\Mbar_{g,n})$ by \eqref{eq:positive-intersection}, so we can
+introduce the abridged notation:
+\begin{equation}
+  \label{eq:intersection-index-cpt}
+  \langle\tau_0^{d_0} \tau_1^{d_1} \cdots \tau_k^{d_k} \rangle := \langle \underbrace{\tau_0 \cdots
+    \tau_0}_{\text{$d_0$ times}} \cdots \underbrace{\tau_k \cdots
+    \tau_k}_{\text{$d_k$ times}} \rangle.
 \end{equation}
 
 \begin{definition}\label{dfn:F-and-Z}
@@ -86,17 +96,8 @@ Arakelov,
     Z(t_*) := \exp F(t_*).
   \end{equation}
 \end{definition}
-
-The permutation group $\Perm{n}$ acts trivially on
-$\Htop(\Mbar_{g,n})$ by \eqref{eq:positive-intersection}, so we can
-introduce the abridged notation:
-\begin{equation}
-  \label{eq:intersection-index-cpt}
-  \langle\tau_0^{d_0} \tau_1^{d_1} \cdots \tau_k^{d_k} \rangle := \langle \underbrace{\tau_0 \cdots
-    \tau_0}_{\text{$d_0$ times}} \cdots \underbrace{\tau_k \cdots
-    \tau_k}_{\text{$d_k$ times}} \rangle.
-\end{equation}
-With this proviso, we may rewrite:
+With the notation of \eqref{eq:intersection-index-cpt}, we may
+rewrite:
 \begin{equation}\label{eq:F-dfn-cpt}
   F(t_*) = \sum_{g, d_1, \ldots, d_k} \langle \tau_0^{d_0} \cdots \tau_k^{d_k} \rangle \frac
   {t_0^{d_0} \cdots t_k^{d_k}} {d_0! \cdots d_k!} =: \sum_{g, d_*} \langle \tau_*^{d_*}

@@ -554,7 +554,7 @@ def graph_to_xypic(graph):
         return 90+(k-1)*360/K
     for k in range(1,K+1):
         # "vK",{\xypolygonL"vKl"{~{1.20,0):~={...}~>{}}},%
-        result += r'"v%d",{\xypolygon%d"v%dl"{~:{(1.20,0):}~={%d}~>{}}},%%' \
+        result += r'"v%d",{\xypolygon%d"v%dl"{~:{(1.20,0):q}~={%d}~>{}}},%%' \
                   % (k, 2*len(graph[k-1])-2, k, rotation_angle(K,k)) \
                   + '\n'
     for k in range(1,K+1):

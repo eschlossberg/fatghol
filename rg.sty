@@ -344,6 +344,32 @@ _>{#2}
 
 
 %%
+%% \ciliamedio[SIMBOLO]{LATO1}{LATO2}
+%%
+%% Marca con SIMBOLO ('*' in mancanza di indicazioni) la buca tra
+%% LATO1 e LATO2 (indicati col numero d'ordine), un po' piu' lontano di
+%%\cilia e un po' meno lontano di \cilialontano.
+%%
+\newcommand{\ciliamedio}[3][\bigstar]{\POS{%
+    "AUXi#2";"AUXi#3"**\dir{}?(.5)="m@",%
+    "CENTER";"m@"**\dir{}?(1.5)*{#1}%
+}}
+
+
+%%
+%% \cilialontano[SIMBOLO]{LATO1}{LATO2}
+%%
+%% Marca con SIMBOLO ('*' in mancanza di indicazioni) la buca tra
+%% LATO1 e LATO2 (indicati col numero d'ordine), un po' piu' lontano di
+%%\cilia.
+%%
+\newcommand{\cilialontano}[3][\bigstar]{\POS{%
+    "AUXi#2";"AUXi#3"**\dir{}?(.5)="m@",%
+    "CENTER";"m@"**\dir{}?(1.8)*{#1}%
+}}
+
+
+%%
 %% \spike[LUNGHEZZA]{SIMBOLO}{LATO1}{LATO2}
 %%
 %% Marca con SIMBOLO ('*' in mancanza di indicazioni) la buca tra
@@ -387,6 +413,29 @@ _>{#2}
 "VERTEX#2";"VERTEX#1"\curve{~**\dir{-}% 
   "AUXi#2"&"AUXii#2"&"c@"&"AUXii#1"&"AUXi#1"}%
 }} 
+
+
+%% 
+%% \joinlontano[DECOR]{VERTICE1}{VERTICE2} 
+%% 
+%% Unisce i vertici indicati (col numero d'ordine) con un lato. 
+%% Eventualmente, pone DECOR nel mezzo di questo lato. Il loop che unisce
+%%i vertici passa piu' lontano rispetto a \join.
+%% 
+\newcommand{\joinlontano}[3][]{\POS{% 
+% Per prima cosa troviamo il punto medio "m@" del lato V1;V2 
+"AUXi#3";"AUXi#2"**\dir{}?="m@",% 
+% poi, troviamo il simmetrico "c@" del centro rispetto al lato 
+% V1;V2 (il punto sulla retta CENTER;m@ a distanza doppia da 
+% CENTER rispetto ad m@, dalla parte di m@) 
+"CENTER";"m@"**\dir{}?(3.0)="c@",% 
+% infine, tracciamo una curva che passa per "c@" e per 
+% i punti ausiliari creati da \rghole. 
+"VERTEX#3";"VERTEX#2"**\crv{~**\dir{-}% 
+  "AUXi#3"&"AUXii#3"&"c@"&"AUXii#2"&"AUXi#2"}%
+  ?*{#1}%
+}} 
+
 
 %% 
 %% \dotjoin{VERTICE1}{VERTICE2} 
@@ -581,6 +630,23 @@ c?(0.05);"VERTEX#4"**\crv{~**\dir{-}"AUXii#4"},%
 \POS{"CENTER"="VERTEX2",} 
 \POS{"CENTER"="VERTEX3",} 
 } 
+
+
+%%
+%% \altgenericfences[NUM]
+%%
+%% Decora un vertice 5-valente con le gambette per ``un numero
+%% qualunque di lati uscenti; l'ultimo lato porta l'indice i_{NUM}, se
+%% NUM manca, si assume ``n''. A differenza di \genericfences, gli indici
+%% non sono costanti sui lati di una buca.
+%%
+\newcommand{\altgenericfences}[1][n]{%
+\fence{1}{\ldots}{i_{#1}}%
+\fence{2}{j_{#1}}{i_1}%
+\fence{3}{j_1}{i_2}%
+\fence{4}{j_2}{\ldots}%
+\missing[\cdots]{5}
+}
 
 
 %%

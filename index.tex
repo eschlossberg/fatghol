@@ -125,7 +125,14 @@
 %  {{\mathcal{H}\ifx#1\relax\else(#1)\fi}}   % spazio delle matrici hermitiane
 
 
+% spazi negativi
+\newcommand{\negquad}{\hskip-.5em\relax}
+\newcommand{\negqquad}{\hskip-1.5em\relax}
+
+
 % medie sui grafi
+\newcommand{\expval}[1]{\langle\!\langle#1\rangle\!\rangle}
+\newcommand{\X}{\mathcal{X}}
 \newcommand{\vv}[1]{V(#1)}
 \newcommand{\biggint}[2][]{%
 \Biggl\langle\Biggl\langle#2\Biggr\rangle\Biggr\rangle_{#1}}
@@ -134,6 +141,10 @@
 \newcommand{\ginttriv}[2][]{%
   \left\langle\!\left\langle#2\right\rangle\!\right\rangle_{#1}\triv}
 
+% decomposizione ciclica
+\newcommand{\dec}{\sbtext{\rm dec}}
+\newcommand{\res}{\sbtext{\rm res}}
+
 % omotopia
 \newcommand{\rel}{\sim}
 
@@ -141,8 +152,11 @@
 %%%
 %%% Cominciamo...
 %%%
-\includeonly{graphcomplex}
+%\includeonly{dfiz}
 \begin{document}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{2ex plus 0.5ex minus 1ex}
 
 \include{title}
 \include{prelim}
@@ -151,6 +165,7 @@
 \include{fd}
 \include{ainfty}
 \include{kontsevich}
+\include{dfiz}
 
 \appendix
 \include{arrows}
@@ -170,5 +185,4 @@
 %%% Local Variables: 
 %%% mode: latex
 %%% TeX-master: t
-%%% x-symbol-mode: nil
 %%% End: 
