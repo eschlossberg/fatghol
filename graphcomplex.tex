@@ -230,6 +230,9 @@ The following lemma is an immediate consequence of the definition.
   contractions of non-loop edges.
 \end{lemma}
 
+We can thus define functors $\Vertices{-}$, $\Edges{-}$ and $\Legs{-}$
+that take a morphism of graphs to a map of their set of vertices,
+(unoriented) edges, and oriented edges.
 
 \subsection{From fatgraphs to Riemann surfaces, I}
 \label{sec:rg-to-surfaces}
@@ -324,8 +327,11 @@ the retraction to small loops around the punctures in $S(G)$; they are
 called ``boundary components'' of $G$.  Also in the topological
 description, it will be convenient to identify a boundary component
 $\beta$ with the set of edges it is made of, and a vertex $\gamma$ with the set
-of edges incident to it.
+of edges incident to it.  
 
+The assignment $G \mapsto \Holes{G}$ extends to a functor $\Holes{-}$;
+by Lemma~\ref{lemma:contraction1}, for any $f\colon G_1 \to G_2$ the
+map $\Holes{f} \colon \Holes{G_1} \to \Holes{G_2}$ is a bijection.
 
 \subsection{Numbered fatgraphs}
 \label{sec:numbered-rg}
@@ -341,19 +347,18 @@ of edges incident to it.
     \xymatrix{%
       \Holes{G_1} &  & \Holes{G_2}
       \\
-      & &
-      \\
       & \{ 1, \ldots, n \} &
       \ar^{f} "1,1";"1,3"
-      \ar_{\nu_1} "1,1";"3,2"
-      \ar_{\nu_2} "1,3";"3,2"
+      \ar_{\nu_1} "1,1";"2,2"
+      \ar^{\nu_2} "1,3";"2,2"
     }%
   \end{equation*}
 \end{definition}
-From this point onwards, \emph{all fatgraphs are equipped with a
-  numbering}. By a slight abuse of language, we shall usually omit
-mention of the numbering $\nu$ and just speak of ``the numbered
-fatgraph $G$''.
+
+Until the end of this chapter, \emph{all fatgraphs are implicitly
+  equipped with a numbering}. By a slight abuse of language, we shall
+usually omit mention of the numbering $\nu$ and just speak of ``the
+numbered fatgraph $G$''.
 
 The correspondence between fatgraphs and Riemann surfaces allows
 us to give the following.
@@ -462,7 +467,8 @@ $[G, \iota, \psi_*]$ into $[G, \iota \circ \phi, \phi \circ \psi_*]$.
 \end{proof}
 
 
-\subsection{From graphs to surfaces, II: a complex analytic atlas on $S(G)$}
+\subsection[From graphs to surfaces, II][A complex analytic atlas on $S(G)$]
+{From graphs to surfaces, II: a complex analytic atlas on $S(G)$}
 \label{sec:atlas}
 
 We can give the topological Riemann surface $S(G)$ a complex analytic

@@ -138,7 +138,7 @@ def MgnGraphs(g,n):
 \end{lstlisting}
 Graphs with the maximal number of edges are trivalent graphs; they are
 computed by a separate function "MgnTrivalentGraphs", described in
-Section~\ref{sec:stage1-trivalent}.
+Section~\ref{sec:trivalent}.
 \begin{lstlisting}
   # first item `graphs[0]` contains all 3-valent graphs
   graphs.append(list(MgnTrivalentGraphs(g,n)))
@@ -522,7 +522,7 @@ $r$ is superfluous.
   disconnects.
 \end{proof}
 
-\subsection{The \protect\Verb`MgnTrivalentGraphs` algorithm}
+\subsection{The \q{MgnTrivalentGraphs} algorithm}
 \label{sec:MgnTrivalentGraphs}
 
 The stage is now set for implementing the recursive generation of
@@ -547,7 +547,7 @@ start.  In particular, "MgnTrivalentGraphs" must:
 \end{itemize}
 This is indeed realized in the following lines (the fatgraph
 representation as a Python ``"Fatgraph"'' object is discussed in
-Section~\ref{sec:stage1-fatgraphs}):
+Section~\ref{sec:Fatgraph}):
 \begin{lstlisting}
   # avoid infinite recursion in later statements
   if n==0 or (g,n)<(0,3):
@@ -612,7 +612,7 @@ parameter ("0" or "1") determines which orientation of "x"
 should be considered, therefore expressions like ``"x,0"'' and
 ``"x,1"'' should really be read as $\bar{x}$ or $\underline{x}$. A
 complete explanation and implementation details are given in
-Section~\ref{sec:stage1-fatgraphs}.
+Section~\ref{sec:Fatgraph}.
 
 Similarly, function ``"Fatgraph.bridge"'' implements $q$;
 the algorithm used is independent of $g$ and $n$, thus a single
@@ -645,10 +645,6 @@ returned to the caller:
 \begin{lstlisting}
     return result
 \end{lstlisting}
-\FIXME{Serve qui un'analisi della complessit\`a dell'algoritmo?  In
-  realt\`a non si pu\`o concludere molto, perch\'e dipende in modo
-  essenziale dal numero totale dei grafi e dal numero dei duplicati:
-  nessuno di questi \'e noto in anticipo.}
 
 
 \section{Computer representation of Fatgraphs}
@@ -663,16 +659,15 @@ edge ("Fatgraph.contract"), compute orbits of edges under the action
 of fatgraph automorphisms ("Fatgraph.edge_orbits" and
 "Fatgraph.edge_pair_orbits"), implement maps $p$ and $q$
 ("Fatgraph.hangcircle" and "Fatgraph.bridge"), and, last but not
-least, check two graphs for isomorphism.\FIXME{Rimuovere i nomi delle
-  funzioni da questo paragrafo introduttivo?}
+least, check two graphs for isomorphism.
 
 Although the combinatorial definition of a fatgraph
-(cf.~Section~\ref{sec:fatgraphs}) might suggest a computer representation as
-a triple of permutations ---as used, e.g., in \cite[Section
-2.4]{arXiv:0902.1025}---, the functions that are needed by the above
-generation algorithms are rather topological in nature and thus
-suggest an approach more directly related to the concrete realization
-of a fatgraph.
+(cf.~Section~\ref{sec:Fatgraph}) lends itself to a computer
+representation as a triple of permutations ---as used, e.g., in
+\cite[Section 2.4]{arXiv:0902.1025}---, the functions that are needed
+by the above generation algorithms are rather topological in nature
+and thus suggest an approach more directly related to the concrete
+realization of a fatgraph.
 
 \subsection{Vertices}
 \label{sec:vertices}
@@ -688,7 +683,7 @@ e^k_{i_k})$, such that $\{e^0_0, \ldots, e^0_{i_0}, e^1_0, \ldots,
 e^{k-1}_{i_{k-1}}, e^k_0, \ldots, e^k_{i_k}\} = \{0, \ldots, l\}$,
 we can set
 \begin{equation*}
-  X := \{ (e, v) : e \in v, v\in \{v_0, \ldots, v_k\} \},
+  X := \{ (e, v) : e \in v,\: v\in \{v_0, \ldots, v_k\} \},
 \end{equation*}
 and define maps $\sigma_0, \sigma_1, \sigma_2: X \to X$ as follows:
 $\sigma_0$ sends $(e, v)$ to $(e', v)$ where $e'$ is the successor of
@@ -789,18 +784,18 @@ class Edge(object):
   """An edge of a fatgraph."""
 
   def __init__(self, va1, va2):
-    if va1[0] < va2[0]:
+    if va1[0] < va2[0]:            |\n{edge-incr-order}|
       self.endpoints = (va1, va2)
     else:
       self.endpoints = (va2, va1)
 
 \end{lstlisting}
-Note that the "Edge.__init__" constructor requires the two
-endpoints, that is, it should be invoked like: 
-"e = Edge((0,1),(1,3))", passing the endpoints already as a Python tuple 
-"(v,a)".  Also, "Edge" objects guarantee that endpoints are stored in
-increasing vertex index order (line~63): therefore, if "e" is an "Edge"
-object, then "e.endpoints[0] < e.endpoints[1]".
+Note that "Edge" objects guarantee that endpoints are stored in
+increasing vertex index order (line~\nr{edge-incr-order}): therefore,
+if "e" is an "Edge" object, then "e.endpoints[0] < e.endpoints[1]".
+Also, the "Edge.__init__" constructor requires the two endpoints, that
+is, it should be invoked like: "e = Edge((0,1),(1,3))", passing the
+endpoints already as a Python tuple "(v,a)".
 
 "Edge" objects bear no reference to a particular "Fatgraph" instance,
 to allow sharing the same edge instance among "Fatgraph" instances that are
@@ -879,7 +874,7 @@ either "j==i+1" or "i" and "j" are the ending and starting indices.
   \label{fig:corners}
 \end{figure}
 It is easy to convince oneself that this is equivalent to the boundary
-cycle definition in Section~\ref{sec:fatgraphs}.  Indeed, if $(X, \sigma_0,
+cycle definition in Section~\ref{sec:Fatgraph}.  Indeed, if $(X, \sigma_0,
 \sigma_1, \sigma_2)$ is a fatgraph, then the boundary cycles are
 defined as the orbits of $\sigma_2$ on the set of oriented edges
 $X$. We could substitute an \emph{(edge, endpoint vertex)} pair for an
@@ -923,7 +918,6 @@ class.\footnote{Class \q{frozenset} is the immutable variant of a
 \begin{lstlisting}
 class BoundaryCycle(frozenset):
   """A boundary cycle of a Fatgraph."""
-
   # no change to the `frozenset` code
   pass 
 
@@ -936,7 +930,7 @@ fatgraph vertices.
 
 
 \subsection{Fatgraphs}
-\label{sec:fatgraphs}
+\label{sec:Fatgraph}
 
 The stage is now set for the introduction of a computable
 representation of fatgraphs.  The class "Fatgraph" constructor takes a
@@ -986,7 +980,7 @@ Thus, we allow supplying some of the internal data by means of an
 additional "kwargs" argument for efficiency reasons (e.g., when a data
 structure is already known to the caller, as is the case in the
 "Fatgraph.contract" method).\footnote{This is a
-  work-around for Python's lack of multiple constructors: The
+  work-around for Python's lack of multiple constructors: the
   \q{kwargs} parameter is a way to assemble a \q{Fatgraph} object out of
   already-computed data, see, for instance, the \q{contract}
   method.}
@@ -1173,8 +1167,8 @@ corners are cleared out of the "corners" list by replacing them with
 the special value "None", so that we won't pick them up again in
 susequent iterations.
 
-An auxiliary function is needed, to find the smallest index in a list
-"L" which is associated with a non-"None" value. 
+Thus, an auxiliary function is needed, to find the smallest index in a
+list "L" which is associated with a non-"None" value.
 \begin{lstlisting}
     def first_index_not_none(L):
         for index, item in enumerate(L):
@@ -1197,10 +1191,10 @@ Python retains the value of "v" and "i" outside the loop.
     result = [ ]
     while True:                                 |\n{bcy-main-loop}|
       # fast-forward to the first unused corner
-      for v in xrange(self.num_vertices):
+      for v in range(self.num_vertices):
         i = first_index_not_none(corners[v])
         if i is not None:
-          break                                 |\n{bcy-quit-ffwd}|
+          break # exit "for" loop               |\n{bcy-quit-ffwd}|
 
 \end{lstlisting}
 Exit loop if all corners in the list are "None": if the above loop
@@ -1209,7 +1203,7 @@ the "corners" list (i.e., "len(corners)-1") and "i" will be "None" (by
 definition of the "first_index_not_none" function):
 \begin{lstlisting}
       if v == len(corners)-1 and i is None:
-        break
+        break # exit "while" loop
 
 \end{lstlisting}
 Now build a list of corners comprising the same boundary cycle: start
@@ -1241,52 +1235,10 @@ line~\nr{bcy-main-loop}), the list of all "BoundaryCycle" objects
 is returned to the caller:
 \begin{lstlisting}
     return result
-    # "compute_boundary_cycles" ends here.
+    # end of "compute_boundary_cycles"
     
 \end{lstlisting}
 
-\begin{lstlisting}
-    def contract_boundary_cycle(self, bcy, edgeno):
-        """
-        Return a new `BoundaryCycle` instance, image 
-        of `bcy` under the topological map that contracts 
-        the edge with index `edgeno`.
-        """
-        ((v1, pos1),(v2, pos2)) = self.endpoints(edgeno)
-        l1 = len(self.vertices[v1])
-        l2 = len(self.vertices[v2])
-        new_bcy = [ ]
-        for corner in bcy:
-            if corner[0] == v1:
-                if pos1 == corner[1]:
-                    # skip this corner, keep only one of the
-                    # corners limited by the contracted edge
-                    continue
-                else: 
-                    i1 = (corner[1] - pos1 - 1) % l1
-                    i2 = (corner[2] - pos1 - 1) % l1
-                    new_bcy.append((v1, i1, i2))
-            elif corner[0] == v2:
-                if pos2 == corner[1]:
-                    # skip this corner, keep only one of the
-                    # corners limited by the contracted edge
-                    continue
-                if pos2 == corner[2]:
-                    new_bcy.append((v1, l1+l2-3, 0))
-                else:
-                    i1 = l1-1 + ((corner[1] - pos2 - 1) % l2)
-                    i2 = l1-1 + ((corner[2] - pos2 - 1) % l2)
-                    new_bcy.append((v1, i1, i2))
-            elif corner[0] > v2:
-                # shift vertices after `v2` one position down
-                new_bcy.append((corner[0]-1, corner[1], corner[2]))
-            else:
-                # pass corner unchanged
-                new_bcy.append(corner)
-        return BoundaryCycle(new_bcy)
-        # end of "contract_boundary_cycle".
-
-\end{lstlisting}
 
 \subsection{Construction of new fatgraphs}
 \label{sec:construction}
@@ -1460,6 +1412,114 @@ default orientation:
 \begin{lstlisting}
     return Fatgraph(new_vertices, 
                     orientation=new_edge_numbering)
+
+\end{lstlisting}
+
+\paragraph{The \q{contract\_boundary\_cycle} function.}
+Also the corners representation of boundary cycles can be inferred for
+graphs that have been created by contracting an edge in a parent
+graph.
+\begin{lstlisting}
+  def contract_boundary_cycle(self, bcy, edgeno):
+    """
+    Return a new `BoundaryCycle` instance, image 
+    of `bcy` under the topological map that contracts 
+    the edge with index `edgeno`.
+    """
+\end{lstlisting}
+The implementation is quite straightforward: we copy the given list of
+corners and alter those who refer to the two vertices that have been
+merged in the process of contracting the specified edge.
+
+First, store the endpoints and attachment indices of the contracted
+edge, and save also the number of edges attached to the merged
+vertices.  Because of the way the "endpoints" attribute is built, we
+know that "v1 < v2".
+\begin{lstlisting}
+    ((v1, pos1),(v2, pos2)) = self.endpoints(edgeno)
+    l1 = len(self.vertices[v1])
+    l2 = len(self.vertices[v2])
+\end{lstlisting}
+Corners of the boundary cycle in the ``child'' fatgraph will be
+accumulated into the variable "new_bcy": it starts its life as an
+empty list (line~\nr{cbcy:1}), and is then added corners as we run
+over them in the loop between lines~\nr{cbcy:2} and~\nr{cbcy:3}.
+\begin{lstlisting}
+    new_bcy = [ ]                                   |\n{cbcy:1}|
+    for corner in bcy:                              |\n{cbcy:2}|
+\end{lstlisting}
+
+There are four distinct corners that are bounded by the edge to be
+contracted; denote them by $C_1$, $C_2$, $C_3$, $C_4$.  These map onto
+two distinct corners $\bar C$, $\bar C'$ after contraction.  Assume
+that $C_1$ and $C_2$ map to $\bar C$: then $C_1$ and $C_2$ lay ``on
+the same side'' of the contracted edge, i.e., any boundary cycle that
+includes $C_1$ will include also $C_2$ and vice-versa.  Since they
+both map to the same corner in the ``child'' graph, we only need to
+keep one: we choose to keep (and transform) the corner that has the
+contracted edge at the \emph{second} index
+(lines~\nr{cbcy:4}--\nr{cbcy:5}); similarly for $C_3$ and $C_4$ in
+mapping to $\bar C'$ (lines~\nr{cbcy:6}--\nr{cbcy:7}).
+
+Recall that, when contracting an edge with endpoints "v1" and "v2",
+the new vertex has index "v1" and is formed by concatenating two
+series of edges:
+\begin{inparaenum}
+\item edges attached to the prior "v1", starting with the successor
+  (in the cyclic order) of the contracted edge;
+\item edges attached to the prior "v2", starting with the successor
+  of the contracted edge.
+\end{inparaenum}
+Therefore:
+\begin{enumerate}
+\item The image of a corner rooted in vertex "v1" will have its
+  attachment indices rotated leftward by "pos1+1" positions: the
+  successor of the contracted edge has now attachment index 0
+  (lines~\nr{cbcy:8}--\nr{cbcy:9}).  Note that the highest attachment
+  index belonging into this group is "l2-1": position "l1-1" would
+  correspond to the contracted edge.
+\item The image of a corner rooted in vertex "v2" has its attachment
+  indices rotated leftwards by "pos2+1" positions, and shifted up by
+  "l1-1" (lines~\nr{cbcy:10}--\nr{cbcy:11}).  As a special case, when
+  the contracted edge is in second position we need to map the corner
+  to the corner having attachment index "0" in second position
+  (line~\nr{cbcy:12}).
+\end{enumerate}
+\begin{lstlisting}
+      if corner[0] == v1:
+        if pos1 == corner[1]:                        |\n{cbcy:4}|
+          continue # with next "corner"              |\n{cbcy:5}|
+        else: 
+          i1 = (corner[1] - pos1 - 1) % l1           |\n{cbcy:8}|
+          i2 = (corner[2] - pos1 - 1) % l1           |\n{cbcy:9}|
+          new_bcy.append((v1, i1, i2))
+      elif corner[0] == v2:
+        if pos2 == corner[1]:                        |\n{cbcy:6}|
+          continue # with next "corner"              |\n{cbcy:7}|
+        if pos2 == corner[2]:
+          new_bcy.append((v1, l1+l2-3, 0))           |\n{cbcy:12}|
+        else:
+          i1 = l1-1 + ((corner[1] - pos2 - 1) % l2)  |\n{cbcy:10}|
+          i2 = l1-1 + ((corner[2] - pos2 - 1) % l2)  |\n{cbcy:11}|
+          new_bcy.append((v1, i1, i2))
+\end{lstlisting}
+Vertices with index greater than "v2" must be shifted one position
+down; attachement indices in the corner remain unchanged:
+\begin{lstlisting}
+      elif corner[0] > v2:
+        new_bcy.append((corner[0]-1, corner[1], corner[2]))
+\end{lstlisting}
+Any other corner is copied with no alterations:
+\begin{lstlisting}
+      else:
+        new_bcy.append(corner)                      |\n{cbcy:3}|
+\end{lstlisting}
+
+Finally, the "new_bcy" list of corners is turned into a proper
+"BoundaryCycle" instance:
+\begin{lstlisting}
+    return BoundaryCycle(new_bcy)
+    # end of "contract_boundary_cycle".
 
 \end{lstlisting}
 
@@ -1768,7 +1828,7 @@ consists in finding out when two distinct "Fatgraph" instances
 represent isomorphic fatgraphs (in the sense of
 Definition~\ref{dfn:fatgraphs}) or even the same fatgraph.  Indeed,
 the procedure for associating a "Fatgraph" instance to a fatgraph (see
-Section~\ref{sec:fatgraphs}) involves labelling all edges, choosing a
+Section~\ref{sec:Fatgraph}) involves labelling all edges, choosing a
 starting edge (cilium) on each vertex and enumerating all vertices in
 a certain order; for each choice, we get a different "Fatgraph"
 instance representing the same (abstract) fatgraph.
@@ -2296,34 +2356,6 @@ This section briefly lists those methods of the "Fatgraph" class that
 are needed for proper working of the class, but do not have any
 special interest by themselves.
 
-Mathod "assimilate" modifies a "Fatgraph" instance to be exactly equal
-to another given instance; after a call into "assimilate", attributes
-of both "Fatgraph"s will point to the same Python objects.  The only
-use of this call will be evident later on: we will need to create a
-"NumberedFatgraph" instance and make it a clone of an existing
-un-numbered "Fatgraph".
-\begin{lstlisting}
-  def assimilate(self, other):
-    """
-    Copy-constructor: make `self` equal to `other`.
-    """
-    self.boundary_cycles = other.boundary_cycles
-    self.edges = other.edges
-    self.edge_numbering = other.edge_numbering
-    self.genus = other.genus
-    self.num_boundary_cycles = other.num_boundary_cycles
-    self.num_edges = other.num_edges
-    self.num_vertices = other.num_vertices
-    self.vertices = other.vertices
-    self.invariants = (
-        self.num_vertices,
-        self.num_edges,
-        self.num_boundary_cycles,
-        )
-
-\end{lstlisting}
-
-
 \subsubsection{Orbits under automorphisms}
 The "edge_orbits" function computes orbits of the edges under the
 action of graph automorphism group, and a representative for each
@@ -2392,20 +2424,6 @@ algorithm works exactly the same.
           orbits[p].update(orbits[q])
           del orbits[q]
     return orbits
-
-\end{lstlisting}
-
-
-\subsubsection{Printed representation.}
-On "Fatgraph" objects, both "__repr__" and "__str__" return the
-same string, i.e., the constructor invocation with the vertex list,
-which is guaranteed to produce an isomorphic "Fatgraph" instance.
-\begin{lstlisting}
-  def __repr__(self):
-    return "Fatgraph(%s)" % repr(self.vertices)
-  
-  def __str__(self):
-    return repr(self)
 
 \end{lstlisting}
 
@@ -2652,7 +2670,7 @@ the rank.  Algorithms for computing the rank of matrices are
 well-known\FIXME{reference!} and fast implementations are available in
 the form of programming libraries; on these grounds, no implementation
 of the "rank" function is given here, the production version of the
-program used the freely-available LinBox C++ library\FIXME{reference!}
+program used the free LinBox C++ library\FIXME{reference!}
 for representing matrices and computing their rank. However, except
 for trivial cases (very small $g,n$), computation of the rank is the
 most time-consuming part of the whole algorithm.
@@ -3034,9 +3052,9 @@ iterating over boundary cycles (lines~\nr{nb0:2}--\nr{nb0:5}).
 \begin{lstlisting}
     def phi(a):
       pi = Permutation()                                     |\n{nb0:1}|
-      for src_index,src_cycle in enumerate(bc):                 |\n{nb0:2}|
-        dst_cycle = a.transform_boundary_cycle(src_cycle)       |\n{nb0:3}|
-        dst_index = bc.index(dst_cycle)                         |\n{nb0:4}|
+      for src_index,src_cycle in enumerate(bc):              |\n{nb0:2}|
+        dst_cycle = a.transform_boundary_cycle(src_cycle)    |\n{nb0:3}|
+        dst_index = bc.index(dst_cycle)                      |\n{nb0:4}|
         pi[src_index] = dst_index                            |\n{nb0:5}|
       return pi
 
@@ -3059,11 +3077,11 @@ algorithm proceeds with another automorphism.
 \begin{lstlisting}
     bc = G.boundary_cycles
     n = len(bc) # == "G.num_boundary_cycles"
-    for a in G.automorphisms():                                 |\n{nb1:1}|
+    for a in G.automorphisms():                              |\n{nb1:1}|
       try:
         pi = phi(a)                                          |\n{nb1:2}|
-      except ValueError:                                        |\n{nb1:3}|
-        continue # with next "a"                                |\n{nb1:4}|
+      except ValueError:                                     |\n{nb1:3}|
+        continue # with next "a"                             |\n{nb1:4}|
 
 \end{lstlisting}
 If "a" preserves the boundary cycles pointwise, then it induces an
@@ -3071,8 +3089,8 @@ automorphism of the numbered graph and we need to test whether it
 preserves or reverses orientation.
 \begin{lstlisting}
       if pi.is_identity():                                   |\n{nb1:5}|
-        if a.compare_orientations() == -1:                      |\n{nb1:6}|
-          orientable = False                                    |\n{nb1:7}|
+        if a.is_orientation_reversing():                     |\n{nb1:6}|
+          orientable = False                                 |\n{nb1:7}|
 
 \end{lstlisting}
 At last, if "pi" is not already present in "P",\footnote{There are
@@ -3082,7 +3100,7 @@ likewise, we keep record of the automorphism "a" inducing it.
 \begin{lstlisting}
       if pi not in P:                                        |\n{nb1:8}|
         P.append(pi)                                         |\n{nb1:9}|
-        A.append(a)                                             |\n{nb1:10}|
+        A.append(a)                                          |\n{nb1:10}|
 
 \end{lstlisting}
 This ends the stage {\sl (1)} computation.
@@ -3321,17 +3339,14 @@ the orientation $\Omega_2$ of $(G_2, \nu_2^{(k)})$ with the
 orientation ${(f_2 \circ f_1)}_* \Omega_1$, where $\Omega_1$ is the
 orientation on $(G_1, \nu_1^{(j)})$.  By the above
 Lemma~\ref{lemma:unique-nu}, given $\nu_1 = \nu_1^{(j)}$ there is a
-unique $\nu_2$ such that "s" can be non-null;\FIXME{Quindi,
-  all'interno di un blocco, su ogni colonna c'\'e un solo indice
-  nonzero.  Questa potrebbe essere una osservazione importante per il
-  calcolo del rango: per\`o non sono riuscito finora ad applicarla in
-  alcun modo.} by Lemma~\ref{lemma:sigma+aut}, there exist
-$\nu_2^{(k)} = \sigma_2^{(k)} \circ \bar\nu_2$ and $a \in \Aut G$ such
-that $(G_2, \nu_2^{(k)})$ is representative the isomorphism class
-$[G_2,\nu_2]$ stored within the "NumberedFatgraphPool" instance "p2",
-and $a$ gives the isomorphism between numbered fatgraphs $(G_2,\nu_2)$
-and $(G_2, \nu_2^{(k)})$.  Actual computation of these data is the
-purpose of the final part of this function.
+unique $\nu_2$ such that "s" can be non-null; by
+Lemma~\ref{lemma:sigma+aut}, there exist $\nu_2^{(k)} = \sigma_2^{(k)}
+\circ \bar\nu_2$ and $a \in \Aut G$ such that $(G_2, \nu_2^{(k)})$ is
+representative the isomorphism class $[G_2,\nu_2]$ stored within the
+"NumberedFatgraphPool" instance "p2", and $a$ gives the isomorphism
+between numbered fatgraphs $(G_2,\nu_2)$ and $(G_2, \nu_2^{(k)})$.
+Actual computation of these data is the purpose of the final part of
+this function.
 
 The map $\phi_1$ is relatively easy to compute: since $\bar\nu_1$
 numbers the boundary cycles of $G_1$ in the order they are returned by
@@ -3468,6 +3483,13 @@ class MgnVectorSpace(VectorSpace):
     return sum(len(pool) for pool in self.base)
 
 \end{lstlisting}
+An additional method "aggregate" allows us to grow the vector space
+base with a new pool:
+\begin{lstlisting}
+  def aggregate(self, pool):
+    self.base.append(pool)
+\end{lstlisting}
+
 If we were using the naive "compute_homology_ranks" method provided by
 the "ChainComplex" class, we would need to override also the
 "coordinate" method to account for the use of "NumberedFatgraphPool"
@@ -3475,37 +3497,54 @@ aggregates in the basis; the following specialized "MgnChainComplex"
 class uses a (slightly) different "compute_boundary_operator"
 algorithm which renders this unneeded.
 
+The only change in the initialization code is to make use of the
+"MgnVectorSpace" class instead of the generic "VectorSpace" one:
 \begin{lstlisting}
 class MgnChainComplex(ChainComplex):
   """A specialized `ChainComplex`."""
   def __init__(self, length):
     ChainComplex.__init__(self, length)
     for i in range(length):
-      self.module[i] = AggregateList()
+      self.module[i] = MgnVectorSpace()
 
+\end{lstlisting}
+
+The "compute_boundary_operators" function starts just like the generic
+one: 
+\begin{lstlisting}
   def compute_boundary_operators(C):
-    #: Matrix form of boundary operators; the "i"-th differential
-    #: "D[i]" is "dim C[i-1]" rows (range) by "dim C[i]" columns
-    #: (domain).
-    m = C.module # micro-optimization
-    D = DifferentialComplex()
-    D.append(NullMatrix, 0, len(m[0]))
-    for i in range(1, len(C)):
-      p = len(m[i-1]) # == dim C[i-1]
-      q = len(m[i])   # == dim C[i]
+    m = C.module # for brevity
+    D = [ ]
+    D.append(NullMatrix, 0, m[0].dimension()))
+    for i in range(1, C.length):
+      p = m[i-1].dimension() # == dim C[i-1]
+      q = m[i].dimension()   # == dim C[i]
       d = SimpleMatrix(p, q)
+\end{lstlisting}
+The inner loop (lines~\nr{cbo:1}--\nr{cbo:2}) runs over all pairs of a
+"pool1" (of graphs with "i" edges) and a "pool2" (of fatgraphs with
+"i-1" edges); variables "j0" and "k0" point at the upper left corner
+of the matrix block corresponding to fatgraphs included in these
+pools.  Any non-loop edge is then contracted, and the resulting
+triplets populate the matrix block
+(lines~\nr{cbo:3}--\nr{cbo:4}).\footnote{Note that the resulting block
+  is the \emph{sum} of blocks corresponding to the contraction of an
+  edge, since the differential in the fatgraph complex is the
+  alternating sum of edge contractions.  (Alternation of signs is
+  taken care here by the \q{NumberedFatgraphPool.block} function.)}
+\begin{lstlisting}
       j0 = 0
-      for pool1 in m[i]:
+      for pool1 in m[i]:                   |\n{cbo:1}|
         k0 = 0
         for pool2 in m[i-1]:
           for edgeno in range(pool1.graph.num_edges):
             if pool1.graph.is_loop(edgeno):
               continue # with next "edgeno"
-            for (j, k, s) in NumberedFatgraphPool.block(pool1, edgeno, pool2):
-              d.addToEntry(k+k0, j+j0, s)
+            for (j, k, s) in NumberedFatgraphPool.block(pool1,edgeno,pool2): |\n{cbo:3}|
+              d.addToEntry(k+k0, j+j0, s)  |\n{cbo:4}|
           k0 += len(pool2)
         j0 += len(pool1)
-      D.append(d, p, q)
+      D.append(d, p, q)                    |\n{cbo:2}|
     return D
 
 \end{lstlisting}
@@ -3550,10 +3589,10 @@ graphs are aggregated to the degree $E-1$ vector space of the complex
   C = MgnChainComplex(top_dimension)    |\n{finale:1}|
   for graph in MgnGraphsIterator(g,n):  |\n{finale:2}|
     pool = NumberedFatgraphPool(graph)  |\n{finale:3}|
-    if not pool.is_orientable:      |\n{finale:4}|
-      continue # with next "graph"  |\n{finale:5}|
+    if not pool.is_orientable:          |\n{finale:4}|
+      continue # with next "graph"      |\n{finale:5}|
     grade = graph.num_edges - 1
-    C.module[grade].aggregate(pool)   |\n{finale:6}|
+    C.module[grade].aggregate(pool)     |\n{finale:6}|
     
   return C # end of "FatgraphComplex"
 \end{lstlisting}

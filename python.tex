@@ -44,7 +44,7 @@ u = (1 + 4*x[2]
        + z)
 \end{lstlisting}
 As one can see from the example above, the Python interpreter ignores
-any character following `"#"' until the end of the line.  This
+any character from `"#"' until the end of the line.  This
 syntax is used to add explicative comments to the Python source code.
 
 The Python interpreter completely ignores comments and blank lines
@@ -85,7 +85,7 @@ occurs.
 
 
 \subsection{Program blocks}
-\label{sec:blocks}
+\label{sec:code-blocks}
 
 A distinctive feature of Python is its use of whitespace to delimit
 program blocks:\footnote{Note: the use of the word ``block'' here is
@@ -410,7 +410,7 @@ Chapter~\ref{chap:algorithm} are:
 In addition to the basic types (integers, floating-point numbers,
 character strings), the Python language provides support for other
 common data structures: lists, tuples ($t$-uples), dictionaries, and
-sets.  These are collectively called \emph{container} types, as their
+sets.  These can be collectively called \emph{container} types, as their
 purpose is to store a collection of other objects.
 There are two main operations supported by Python on standard
 containers: \emph{iteration} and \emph{look-up}.
@@ -424,7 +424,7 @@ for item in container:
 \end{lstlisting}
 The block of code following a ``"for ... in ...:"'' line will be
 executed once for each item stored in the container; at each
-iteration, the variable folliwing the `"for"' keyword will be bound to
+iteration, the variable following the `"for"' keyword will be bound to
 a different object in the container.  Containers are said to be
 \emph{ordered} or \emph{unordered}, depending whether iteration
 returns the objects in the order they were added to the container
@@ -708,7 +708,7 @@ print(b)
 \end{lstlisting}
                      
 
-\subsection{The {\l pass} statement}
+\subsection{The \q{pass} statement}
 \label{sec:pass}
 
 Python syntax does not allow to specify an empty block of code. There
