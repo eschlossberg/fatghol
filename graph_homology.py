@@ -105,18 +105,15 @@ class MgnChainComplex(ChainComplex):
             for pool1 in m[i].iterblocks():
                 k0 = 0
                 for pool2 in m[i-1].iterblocks():
-                    for l in pool1.graph.edges():
-                        if pool1.graph.is_loop(l):
-                            continue # with next `l`
-                        for (j, k, s) in NumberedFatgraphPool.facets(pool1, l, pool2):
+                    for edgeno in xrange(pool1.graph.num_edges):
+                        if pool1.graph.is_loop(edgeno):
+                            continue # with next `edgeno`
+                        for (j, k, s) in NumberedFatgraphPool.facets(pool1, edgeno, pool2):
                             assert k < len(pool2)
                             assert j < len(pool1)
                             assert k+k0 < p
                             assert j+j0 < q
                             d.addToEntry(k+k0, j+j0, s)
-                            ## if __debug__:
-                            ##     if outputs:
-                            ##         outputs[i].write("M %04d %04d %d\n" % (k+k0, j+j0, s))
                     k0 += len(pool2)
                 j0 += len(pool1)
             D.append(d, p, q)
@@ -416,10 +413,6 @@ class NumberedFatgraphPool(object):
             s = Fatgraph._cmp_orient(g2, g1, f1) \
                 * Fatgraph._cmp_orient(g2, g2, a) \
                 * minus_one_exp(g0.edge_numbering[edge])
-            if __debug__:
-                p2 = NumberedFatgraphPool(g2)
-                assert p2[k] == self[j].contract(edge)
-                assert s == self[j].contract(edge).projection(p2[k]) * minus_one_exp(g0.edge_numbering[edge])
             yield (j, k, s)
 
     def _index(self, numbering):

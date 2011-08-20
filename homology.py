@@ -179,7 +179,6 @@ class ChainComplex(object):
             d = SimpleMatrix(self.module[i-1].dimension,
                              self.module[i].dimension)
             for j in xrange(self.module[i].dimension):
-                # a = self.module[i].base[j]
                 for (k, c) in self.module[i-1].coordinates(
                                    self.differential[i](
                                         self.module[i].base[j])).iteritems():
@@ -301,11 +300,7 @@ class DifferentialComplex(list):
         #: `D[0]` is the null map.
         ranks = []
         for (A, ddim, cdim) in self:
-            # XXX: LinBox segfaults if asked to compute the rank of a 0xL matrix
-            if A.num_rows > 0 and A.num_columns > 0:
-                ranks.append(A.rank())
-            else:
-                ranks.append(0)
+            ranks.append(A.rank())
         for (i, r) in enumerate(ranks):
             logging.info("  rank D[%d]=%d", i, r)
 

@@ -14,7 +14,6 @@ import weakref
 ## local imports
 
 from iterators import Iterator
-from persist import PersistedIterator
 
 
 ## auxiliary classes
