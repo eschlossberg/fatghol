@@ -480,7 +480,6 @@ class Graph(object):
                     self._valence_spectrum[l] = [index]
         return self._valence_spectrum
         
-        
 
 def all_graphs(vertex_valences):
     """Return all graphs having vertices of the given valences.
@@ -506,7 +505,6 @@ def all_graphs(vertex_valences):
         return []
 
     ## pass 2: filter out sequences representing isomorphic graphs
-
     def vertex_permutations(valence_spectrum):
         """Return all permutations of vertices that preserve valence.
         (A permutation `p` preserves vertex valence if vertices `v`
@@ -554,7 +552,7 @@ def all_graphs(vertex_valences):
                 candidate_is_isomorphic_to_current = True
             else:
                 for vertex_index_map in vertex_to_vertex_mappings:
-                    morphism = Map(total_edges)
+                    morphism = Mapping(total_edges)
                     for i1,i2 in izip(vertex_to_vertex_mapping_domain, vertex_index_map):
                         v1 = current.vertices[i1]
                         (b1, rp1) = v1.repetition_pattern()
@@ -667,13 +665,13 @@ def all_canonical_decorated_graphs(vertex_valences, total_edges):
             yield g
 
 
-class Map:
+class Mapping:
     """A mapping (in the mathematical sense) with a domain of fixed cardinality.
 
     Provides methods to incrementally construct the mapping by
     extending an existing map with new source->destination pairs.  The
     cardinality of the domain should be known in advance, and the
-    `Map` object is *complete* when all items in the domain have been
+    `Mapping` object is *complete* when all items in the domain have been
     assigned a destination value.
     """
     def __init__(self, order):
@@ -682,7 +680,7 @@ class Map:
     def __call__(self, src):
         return self.map[src]
     def extend(self, srcs, dsts):
-        """Return `True` if the Map can be extended by mapping
+        """Return `True` if the mapping can be extended by mapping
         elements of `srcs` to corresponding elements of `dsts`.
         Return `False` if any of the new mappings conflicts with an
         already established one.
@@ -697,8 +695,8 @@ class Map:
                 self.map[srcs[i]] = dsts[i]
         return True
     def extend_with_hash(self, mappings):
-        """Return `True` if the Map can be extended by mapping each
-        key of `mappings` tothe corresponding value.  Return `False`
+        """Return `True` if the mapping can be extended by mapping each
+        key of `mappings` to the corresponding value.  Return `False`
         if any of the new mappings conflicts with an already
         established one.
         """
