@@ -621,13 +621,15 @@ elif 'homology' == args[0]:
         # from Harer's SLN1337, Theorem 7.1
         if hs[1] != 0:
             logging.error("Harer's Theorem 7.1 requires h_1=0 when g>0")
-        # From Harer's SLN1337, Theorem 7.2
-        if g==1 or g==2:
-            if hs[2] != n:
-                logging.error("Harer's Theorem 7.2 requires h_2=%d when g=1 or g=2" % n)
-        elif g>2:
-            if hs[2] != n+1:
-                logging.error("Harer's Theorem 7.2 requires h_2=%d when g>2" % n)
+        ## DISABLED 2009-03-27: Harer's statement seems to be incorrect,
+        ## at least for low genus...
+        ## # From Harer's SLN1337, Theorem 7.2 
+        ## if g==1 or g==2:
+        ##     if hs[2] != n:
+        ##         logging.error("Harer's Theorem 7.2 requires h_2=%d when g=1 or g=2" % n)
+        ## elif g>2:
+        ##     if hs[2] != n+1:
+        ##         logging.error("Harer's Theorem 7.2 requires h_2=%d when g>2" % n+1)
             
 
 else:
