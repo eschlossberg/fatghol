@@ -5,7 +5,7 @@
 __docformat__ = 'reStructuredText' 
 
 
-from array import array, ArrayType
+from array import array
 
 
 class CyclicList(list):
@@ -47,8 +47,14 @@ class CyclicList(list):
             list.__init__(self, sequence)
 
     def __getitem__(self, i): return list.__getitem__(self, i % len(self))
+
     def __setitem__(self, i, item): list.__setitem__(self, i % len(self), item)
+
     def __delitem__(self, i): list.__delitem__(self, i%len(self))
+
+    def __delslice__(self, i, j):
+        i = max(i, 0); j = max(j, 0)
+        list.__delslice__(self, i%len(self), j%len(self))
 
     def __getslice__(self, i, j):
         """*Note:* returned slice is of `list` type!"""
@@ -64,15 +70,13 @@ class CyclicList(list):
             return list.__getslice__(self, b%l,l) \
                    + (n*list.__getslice__(self, 0,l)) \
                     + list.__getslice__(self, 0,a%l)
+
     def __setslice__(self, i, j, other):
         i = max(i, 0); j = max(j, 0); l = len(self)
         if isinstance(other, list):
             list.__setslice__(self, i%len(self), j%len(self), other)
         else:
             list.__setslice__(self, i%len(self), j%len(self), list(other))
-    def __delslice__(self, i, j):
-        i = max(i, 0); j = max(j, 0)
-        list.__delslice__(self, i%len(self), j%len(self))
 
     def __eq__(self, other):
         """Compare `self` with all possible translations of `other`."""
@@ -111,6 +115,7 @@ class CyclicList(list):
             else:
                 shift += 1
         return None
+
     def all_shifts_for_list_eq(self, other):
         start = 0
         l = len(self)
@@ -122,12 +127,15 @@ class CyclicList(list):
                 yield shift
             start = shift+1
 
+    def repetition_pattern(self):
+        return _repetition_pattern(self)
 
-class CyclicArray(ArrayType):
+
+class CyclicArray(array):
     """Array with indices wrapping around.
 
     Examples::
-      >>> a=CyclicArray('i', [1,2,3])
+      >>> a=CyclicArray([1,2,3])
       >>> len(a)
       3
       >>> a[3]
@@ -144,26 +152,32 @@ class CyclicArray(ArrayType):
       array('i', [1, 7, 8, 9, 3])
       >>> len(a)
       5
-      >>> a=CyclicArray('i', [1,2,3])
-      >>> b=CyclicArray('i', [2,3,1])
+      >>> a=CyclicArray([1,2,3])
+      >>> b=CyclicArray([2,3,1])
       >>> b == a
       True
-      >>> c=CyclicArray('i', [3,1,2])
+      >>> c=CyclicArray([3,1,2])
       >>> c==a
       True
-      >>> d=CyclicArray('i', [1,3,2])
+      >>> d=CyclicArray([1,3,2])
       >>> d==a
       False
     """
     def __new__(cls, sequence=None, typecode='i', *args, **kwargs):
         if sequence is None:
-            return ArrayType.__new__(cls, typecode, *args, **kwargs)
+            return array.__new__(cls, typecode, *args, **kwargs)
         else:
-            return ArrayType.__new__(cls, typecode, sequence, *args, **kwargs)
+            return array.__new__(cls, typecode, sequence, *args, **kwargs)
+
+    def __delitem__(self, i): array.__delitem__(self, i%len(self))
 
     def __getitem__(self, i): return array.__getitem__(self, i % len(self))
+
     def __setitem__(self, i, item): array.__setitem__(self, i % len(self), item)
-    def __delitem__(self, i): array.__delitem__(self, i%len(self))
+
+    def __delslice__(self, i, j):
+        i = max(i, 0); j = max(j, 0)
+        array.__delslice__(self, i%len(self), j%len(self))
 
     def __getslice__(self, i, j):
         """*Note:* returned slice is of `array` type!"""
@@ -177,8 +191,9 @@ class CyclicArray(ArrayType):
             d = l*(b/l + 1) # nearest multiple of l above b
             n = (a/l) - (b/l + 1) # how many times the whole seq is repeated in the middle
             return array.__getslice__(self, b%l,l) \
-                   + (n*array.__getslice__(self, 0,l)) \
+                   + (n * array.__getslice__(self, 0,l)) \
                     + array.__getslice__(self, 0,a%l)
+
     def __setslice__(self, i, j, other):
         i = max(i, 0); j = max(j, 0); l = len(self)
         if isinstance(other, array):
@@ -186,10 +201,6 @@ class CyclicArray(ArrayType):
         else:
             array.__setslice__(self, i%len(self), j%len(self),
                                array(self.typecode, other))
-    def __delslice__(self, i, j):
-        i = max(i, 0); j = max(j, 0)
-        array.__delslice__(self, i%len(self), j%len(self))
-
     def __eq__(self, other):
         """Compare `self` with all possible translations of `other`."""
         if len(other) != len(self):
@@ -227,6 +238,7 @@ class CyclicArray(ArrayType):
             else:
                 shift += 1
         return None
+
     def all_shifts_for_list_eq(self, other):
         start = 0
         l = len(self)
@@ -237,6 +249,10 @@ class CyclicArray(ArrayType):
             else:
                 yield shift
             start = shift+1
+
+
+    def repetition_pattern(self):
+        return _repetition_pattern(self, CyclicArray)
 
 
 class RotatedList(CyclicList):
@@ -271,28 +287,32 @@ class RotatedList(CyclicList):
         CyclicList.__delslice__(self, i+self.shift, j+self.shift)
 
 
-def repetition_pattern(c):
-    """Return the repetition pattern of a cyclic list `c`.
+def _repetition_pattern(c, cls=CyclicList):
+    """Return the repetition pattern of a cyclic sequence `c`.
 
-    The repetition pattern is a *cyclic* list of integers: each number
-    `n` in the repetition list corresponds to `n` equal-valued items
-    in the list `c`.
+    The repetition pattern is a *cyclic* sequence of integers: each
+    number `n` in the repetition list corresponds to `n` equal-valued
+    items in `c`.
 
+    Optional second argument `cls` is a factory function to build the
+    returned cyclic sequence; it should accept being called with the
+    same arguments that `CyclicList.__init__` does.
+    
     Examples::
       >>> c=CyclicList([1,2,3])
-      >>> repetition_pattern(c)
+      >>> _repetition_pattern(c)
       (1, [1, 1, 1])
       >>> c=CyclicList([4,4,4])
-      >>> repetition_pattern(c)
+      >>> _repetition_pattern(c)
       (0, [3])
-      >>> c=CyclicList([4,4,4,1])
-      >>> repetition_pattern(c)
-      (3, [1, 3])
+      >>> c=CyclicArray([4,4,4,1])
+      >>> _repetition_pattern(c, CyclicArray)
+      (3, array('i', [1, 3]))
       >>> c=CyclicList([1,4,4,4,1])
-      >>> repetition_pattern(c)
-      (1, [3, 2])
-      >>> c=CyclicList([4,4,4,3,3])
-      >>> repetition_pattern(c)
+      >>> _repetition_pattern(c, CyclicArray)
+      (1, array('i', [3, 2]))
+      >>> c=CyclicArray([4,4,4,3,3])
+      >>> _repetition_pattern(c)
       (3, [2, 3])
     """
     l=len(c)
@@ -302,9 +322,9 @@ def repetition_pattern(c):
         b += 1
     # all items are equal
     if b == l:
-        return (0, CyclicList([l]))
+        return (0, cls([l]))
     # else, start building pattern from here
-    result=CyclicList()
+    result = cls()
     b += 1
     i=0
     while i < l:
