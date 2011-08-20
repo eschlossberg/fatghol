@@ -1,6 +1,5 @@
 (TeX-add-style-hook "gc"
- (function
-  (lambda ()
+ (lambda ()
     (LaTeX-add-labels
      "cha:gc"
      "sec:gc-stc"
@@ -15,9 +14,9 @@
      "thm:gc2"
      "sec:gc-ribbon-graphs"
      "dfn:ribbon-graphs"
-     "fig:rt-to-cyclic"
      "M3"
      "M4"
+     "fig:moving-edges-in-out"
      "dfn:rg-algebra"
      "eq:passing-up-and-down"
      "eq:right-rot"
@@ -29,5 +28,5 @@
      "dfn:symmetric-graph-category"
      "dfn:sg-algebra"
      "thm:gc-sym"
-     "rem:many-sorted-graphs"))))
+     "rem:many-sorted-graphs")))
 

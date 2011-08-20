@@ -1,9 +1,15 @@
 (TeX-add-style-hook "csref"
- (function
-  (lambda ()
+ (lambda ()
     (TeX-add-symbols
+     '("csref" 1)
+     '("cslabel" 1)
      '("renewcsref" 1)
-     "newcsref"
+     '("newcsref" 1)
+     "filename"
      "label"
-     "refsectionname"))))
+     "refsectionname")
+    (TeX-run-style-hooks
+     "prettyref"
+     "fancyref"
+     "varioref")))
 

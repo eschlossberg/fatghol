@@ -1,6 +1,5 @@
 (TeX-add-style-hook "index"
- (function
-  (lambda ()
+ (lambda ()
     (LaTeX-add-bibliographies
      "math")
     (LaTeX-add-environments
@@ -15,25 +14,26 @@
      "definition"
      "example")
     (TeX-add-symbols
-     '("ginttriv" 2)
-     '("gint" 2)
-     '("biggint" 2)
+     '("ginttriv" ["argument"] 1)
+     '("gint" ["argument"] 1)
+     '("biggint" ["argument"] 1)
+     '("Strebel" ["argument"] 0)
+     '("SG" ["argument"] 0)
+     '("RG" ["argument"] 0)
+     '("RTG" ["argument"] 0)
+     '("RTE" ["argument"] 0)
+     '("RTD" ["argument"] 0)
+     '("Oo" ["argument"] 0)
      '("vv" 1)
      '("Holes" 1)
      '("Edges" 1)
      '("Vertices" 1)
-     '("Strebel" 1)
      '("ftpc" 1)
      '("btpc" 1)
      '("tpc" 1)
      '("freemsc" 1)
      '("freemc" 1)
-     '("SG" 1)
-     '("RG" 1)
-     '("RTG" 1)
-     '("RTE" 1)
-     '("RTD" 1)
-     '("Oo" 1)
+     "theoremname"
      "A"
      "B"
      "rev"
@@ -42,19 +42,32 @@
      "T"
      "Lb"
      "Hn"
+     "rel"
      "xyc"
      "nx")
     (TeX-run-style-hooks
      "graphicx"
+     "final"
      "csref"
      "nomencl"
+     "refpage"
      "hyperref"
      "url"
      "mdwtab"
      "mdwlist"
      "paralist"
+     "newenum"
+     "newitem"
      "rg"
      "xy"
+     "poly"
+     "knot"
+     "arc"
+     "all"
+     "colour"
+     "xdvi"
+     "dvips"
+     "ps"
      "miscmath"
      "amsthm"
      "rcs"
@@ -62,16 +75,17 @@
      "latex2e"
      "amsbook10"
      "amsbook"
-     "a4paper"
-     "reqno"
-     "openany"
      "draft"
+     "openany"
+     "reqno"
+     "a4paper"
      "title"
      "prelim"
      "gc"
      "fd"
      "kontsevich"
+     "construction"
      "arrows"
      "btc"
-     "rt"))))
+     "rt")))
 

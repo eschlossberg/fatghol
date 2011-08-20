@@ -1,8 +1,9 @@
 (TeX-add-style-hook "prova"
- (function
-  (lambda ()
+ (lambda ()
     (TeX-run-style-hooks
+     "csref"
      "latex2e"
-     "amsart10"
-     "amsart"))))
+     "art10"
+     "article"
+     "a4paper")))
 

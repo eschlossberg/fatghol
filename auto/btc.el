@@ -1,6 +1,5 @@
 (TeX-add-style-hook "btc"
- (function
-  (lambda ()
+ (lambda ()
     (LaTeX-add-labels
      "cha:btc"
      "sec:monoidal-categories"
@@ -16,5 +15,5 @@
      "thm:ev-rev"
      "xmp:vect-duality"
      "xmp:vect-duality-nondeg"
-     "sec:tortile"))))
+     "sec:tortile")))
 
