@@ -767,7 +767,6 @@ class Fatgraph(object):
                      )
     
     
-
     def bridge2(self, edge1, side1, other, edge2, side2):
         """Return a new `Fatgraph`, formed by connecting the midpoints
         of `edge1` on `self` and `edge2` on `other`.
@@ -805,8 +804,8 @@ class Fatgraph(object):
           True
 
         *Caveat:* If `self == other` then the resulting graph is made
-         up of *two copies* of `self` with a new edge connecting
-         `edge1` on one copy and `edge2` on the other.
+        up of *two copies* of `self` with a new edge connecting
+        `edge1` on one copy and `edge2` on the other.
          
         """
         assert side1 in [0,1], \
@@ -859,7 +858,7 @@ class Fatgraph(object):
         connecting_edge = self.num_edges + other.num_edges
         ## break `edge1` in two halves: if `v1a` and `v1b` are the
         ## endpoints of `edge1`, then the "one_half" edge extends from
-        ## the `v1a` endpoint of `edge1` to the new vertex
+         ## the `v1a` endpoint of `edge1` to the new vertex
         ## `midpoint1`; the "other_half" edge extends from the
         ## `midpoint1` new vertex to `v1b`.
         one_half1 = edge1
@@ -974,7 +973,6 @@ class Fatgraph(object):
 
         In the above examples, notice that any reference to edge `2`
         has been removed from the boundary cycles after contraction.
-
         """
         # check that we are not contracting a loop or an external edge
         assert not self.is_loop(edgeno), \
@@ -1193,10 +1191,8 @@ class Fatgraph(object):
         It is worth noting that the new graph will have 3 edges more
         than the original one::
 
-          >>> g.num_edges
-          3
-          >>> g1.num_edges
-          6
+          >>> g1.num_edges == g.num_edges + 3
+          True
           
         """
         assert side in [0,1], \
@@ -2363,7 +2359,7 @@ class _MgnGraphsIterator(BufferingIterator):
         max_valence = 2 * (2*g + n - 1)
 
         ## pass 1: Gather all roses.
-        logging.info("Computing roses with %d leaves ...", max_valence/2)
+        logging.debug("Computing roses with %d leaves ...", max_valence/2)
         roses = []
         discarded = 0
         for rose in GivenValenceGraphsIterator((max_valence,)):
@@ -2375,18 +2371,18 @@ class _MgnGraphsIterator(BufferingIterator):
             roses.append(rose)
             # a rose is a valid fatgraph too
             #graphs.extend(MakeNumberedGraphs(rose))
-        logging.info("Found %d distinct unique roses; discarded %d.",
+        logging.debug("  Found %d distinct unique roses; discarded %d.",
                      len(roses), discarded)
             
         ## pass 2: Gather all 3-valent graphs.
         trivalent = []
         #: Full binary trees
-        logging.info("Computing full binary trees with %d leaves ...",
+        logging.debug("Computing full binary trees with %d leaves ...",
                      max_valence - 3)
         trees = [ Tree(zip(l,r))
                   for l,r in AlgorithmB(max_valence - 3) ]
 
-        logging.info("Computing trivalent fat graphs ...")
+        logging.debug("Computing trivalent fat graphs ...")
         discarded = 0
         for rose in roses:
             # now substitute the unique vertex with any possible tree
@@ -2404,7 +2400,7 @@ class _MgnGraphsIterator(BufferingIterator):
                         discarded += 1
                         continue
                     trivalent.append(graph)
-        logging.info("Found %d distinct trivalent graphs, discarded %d.",
+        logging.debug("  Found %d distinct trivalent graphs, discarded %d.",
                      len(trivalent), discarded)
 
         #: Fatgraphs to be contracted at next `.refill()` invocation
@@ -2424,7 +2420,7 @@ class _MgnGraphsIterator(BufferingIterator):
         if self._num_vertices == 0:
             raise StopIteration
 
-        logging.info("Generating graphs with %d vertices ...",
+        logging.debug("Generating graphs with %d vertices ...",
                      self._num_vertices)
         discarded = 0
         next_batch = []
@@ -2439,7 +2435,7 @@ class _MgnGraphsIterator(BufferingIterator):
         self._batch = next_batch
         self._num_vertices -= 1
 
-        logging.info("Found %d distinct unique graphs with %d vertices, discarded %d.",
+        logging.debug("  Found %d distinct unique graphs with %d vertices, discarded %d.",
                      len(next_batch), self._num_vertices, discarded)
         return next_batch
 

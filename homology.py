@@ -202,7 +202,7 @@ class ChainComplex(object):
         """
         ## pass 1: compute boundary operators in matrix form
         #
-        logging.info("Computing matrix form of boundary operator ...")
+        logging.debug("Computing matrix form of boundary operator ...")
         
         # FIXME: since we're only interested in computing the
         # rank, should we instanciate the matrix as row-major or
@@ -228,7 +228,7 @@ class ChainComplex(object):
         for i in xrange(1, self.length):
             D.append([ self.module[i-1].coordinates(self.differential[i](b))
                        for b in self.module[i].base ])
-            logging.info("Computed %dx%d matrix D[%d]",
+            logging.debug("  Computed %dx%d matrix D[%d]",
                          len(self.module[i-1].base),
                          len(self.module[i].base),
                          i)
@@ -241,7 +241,7 @@ class ChainComplex(object):
         
         ## pass 2: compute rank and nullity of boundary operators
         #
-        logging.info("Computing ranks of boundary operator matrices ...")
+        logging.debug("Computing ranks of boundary operator matrices ...")
         
         ## We reduce (destructively) every boundary operator matrix to
         ## column Echelon form by Gaussian elimination, computing the

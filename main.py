@@ -102,9 +102,9 @@ def do_graphs(g,n):
     `(g,n)`-graphs, and `D` is a list, the `k`-th element of which is
     the list of differentials of graphs with `k` edges.
     """
-    logging.info("Computing fat graphs for g=%d, n=%d ...", g, n)
+    logging.debug("Computing fat graphs for g=%d, n=%d ...", g, n)
     graphs = FatgraphComplex(g,n)
-    logging.info("Found %d distinct orientable fat graphs.", len(graphs))
+    logging.debug("Found %d distinct orientable fat graphs.", len(graphs))
     
     # FIXME: `D` must match the one used in `ChainComplex.compute_homology_rank()`
     D = [ [ graphs.module[i-1].coordinates(graphs.differential[i](b))
@@ -120,10 +120,10 @@ def do_homology(g, n):
 
     Return array of homology ranks.
     """
-    logging.info("Computing fat graphs complex for g=%d, n=%d ...", g, n)
+    logging.debug("Computing fat graphs complex for g=%d, n=%d ...", g, n)
     graph_complex = FatgraphComplex(g,n)
 
-    logging.info("Computing homology ranks ...")
+    logging.debug("Computing homology ranks ...")
     hs = graph_complex.compute_homology_ranks()
 
     return hs
@@ -134,15 +134,15 @@ def do_valences(g,n):
 
     Return list of valences.
     """
-    logging.info("Computing vertex valences occurring in g=%d,n=%d fatgraphs ...", g, n)
+    logging.debug("Computing vertex valences occurring in g=%d,n=%d fatgraphs ...", g, n)
     return vertex_valences_for_given_g_and_n(g,n)
 
 
 def do_vertices(valences):
     """Return all graphs with vertices of prescribed valences."""
-    logging.info("Computing graphs with vertex valences %s ...", valences)
+    logging.debug("Computing graphs with vertex valences %s ...", valences)
     graphs = list(ConnectedGraphsIterator(valences))
-    logging.info("Found %d distinct graphs.", len(graphs))
+    logging.debug("Found %d distinct graphs.", len(graphs))
     return graphs
 
 
@@ -283,7 +283,7 @@ elif 'selftest' == args[0]:
         print("Module '%s' FAILED %d tests of %d." % (__name__, failed, tested))
     else:
         if tested>0:
-            logging.info("  module '%s' passed all doctests." % __name__)
+            logging.debug("  module '%s' passed all doctests." % __name__)
             print("Module '%s' passed all doctests." % __name__)
         else:
             logging.warning("  module '%s' had no doctests." % __name__)
@@ -334,7 +334,7 @@ elif 'valences' == args[0]:
                          % (args[1],))
         sys.exit(1)
 
-    logging.info("Computing vertex valences occurring in g=%d,n=%d fatgraphs ...", g, n)
+    logging.debug("Computing vertex valences occurring in g=%d,n=%d fatgraphs ...", g, n)
     vvs = do_valences(g,n)
     if not options.silent:
         for vv in vvs:
@@ -580,4 +580,4 @@ try:
 except:
     pass
 
-logging.info("Done.")
+logging.debug("Done.")
