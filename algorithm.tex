@@ -4,25 +4,23 @@
 \label{chap:algorithm}
 
 This chapter presents an algorithm to compute homology of the fatgraph
-complex $\R_{g,n}$.  By \csref{thm:fatgraph-homology}, this is
+complex $\R_{g,n}$.  By Theorem~\ref{thm:fatgraph-homology}, this is
 tantamount to the (co)homology with rational coefficients of the
 moduli spaces $\M_{g,n}$. An effective computer implementation of the
 algorithm is presented, which is capable of computing the Betti
-numbers of $\M_{g,n}$ for $(2g+n) < 6$ on standard desktop-class
-hardware.  The size of the fatgraph complex increases factorially with
-$2g+n$, so a parallel algorithm is needed to compute the Betti numbers
-of $\M_{g,n}$ for $(2g+n) \geq 6$; this will be the subject of a later
-chapter.
-
-Generators of the homology modules could be computed with a little
-variant in the last step of the algorithm; however, this is not
-interesting in connection with the homology of $\M_{g,n}$, since
-expression of a fatgraph homology class in terms of algebro-geometric
-classes has proved to be a difficult problem 
-\cite{mondello:2004,
-  igusa:combinatorial-miller-morita-mumford-classes-and-witten-cycles,
-  igusa:graph-cohomology-and-kontsevich-cycles},
-and to-date lacks a general solution.
+numbers\footnote{Explicit generators of the homology modules could be
+  computed with a little variant in the last step of the algorithm;
+  however, this is not interesting in connection with the homology of
+  $\M_{g,n}$, since expression of a fatgraph homology class in terms
+  of the ``natural'' algebro-geometric classes has proved to be a
+  difficult problem \cite{mondello:2004,
+    igusa:combinatorial-miller-morita-mumford-classes-and-witten-cycles,
+    igusa:graph-cohomology-and-kontsevich-cycles}, and to-date lacks a
+  general solution.} of $\M_{g,n}$ for $(2g+n) < 6$ on standard
+desktop-class hardware.  The size of the fatgraph complex increases
+factorially with $2g+n$, so a parallel algorithm is needed to compute
+the Betti numbers of $\M_{g,n}$ for $(2g+n) \geq 6$; this will be the
+subject of a later chapter.
 
 The Python programming language is used in this chapter to articulate
 the algorithm.  Python is claimed to be ``executable pseudo-code'',
@@ -32,14 +30,24 @@ power of a general-purpose language that is presently in daily use for
 several real-world applications (see, e.g., \cite{python:success}).
 Therefore, the code listed in this chapter can be copied to a Python
 file and actually executed.  For the reader's convenience,
-\csref{chap:python} recaps the Python syntax and briefly explains the
+Appendix~\ref{chap:python} recaps the Python syntax and briefly explains the
 constructs and idioms used in programming this algorithm.
 
+The purpose of this chapter is thus threefold:
+\begin{itemize}
+\item Elucidate the algorithm,
+\item Provide an actual implementation, and
+\item Prove its correctness.
+\end{itemize}
+This yields an example of \emph{literate programming} \cite{knuth:lp},
+the computer source code and the text explaining it are entwined
+together into a single text, which can be read as a proof of the
+algorithm's correctness.
 
 \section[Overview]{Overview of the algorithm}
 \label{sec:overview}
 
-\csref{thm:fatgraph-homology} provides an effective way to compute the
+Theorem~\ref{thm:fatgraph-homology} provides an effective way to compute the
 (co)homology of $\M_{g,n}$.  The Betti numbers of $\M_{g,n}$ can be
 computed from the knowledge of the dimension of chain spaces $W_p$of
 the fatgraph complex, and the ranks of the boundary operators $D_p$;
@@ -80,7 +88,7 @@ fatgraph allows us to apply the naive algorithm to topological
 fatgraphs, which cuts complexity down by a factor~$(n!)^2$.  The
 resulting matrix is then extended to numbered fatgraphs by the action
 of graph automorphism groups on the numberings of boundary cycles.
-This is the variant detailed in \csref{sec:stage-ii}.
+This is the variant detailed in Section~\ref{sec:stage-ii}.
 
 Stage~III is the simplest: by elementary linear algebra, the Betti
 numbers can be computed from the rank of matrices $D_k$ and the
@@ -132,7 +140,7 @@ def MgnGraphs(g,n):
 \end{lstlisting}
 Graphs with the maximal number of edges are trivalent graphs; they are
 computed by a separate function "MgnTrivalentGraphs", described in
-\csref{sec:stage1-trivalent}.
+Section~\ref{sec:stage1-trivalent}.
 \begin{lstlisting}[name=MgnGraphs,firstnumber=11]
   # first item `graphs[0]` contains all 3-valent graphs
   graphs.append(list(MgnTrivalentGraphs(g,n)))
@@ -282,7 +290,7 @@ a different result in each case.
 Case {\slshape A)}: If $x$ is a loop attached to $v$, then, after deletion
 of $x$, one needs to also delete the loose edge $x'$ and the
 vertex $v'$ (that is, join the two other edges attached to $v'$; see
-\csref{fig:removal}, bottom row).  The resulting fatgraph $G'$ has:
+Figure~\ref{fig:removal}, bottom row).  The resulting fatgraph $G'$ has:
 \begin{itemize}
 \item two vertices less than $G$: $v$ and $v'$ have been deleted;
 \item three edges less: $x$, $x'$ have been deleted and two other
@@ -305,7 +313,7 @@ G' \in \R_{g,n-1}.
 \end{equation}
 
 In case {\slshape B)}, $x$ joins distinct vertices $v$,
-$v'$ and separates distinct boundary cycles (see \csref{fig:removal},
+$v'$ and separates distinct boundary cycles (see Figure~\ref{fig:removal},
 top row).  Delete $x$ and merge the two edges attached to each of
 the two vertices $v$ and $v'$; in the process, the two boundary cycles
 $\beta, \beta'$ also merge into one. The resulting fatgraph $G'$ is
@@ -376,7 +384,7 @@ G' \in \R_{g-1,n+1}.
   $G'_2$; for this statement to hold unconditionally, we temporarily allow a
   single circle into the set of connected fatgraphs (consider it a fatgraph
   with one closed edge and no vertices) as the one and only element of
-  $\R_{0,2}$.  As will be shown in \csref{lemma:no-c2}, this is
+  $\R_{0,2}$.  As will be shown in Lemma~\ref{lemma:no-c2}, this is
   irrelevant for the algorithm.  Now:
   \begin{equation*} V'_1 + V'_2 = V -2, 
     \qquad E'_1 + E'_2 = E - 3,
@@ -419,7 +427,7 @@ way.  Given a fatgraph $G$ and an \emph{oriented} edge $\bar{x}$, we
 can create a new trivalent vertex $v$ in the midpoint of $x$, and
 attach a new edge to it, in such a way that the two halves of $x$
 appear, in the cyclic order at $v$, in the same order induced by the
-by the orientation of $\bar{x}$.  \csref{fig:adding} depicts the process.
+by the orientation of $\bar{x}$.  Figure~\ref{fig:adding} depicts the process.
 \begin{figure}
   \centering
   % rubber: make adding.eps from adding.fig
@@ -539,7 +547,7 @@ start.  In particular, "MgnTrivalentGraphs" must:
 \end{itemize}
 This is indeed realized in the following lines (the fatgraph
 representation as a Python ``"Fatgraph"'' object is discussed in
-\csref{sec:stage1-fatgraphs}):
+Section~\ref{sec:stage1-fatgraphs}):
 \begin{lstlisting}[name=MgnTrivalentGraphs,firstnumber=6]
   # avoid infinite recursion in later statements
   if n==0 or (g,n)<(0,3):
@@ -562,7 +570,7 @@ representation as a Python ``"Fatgraph"'' object is discussed in
 The general case is quite straightforward, if we assume to have
 working implementations of the maps $p$ and $q$ defined in the
 previous section (a description of the implementation of these maps
-falls within the scope of \csref{sec:stage1-fatgraphs}).  The basic
+falls within the scope of Section~\ref{sec:stage1-fatgraphs}).  The basic
 idea is: apply maps $p$, $q$ to every fatgraph in $\R_{g,n-1}$, and
 $q$ to every fatgraph in $\R_{g-1,n+1}$; discard all graphs that do
 not belong to $\R_{g,n}$ and take only one graph per isomorphism class
@@ -604,7 +612,7 @@ parameter ("0" or "1") determines which orientation of "x"
 should be considered, therefore expressions like ``"x,0"'' and
 ``"x,1"'' should really be read as $\bar{x}$ or $\underline{x}$. A
 complete explanation and implementation details are given in
-\csref{sec:stage1-fatgraphs}.
+Section~\ref{sec:stage1-fatgraphs}.
 
 Similarly, function ``"Fatgraph.bridge"'' implements $q$;
 the algorithm used is independent of $g$ and $n$, thus a single
@@ -659,7 +667,7 @@ least, check two graphs for isomorphism.\FIXME{Rimuovere i nomi delle
   funzioni da questo paragrafo introduttivo?}
 
 Although the combinatorial definition of a fatgraph
-(cf.~\csref{sec:fatgraphs}) might suggest a computer representation as
+(cf.~Section~\ref{sec:fatgraphs}) might suggest a computer representation as
 a triple of permutations ---as used, e.g., in \cite[Section
 2.4]{arXiv:0902.1025}---, the functions that are needed by the above
 generation algorithms are rather topological in nature and thus
@@ -873,7 +881,7 @@ either "j==i+1" or "i" and "j" are the ending and starting indices.
   \label{fig:corners}
 \end{figure}
 It is easy to convince oneself that this is equivalent to the boundary
-cycle definition in \csref{sec:fatgraphs}.  Indeed, if $(X, \sigma_0,
+cycle definition in Section~\ref{sec:fatgraphs}.  Indeed, if $(X, \sigma_0,
 \sigma_1, \sigma_2)$ is a fatgraph, then the boundary cycles are
 defined as the orbits of $\sigma_2$ on the set of oriented edges
 $X$. We could substitute an \emph{(edge, endpoint vertex)} pair for an
@@ -890,7 +898,7 @@ vertex (for computation efficiency reasons).
 In particular, this representation based on ``corners'' allows one to
 distinguish the boundary cycles made that comprises the same set of
 edges: for instance, the boundary cycles of the fatgraph depicted in
-\csref{fig:012012} are represented by the set of corners $\{(0, 2, 3),
+Figure~\ref{fig:012012} are represented by the set of corners $\{(0, 2, 3),
 (0, 4, 5), (0, 0, 1)\}$ and $\{(0, 1, 2), (0, 3, 4), (0, 5, 0)\}$.
 \begin{figure}
   \centering
@@ -1044,7 +1052,7 @@ kept together, at the same position in the list (line~110). Finally,
 the list of endpoints is used to construct a list of "Edge" objects
 (line~112).\footnote{The Python syntax \l{Edge(*e)} allows calling a
   function with a list of arguments only known at runtime; it is
-  briefly explained in \csref{sec:fn-special-syntax}.}
+  briefly explained in Section~\ref{sec:fn-special-syntax}.}
 
 The algorithm to compute boundary cycles is complex enough to warrant
 its own method "Fatgraph.compute_boundary_cycles()":
@@ -1076,7 +1084,7 @@ invariants are equal.
 
 
 \paragraph{Orientation.}
-According to \csref{dfn:orientation}, orientation is given by an
+According to Definition~\ref{dfn:orientation}, orientation is given by an
 ordering of the edges (which directly translates into an orientation
 of the associated orbifold cell).
 
@@ -1106,7 +1114,7 @@ of edges is the one induced by the (numeric) edge labels (line~126).
 The above code snippet concludes the "Fatgraph.__init__" constructor
 code.
 
-According to \csref{dfn:orientable}, a fatgraph is orientable iff it
+According to Definition~\ref{dfn:orientable}, a fatgraph is orientable iff it
 has no orientation-reversing automorphism.  There is no
 way to practically ascertain if a fatgraph is orientable other than
 enumerating all automorphims:
@@ -1249,7 +1257,7 @@ topological constructions.
 \subsubsection{Contraction of an edge}
 \label{sec:contract}
 
-Recall from the definition in \csref{sec:contractions}) that
+Recall from the definition in Section~\ref{sec:contractions}) that
 contraction produces a ``child'' fatgraph from a ``parent'' fatgraph
 and a chosen regular (i.e., non-looping) edge. 
 
@@ -1324,7 +1332,7 @@ endpoints of the contracted edge:
 \begin{enumerate}
 \item Rotate endpoints "v1", "v2" so that the given edge "edge" would
   appear \emph{last} in "v1" and \emph{first} in "v2". (Note that, by
-  construction of the "Edge" objects (\csref{sec:edges}), we have 
+  construction of the "Edge" objects (Section~\ref{sec:edges}), we have 
   "v1 < v2".) This can be accomplished by operating on the list:
 \begin{lstlisting}
     def rotated(L, p):
@@ -1419,7 +1427,7 @@ default orientation:
 \label{sec:bridge}
 
 The method "Fatgraph.bridge" implements the construction $q(G,x,y)$
-described in \csref{sec:addition}:
+described in Section~\ref{sec:addition}:
 \begin{lstlisting}
   def bridge(self, edge1, side1, edge2, side2):
     """
@@ -1603,7 +1611,7 @@ computational efficiency):
 \label{sec:hangcircle}
 
 The method "Fatgraph.bridge" implements the construction $q(G,x,y)$
-described in \csref{sec:addition}:
+described in Section~\ref{sec:addition}:
 \begin{lstlisting}
   def hangcircle(self, edge, side):
     """
@@ -1612,7 +1620,7 @@ described in \csref{sec:addition}:
     """
 \end{lstlisting}
 The implementation of "Fatgraph.hangcircle" is closely related to
-"Fatgraph.bridge" (see \csref{sec:bridge}): break "edge" in two
+"Fatgraph.bridge" (see Section~\ref{sec:bridge}): break "edge" in two
 halves: if "v1" and "v2" are the endpoints of "edge", then the
 "one_half" edge extends from "v1" to the new vertex "midpoint"; the
 "other_half" edge extends from the new "midpoint" vertex to "v2".
@@ -1714,46 +1722,116 @@ computational efficiency):
 \subsubsection{Fatgraphs isomorphism and equality testing}
 \label{sec:isomorphism}
 
+The isomorphism problem on computer representations of fatgraphs
+consists in finding out when two distinct "Fatgraph" instances
+represent isomorphic fatgraphs (in the sense of
+Definition~\ref{dfn:fatgraphs}) or even the same fatgraph.  Indeed,
+the procedure for associating a "Fatgraph" instance to a fatgraph (see
+Section~\ref{sec:fatgraphs}) involves labelling all edges, choosing a
+starting edge (cilium) on each vertex and enumerating all vertices in
+a certain order; with different choices, we get different "Fatgraph"
+instances representing the same fatgraph.
+
+\begin{definition}
+  An isomorphism of "Fatgraph" objects "G1" and "G2" is a triple 
+  "(pv, rot, pe)" where:
+  \begin{itemize}
+  \item "pv" is a permutation of ther vertices: the "i"-th vertex of
+    "G1" is sent to the "pv[i]"-th vertex of "G2", rotated by "rot[i]"
+    places leftwards;
+  \item "pe" is a permutation of the edge labels: edge label "i" in
+    "G1" is mapped to the edge label "pe[i]" in "G2".
+  \end{itemize}
+  The adjacency relation must be conserved by isomorphism triples: if
+  "i" and "j" are the indices (within "G1.vertices") of endpoint
+  vertices of the edge "k", then "pv[i]" and "pv[j]" must be the
+  indices of endpoint vertices of edge "pe[k]" in "G2".
+\end{definition}
+Since a vertex in a "Fatgraph" instance is plainly the list of labels
+of edges attached to that vertex, we can dually state the
+compatibility condition above as requiring that, for any index "i"
+into the list "G1.vertices" and any valid index "j" into
+"G1.vertices[i]", we have:
+\begin{equation}
+  \label{eq:fg-iso}
+  \text{\protect\Verb'G2.vertices[pv[i]][j+rot[i]] == pe[G1.vertices[i][j]]'}
+\end{equation}
+Formula~\eqref{eq:fg-iso} makes the parallel between "Fatgraph" object
+isomorphism and fatgraph maps (in the sense of
+Definition~\ref{dfn:fatgraphs}) explicit.
+
+\begin{lemma}
+  Let $G_1$, $G_2$ be fatgraphs, represented respectively by "G1" and
+  "G2". Every isomorphism of fatgraphs $f: G_1 \to G_2$ induces a
+  corresponding isomorphism "f = (pv, rot, pe)" on the computer
+  re[resentations, and, conversely, every triple "(pv, rot, pe)"
+  representing an isomorphism between the "Fatgraph" instances can be
+  lifted to a (possibly trivial) fatgraph isomorphism between $G_1$
+  and $G_2$.
+\end{lemma}
+\begin{proof}
+  Every isomorphism $f: G_1 \to G_2$ naturally induces bijective maps
+  $f_V: V(G_1) \to V(G_2)$ and $f_E: E(G_1) \to E(G_2)$ on vertices
+  and edges.  When vertices are ciliated, $f_V$ determines (and is
+  completetely determined by) a permutation on the set of vertices
+  (which vertex maps to which one) and how much the image of the
+  cilium in the source vertex should be displaced with respect to the
+  cilium of the target vertex.  Similarly, $f_E$ determines a
+  bijective mapping of edge labels, and is completely determined by
+  it.  This is exactly the data collected in the triple "(pv, rots, pe)", 
+  and the compatibility condition~\eqref{eq:fg-iso} holds by
+  construction.
+
+  Conversely, assume we are given a triple "(pv, rots, pe)",
+  representing an isomorphism of "Fatgraph" instances.  We can
+  construct a map $f_V$ between vertices of $G_1$ and vertices of
+  $G_2$ as follows: map the vertex of $G_1$ corresponding to the
+  "i"-th vertex in "G1.vertices" to the vertex of $G_2$ corresponding
+  to the "pv[i]"-th vertex in "G2.vertices"; the mapping is such that
+  the image of cilium of the "i"-th source vertex is displaced
+  "rot[i]" positions from the cilium of the target vertex.  The map
+  $f_V$ can be glued to a global map $f: G_1 \to G_2$ if and only if
+  the adjacency relation is preserved.  This is guaranteed by the
+  compatibility condition~\eqref{eq:fg-iso}.
+\end{proof}
 
 \begin{lstlisting}
   def isomorphisms(G1, G2):
-    """Iterate over `Fatgraph` isomorphisms from `G1` to `G2`.
-
-    An isomorphism is represented by a tuple `(pv, rot, pe)` where:
-
-      - `pv` is a permutation of ther vertices: the `i`-th vertex
-      of `G1` is sent to the `pv[i]`-th vertex of `G2`, rotated
-      by `rot[i]` places leftwards;
-
-      - `pe` is a permutation of the edges: edge `i` in `G1` is
-      mapped to edge `pe[i]` in `G2`.
-
-    This method can iterate over the automorphism group of a
-    graph::
-
-      >>> G1 = Fatgraph([Vertex([2, 1, 1]), Vertex([2, 0, 0])])
-      >>> for f in G1.isomorphisms(G1): print f
-      ({0: 0, 1: 1}, [0, 0], {0: 0, 1: 1, 2: 2})
-      ({0: 1, 1: 0}, [0, 0], {0: 1, 1: 0, 2: 2})
-
-    Or it can find the isomorphisms between two given graphs::
-
-      >>> G2 = Fatgraph([Vertex([2, 2, 0]), Vertex([1, 1, 0])])
-      >>> for f in G1.isomorphisms(G2): print f
-      ({0: 0, 1: 1}, [2, 2], {0: 1, 1: 2, 2: 0})
-      ({0: 1, 1: 0}, [2, 2], {0: 2, 1: 1, 2: 0})
-
-    If there are no isomorphisms connecting the two graphs, then no
-    item is returned by the iterator::
-
-      >>> g3 = Fatgraph([Vertex([2, 1, 0]), Vertex([2, 0, 1])])
-      >>> list(G1.isomorphisms(g3))
-      []
     """
-    
-    # As this procedure is quite complex, we break it into a
-    # number of auxiliary functions.
-    
+    Iterate over `Fatgraph` isomorphisms from `G1` to `G2`.
+    """
+\end{lstlisting}
+If there are no isomorphisms connecting the two graphs, then no
+item is returned by the iterator.
+
+As this procedure is quite complex, we break it into a
+number of auxiliary functions.
+\begin{lstlisting}
+    def valence_spectrum(self):
+      """
+      Return a dictionary mapping valences into vertex indices.
+
+      Examples::
+
+         >>> Fatgraph([Vertex([1,1,0,0])]).valence_spectrum()
+         {4: [0]}
+
+         >>> Fatgraph([Vertex([1,1,0]), Vertex([2,2,0])]).valence_spectrum()
+         {3: [0, 1]}
+
+         >>> Fatgraph([Vertex([3, 1, 0, 1]), \
+              Vertex([4, 4, 0]), Vertex([3, 2, 2])]).valence_spectrum()
+         {3: [1, 2], 4: [0]}
+      """
+      result = {}
+      for (index, vertex) in enumerate(self.vertices):
+        l = len(vertex)
+        if l in result:
+          result[l].append(index)
+        else:
+          result[l] = [ index ]
+      return result
+
     def starting_vertices(graph):
       """
       Return the pair `(valence, vertices)`, which minimizes the
@@ -1971,37 +2049,9 @@ computational efficiency):
     return len(list(self.automorphisms()))
   
 
-  def valence_spectrum(self):
-    """Return a dictionary mapping valences into vertex indices.
-
-    Examples::
-
-       >>> Fatgraph([Vertex([1,1,0,0])]).valence_spectrum()
-       {4: [0]}
-
-       >>> Fatgraph([Vertex([1,1,0]), Vertex([2,2,0])]).valence_spectrum()
-       {3: [0, 1]}
-
-       >>> Fatgraph([Vertex([3, 1, 0, 1]), \
-            Vertex([4, 4, 0]), Vertex([3, 2, 2])]).valence_spectrum()
-       {3: [1, 2], 4: [0]}
-    """
-    result = {}
-    for (index, vertex) in enumerate(self.vertices):
-      l = len(vertex)
-      if l in result:
-        result[l].append(index)
-      else:
-        result[l] = [index]
-    return result
-
   def vertex_valences(self):
     return frozenset(len(v) for v in self.vertices)
 
-  def vertex_valence_distribution(self):
-    spec = self.valence_spectrum()
-    return dict((v, len(spec[v]))
-                for v in spec.iterkeys())
 \end{lstlisting}
 
 
