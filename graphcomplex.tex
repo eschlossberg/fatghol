@@ -13,17 +13,17 @@ construction gives birth to a chain complex whose homology is
 isomorphic to the (co)homology of the moduli space of smooth punctured
 curves $\M_{g,n}$.
 
-Here we give a construction of the ribbon graph complex, deriving it as
-a relative of Harer's arc-system complex
+Here we give a construction of the ribbon graph complex, deriving it
+as a relative of Harer's arc-system complex
 \cite{harer;cohomological-dimension,
   harer;cohomology-of-moduli}\FIXME{Non sono affatto sicuro che gli
-  arc-system siano stati introdotti da Harer; forse Penner o un altro?
-  Per\`o non \`e molto importante chi li ha introdotti, quanto che qui si
-  costruisce il complesso dei grafi a nastro parallelamente a come
-  Harer costruisce quello degli arc-system.}, and prove the
-isomorphism of its homology with the rational (co)homology of
-$\M_{g,n}$.  The main ingredient of this construction is a cell
-decomposition of $\M_{g,n}$ based on a theorem of Jenkins and Strebel
+  arc-system siano stati introdotti da Harer.  Per\`o non \`e molto
+  importante chi li ha introdotti, quanto che qui si costruisce il
+  complesso dei grafi a nastro parallelamente a come Harer costruisce
+  quello degli arc-system.}, and prove the isomorphism of its homology
+with the rational (co)homology of $\M_{g,n}$.  The main ingredient of
+this construction is a cell decomposition of $\M_{g,n}$ based on a
+theorem of Jenkins and Strebel
 \cite{strebel;quadratic-differentials;1983}.  This ribbon graph
 complex is the same complex that one gets by applying Kontsevich'
 construction in the associative case; however, the proof given here is
@@ -31,9 +31,10 @@ specific to $\M_{g,n}$ and does not trivially extend to other cases.
 
 A different construction of the graph complex, complete with full
 details, is given in \cite{conant-vogtmann;2003}, closely following
-Kontsevich' original work.  The techniques devised by Kontsevich were
-later extended by Getzler and Kapranov \cite{getzler-kapranov} and
-Markl \cite{markl;cyclic}.
+Kontsevich' original work.  In contrast to the simpler method
+presented here, the techniques devised by Kontsevich are suitable to
+further generalization to any ``modular operad''
+\cite{getzler-kapranov}.
 
 
 
@@ -47,15 +48,33 @@ which has proofs and references.
 
 Fix integers $g,n\geq0$ such that $2 -2g - n < 0$. Let $S$ be a Riemann
 surface of genus $g$ and $P = \{ x_1, \ldots, x_n \}$ a set of $n$ points
-in $S$.
+in $S$.  
+
+Let $\Diff(S,P)$ be the group of diffeomorphims of $S$ that fix $P$
+pointwise\FIXME{Nella costruzione di $\T{g,n}$ ed $\M{g,n}$ \`e
+  richiesto che $\Diff$ fissi $P$ \emph{pointwise}, non
+  \emph{setwise}, altrimenti ci ritroviamo con un'azione di $\Perm{n}$
+  sulle marcature, che non vogliamo.  Giusto?  Questo \`e cruciale per
+  la questione degli automorfismi dei grafi.}; let $\Diff^0(S,P)$,
+$\Diff^+(S,P)$ be the subgroups of diffeomorphisms homotopic to the
+identity mapping $\id_S$, resp.\ the subgroup of
+orientation-preserving diffeomorphisms.
+
+Every set $P$ of marked points can be carried into another chosen one
+$P'$ by a diffeomorphism $\phi$ homotopic to the identity mapping
+$\id_S$.  Therefore, $\Diff^+(S,P)$ and $\Diff^0(S, P)$ depend only on
+$n = \card{P}$ and not on $P$, cf. \cite{krushkal;riemann-surfaces}.
+Summing up:
+\begin{definition}\label{dfn:diff}
+  $\Diff(S,n)$ is the group of orientation-preserving diffeomorphisms
+  that keep the $n$ marked points fixed.
+
+  $\Diff^0(S,n)$ is the group of diffeomorphisms of $S$ homotopic to
+  the identity mapping $\id_S$ that keep the $n$ marked points fixed.
+\end{definition}
 
 Every complex structure  on $S$ determines a conformal structure; let
 $\Conf(S)$ be the set of all conformal structures on $S$. 
-
-Every set $P$ of marked points can be carried into another chosen one
-$P'$ by a diffeomorphism $\phi \in \Diff^0(S, n)$ --- therefore,
-$\Diff^0(S, n)$ depends only on $n$ and not on $P$, cf.
-\cite{krushkal;riemann-surfaces}. 
 \begin{definition}\label{dfn:teichmuller}
   The \emph{Teichm{\"u}ller space}
   \begin{equation*}

@@ -3,6 +3,7 @@
     (LaTeX-add-labels
      "cha:ribbon-graph-complex"
      "sec:moduli-spaces"
+     "dfn:diff"
      "dfn:teichmuller"
      "dfn:mapping-class-group"
      "sec:Mgn"

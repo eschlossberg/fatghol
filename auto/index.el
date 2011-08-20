@@ -19,6 +19,7 @@
      '("Tcomb" ["argument"] 0)
      '("Strebel" ["argument"] 0)
      '("SG" ["argument"] 0)
+     '("ERG" ["argument"] 0)
      '("RG" ["argument"] 0)
      '("RTG" ["argument"] 0)
      '("RTE" ["argument"] 0)
@@ -35,7 +36,6 @@
      '("freemc" 1)
      '("textsuperscript" 1)
      '("textsubscript" 1)
-     "xyc"
      "theoremname"
      "ksz"
      "aksz"
@@ -51,24 +51,25 @@
      "ad"
      "comb"
      "T"
-     "rel")
+     "rel"
+     "xyc")
     (TeX-run-style-hooks
      "miscmath"
      "amsthm"
      "xytree"
      "rg"
      "xy"
-     "poly"
-     "knot"
-     "arc"
-     "all"
-     "colour"
-     "xdvi"
-     "dvips"
      "ps"
+     "dvips"
+     "xdvi"
+     "colour"
+     "all"
+     "arc"
+     "knot"
+     "poly"
      "paralist"
-     "newenum"
      "newitem"
+     "newenum"
      "url"
      "hyperref"
      "graphicx"
@@ -78,10 +79,10 @@
      "latex2e"
      "amsbook10"
      "amsbook"
-     "draft"
-     "openany"
-     "reqno"
      "a4paper"
+     "reqno"
+     "openany"
+     "draft"
      "title"
      "prelim"
      "graphcomplex"
