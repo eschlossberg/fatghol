@@ -198,6 +198,27 @@ def positive_int(arg):
     return result
 
 
+def sign(x):
+    """Return the sign of `x`: that is, 0 if `x` is zero, +1 iff it is
+    positive, -1 iff it is negative.
+
+    Examples::
+
+      >>> sign(0)
+      0
+      >>> sign(3)
+      1
+      >>> sign(-5)
+      -1
+      
+    """
+    if x == 0:
+        return 0
+    elif x == abs(x):
+        return +1
+    else:
+        return -1
+
 
 ## main: run tests
 
