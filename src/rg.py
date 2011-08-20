@@ -175,15 +175,20 @@ class Vertex(CyclicList):
         return self._num_loops
 
 
-class _count(Iterator):
+class _Count(Iterator):
     """A pickable clone of `itertools.count`."""
 
-    def __init__(self):
-        self.counted = -1
+    def __init__(self, firstval=0):
+        self.counted = firstval - 1
 
     def next(self):
         self.counted += 1
         return self.counted
+
+    def thaw(self):
+        pass # do not reset counter on unpickle
+    
+Count=persist.PersistedIterator(_Count)
 
 
 class Graph(object):
@@ -218,7 +223,7 @@ class Graph(object):
 ##         ]
 
     def __init__(self, vertices, vertextype=Vertex,
-                 __fasteq_cache={}, __id_factory=_count(), **kwargs):
+                 __fasteq_cache={}, __id_factory=Count(), **kwargs):
         """Construct a `Graph` instance, taking list of vertices.
 
         Argument `vertices` must be a sequence of `Vertex` class
