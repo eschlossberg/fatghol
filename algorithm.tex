@@ -249,25 +249,33 @@ an edge.
 
 Let $G \in \R_{g,n}$ be a \emph{connected} trivalent graph. Each edge
 $x \in E(G)$ falls into one of the following categories:
-\begin{enumerate}[A)]
-\item\label{item:deletion-A} $x$ is a loop: both endpoints of $x$ are
+\begin{enumerate}[\sl A)]
+\item $x$ is a loop: both endpoints of $x$ are
   attached to a single vertex $v$; another edge $x'$ joins $v$ with a
   distinct vertex $v'$;
-\item\label{item:deletion-B} $x$ joins two distinct vertices $v, v'
+\item $x$ joins two distinct vertices $v, v'
   \in V(G)$ and separates two distinct boundary cycles $\beta, \beta'
   \in B(G)$;
-\item\label{item:deletion-C} $x$ joins two distinct vertices $v, v'
+\item $x$ joins two distinct vertices $v, v'
   \in V(G)$ but belongs to only one boundary cycle $\beta \in B(G)$
   (in which it occurs twice, once for each orientation).
 \end{enumerate}
 Deletion of edge $x$ requires different adjustments in order to get a
 trivalent graph again in each of the three cases above; it also yields
 a different result in each case.
+\begin{figure}
+  \centering
+  % rubber: make removal.eps from removal.fig
+  % rubber: make removal.pdf from removal.fig
+  \includegraphics{removal}
+  \caption{Graphical illustration of fatgraph edge removal.  Top row: a regular edge is removed from an $\R_{0,4}$ graph; its endpoints are further removed; the remaining edges are joined and the resulting graph is a trivalent fatgraph in $\R_{0,3}$.  Bottom row: a loop is removed from a trivalent $\R_{0,4}$ graph; the stem together with its endpoints has to be removed as well; the remaining edges are joined, and we end up with a trivalent fatgraph in $\R_{0,3}$.}
+  \label{fig:removal}
+\end{figure}
 
-If $x$ is a loop attached to $v$ (case \ref{item:deletion-A}), then,
-after deletion of $x$, one needs to also delete the loose edge $x'$ and
-also the vertex $v'$ (that is, join the two other edges attached to
-$v'$).  The resulting fatgraph $G'$ has:
+Case {\sl A)}: If $x$ is a loop attached to $v$, then, after deletion
+of $x$, one needs to also delete the loose edge $x'$ and also the
+vertex $v'$ (that is, join the two other edges attached to $v'$; see
+\csref{fig:removal}, bottom row).  The resulting fatgraph $G'$ has:
 \begin{itemize}
 \item two vertices less than $G$: $v$ and $v'$ have been deleted;
 \item three edges less: $x$, $x'$ have been deleted and two other
@@ -289,17 +297,17 @@ G' \in \R_{g,n-1}.
 \label{eq:A}\tag{A}
 \end{equation}
 
-In case \ref{item:deletion-B}, $x$ joins distinct vertices $v$, $v'$ and
-separates distinct boundary cycles.  Delete $x$ and merge the two
-edges attached to each of the two vertices $v$ and $v'$; in the
-process, the two boundary cycles $\beta, \beta'$ also merge into
-one. The resulting fatgraph $G'$ is connected. Indeed, given any two vertices
-$u, u' \in V(G')$, there is a path $(x_1, \ldots, x_k)$ connecting $u$
-with $u'$ in $G$; if this path passes through $x$, one can replace the
-occurrence of $x$ with the perimeter ---excluding $x$--- of one of
-the two boundary cycles $\beta, \beta'$ to get a path joining $v$ and
-$v'$ which avoids $x$, and thus projects to a path in $G'$.  Again we
-see that $G'$ has:
+In case {\sl B)}, $x$ joins distinct vertices $v$,
+$v'$ and separates distinct boundary cycles (see \csref{fig:removal},
+bottom row).  Delete $x$ and merge the two edges attached to each of
+the two vertices $v$ and $v'$; in the process, the two boundary cycles
+$\beta, \beta'$ also merge into one. The resulting fatgraph $G'$ is
+connected. Indeed, given any two vertices $u, u' \in V(G')$, there is
+a path $(x_1, \ldots, x_k)$ connecting $u$ with $u'$ in $G$; if this
+path passes through $x$, one can replace the occurrence of $x$ with
+the perimeter ---excluding $x$--- of one of the two boundary cycles
+$\beta, \beta'$ to get a path joining $v$ and $v'$ which avoids $x$,
+and thus projects to a path in $G'$.  Again we see that $G'$ has:
 \begin{itemize}
 \item two vertices less than $G$: $v$ and $v'$ have been deleted;
 \item three edges less: $x$ has been deleted and four other
@@ -313,28 +321,28 @@ G' \in \R_{g,n-1}.
 \label{eq:B}\tag{B}
 \end{equation}
 
-In case \ref{item:deletion-C}, $x$ joins distinct vertices $v$, $v'$
-but belongs into \emph{one} boundary cycle $\beta \in B(G)$ only.
+In case {\sl C)}, $x$ joins distinct vertices $v$,
+$v'$ but belongs into \emph{one} boundary cycle $\beta \in B(G)$ only.
 Delete edge $x$ and the two vertices $v$, $v'$, joining the attached
-edges two by two as in case \ref{item:deletion-B}.
+edges two by two as in case {\sl B)}.
 \begin{enumerate}
-\item[C')]
-If the resulting fatgraph $G'$ is connected, then $\beta \in B(G)$ has
-been split into two distinct boundary cycles $\beta', \beta'' \in
-B(G')$.  Indeed, write the boundary cycle $\beta$ as an ordered sequence of
-oriented edges: $y_0 \to  y_1 \to \ldots \to y_l \to y_0$. 
-(The $y_*$ appear in this sequence in the exact order they are
-encountered when waling along $\beta$ in the sense given by the
-fatgraph orientation.) The oriented edges $y_j$ are pairwise
-distinct: if $y_i$ and $y_k$ share the same supporting edge, then
-$y_i$ and $y_k$ have opposite orientations. By the initial assumption
-of case~\ref{item:deletion-C}, edge $x$ must appear \emph{twice} in
-the list: if $\bar x$ and $\underline x$ denote the two orientations
-of $x$, then $y_i = \bar x$ and $y_k = \underline x$.  Deleting $x$
-from $\beta$ is (from a homotopy point of view) the same as replacing
-$y_i = \bar x$ with $\bar x \to \underline x$, and $y_k = \underline x$
-with $\underline x \to \bar x$ when walking a boundary cycle. Then we
-see that $\beta$ splits into two disjoint cycles:
+\item[\sl C')] If the resulting fatgraph $G'$ is connected, then
+  $\beta \in B(G)$ has been split into two distinct boundary cycles
+  $\beta', \beta'' \in B(G')$.  Indeed, write the boundary cycle
+  $\beta$ as an ordered sequence of oriented edges: $y_0 \to y_1 \to
+  \ldots \to y_l \to y_0$.  (The $y_*$ appear in this sequence in the
+  exact order they are encountered when waling along $\beta$ in the
+  sense given by the fatgraph orientation.) The oriented edges $y_j$
+  are pairwise distinct: if $y_i$ and $y_k$ share the same supporting
+  edge, then $y_i$ and $y_k$ have opposite orientations. By the
+  initial assumption of case~{\sl C)}, edge $x$
+  must appear \emph{twice} in the list: if $\bar x$ and $\underline x$
+  denote the two orientations of $x$, then $y_i = \bar x$ and $y_k =
+  \underline x$.  Deleting $x$ from $\beta$ is (from a homotopy point
+  of view) the same as replacing $y_i = \bar x$ with $\bar x \to
+  \underline x$, and $y_k = \underline x$ with $\underline x \to \bar
+  x$ when walking a boundary cycle. Then we see that $\beta$ splits
+  into two disjoint cycles:
 \begin{align*}
   \beta' &= y_0 \to y_1 \to \cdots \to y_{i-1} \to \bar{x} \to
   \underline{x} \to y_{k+1} \to \cdots \to y_l \to y_0
@@ -348,7 +356,7 @@ In this case, $G'$ has:
 \item three edges less: $x$ has been deleted and four other
   edges merged into two, pair by pair;
 \item one boundary cycle \emph{more}: the boundary cycle $\beta$ has
-  been split in two.
+  been split in the pair $\beta'$, $\beta''$.
 \end{itemize}
 Therefore $g'=g-1$ and $n'=n+1$, so:
 \begin{equation}
@@ -356,8 +364,12 @@ G' \in \R_{g-1,n+1}.
 \label{eq:C'}\tag{C'}
 \end{equation}
 
-\item[C'')] $G'$ is a disconnected union of fatgraphs $G'_1$ and
-$G'_2$. Then:
+\item[\sl C'')] $G'$ is a disconnected union of fatgraphs $G'_1$ and
+  $G'_2$; for this to hold unconditionally, we temporarily allow a
+  single circle into the set of connected fatgraphs (as a fatgraph
+  with one closed edge and no vertices) as the one and only element of
+  $\R_{0,2}$.  As will be shown in \csref{lemma:no-c2}, this is
+  irrelevant for the algorithm.  Now:
   \begin{equation*} V'_1 + V'_2 = V -2, 
     \qquad E'_1 + E'_2 = E - 3,
     \qquad n'_1 + n'_2 = n + 1,
@@ -377,48 +389,100 @@ So that $g'_1 + g'_2 = g$, $n'_1 + n'_2 = n+1$ and
 \subsubsection{Inverse construction}
 \label{sec:addition}
 
-Let $\R'_{g,n}$ be the set of fatgraphs with a selected oriented edge:
-$\R'_{g,n} := \{ (G,\bar x) : G \in \R_{g,n}, \bar{x} \in L(G)\}.$ 
-Similarly, let $\R''_{g,n}$ be the set of fatgraphs with two distinct
-selected edges:
-$\R''_{g,n} := \{ (G, \bar x, \bar y) : G \in \R_{g,n}, \bar{x},
-\bar{y} \in L(G), x \not= y\}.$ 
+If $x \in E(G)$ is an edge of fatgraph $G$, denote $\bar{x}$ and
+$\underline{x}$ the two opposite orientations of $x$.
 
-We can define maps that invert the constructions A), B), C') and C'')
-above:
-\begin{description}
-\item[$a : \R'_{g,n-1} \to \R_{g,n}$]: from a pair $(G, \bar{x})$,
-  creates $a(G,\bar{x})$ by attaching a
-  ``slip knot''\footnote{A single 3-valent vertex with one loop
-    attached and a regular edge with one loose end.} to the midpoint of
-  $x$ by the loose end, in such a way that the two halves of $x$
-  appear in the cyclic order (at the new midpoint vertex) in the same
-  order induced by the orientation of $\bar x$.
-\item[$b : \R''_{g,n-1} \to \R_{g,n}$]: given $(G, \bar{x}, \bar{y})$,
+In the following, let $\R'_{g,n}$ be the set of fatgraphs with a
+selected oriented edge:
+\begin{equation*}
+  \R'_{g,n} := \{ (G,\bar x) : G \in \R_{g,n}, \bar{x} \in L(G)\}.
+\end{equation*}
+Similarly, let $\R''_{g,n}$ be the set of fatgraphs with two
+chosen oriented edges:
+\begin{equation*}
+  \R''_{g,n} := \{ (G, \bar x, \bar y) : G \in \R_{g,n}, 
+                   \bar{x}, \bar{y} \in L(G) \}.
+\end{equation*}
+The following abbreviations come in handy: let $\R = \cup \R_{g,n}$,
+$\R' = \cup \R'_{g,n}$, and $\R'' = \cup \R''_{g,n}$.
+
+Define the attachment of a new edge to a fatgraph in the following
+way.  Given a fatgraph $G$ and an \emph{oriented} edge $\bar{x}$, we
+can create a new trivalent vertex $v$ in the midpoint of $x$, and
+attach a new edge to it, in such a way that the two halves of $x$
+appear, in the cyclic order at $v$, in the same order induced by the
+by the orientation of $\bar{x}$.  \csref{fig:adding} depicts the process.
+
+\begin{figure}[bh]
+  \centering
+  % rubber: make adding.eps from adding.fig
+  % rubber: make adding.pdf from adding.fig
+  \includegraphics{adding}
+  \caption{When adding a new vertex in the middle of an edge $x$, the cyclic order depends on the oriented edge: the two orientations $\bar{x}$ and $\underline{x}$ get two inequivalent cyclic orders.}
+  \label{fig:adding}
+\end{figure}
+
+We can define maps that invert the constructions {\sl A)}, {\sl B)},
+{\sl C')} and {\sl C'')} defined in the previos section.
+
+Let $p_{g,n} : \R'_{g,n-1} \to \R_{g,n}$ be the map that creates
+$p(G,\bar{x})$ from a pair $(G, \bar{x})$ by attaching a ``slip
+knot''\footnote{A single 3-valent vertex with one loop attached and a
+  regular edge with one loose end.} to the midpoint of $x$ by the
+loose end.  The map $p: \R' \to \R$, $p|_{\R'_{g,n}} := p_{g,n}$ is
+evidently the inverse to {\sl A)}.
+
+To invert {\sl B)} and {\sl C')}, define a map $q : \R'' \to \R$ that
+operates as follows:
+\begin{itemize}
+\item Given $(G, \bar{x}, \bar{y})$ with $\bar{x} \not= \bar{y}$, $q$
   attaches a new edge to the midpoints of $x$ and $y$; again the
   cyclic order on the new midpoint vertices is chosen such that the
   two halves of $x$ and $y$ appear in the order induced by the
   orientations $\bar x$, $\bar y$.
-\item[$c': \R''_{g-1,n+1} \to \R_{g,n}$]: defined just like $b(G,
-  \bar{x}, \bar{y})$, except on a different domain.
-\item[$c'': \bigoplus_{\substack{g'_1+g'_2=g \\ n'_1+n'_2=n}}
-  \R'_{g'_1, n'_1} \times \R'_{g'_2, n'_2} \to \R_{g,n}$]: from $(G',
-  \bar{x}', G'', \bar{x}'')$, constructs a new fatgraph by bridging
-  $G'$ and $G''$ with a new edge, whose endpoints are in the midpoints
-  of $x'$ and $x''$; again, stipulate that the cyclic order on the new
-  vertices is chosen such that the two halves of $x'$, $x''$ appear in
-  the order induced by the orientations $\bar{x}'$, $\bar{x}''$.
-\end{description}
+\item When $\bar{x} = \bar{y}$, let us further stipulate that the
+  construction of $q'(G, \bar{x}, \bar{x})$ happens in two steps:
+  \begin{enumerate}
+  \item a new trivalent vertex is created in the midpoint of $x \in
+    E(G)$ and a new edge $\xi$ is attached to it,
+  \item map $x$ to the one of the two halves that comes first in the
+    ordering induced by the orientation $\bar{x}$: create a new
+    trivalent vertex in the middle of it, and attach the loose end of
+    the new edge $\xi$.
+  \end{enumerate}
+  It is clear that the above steps give an unambiguous definition of
+  $q$ in all cases where $\bar{x}$ and $\bar{y}$ are orientations of
+  the same edge of $G$, that is, $(G, \bar{x}, \bar{x})$, $(G,
+  \bar{x}, \underline{x})$, $(G, \underline{x}, \bar{x})$, and $(G,
+  \underline{x}, \underline{x})$.
+\end{itemize}
+Ostensibly, $q$ inverts the edge removal in cases {\sl B)} and {\sl
+  C')}: the former applies when a graph $G \in \R_{g,n}$ is sent to
+$q(G) \in \R_{g,n+1}$, the latter when $G \in \R_{g,n}$ is sent to
+$q(G) \in \R_{g+1,n-1}$.
+
+Finally, to invert {\sl C'')}, let us define
+\begin{equation*}
+r_{g,n}: \bigoplus_{\substack{g'_1+g'_2=g \\ n'_1+n'_2=n}} 
+\R'_{g'_1, n'_1} \times \R'_{g'_2, n'_2} \to \R.
+\end{equation*}
+From $(G', \bar{x}', G'',
+\bar{x}'')$, construct a new fatgraph by bridging $G'$ and $G''$ with
+a new edge, whose endpoints are in the midpoints of $x'$ and $x''$;
+again, stipulate that the cyclic order on the new vertices is chosen
+such that the two halves of $x'$, $x''$ appear in the order induced by
+the orientations $\bar{x}'$, $\bar{x}''$.
+
 Summing up, any fatgraph $G \in \R_{g,n}$ belongs to the image of one
-of the above maps $a$, $b$, $c'$ and $c''$. There is considerable
+of the above maps $p$, $q$, and $r$. There is considerable
 overlap among the different image sets: indeed, one can prove that
-$c''$ is superfluous.
-\begin{lemma}
-  Any fatgraph obtained by inverting construction C'' can be obtained
-  by procedures $a$, $b$ or $c'$.
+$r$ is superfluous.
+\begin{lemma}\label{lemma:no-c2}
+  Any fatgraph obtained by inverting construction {\sl C'')} lies in
+  the image of maps $p$ and $q$.
 \end{lemma}
 \begin{proof}
-  Assume, on the contrary, that $G$ lies in the image of $c''$ only.
+  Assume, on the contrary, that $G$ lies in the image of $r$ only.
   Then, deletion of any edge $x$ from $G$ yields a disconnected graph
   $G' \otimes G''$.  Both subgraphs $G'$ and $G''$ enjoy the same
   property, namely, that deletion of any edge disconnects: otherwise,
@@ -433,56 +497,126 @@ $c''$ is superfluous.
   required property holds, that any deletion disconnects.
 \end{proof}
 
+\subsubsection{The \l{MgnTrivalentGraphs} algorithm}
+\label{sec:MgnTrivalentGraphs}
+
+The stage is now set for implementing the recursive generation of
+trivalent graphs.
 \begin{lstlisting}[name=MgnTrivalentGraphs,firstnumber=1]
 def MgnTrivalentGraphs(g, n):
   """
   Return a list of all connected trivalent fatgraphs with
   prescribed genus `g` and number of boundary cycles `n`.
   """
+\end{lstlisting}
+
+A function call \l{MgnTrivalentGraphs(g,n)} recursively calls
+\l{MgnTrivalentGraphs} to enumerate trivalent graphs of $\R_{g,n-1}$
+and $\R_{g-1,n+1}$; it is cleaner to code the function as to call itself
+unconditionally, and to catch the induction base cases at the very
+start.  In particular, \l{MgnTrivalentGraphs} must:
+\begin{itemize}
+\item return the empty set when called with an invalid \l{(g,n)} pair;
+\item provide the full set of fatgraphs $\R_{0,3}$ and $\R_{1,1}$ as
+  induction base.
+\end{itemize}
+This is indeed realized in the following lines:
+\begin{lstlisting}[name=MgnTrivalentGraphs,firstnumber=6]
   # avoid infinite recursion in later statements
   if n==0 or (g,n)<(0,3):
-    raise StopIteration
+    return [] # return empty list
 
   # $M_{0,3}$ --- induction base
   if (g,n) == (0,3):
-    yield Fatgraph([Vertex([1, 2, 1]), Vertex([2, 0, 0])])
-    yield Fatgraph([Vertex([1, 0, 2]), Vertex([2, 0, 1])])
+    return [ 
+        Fatgraph([Vertex([1, 2, 1]), Vertex([2, 0, 0])]),
+        Fatgraph([Vertex([1, 0, 2]), Vertex([2, 0, 1])]) 
+      ]
 
   # $M_{1,1}$ --- induction base
   elif (g,n) == (1,1):
-    yield Fatgraph([Vertex([1, 0, 2]), Vertex([2, 1, 0])])
+    return [ 
+        Fatgraph([Vertex([1, 0, 2]), Vertex([2, 1, 0])]) 
+      ]
+\end{lstlisting}
 
+The general case is quite straightforward, if we assume to have
+working implementations of the maps $p$ and $q$ defined in the
+previous section (a description of the implementation of these maps
+falls within the scope of \csref{sec:stage1-fatgraphs}).  The basic
+idea is: apply maps $p$, $q$ to every fatgraph in $\R_{g,n-1}$, and
+$q'$ to every fatgraph in $\R_{g-1,n+1}$; discard all graphs that do
+not belong to $\R_{g,n}$ and take only one graph per isomorphism class
+into the result set.
+
+Implementation of the general case starts with creating an empty list
+for accumulating the results.  An helper function
+\l{add_if_admissible} is defined, to store only fatgraphs belonging in
+$\R_{g,n}$ into \l{result}, and only one fatgraph per isomorphism
+class (the `\l{G not in result}' clause):
+\begin{lstlisting}[name=MgnTrivalentGraphs,firstnumber=22]
   # general case
   else:
-    def graphs(g,n):
-      # case A: hang a circle to all edges of graphs in $M_{g,n-1}$
-      for G in MgnTrivalentGraphs(g,n-1):
-        for x in G.edge_orbits():
-          yield G.hangcircle(x,0)
-          yield G.hangcircle(x,1)
+    result = [] # start with empty list
 
-      # case B: bridge all edges of a single graph in $M_{g,n-1}$
-      for G in MgnTrivalentGraphs(g,n-1):
-        for (x,y) in G.edge_pair_orbits():
-          yield G.bridge(x,0, y,0)
-          yield G.bridge(x,0, y,1)
-          yield G.bridge(x,1, y,0)
-          yield G.bridge(x,1, y,1)
-
-      # case C': bridge all edges of a single graph in $M_{g-1,n+1}$
-      for G in MgnTrivalentGraphs(g-1,n+1):
-        for (x,y) in G.edge_pair_orbits():
-          yield G.bridge(x,0, y,0)
-          yield G.bridge(x,0, y,1)
-          yield G.bridge(x,1, y,0)
-          yield G.bridge(x,1, y,1)
-
-    unique = []
-    for G in graphs(g,n):
+    def add_if_admissible(G):
       if (G.genus, G.num_boundary_cycles) == (g,n) \
-          and (G not in unique):
-        unique.append(G)
-        yield G
+          and (G not in result):
+        result.append(G)
+      
+\end{lstlisting}
+
+To invert construction {\sl A)}, apply map $p$ to all fatgraphs $G \in
+\R_{g,n-1}$; if $a \in \Aut(G)$, then $p(a(G), a(x)) = p(G, x)$,
+therefore we may limit ourselves to one pair $(G,x)$ per orbit of the
+automorphism group, saving a few computational cycles:
+\begin{lstlisting}[name=MgnTrivalentGraphs,firstnumber=30]
+    # case A: hang a circle to all edges of graphs in $M_{g,n-1}$
+    for G in MgnTrivalentGraphs(g,n-1):
+      for x in G.edge_orbits():
+        add_if_admissible (G.hangcircle(x,0))
+        add_if_admissible (G.hangcircle(x,1))
+
+\end{lstlisting}
+The `\l{Fatgraph.hangcircle}' function implements the behavior of the
+$p$ map: the expression `\l{G.hangcircle(x,0)}' returns a copy of
+\l{G}, with a ``slipknot'' attached to edge \l{x}.  The additional
+parameter (\l{0} or \l{1}) determines which orientation of \l{x}
+should be considered, therefore expressions like `\l{x,0}' and
+`\l{x,1}' should really be read as $\bar{x}$ or $\underline{x}$. A
+complete explanation and implementation details are given in
+\csref{sec:stage1-fatgraphs}.
+
+Similarly, function `\l{Fatgraph.bridge}' implements $q$;
+the algorithm used is independent of $g$ and $n$, thus a single
+function can serve the whole fatgraph domain $\R = \cup
+\R_{g,n}$. Since $q$ is a function of $(G, \bar{x}, \bar{y})$, which
+is by construction invariant under $\Aut(G)$, we can again restrict
+to considering only one $(G, \bar{x}, \bar{y})$ per $\Aut(G)$-orbit;
+this is computed by the \l{G.edge_pair_orbit} function:
+\begin{lstlisting}[name=MgnTrivalentGraphs,firstnumber=35]
+    # case B: bridge all edges of a single graph in $M_{g,n-1}$
+    for G in MgnTrivalentGraphs(g,n-1):
+      for (x,y) in G.edge_pair_orbits():
+        add_if_admissible (G.bridge(x,0, y,0))
+        add_if_admissible (G.bridge(x,0, y,1))
+        add_if_admissible (G.bridge(x,1, y,0))
+        add_if_admissible (G.bridge(x,1, y,1))
+
+    # case C': bridge all edges of a single graph in $M_{g-1,n+1}$
+    for G in MgnTrivalentGraphs(g-1,n+1):
+      for (x,y) in G.edge_pair_orbits():
+        add_if_admissible (G.bridge(x,0, y,0))
+        add_if_admissible (G.bridge(x,0, y,1))
+        add_if_admissible (G.bridge(x,1, y,0))
+        add_if_admissible (G.bridge(x,1, y,1))
+
+\end{lstlisting}
+
+Finally, the list of fatgraphs (one fatgraph per isomorphism class) is
+returned to the caller:
+\begin{lstlisting}[name=MgnTrivalentGraphs,firstnumber=50]
+    return result
 \end{lstlisting}
 
 
