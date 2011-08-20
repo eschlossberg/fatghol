@@ -2,7 +2,284 @@
 \chapter{An algorithm for computing graph homology}
 \label{chap:algorithm}
 
-This
+This chapter presents an algorithm to compute homology of the fatgraph
+complex $\R_{g,n}$.  By \csref{thm:fatgraph-homology}, this is
+tantamount to the (co)homology with rational coefficients of the
+moduli spaces $\M_{g,n}$. An effective computer implementation of the
+algorithm is presented, which is capable of computing the Betti
+numbers of $\M_{g,n}$ for $(2g+n) < 6$ on standard desktop-class
+hardware.  The size of the fatgraph complex increases factorially with
+$2g+n$, so a parallel algorithm is needed to compute the Betti numbers
+of $\M_{g,n}$ for $(2g+n) \geq 6$; this will be the subject of a later
+chapter.
+
+Generators of the homology modules could be computed with a little
+variant in the last step of the algorithm; however, this is not
+interesting in connection with the homology of $\M_{g,n}$, since
+expression of a fatgraph homology class in terms of algebro-geometric
+classes has proved to be a difficult problem 
+\cite{mondello:2004,
+  igusa:combinatorial-miller-morita-mumford-classes-and-witten-cycles,
+  igusa:graph-cohomology-and-kontsevich-cycles},
+and to-date lacks a general solution.
+
+The Python programming language is used in this chapter to articulate
+the algorithm.  Python claims to be ``executable pseudo-code'',
+combining a readable and ``natural'' syntax that makes it well suited
+to teaching programming to novices \cite{georgatos:python}, with the
+power of a general-purpose language that is presently in daily use for
+several real-world applications (see, e.g., \cite{python:success}).
+The advantage is clear: the code listed in this chapter can be copied
+to a Python file and actually executed.  For the reader's convenience,
+\csref{chap:python} recaps the Python syntax and briefly explains the
+constructs and idioms used in programming this algorithm.
+
+
+\section[Overview]{Overview of the algorithm}
+\label{sec:overview}
+
+\csref{thm:fatgraph-homology} provides an effective way to compute the
+(co)homology of $\M_{g,n}$.  The Betti numbers of $\M_{g,n}$ can be
+computed from the knowledge of the dimension of chain spaces $W_p$ and
+the ranks of the boundary operators $D_p$; this can effectively be
+accomplished in the following stages:
+\begin{enumerate}[I.]
+\item Compute the basis set of $W_*$; by definition, the basis set is
+  the set of \emph{orientable} fatgraphs indexing
+  the cells of $\Mcomb_{g,n}$.
+\item Work out the differential $D: W_* \to W_*$ in an
+  effectively computable way, i.e., as matrix operators $D_p$ mapping
+  coordinates in the fatgraph basis of $W_p$ into coordinates
+  w.r.t. the fatgraph basis of $W_{p-1}$.
+\item Compute the ranks of the matrices $D_p$.
+\end{enumerate}
+
+Stage~I needs just the pair $g,n$ as input; its output is the set of
+orientable numbered fatgraphs belonging in $\R_{g,n}$: the core of
+Stage~I is an algorithm to enumerate the fatgraph of given genus and
+number of boundary cycles. By definition, numbered fatgraphs are
+decorated abstract fatgraphs, and the decoration is a simple
+combinatorial datum: therefore, the problem can be reduced to
+enumerating abstract fatgraphs.  With a recursive algorithm, one can
+construct trivalent $\M_{g,n}$-fatgraphs from $\M_{g-1,n}$ and
+$\M_{g',n'} \times \M_{g'',n''}$ with $g'+g''=g$ and $n'+n''=n$; all
+other graphs are gotten by contraction of regular edges.
+
+The differential $D$ has a simple geometrical definition: $D(G)$ is a
+sum of graphs $G'$ gotten by contracting a non-loop edge of $G$. A
+naive implementation of Stage~II would just compare each contraction
+of a graph with $k$ edges with any graph with $k-1$ edges, and score a
+$\pm 1$ in the corresponding entry of the matrix $D_k$.  However, this
+algorithm has quadratic complexity, and the large number of graphs
+involved make it very inefficient already for $\M_{0,5}$.  The simple
+observation that contraction of edges is defined on the topological
+fatgraph underlying a numbered fatgraph allows us to apply the naive
+algorithm to topological fatgraphs ---which cuts complexity down by a
+factor~$(n!)^2$---, and then extend the result by the action of graph
+automorphism groups on the numberings of boundary cycles.  This
+is the variant detailed in \csref{sec:stage-ii}.
+
+Stage~III is the simplest: by elementary linear algebra, the Betti
+numbers can be computed from the rank of matrices $D_k$ and the
+dimension of their domain space.  The computational problem of
+determining the rank of a matrix has been extensively studied, and
+several implementations of popular algorithms are already available in
+the form of function libraries, ready for use. It should be noted,
+however, that this is the step that consumes more computer time
+(except for the very simple cases $2g+n<5$).
+
+\section[Stage I]{Stage I: generate the fatgraphs complex}
+\label{sec:stage-i}
+
+Exposition of the Stage~I code will proceed in a \emph{top-down}
+fashion: we shall work our way from the topmost function, which
+returns the collection of all fatgraphs in $\R_{g,n}$, down to the
+computer representation of a fatgraph.  This way, requirements that
+functions and objects must satisfy become evident during the analysis,
+and implementation details are introduced only when needed.
+
+\subsection{Generation of all Fatgraphs in $\R_{g,n}$}
+\label{sec:stage1-all}
+
+Computations in Stage~I output the set of orientable fatgraphs
+$\R_{g,n}$ from the input pair $g, n$, with $2g +n - 2 > 0$.  The
+numbering will be added in Stage~II of the algorithm, so just the set
+of undecorated fatgraphs is output here.
+
+Let \l{MgnGraphs} be the function which, given the two integers $g$,
+$n$ as input, and returns the collection of $\R_{g,n}$ graphs.  Let us
+further stipulate that the output result will be represented as a
+Python \l{list}: the $0$-th item in this list is the list of graphs
+with the maximal number $m$ of edges; the $k$-th item in the list is
+the list of graphs having $m - k$ edges.  There are algorithmic
+advantages in this subdivision, which are explained below.
+
+The Python implementation of the \l{MgnGraphs} function is as follows:
+\begin{lstlisting}[name=MgnGraphs,firstnumber=1]
+def MgnGraphs(g,n):
+  """
+  Return all connected fatgraphs having
+  prescribed genus `g` and number of boundary cycles `n`.
+  """
+  # `graphs` is the function output -- start with an empty list
+  graphs = []
+
+  # maximum number of edges
+  m = 4*g + 2*n - 5
+\end{lstlisting}
+Graphs with the maximal number of edges are trivalent graphs; they are
+computed by a separate function \l{MgnTrivalentGraphs}, described in
+\csref{sec:stage1-trivalent}.
+\begin{lstlisting}[name=MgnGraphs,firstnumber=11]
+  # first item `graphs[0]` contains all 3-valent graphs
+  graphs.append(list(MgnTrivalentGraphs(g,n)))
+\end{lstlisting}
+We can then proceed to generating all graphs in $\R_{g,n}$ by
+sequential contraction of graphs edges: by contracting one edge in
+trivalent graphs we get the list \l{graphs[1]} of all graphs with
+$m-1$ edges; contracting one edge in $G \in \text{\l{graphs[1]}}$, we
+get $F \in \text{\l{graphs[2]}}$ with $m-2$ edges; and so on:
+\begin{lstlisting}[name=MgnGraphs,firstnumber=13]
+  for k in range(1,m):
+    graphs.append([]) # start with empty list
+    for G in graphs[k-1]:
+      for e in G.edge_orbits():
+        if not e.is_loop():
+          F = G.contract(e)
+          if F not in graphs[k]:
+            graphs[k].append(F)
+\end{lstlisting}
+A line-by-line explanation is in order:
+\begin{itemize}
+\item At line 13, the \l{range(1,m)} function sequentially generates
+  all integers in the half-open range $[1, m)$; therefore, the
+  \l{for}-loop body in lines 14--20 is executed $m-1$ times, with $k$
+  taking the values $1$, ..., $m-1$ in order.  Note that, by Python
+  syntax, the loop body is indented w.r.t the loop head line.
+\item At line 14, \l{graph[k]} is initialized to an empty list:
+  at the start of the loop body, the \l{graphs} list only has items
+  \l{graphs[0]} through \l{graphs[k-1]}.
+\item Line 15 introduces a new loop: code in lines 16--20 will be
+  executed once for each fatgraph \l{G} in \l{graphs[k-1]}.
+\item Line 16 starts the core of the function: contract edges of
+  the fatgraph \l{G} to generate new fatgraphs with $m-k$ edges.
+  However, we need not contract every edge of a fatgraph: if $a \in
+  \Aut(G)$ is an automorphism and $x \in E(G)$ is an edge, then the
+  contracted graphs $G' = G/x$ and $G'' = G/a(x)$ are isomorphic.
+  Hence, we can restrict the computation to consider only one edge per
+  orbit of the action induced by $\Aut(G)$ on the set $E(G)$. This is
+  what the method call \l{G.edge_orbits()} provides: for each graph
+  \l{G}, it partitions the set of edges of \l{G} into orbits and
+  returns one representative edge \l{e} for each one.
+\item Line 17 skips non-regular edges: the following code is executed
+  if and only if \l{e} is not a loop.
+\item Line 18 computes the fatgraph \l{F} obtained by contracting the
+  current edge \l{e} in \l{G}: the \l{Fatgraph.contract(G,e)} invocation
+  returns a \emph{new} fatgraph instance obtained by applying
+  topological contraction.
+\item Lines 19--20 add \l{F} to \l{graphs[k]} \emph{only if it is not
+    already there}.  This is actually very concise syntax for the most
+  computationally expensive part of the \l{MgnGraphs} function: Python
+  performs a comparison between \l{F} and each element in
+  \l{graphs[k]}; each comparison invokes the \l{Fatgraph.__eq__}
+  method, which in turn invokes \l{Fatgraph.isomorphism}.  
+
+  If $L = \text{\l{len(graph[k])}}$ is the number of elements in
+  \l{graph[k]} and $T_\text{iso}$ is the average time needed to
+  determine if two graphs are isomorphic, evaluating the expression
+  \l{F in graphs[k]} takes $O(L \cdot T_\text{iso})$ time: thus, the
+  subdivision of \l{graphs} into lists, each one holding graphs with a
+  specific number of edges, reduces the number of fatgraph comparisons
+  done in the innermost loop of \l{MgnGraphs}.  (Although graphs with
+  a different number of edges are readily seen not to be isomorphic,
+  since the test is performed in the innermost loop, it is executed
+  nonetheless a considerable number of times, and each saving, albeit
+  small, can result in a substantial shortening of the total running
+  time.)
+\end{itemize}
+
+Finally, function \l{MgnGraphs} exits and returns the list \l{graphs} to the
+caller:
+\begin{lstlisting}[name=MgnGraphs,firstnumber=21]
+  # `graphs` is the final output of this function
+  return graphs
+\end{lstlisting}
+
+Note that the top-level function \l{MgnGraphs} is quite independent of
+the actual Python implementation of the \l{Fatgraph} type of objects:
+all is needed here, is that a \l{Fatgraph} instance has methods for
+enumerating edges, contract an edge, and test two graphs for equality.
+
+
+\subsection{Generation of Trivalent Fatgraphs}
+\label{sec:stage1-trivalent}
+
+\begin{lstlisting}
+def MgnTrivalentGraphs(g, n):
+  """
+  Return a list of all connected trivalent fatgraphs having the
+  prescribed genus `g` and number of boundary cycles `n`.
+  """
+  # avoid infinite recursion in later statements
+  if n==0 or (g,n)<(0,3):
+    raise StopIteration
+
+  # $M_{0,3}$ --- induction base
+  if (g,n) == (0,3):
+    yield Fatgraph([Vertex([1, 2, 1]), Vertex([2, 0, 0])])
+    yield Fatgraph([Vertex([1, 0, 2]), Vertex([2, 0, 1])])
+
+  # $M_{1,1}$ --- induction base
+  elif (g,n) == (1,1):
+    yield Fatgraph([Vertex([1, 0, 2]), Vertex([2, 1, 0])])
+
+  # general case
+  else:
+    def graphs(g,n):
+      # pass 1: hang a circle to all edges of graphs in $M_{g,n-1}$
+      for G in MgnTrivalentGraphs(g,n-1):
+        for x in G.edge_orbits():
+          yield G.hangcircle(x,0)
+          yield G.hangcircle(x,1)
+
+      # pass 2: bridge all edges of a single graph in $M_{g,n-1}$
+      for G in MgnTrivalentGraphs(g,n-1):
+        for (x,y) in G.edge_pair_orbits():
+          yield G.bridge(x,0, y,0)
+          yield G.bridge(x,0, y,1)
+          yield G.bridge(x,1, y,0)
+          yield G.bridge(x,1, y,1)
+
+      # pass 3: bridge all edges of a single graph in $M_{g-1,n+1}$
+      for G in MgnTrivalentGraphs(g-1,n+1):
+        for (x,y) in G.edge_pair_orbits():
+          yield G.bridge(x,0, y,0)
+          yield G.bridge(x,0, y,1)
+          yield G.bridge(x,1, y,0)
+          yield G.bridge(x,1, y,1)
+
+    unique = []
+    for G in graphs(g,n):
+      if (G.genus, G.num_boundary_cycles) == (g,n) \
+          and (G not in unique):
+        unique.append(G)
+        yield G
+\end{lstlisting}
+
+
+\subsection{Computer representation of Fatgraphs}
+\label{sec:stage1-fatgraphs}
+
+
+
+\section[Stage II]{Stage II: compute boundary operator matrices}
+\label{sec:stage-ii}
+
+\section[Stage III]{Stage III: compute Betti numbers of $\M_{g,n}$}
+\label{sec:stage-iii}
+
+
+
 %%% Local Variables: 
 %%% mode: latex
 %%% TeX-master: "index"

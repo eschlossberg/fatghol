@@ -1,10 +1,14 @@
 %%% index.tex -- Master LaTeX file.
 %%%
-\documentclass[a4paper,reqno,openany,draft]{amsbook}
+\documentclass[draft]{scrbook}
+\usepackage{beton}
+\usepackage{euler}
+%\documentclass[a4paper,reqno,openany,draft]{amsbook}
 
 %% Debugging code
 \usepackage{prelim2e}
 %\usepackage[nomsgs]{refcheck}
+\usepackage[reqno]{amsmath}
 \usepackage{color}
 \newcommand{\FIXME}[1]{{\color{red}\footnote{\sffamily #1}}}
 \usepackage[T1]{fontenc}
@@ -18,7 +22,7 @@
 %  }
 %\usepackage{mdwtab}
 \usepackage[final]{graphicx}
-\usepackage{hyperref}
+%\usepackage{hyperref}
 \usepackage[final]{listings}
   \lstloadlanguages{Python}%
   \lstset{language=Python,%
@@ -28,10 +32,10 @@
           showspaces=false,%
           showstringspaces=false,%
           xleftmargin=2em,%
-          numbers=none%
-          %numberstyle=\small,%
-          %stepnumber=1,%
-          %firstnumber=last%
+          numbers=left,%
+          numberstyle=\tiny,%
+          stepnumber=1,%
+          firstnumber=last%
         }
   \let\l=\lstinline
   %\lstnewenvironment{py}{\lstset{numbers=none}}{}
@@ -42,6 +46,15 @@
 \usepackage{url}
 
 \usepackage[debug]{csref}
+\newcsref{theorem}{Theorem~\ref{#1}}%
+\newcsref{lemma}{Lemma~\ref{#1}}%
+\newcsref{proposition}{Proposition~\ref{#1}}%
+\newcsref{claim}{Claim~\ref{#1}}%
+\newcsref{conjecture}{Conjecture~\ref{#1}}%
+\newcsref{example}{Example~\ref{#1}}%
+\newcsref{definition}{Definition~\ref{#1}}%
+\newcsref{corollary}{Corollary~\ref{#1}}%
+\newcsref{remark}{Remark~\ref{#1}}%
 
 \usepackage[ps,dvips,xdvi,colour,all,arc,knot,poly]{xy}
   \everyxy={/r24pt/:} % scala per i diagrammi
@@ -175,7 +188,7 @@
 %%%
 %%% Cominciamo...
 %%%
-\includeonly{python}
+\includeonly{algorithm,python}
 \begin{document}
 
 \setlength{\parindent}{0pt}
