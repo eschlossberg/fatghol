@@ -16,6 +16,7 @@
      '("ginttriv" ["argument"] 1)
      '("gint" ["argument"] 1)
      '("biggint" ["argument"] 1)
+     '("Tcomb" ["argument"] 0)
      '("Strebel" ["argument"] 0)
      '("SG" ["argument"] 0)
      '("RG" ["argument"] 0)
@@ -34,6 +35,7 @@
      '("freemc" 1)
      '("textsuperscript" 1)
      '("textsubscript" 1)
+     "xyc"
      "theoremname"
      "ksz"
      "aksz"
@@ -43,30 +45,30 @@
      "catN"
      "Ao"
      "Conf"
-     "T"
      "Lb"
      "Hn"
      "Harmonic"
      "ad"
-     "rel"
-     "xyc")
+     "comb"
+     "T"
+     "rel")
     (TeX-run-style-hooks
      "miscmath"
      "amsthm"
      "xytree"
      "rg"
      "xy"
-     "ps"
-     "dvips"
-     "xdvi"
-     "colour"
-     "all"
-     "arc"
-     "knot"
      "poly"
+     "knot"
+     "arc"
+     "all"
+     "colour"
+     "xdvi"
+     "dvips"
+     "ps"
      "paralist"
-     "newitem"
      "newenum"
+     "newitem"
      "url"
      "hyperref"
      "graphicx"
@@ -76,10 +78,10 @@
      "latex2e"
      "amsbook10"
      "amsbook"
-     "a4paper"
-     "reqno"
-     "openany"
      "draft"
+     "openany"
+     "reqno"
+     "a4paper"
      "title"
      "prelim"
      "graphcomplex"

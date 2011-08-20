@@ -1,7 +1,7 @@
 (TeX-add-style-hook "math"
- (function
-  (lambda ()
+ (lambda ()
     (LaTeX-add-bibitems
+     "jenkins;annals"
      "QFS"
      "arbarello-cornalba"
      "baez-dolan;finite-sets"
@@ -11,8 +11,11 @@
      "broadhurst-kreimer;renormalization-automated"
      "cheng-oneill"
      "cochran-melvin;invariants-3-manifolds"
+     "conant-vogtmann"
+     "conant;fusion-and-fission"
      "deligne-mumford"
      "di-francesco-itzykson-zuber;kontsevich-model"
+     "eilenberg-kelly;closed-categories"
      "freyd-yetter;btc"
      "freyd-yetter;coherence"
      "getzler-kapranov"
@@ -20,6 +23,7 @@
      "hain-looijenga"
      "harer-zagier;euler-characteristic"
      "harer;cohomology-of-moduli"
+     "khalkhali;homology-infty-algebras"
      "itzykson-zuber;quantum-field-theory"
      "joyal-street-verity"
      "joyal-street;1991"
@@ -36,6 +40,8 @@
      "lawvere;1965"
      "looijenga;cellular-decomposition"
      "maclane;cwn"
+     "markl;homotopy-algebras-are-homotopy-algebras"
+     "markl;models"
      "math.QA/9807097"
      "math.QA/9811054"
      "may;loop-spaces"
@@ -47,6 +53,9 @@
      "oeckl;braided-qft"
      "oeckl;equivalence-qfts"
      "oeckl;spin-and-statistics"
+     "penakava;l-infinity"
+     "penkava-schwarz"
+     "penkava;graph-complexes"
      "penrose-rindler"
      "penrose;negative-dimensional-tensors"
      "reshetikhin-turaev;ribbon-graphs"
@@ -58,5 +67,5 @@
      "weinberg;qft1"
      "witten;kontsevich-model"
      "yetter;braided-deformations"
-     "zinn-justin-zuber;counting-tangles"))))
+     "zinn-justin-zuber;counting-tangles")))
 
