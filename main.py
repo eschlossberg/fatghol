@@ -16,39 +16,9 @@ import sys
 from utils import positive_int
 
 
-def graph_to_xypic(graph, g=None, n=None, orientable=None, name=None):
-    r"""Print XY-Pic code snippet to render graph `graph`.
+def graph_to_xypic(graph, g=None, n=None, orientable=None):
+    """Print XY-Pic code snippet to render graph `graph`."""
 
-    Examples::
-      #>>> print graph_to_xypic([[3,2,1],[3,1,2]])
-      \xy 0;<2cm,0cm>:%
-      (1,1)="v1",%
-      (-1,1)="v2",%
-      "v1",{\xypolygon4"v1l"{~:{(1.20,0):(0,-1)::}~={90}~>{}}},%
-      "v2",{\xypolygon4"v2l"{~:{(1.20,0):}~={270}~>{}}},%
-      "v1"*\txt{[321]},%
-      "v2"*\txt{[312]},%
-      "v1";"v2"**\crv{"v1l3"&"v2l3"},%
-      "v1";"v2"**\crv{"v1l2"&"v2l1"},%
-      "v1";"v2"**\crv{"v1l1"&"v2l2"},%
-      \endxy
-    #>>> print graph_to_xypic([[1,2,3,1],[1,2,3,2],[1,2,3,3]])
-      \xy 0;<2cm,0cm>:%
-      {\xypolygon3"v"{~={0}~>{}}},% mark v1,v2,v3
-      "v1",{\xypolygon8"v1l"{~:{(1.20,0):}~={90}~>{}}},%
-      "v2",{\xypolygon8"v2l"{~:{(1.20,0):}~={210}~>{}}},%
-      "v3",{\xypolygon8"v3l"{~:{(1.20,0):}~={330}~>{}}},%
-      "v1"*\txt{[1231]},
-      "v2"*\txt{[1232]},
-      "v3"*\txt{[1233]},
-      "v1";"v2"**\crv{"v1l2"&"v2l1"},%
-      "v1";"v3"**\crv{"v1l3"&"v3l1"},%
-      "v2";"v3"**\crv{"v2l3"&"v3l2"},%
-      "v1";"v1"**\crv{"v1l1"&"v1l4"},%
-      "v2";"v2"**\crv{"v2l2"&"v2l4"},%
-      "v3";"v3"**\crv{"v3l3"&"v3l4"},%
-      \endxy
-    """
     # provide default values for arguments
     if g is None:
         g = graph.genus()
@@ -58,25 +28,16 @@ def graph_to_xypic(graph, g=None, n=None, orientable=None, name=None):
         orientable = graph.is_oriented()
 
     # header
-    if name is not None:
-        result = r"\subsection*{%s}" % name
-    else:
-        result = ""
-    if graph.numbering is not None:
-        result += r"{\raggedright " + '\n'
-        for (bcy, nr) in graph.numbering.iteritems():
-            result += r"(%s):{\bf %s}\\ " % (
-                str.join(",", [str(edge) for edge in bcy]),
-                nr
-                ) + '\n'
-    else: 
-        result += r"{\raggedright " +'\n'
+    result = r"\begin{flushleft}" +'\n'
     
     def vertex_label(v):
-        return '[' + str.join("", map(str, v)) + ']'
-    label = map(vertex_label, graph)
+        #return '[' + str.join("", map(str, v)) + ']'
+        # vertices are labeled with lowercase latin letters
+        return chr(97 + v)
+##     label = map(vertex_label, graph)
     K = graph.num_vertices
     result += r'\xy 0;<2cm,0cm>:%'+'\n'
+
     # put graph vertices on a regular polygon
     if K < 3:
         result += '(2,0)="v1",%\n(0,0)="v2",%\n'
@@ -84,39 +45,43 @@ def graph_to_xypic(graph, g=None, n=None, orientable=None, name=None):
         result += r'{\xypolygon%d"v"{~={0}~>{}}},%% mark vertices' \
                   % (max(K,3)) \
                   + '\n'
+
     # mark invisible "control points" for bezier curves connecting vertices
     def rotation_angle(K,k):
         return 90+(k-1)*360/K
     for k in range(1,K+1):
-        # "vK",{\xypolygonL"vKl"{~{(1.20,0):}~={...}~>{}}},%
         result += r'"v%d",{\xypolygon%d"v%dl"{~:{(1.20,0):}~={%d}~>{}}},' \
                   % (k, 2*len(graph[k-1])-2, k, rotation_angle(K,k)) \
                   + '%\n'
-    for k in range(1,K+1):
-        # "vK"*\txt{[...]},%
-        result += r'"v%d"*\txt{%s},' \
-                  % (k, label[k-1]) \
-                  + '%\n'
+
     for l in xrange(graph.num_edges):
-        ((v1,i1), (v2, i2)) = graph.endpoints_v[l]
+        (v1, v2) = graph.endpoints_v[l]
+        (i1, i2) = graph.endpoints_i[l]
         if v1 != v2:
-            result += r'"v%d";"v%d"**\crv{"v%dl%d"&"v%dl%d"}?(.33)*\txt{\sl %d},' \
-                      % (v1+1, v2+1, v1+1, 1+graph.vertices[v1].index(l),
-                         v2+1, 1+graph[v2].index(l), l) \
+            result += r'"v%d"*+\txt{%s};"v%d"*+\txt{%s}**\crv{"v%dl%d"&"v%dl%d"}?(.6)+/2em/*\txt{\bf %d},%%?(.3)*\dir{>},' \
+                      % (v1+1, vertex_label(v1),
+                         v2+1, vertex_label(v2),
+                         v1+1, 1+graph.vertices[v1].index(l),
+                         v2+1, 1+graph[v2].index(l), graph.orient_e[l]) \
                       + '%\n'
         else:
             h = graph.vertices[v1].index(l)
-            result += r'"v%d";"v%d"**\crv{"v%dl%d"&"v%dl%d"},' \
-                      % (v1+1, v2+1, v1+1, h+1, v2+1, 1+graph.vertices[v1].index(l,h+1)) \
+            result += r'"v%d"*+\txt{%s};"v%d"*+\txt{%s}**\crv{"v%dl%d"&"v%dl%d"}?(.6)+/2em/*\txt{\bf %d},%%?(.3)*\dir{>},' \
+                      % (v1+1, vertex_label(v1),
+                         v2+1, vertex_label(v2),
+                         v1+1, h+1, v2+1, 1+graph.vertices[v1].index(l,h+1),
+                         graph.orient_e[l]) \
                       + '%\n'
-    result += r'0,(-0.50,+1.00)*\txt{g=%d,n=%d},' % (g,n) + '%\n'
+
+    # cross-out graph, if not orientable
     if orientable is False:
         # 0,(-1.20,+1.20);(+1.20,-1.20)**[red][|(10)]@{-},%
         result += r"0,(0,+1.20);(+2.40,-1.20)**[red][|(10)]@{-}," + '%\n'
         result += r"0,(0,-1.20);(+2.40,+1.20)**[red][|(10)]@{-}," + '%\n'
     result += r'\endxy'
 
-    result += r"}" + '\n' # close the "\raggedright{ ..."
+    result += r"\end{flushleft}" + '\n'
+
     return result
 
 
@@ -226,34 +191,115 @@ elif "graphs" == args[0]:
                          % (args[1],))
         sys.exit(1)
 
-    # compute graphs matching given g,n
-    graphs = list(MgnGraphsIterator(g,n))
+    # compute graph complex
+    graphs = FatgraphComplex(g,n)
+    # FIXME: `D` must match the one used in `ChainComplex.compute_homology_rank()`
+    D = [ [ graphs.module[i-1].coordinates(graphs.differential[i](b))
+            for b in graphs.module[i].base ]
+          for i in xrange(1, graphs.length)
+          ]
 
     # output results
     if not options.silent:
         if options.latex:
             outfile.write(r"""
     \documentclass[a4paper,twocolumn]{article}
+    \usepackage{amsmath}
     \usepackage[color,curve,line,poly,xdvi]{xy}
     \begin{document}
-    \section*{Fatgraphs labeling cells of $M_{%d,%d}$}
-    """ % (g,n))
-        for (num, graph) in enumerate(graphs):
-            if options.latex:
-                outfile.write(graph_to_xypic(graph,
+    \section*{Fatgraphs labeling cells of $M_{%(genus)d,%(bc)d}$}
+
+    The graph $G_{l,k}$ is the $k$-th graph in the
+    set of graphs of genus $%(genus)d$ with $l$ edges and $%(bc)d$
+    boundary cycles.
+
+    The crossed-out graphs are those having an automorphism that
+    reverses the associated cell orientation.
+    
+    """ % {'genus':g, 'bc':n})
+        tot = 0
+        for num_of_edges in xrange(1, len(graphs)):
+            if options.latex and graphs.module[num_of_edges].dimension > 0:
+                outfile.write(r"""
+                \subsection*{Graphs with $%d$ edges}
+                
+                """ % (num_of_edges+1))
+            for (num, graph) in enumerate(graphs.module[num_of_edges]):
+                tot += 1
+                if options.latex:
+                    outfile.write((r"\subsection*{$G_{%d,%d}$}" % (num_of_edges,num)) + '\n')
+
+                    # draw graph
+                    outfile.write(graph_to_xypic(graph,
+                                                 graph.genus(),
+                                                 graph.num_boundary_components(),
+                                                 graph.is_oriented(),
+                                                 )+'\n')
+
+                    # print differential
+                    outfile.write(r"\subsubsection*{Differential}" + '\n')
+                    outfile.write(r"""
+\begin{equation*}
+  dG_{%d,%d} =
+                    """ % (num_of_edges, num))
+                    cnt = 0
+                    for (num2, coeff) in enumerate(D[num_of_edges - 1][num]):
+                        if coeff == 0:
+                            continue # with next graph
+                        elif coeff == +1:
+                            coeff = "+"
+                        elif coeff == -1:
+                            coeff = "-"
+                        else:
+                            coeff = "%+d" % coeff
+                        outfile.write(" %sG_{%d,%d}" % (coeff, num_of_edges-1, num2))
+                        cnt += 1
+                    if cnt == 0:
+                        outfile.write("0")
+                    outfile.write(r"""
+\end{equation*}
+                    """)
+
+                    # print boundary cycles
+                    if graph.numbering is not None:
+                        outfile.write(r"\subsubsection*{Boundary cycles}" + '\n')
+                        outfile.write(r"\begin{tabular}{rl}" + '\n')
+                        def fmt_(nr):
+                            if isinstance(nr, (set, frozenset)):
+                                return str.join(",", [str(elt) for elt in nr])
+                            else:
+                                return str(nr)
+                        def cmp_(x,y):
+                            x = x[1]
+                            y = y[1]
+                            if isinstance(x, (set, frozenset)):
+                                x = min(x)
+                            if isinstance(y, (set, frozenset)):
+                                y = min(y)
+                            return cmp(x,y)
+                        for (bcy, nr) in sorted(graph.numbering.iteritems(), cmp=cmp_):
+                            outfile.write(r"\textsl{%s} & (%s) \\ " % (
+                                fmt_(nr),
+                                str.join(",", [str(graph.orient_e[edge])
+                                               for edge in bcy]),
+                                )
+                                + '\n')
+                        outfile.write(r"\end{tabular}" + '\n\n')
+
+                    # print python repr
+                    outfile.write(r"\subsubsection*{Python representation}" + '\n')
+                    outfile.write(r"{\small " + repr(graph) + "}") 
+                    outfile.write('\n\n')
+
+                    outfile.write(r"\vspace{1ex}\hrulefill\vspace{1ex}" + '\n')
+                else:
+                    outfile.write("%s\n" % ((graph,
                                              graph.genus(),
                                              graph.num_boundary_components(),
                                              graph.is_oriented(),
-                                             name=r"\#%d" % num,
-                                             )+'\n')
-            else:
-                outfile.write("%s\n" % ((graph,
-                                         graph.genus(),
-                                         graph.num_boundary_components(),
-                                         graph.is_oriented(),
-                                         ),))
+                                             ),))
         outfile.write("\n")
-        outfile.write("Found %d graphs.\n" % len(graphs))
+        outfile.write("Found %d graphs total.\n" % tot)
         outfile.write("\n")
         if options.latex:
             outfile.write(r"\end{document}")
