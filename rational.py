@@ -3,7 +3,7 @@
 # This is a straightforward port of the `boost::rational` C++ class, whose
 # source file bears the following copyright notice:
 #
-#   (C) Copyright Paul Moore 1999. Permission to copy, use, modify, sell and
+#   (C) Copyright Paul Moore 1999, 2009. Permission to copy, use, modify, sell and
 #   distribute this software is granted provided this copyright notice appears
 #   in all copies. This software is provided "as is" without express or
 #   implied warranty, and with no claim as to its suitability for any purpose.
@@ -189,7 +189,7 @@ class Rational(object):
                result_den = -result_den
 
         except AttributeError:
-            result_num /= second
+            result_den *= second
 
             if (result_den < 0):
                result_num = -result_num
@@ -258,7 +258,7 @@ class Rational(object):
                self.denominator = -self.denominator
 
         except AttributeError:
-            self.numerator /= other
+            self.denominator *= other
 
             if (self.denominator < 0):
                self.numerator = -self.numerator
@@ -352,6 +352,8 @@ class Rational(object):
         elif self.denominator == 1:
             return str(self.numerator)
         else:
+            # XXX: side-effect: normalizes fraction!
+            self.normalize()
             return "%s/%s" % (self.numerator, self.denominator)
 
 
