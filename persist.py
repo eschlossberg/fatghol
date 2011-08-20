@@ -38,10 +38,11 @@ class RecordingIterator(Iterator):
       
     """
 
-    def __init__(self, iterable):
+    def __init__(self, iterable, checkpoint=10):
         self.iterable = iter(iterable)
         self.pos = -1
         self.history = []
+        self.checkpoint = checkpoint
 
     def next(self):
         if (self.pos < len(self.history) - 1):
@@ -51,11 +52,12 @@ class RecordingIterator(Iterator):
             next = self.iterable.next()
             self.history.append(next)
             self.pos += 1
-            # checkpoint to file
-            try:
-                checkpoint(self)
-            except AttributeError:
-                pass
+            if len(self.history) % self.checkpoint == 0:
+                # checkpoint to file
+                try:
+                    checkpoint(self)
+                except AttributeError:
+                    pass
             return next
 
     def rewind(self, pos=0):
@@ -63,7 +65,14 @@ class RecordingIterator(Iterator):
         By default, rewinds iterator at start of the recorded values.
         """
         self.pos = pos-1
-        
+
+    def thaw(self):
+        """Called after the iterator has been un-pickled."""
+        try:
+            self.iterable.thaw()
+        except AttributeError:
+            # rewind iterator at start
+            self.rewind()
 
 
 def PersistedIterator(factory):
@@ -109,6 +118,8 @@ def PersistedIterator(factory):
             store = open(filename, 'r')
             instance = pickle.load(store)
             store.close()
+            # tell instance it has been un-pickled
+            instance.thaw()
         except IOError: # filename does not exist
             # run normal class initialization
             instance = RecordingIterator(factory(*args, **kwargs))
@@ -116,9 +127,6 @@ def PersistedIterator(factory):
         # save persistent store ref into instance
         _backing_store[id(instance)] = filename
 
-        # rewind iterator at start
-        instance.rewind()
-        
         return instance
 
     return make
