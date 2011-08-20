@@ -1185,16 +1185,16 @@ To build all boundary cycles, we loop over the list of corners (line~148).
 First, scan the "corners" list to find an index pair "(v,i)" pointing
 to a valid corner triple (meaning an ``unused'' corner). The trick is
 to loop over all indexes in the "corners" list, and quit looping as
-soon as "corners[v][i]" is not "None" (line~\ref{l:bcy-quit-ffwd});
+soon as "corners[v][i]" is not "None" (line~\nr{bcy-quit-ffwd});
 Python retains the value of "v" and "i" outside the loop.
 \begin{lstlisting}
     result = []
-    while True:                             |\label{l:bcy-main-loop}|
+    while True:                                 |\n{bcy-main-loop}|
       # fast-forward to the first unused corner
       for v in xrange(self.num_vertices):
         i = first_index_not_none(corners[v])
         if i is not None:
-          break                             |\label{l:bcy-quit-ffwd}|
+          break                                 |\n{bcy-quit-ffwd}|
 
 \end{lstlisting}
 Exit loop if all corners in the list are "None": if the above loop
@@ -1209,20 +1209,20 @@ definition of the "first_index_not_none" function):
 Now build a list of corners comprising the same boundary cycle: start
 with the the corner "corners[v][i]", follow the edge starting at the
 second delimiter of the corner to its other endpoint
-(lines~\ref{l:bcy-follow1}--\ref{l:bcy-follow2}
-and~\ref{l:bcy-follow3}), and repeat until we come back to the
-starting corner (line~\ref{l:bcy-loop2}). At each iteration, the used
-corners are cleared out of the "corners" list by replacing them with
-the special value "None" (line~\ref{l:bcy-mark-used}).
+(lines~\nr{bcy-follow1}--\nr{bcy-follow2} and~\nr{bcy-follow3}), and
+repeat until we come back to the starting corner
+(line~\nr{bcy-loop2}). At each iteration, the used corners are cleared
+out of the "corners" list by replacing them with the special value
+"None" (line~\nr{bcy-mark-used}).
 \begin{lstlisting}
       start = (v,i)
       triples = []
-      while (v,i) != start or len(triples) == 0:  |\label{l:bcy-loop2}|
+      while (v,i) != start or len(triples) == 0:         |\n{bcy-loop2}|
         triples.append(corners[v][i])
-        j = corners[v][i][2]                    |\label{l:bcy-follow1}|
-        next_edge = self.vertices[v][j]         |\label{l:bcy-follow2}|
-        corners[v][i] = None                  |\label{l:bcy-mark-used}|
-        (v,i) = self.edges[next_edge].other_end(v, j)  |\label{l:bcy-follow3}|
+        j = corners[v][i][2]                           |\n{bcy-follow1}|
+        next_edge = self.vertices[v][j]                |\n{bcy-follow2}|
+        corners[v][i] = None                         |\n{bcy-mark-used}|
+        (v,i) = self.edges[next_edge].other_end(v, j)  |\n{bcy-follow3}|
 \end{lstlisting}
 The list of such corners, accumulated into the "triples" variable, is
 turned into a "BoundaryCycle" object:
@@ -1231,7 +1231,7 @@ turned into a "BoundaryCycle" object:
 
 \end{lstlisting}
 Once we're out of the `"while True"' loop (started at
-line~\ref{l:bcy-main-loop}), the list of all "BoundaryCycle" objects
+line~\nr{bcy-main-loop}), the list of all "BoundaryCycle" objects
 is returned to the caller:
 \begin{lstlisting}
     return result
@@ -1239,79 +1239,197 @@ is returned to the caller:
 \end{lstlisting}
 
 
+\subsection{Construction of new fatgraphs}
+\label{sec:construction}
 
-\subsubsection{Fatgraphs isomorphism and equality testing}
-\label{sec:isomorphism}
+This section lists the methods implemented in the "Fatgraph" class to
+create new graphs out of existing ones by applying concrete
+topological constructions.
 
+\subsubsection{Contraction of an edge}
+\label{sec:contract}
+
+
+Recall from the definition in \csref{sec:contractions}) that
+contraction produces a ``child'' fatgraph from a ``parent'' fatgraph
+and a chosen regular (i.e., non-looping) edge. 
+
+The "Fatgraph.contract" method thus needs only take as input the ``parent''
+graph and the (number of) the edge to contract:
+\begin{lstlisting}
+  def contract(self, edgeno):
+    """
+    Return new `Fatgraph` obtained by contracting the specified edge.
+    """
+
+\end{lstlisting}
+
+In the actual computer representation of a fatgraph, the contraction
+process effects the following changes:
+\begin{itemize}
+\item Two vertices are merged into one. Thus, one item is deleted from
+  the "self.vertices" list; we choose always to plug the
+  higher-numbered vertex into the lower-numbered one, and to delete
+  the higher-numbered one from the list.  This also affects the "Edge"
+  objects in the "self.edges" list, as the endpoints store the vertex
+  reference by index.
+\item The contracted edge is deleted from the "self.edges" list, thus
+  one element has to be removed from it.
+\item Deletion of an edge also affects the orientation: the canonical
+  orientation on the ``child'' fatgraph keeps the edges in the same
+  order as they are in the parent fatgraph.  However, since the
+  "edge_numbering" must be a permutation of the edge indices, we need
+  to renumber the edges and shift the higher-numbered edges down one
+  place. 
+\end{itemize}
+
+There is thus much renumbering/mapping that takes place on
+lists. The following "translate" function abstracts this kind of
+operation: it takes a Python dictionary $m$
+and a sequence $s$ as input, and returns a sequence $s'$ formed by
+applying $m$ to each element $x$ of $s$; if $x$ is not a key in $m$,
+i.e., there is no mapping in $m$ for $x$, then $x$ is copied unchanged
+to $s'$.  
+\begin{lstlisting}
+    def translate(m, s):
+      """
+      Return items from a sequence, 
+      substituting them as specified.
+      """
+      for x in s:
+        if not m.has_key(x):
+          yield x
+        elif m[x] is None:
+          continue # with next "x"
+        else:
+          yield m[x]
+\end{lstlisting}
+
+A few values need to be saved in local variables before processing,
+namely the endpoints of the edge to be contracted (stored in
+"(v1,pos1)" and "(v2,pos2)"):
+\begin{lstlisting}
+    ((v1, pos1), (v2, pos2)) = self.edges[edgeno].endpoints
+
+\end{lstlisting}
+Note that, by construction of the "Edge" objects (\csref{sec:edges}),
+we have "v1 < v2".
+
+The number of edges attached to the vertices to be mate is stored in
+variables "l1" and "l2" for later reference:
+\begin{lstlisting}
+    l1 = len(self.vertices[v1]) - 1
+    l2 = len(self.vertices[v2]) - 1
+
+\end{lstlisting}
+
+The list of vertices of the ``child'' fatgraph is built by removing
+the contracted edge and shifting all indices above:
+\begin{itemize}
+\item edges numbered 0 to "edgeno-1" are unchanged;
+\item edge "edgeno" is (temporarily) kept intact, will be
+  removed by mating operation (see below);
+\item edges numbered "edgeno+1" and above are renumbered, 
+  shifting the number down one position.
+\end{itemize}
+This prescription is implemented through the "translate" function (see
+above).  Assuming $l$ is the value of "edgeno", we make
+"renumber_edges" into a dictionary which maps $i$ to $i-1$ for $i >
+l$:
+\begin{lstlisting}
+    renumber_edges = { i:(i-1)
+                       for i in range(edgeno+1, self.num_edges) }
+\end{lstlisting}
+Then apply this transformation to the edge labels in each vertex, to
+get the vertices of the ``child'' fatgraph. (This yields incorrect
+values on the endpoints of "edgeno": they will be replaced shortly.)
+\begin{lstlisting}
+    new_vertices = [ Vertex(translate(renumber_edges, V))
+                     for V in self.vertices ]
+
+\end{lstlisting}
+Now mate endpoints of the contracted edge:
+\begin{enumerate}
+\item Rotate endpoints "v1", "v2" so that the given edge "edgeno" would appear
+  \emph{last} in "v1" and \emph{first} in "v2". (Note: since "v1", "v2" are
+  \emph{cyclic}, this means that we do the same operation on "v1" and "v2"
+  alike).
+\item Join vertices by concatenating the list of incident
+  edges.
+\item Set the newly-constructed vertex in the place of old first
+  endpoint within list "new_vertices".
+\item Remove the second endpoint from the list of new vertices.
+\end{enumerate}
+\begin{lstlisting}
+    new_vertices[v1] = Vertex(
+      new_vertices[v1][pos1+1:] + new_vertices[v1][:pos1]
+      +
+      new_vertices[v2][pos2+1:] + new_vertices[v2][:pos2]
+      )
+    del new_vertices[v2]
+
+\end{lstlisting}
+
+The list of new vertices is all that is needed to form the new
+``child'' fatgraph.  However, the ``child'' fatgraph inherits an
+orientation from the ``parent'' fatgraph, which might differ from the
+default orientation.  Therefore, an orientation has to be derived for
+the ``child'' fatgraph: let $G$ be the ``parent'' fatgraph and
+$\alpha_1, \ldots, \alpha_k, \ldots, \alpha_l$ its edges, with
+$\alpha_k$ being contracted to create the ``child'' graph $G'$; if
+$\alpha_{m(1)} < \alpha_{m(2)} < \ldots < \alpha_{m(l)}$ (with $m(j) = k$)
+is the ordering on $E(G)$ that induces the orientation on $G$, then
+$\alpha_{m(1)} < \ldots < \alpha_{m(j-1)} < \alpha_{m(j+1)} < \ldots
+< \alpha_{m(l)}$ descends to a total order on the edges of $G'$ and
+induces the correct orientation. (I.e., the orientation that
+corresponds to the orientation induced on the cell $\Delta(G')$ as a
+face of $\Delta(G)$.)
+
+Orientation is represented in a "Fatgraph" instance as a list, mapping
+edge labels to a position in the total order; using the notation
+above, the orientation of $G$ would be represented by the map
+$n := m^{-1}$.  The orientation on $G'$ is represented by $n'$ defined
+as:
+\begin{equation*}
+  n'(i) :=
+  \begin{cases}
+    n(i)    &\text{if $n(i)<k$,} 
+    \\
+    n(i)-1  &\text{if $n(i)>k$.}
+  \end{cases}
+\end{equation*}
+Correspondingly, the "new_edge_numbering" is built by shifting values
+in the ``parent'' fatgraph's "edge_numbering" down one position if
+they are follow the contracted edge in the orientation order:
+\begin{lstlisting}
+    k = self.edge_numbering[edgeno]
+    # edges with index below the contracted one are untouched
+    renumber_edge_numbering = { n:n for n in range(0,k) }
+    # edges with index above the contracted one are shifted down
+    # one position
+    renumber_edge_numbering.update({ 
+        (n+1):n for n in range(k, self.num_edges) 
+    })
+    new_edge_numbering = [ 
+        renumber_edge_numbering[self.edge_numbering[i]]
+            for i in range(self.num_edges)
+            if i != edgeno 
+    ]
+    
+\end{lstlisting}
+
+The ``child'' fatgraph can finally be constructed, overriding the
+default orientation:
+\begin{lstlisting}
+    return Fatgraph(new_vertices, orientation=new_edge_numbering)
+
+\end{lstlisting}
+
+
+\subsubsection{The map $q(G,x,y)$: bridging two edges of a fatgraph}
+\label{sec:bridge}
 
 \begin{lstlisting}
-  # Instances of this class will compare equal if there is an
-  # isomorphism mapping one to the other.
-  def __eq__(self, other):
-    """Return `True` if `self` and `other` are isomorphic."""
-
-    # shortcuts
-    if self is other:
-      return True
-    if self.invariants != other.invariants:
-      return False
-
-    # go the long way: try to find an explicit isomorphims
-    # between "self" and "other"
-    try:
-      # if there is any morphism, then return "True"
-      self.isomorphisms(other).next()
-      return True
-    except StopIteration:
-      # list of morphisms is empty, objects are not equal.
-      return False
-
-
-  # both "__eq__" and "__ne__" are needed 
-  # for testing equality of Python objects
-  def __ne__(self, other):
-    """The opposite of `__eq__` (which see)."""
-    return not self.__eq__(other)
-
-
-  def assimilate(self, other):
-    """
-    Copy-constructor: make `self` equal to `other`.
-
-    The modified `Fatgraph` instance *shares* all attributes
-    with the instance given as argument::
-
-      >>> g2.vertices is g1.vertices
-      True
-      >>> g2.edge_numbering is g1.edge_numbering
-      True
-      >>> g2.edges is g1.edges
-      True
-    """
-    self.boundary_cycles = other.boundary_cycles
-    self.edges = other.edges
-    self.edge_numbering = other.edge_numbering
-    self.genus = other.genus
-    self.num_boundary_cycles = other.num_boundary_cycles
-    self.num_edges = other.num_edges
-    self.num_vertices = other.num_vertices
-    self.vertices = other.vertices
-    self.invariants = (
-        self.num_vertices,
-        self.num_edges,
-        self.num_boundary_cycles,
-        )
-
-
-  def automorphisms(self):
-    """Enumerate automorphisms of this `Fatgraph` object.
-
-    See `.isomorphisms()` for details of how a `Fatgraph`
-    isomorphism is represented.
-    """
-    return self.isomorphisms(self)
-
-
   def bridge(self, edge1, side1, edge2, side2):
     """Return a new `Fatgraph`, formed by inserting trivalent
     vertices in the middle of edges `edge1` and `edge2` and
@@ -1342,9 +1460,9 @@ is returned to the caller:
     `side1` is `1`, then 0,1 are swapped and the new trivalent
     vertex gets the cyclic order [1,0,2]::
 
-  >>> g1 == Fatgraph([Vertex([0,1,2]), Vertex([4,2,5]), Vertex([0,4,3]), Vertex([1,5,3])])
+    >>> g1 == Fatgraph([Vertex([0,1,2]), Vertex([4,2,5]), Vertex([0,4,3]), Vertex([1,5,3])])
     True
-  >>> g2 == Fatgraph([Vertex([0,1,2]), Vertex([4,2,5]), Vertex([4,0,3]), Vertex([1,5,3])])
+    >>> g2 == Fatgraph([Vertex([0,1,2]), Vertex([4,2,5]), Vertex([4,0,3]), Vertex([1,5,3])])
     True
 
     It is worth noting that this procedure involves 5 edges in
@@ -1479,215 +1597,13 @@ is returned to the caller:
             orientation = new_edge_numbering,
             )
 
-  def contract(self, edgeno):
-    """Return new `Fatgraph` obtained by contracting the specified edge.
-
-    Examples::
-
-      >>> Fatgraph([Vertex([2,2,0]), Vertex([0,1,1])]).contract(0)
-      Fatgraph([Vertex([1, 1, 0, 0])])
-      >>> Fatgraph([Vertex([2,1,0]), Vertex([2,0,1])]).contract(1)
-      Fatgraph([Vertex([0, 1, 1, 0])])
-
-    The M_{1,1} trivalent graph yield the same result no matter
-    what edge is contracted::
-
-      >>> Fatgraph([Vertex([2,1,0]), Vertex([2,1,0])]).contract(0)
-      Fatgraph([Vertex([1, 0, 1, 0])])
-      >>> Fatgraph([Vertex([2,1,0]), Vertex([2,1,0])]).contract(1)
-      Fatgraph([Vertex([0, 1, 0, 1])])
-      >>> Fatgraph([Vertex([2,1,0]), Vertex([2,1,0])]).contract(2)
-      Fatgraph([Vertex([1, 0, 1, 0])])
-    """
-
-    # Plug the higher-numbered vertex into the lower-numbered one.
-    
-    # store endpoints of the edge-to-be-contracted
-    ((v1, pos1), (v2, pos2)) = self.edges[edgeno].endpoints
-
-    # save highest-numbered index of vertices to be contracted
-    l1 = len(self.vertices[v1]) - 1
-    l2 = len(self.vertices[v2]) - 1
-
-    # Build new list of vertices, removing the contracted edge and
-    # shifting all indices above:
-    #   - edges numbered 0..edgeno-1 are unchanged;
-    #   - edges numbered "edgeno+1".. are renumbered, 
-    #   shifting the number down one position;
-    #   - edge "edgeno" is kept intact, will be removed by mating
-    #   operation (see below).
-    renumber_edges = dict((i+1,i)
-                for i in range(edgeno, self.num_edges))
-    # See "itranslate" in utils.py for how this prescription is
-    # encoded in the "renumber_edges" mapping.
-    new_vertices = [ Vertex(itranslate(renumber_edges, V))
-             for V in self.vertices ]
-
-    # Mate endpoints of contracted edge:
-    # 1. Rotate endpoints "v1", "v2" so that the given edge would
-    #  appear *last* in "v1" and *first* in "v2" (*Note:* since
-    #  "v1", "v2" are *cyclic*, this means that we do the same
-    #  operation on "v1" and "v2" alike).
-    # 2. Join vertices by concatenating the list of incident
-    #  edges;
-    # 3. Set new "i1" vertex in place of old first endpoint:
-    new_vertices[v1] = Vertex(
-      new_vertices[v1][pos1+1:] + new_vertices[v1][:pos1]
-      +
-      new_vertices[v2][pos2+1:] + new_vertices[v2][:pos2]
-      )
-    # 4. Remove second endpoint from list of new vertices:
-    del new_vertices[v2]
-
-    # vertices with index below "v2" keep their numbering
-    renumber_vertices = dict((x,x) for x in range(v2))
-    # vertex "v2" is mapped to vertex "v1"
-    renumber_vertices[v2] = v1
-    # vertices with index above "v2" are now shifted down one place
-    renumber_vertices.update(dict((x+1,x)
-                    for x in range(v2, self.num_vertices)))
-    
-    # renumber attachment indices, according to the mating of
-    # vertices "v1" and "v2":
-    # - on former vertex "v1":
-    #   * indices (pos1+1)..l1 are mapped to 0..(l1-pos1-1)
-    #   in the mated vertex;
-    #   * index pos1 is deleted;
-    #   * indices 0..pos1-1 are mapped to (l1-pos1)..l1-1;
-    renumber_pos1 = dict((x, x-pos1-1)
-               for x in range(pos1+1, l1+1))
-    renumber_pos1.update(dict((x, l1-pos1+x)
-                  for x in range(pos1)))
-    # - on former vertex "v2":
-    #   * indices (pos2+1)..l2 are mapped to l1..(l1+l2-pos2-1);
-    #   * index pos2 is deleted;
-    #   * indices 0..pos2-1 are mapped to (l1+l2-pos2)..l1+l2-1:
-    renumber_pos2 = dict((x, l1-pos2-1+x)
-               for x in range(pos2+1, l2+1))
-    renumber_pos2.update(dict((x, l1+l2-pos2+x)
-                  for x in range(pos2)))
-    # build the new edges: except for edges insisting on vertices
-    # "v1" and "v2", we just need to renumber the vertex indices,
-    # and keep attachment indices untouched.
-    def transform_endpoint(e):
-      (v, a) = e
-      if v == v1:
-        return (v1, renumber_pos1[a])
-      elif v == v2:
-        return (v1, renumber_pos2[a])
-      else:
-        return (renumber_vertices[v], a)
-    new_edges = []
-    for (nr, edge) in enumerate(self.edges):
-      if nr == edgeno:
-        # skip contracted edge
-        continue
-      elif edge.meets(v1) or edge.meets(v2):
-        new_edges.append(Edge(transform_endpoint(edge.endpoints[0]),
-                    transform_endpoint(edge.endpoints[1])))
-      else:
-        # XXX: re-use same "Edge" instances if vertex index does not change
-        new_edges.append(Edge((renumber_vertices[edge.endpoints[0][0]], edge.endpoints[0][1]),
-                    (renumber_vertices[edge.endpoints[1][0]], edge.endpoints[1][1])))
-
-    # Orientation of the contracted graph.
-    cut = self.edge_numbering[edgeno]
-    # edges with index below the contracted one are untouched
-    renumber_edge_numbering = dict((x,x) for x in range(cut))
-    # edges with index above the contracted one are shifted down
-    # one position
-    renumber_edge_numbering.update(dict((x+1,x)
-                    for x in range(cut, self.num_edges)))
-    new_edge_numbering = [ renumber_edge_numbering[self.edge_numbering[x]]
-                 for x in range(self.num_edges)
-                 if x != edgeno ]
-    
-    # build new graph
-    return Fatgraph(new_vertices,
-            edges = new_edges,
-            num_edges = self.num_edges-1,
-            orientation = new_edge_numbering,
-            )
-
-  def edge_orbits(self):
-    """Compute orbits of the edges under the action of graph
-    automorphism group, and a representative for each orbit.
-    
-    Returns a dictionary, whose keys are the representatives, and
-    whose values are the orbits.  Orbits are represented as Python
-    `set` objects.
-
-    Examples::
-
-      >>> Fatgraph([Vertex([0,1,2]), Vertex([0,1,2])]).edge_orbits()
-      {0: set([0, 1, 2])}
-
-      >>> Fatgraph([Vertex([1, 0, 2]), Vertex([2, 1, 0])]).edge_orbits()
-      {0: set([0, 1, 2])}
-      
-    """
-    orbits = dict( (x, set([x])) for x in range(self.num_edges) )
-    for a in self.automorphisms():
-      for x in range(self.num_edges):
-        if x not in orbits:
-          continue
-        y = a.pe[x]
-        if y not in orbits:
-          continue
-        # "x" and "y" are in the same orbit, only keep the one
-        # with lower abs. value, and remove the other.
-        if y > x:
-          orbits[x].update(orbits[y])
-          del orbits[y]
-    return orbits
-
-  def edge_pair_orbits(self):
-    """Compute orbits of pairs `(edge1, edge2)` under the action
-    of graph automorphism group, and a representative for each
-    orbit.
-    
-    Returns a dictionary, whose keys are the representatives, and
-    whose values are the orbits.  Orbits are represented as Python
-    `set` objects.
-
-    Examples::
-
-      >>> Fatgraph([Vertex([0,1,2]), Vertex([0,1,2])]).edge_pair_orbits()
-      {(0, 1): set([(0, 1), (1, 2), (2, 0)]),
-       (0, 0): set([(0, 0), (1, 1), (2, 2)]),
-       (0, 2): set([(1, 0), (0, 2), (2, 1)])}
-      
-    """
-    edge_pairs = [ (x,y) 
-             for x in range(self.num_edges)
-             for y in range(self.num_edges) ]
-    orbits = dict( (p, set([p])) for p in edge_pairs )
-    for a in self.automorphisms():
-      for p in edge_pairs:
-        if p not in orbits:
-          continue
-        q = (a.pe[p[0]], a.pe[p[1]])
-        if q not in orbits:
-          continue
-        # "p" and "q" are in the same orbit, only keep the one
-        # with lower abs. value, and remove the other.
-        if p < q:
-          orbits[p].update(orbits[q])
-          del orbits[q]
-    return orbits
+\end{lstlisting}
 
 
-  def endpoints(self, edgeno):
-    """Return the endpoints of `edge`, as a pair of `(v, pos)`
-    where `v` is the endpoint vertex index, and `pos` is the
-    attachment index of `edge` into the `Vertex` object
-    `self.vertices[v]`.
+\subsubsection{The map $p(G,x)$}
+\label{sec:hangcircle}
 
-    The pair `((v1, pos1), (v2, pos2))` is ordered such that `v1 < v2`.
-    """
-    return self.edges[edgeno].endpoints
-
-
+\begin{lstlisting}
   def hangcircle(self, edge, side):
     """Return a new `Fatgraph`, formed by attaching a circle with
     a new edge to a new trivalent vertex in the middle of `edge`.
@@ -1778,13 +1694,51 @@ is returned to the caller:
             num_edges = self.num_edges + 3,
             orientation = new_edge_numbering,
             )
-  
+\end{lstlisting}
 
-  def is_loop(self, edge):
-    """Return `True` if `edge` is a loop (i.e., the two endpoint coincide).
+
+\subsubsection{Fatgraphs isomorphism and equality testing}
+\label{sec:isomorphism}
+
+
+\begin{lstlisting}
+  # Instances of this class will compare equal if there is an
+  # isomorphism mapping one to the other.
+  def __eq__(self, other):
+    """Return `True` if `self` and `other` are isomorphic."""
+
+    # shortcuts
+    if self is other:
+      return True
+    if self.invariants != other.invariants:
+      return False
+
+    # go the long way: try to find an explicit isomorphims
+    # between "self" and "other"
+    try:
+      # if there is any morphism, then return "True"
+      self.isomorphisms(other).next()
+      return True
+    except StopIteration:
+      # list of morphisms is empty, objects are not equal.
+      return False
+
+
+  # both "__eq__" and "__ne__" are needed 
+  # for testing equality of Python objects
+  def __ne__(self, other):
+    """The opposite of `__eq__` (which see)."""
+    return not self.__eq__(other)
+
+
+  def automorphisms(self):
+    """Enumerate automorphisms of this `Fatgraph` object.
+
+    See `.isomorphisms()` for details of how a `Fatgraph`
+    isomorphism is represented.
     """
-    return self.edges[edge].is_loop()
-    
+    return self.isomorphisms(self)
+
 
   def isomorphisms(G1, G2):
     """Iterate over `Fatgraph` isomorphisms from `G1` to `G2`.
@@ -2095,6 +2049,123 @@ class Isomorphism(object):
 This section briefly lists those methods of the "Fatgraph" class that
 are needed for proper working of the class, but do not have any
 special interest.
+
+\begin{lstlisting}
+  def assimilate(self, other):
+    """
+    Copy-constructor: make `self` equal to `other`.
+
+    The modified `Fatgraph` instance *shares* all attributes
+    with the instance given as argument::
+
+      >>> g2.vertices is g1.vertices
+      True
+      >>> g2.edge_numbering is g1.edge_numbering
+      True
+      >>> g2.edges is g1.edges
+      True
+    """
+    self.boundary_cycles = other.boundary_cycles
+    self.edges = other.edges
+    self.edge_numbering = other.edge_numbering
+    self.genus = other.genus
+    self.num_boundary_cycles = other.num_boundary_cycles
+    self.num_edges = other.num_edges
+    self.num_vertices = other.num_vertices
+    self.vertices = other.vertices
+    self.invariants = (
+        self.num_vertices,
+        self.num_edges,
+        self.num_boundary_cycles,
+        )
+
+
+  def edge_orbits(self):
+    """Compute orbits of the edges under the action of graph
+    automorphism group, and a representative for each orbit.
+    
+    Returns a dictionary, whose keys are the representatives, and
+    whose values are the orbits.  Orbits are represented as Python
+    `set` objects.
+
+    Examples::
+
+      >>> Fatgraph([Vertex([0,1,2]), Vertex([0,1,2])]).edge_orbits()
+      {0: set([0, 1, 2])}
+
+      >>> Fatgraph([Vertex([1, 0, 2]), Vertex([2, 1, 0])]).edge_orbits()
+      {0: set([0, 1, 2])}
+      
+    """
+    orbits = dict( (x, set([x])) for x in range(self.num_edges) )
+    for a in self.automorphisms():
+      for x in range(self.num_edges):
+        if x not in orbits:
+          continue
+        y = a.pe[x]
+        if y not in orbits:
+          continue
+        # "x" and "y" are in the same orbit, only keep the one
+        # with lower abs. value, and remove the other.
+        if y > x:
+          orbits[x].update(orbits[y])
+          del orbits[y]
+    return orbits
+
+  def edge_pair_orbits(self):
+    """Compute orbits of pairs `(edge1, edge2)` under the action
+    of graph automorphism group, and a representative for each
+    orbit.
+    
+    Returns a dictionary, whose keys are the representatives, and
+    whose values are the orbits.  Orbits are represented as Python
+    `set` objects.
+
+    Examples::
+
+      >>> Fatgraph([Vertex([0,1,2]), Vertex([0,1,2])]).edge_pair_orbits()
+      {(0, 1): set([(0, 1), (1, 2), (2, 0)]),
+       (0, 0): set([(0, 0), (1, 1), (2, 2)]),
+       (0, 2): set([(1, 0), (0, 2), (2, 1)])}
+      
+    """
+    edge_pairs = [ (x,y) 
+             for x in range(self.num_edges)
+             for y in range(self.num_edges) ]
+    orbits = dict( (p, set([p])) for p in edge_pairs )
+    for a in self.automorphisms():
+      for p in edge_pairs:
+        if p not in orbits:
+          continue
+        q = (a.pe[p[0]], a.pe[p[1]])
+        if q not in orbits:
+          continue
+        # "p" and "q" are in the same orbit, only keep the one
+        # with lower abs. value, and remove the other.
+        if p < q:
+          orbits[p].update(orbits[q])
+          del orbits[q]
+    return orbits
+
+
+  def endpoints(self, edgeno):
+    """Return the endpoints of `edge`, as a pair of `(v, pos)`
+    where `v` is the endpoint vertex index, and `pos` is the
+    attachment index of `edge` into the `Vertex` object
+    `self.vertices[v]`.
+
+    The pair `((v1, pos1), (v2, pos2))` is ordered such that `v1 < v2`.
+    """
+    return self.edges[edgeno].endpoints
+
+
+  def is_loop(self, edge):
+    """
+    Return `True` if `edge` is a loop (i.e., the two endpoint coincide).
+    """
+    return self.edges[edge].is_loop()
+\end{lstlisting}
+
 
 \paragraph{Printed representation.}
 On "Fatgraph" objects, both "__repr__" and "__str__" return the
