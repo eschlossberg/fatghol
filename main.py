@@ -127,18 +127,47 @@ parser = OptionParser(usage="""Usage: %prog [options] action [arg ...]
     """)
 parser.add_option("-n", "--silent",
                   action='store_true', dest='silent', default=False,
-                  help="No output. (Mainly used for timing the algorithm.)")
+                  help="No output. (Useful for timing the algorithm.)")
 parser.add_option("-L", "--latex",
                   action='store_true', dest='latex', default=False,
-                  help="Print Xy-Pic code to draw graphs.")
+                  help="Output results in LaTeX format.")
 parser.add_option("-o", "--output", dest="outfile", default=None,
-                  help="Output file for `vertices` action.")
+                  help="Output file for all actions.")
+parser.add_option("-O", "--feature", dest="features", default=None,
+                  help="Enable optional speedub or tracing features.")
 (options, args) = parser.parse_args()
 
 # print usage message if no args given
 if 0 == len(args) or 'help' == args[0]:
     parser.print_help()
     sys.exit(1)
+
+# enable optional features
+if options.features is not None:
+    features = options.features.split(",")
+    if 'pydb' in features:
+        try:
+            import pydb
+            sys.excepthook = pydb.exception_hook
+            logging.debug("PyDB enabled: exceptions will start a debugging session.")
+        except ImportError:
+            logging.warning("Could not import 'pydb' module - PyDB not enabled.")
+    if 'psyco' in features:
+        try:
+            import psyco
+            psyco.full()
+            logging.debug("Psyco enabled.")
+        except ImportError:
+            logging.warning("Could not import 'psyco' module - Psyco JIT accelerator not enabled.")
+    if 'profile' in features:
+        try:
+            import hotshot
+            pf = hotshot.Profile(__name__ + '.pf')
+            pf.start()
+            logging.debug("Started call profiling with 'hotshot' module.")
+        except ImportError:
+            logging.warning("Could not import 'hotshot' - call profiling *not* enabled.")
+            
 
 # disable logging when '--silent'
 if options.silent:
@@ -428,5 +457,18 @@ else:
     sys.stderr.write("Unknown action `%s`, aborting.\n" % args[0])
     sys.exit(1)
 
+# try to print profiling information, but ignore failures
+# (profiling might not have been requested, in the first place...)
+try:
+    pf.stop()
+    logging.debug("Stopped call profiling, now dumping stats.")
+    pf.close()
+    import hotshot.stats
+    stats = hotshot.stats.load(__name__ + '.pf')
+    stats.strip_dirs()
+    stats.sort_stats('cumulative', 'calls')
+    stats.print_stats(50)
+except:
+    pass
 
 logging.info("Done.")

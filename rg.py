@@ -10,9 +10,7 @@ import logging
 
 ## stdlib imports
 
-import debug, pydb, sys
-sys.excepthook = pydb.exception_hook
-
+import debug, sys
 from copy import copy
 from itertools import chain,count,izip
 
