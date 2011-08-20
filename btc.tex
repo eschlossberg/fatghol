@@ -366,7 +366,7 @@ which provides the first example of a braided monoidal category.
   $\bigcup_n B_n$ as morphisms, with the proviso that two braids  $a$ and
   $b$ compose iff they belong to the same $B_n$, i.e., they are formed
   by the same number of strings. From the arrows-only description of a
-  category (\csref{cha:arrows}), we can compute that the object
+  category (Chapter~\ref{cha:arrows}), we can compute that the object
   set of $\catBraid$ is the set of natural numbers $\setN$, and that 
   \begin{equation*}
     \catBraid(n,m) = \emptyset \text{ if $n\neq m$,} 
@@ -580,8 +580,8 @@ monoidal categories to be autonomous.
   Each left autonomous braided monoidal category is autonomous.  
 \end{proposition}
 \begin{proof}
-  By \csref{thm:rev}, we know that the identity induces a monoidal
-  isomorphism $\A \to \A\rev$; by \csref{thm:funct-dual} it preserves
+  By Theorem~\ref{thm:rev}, we know that the identity induces a monoidal
+  isomorphism $\A \to \A\rev$; by Theorem~\ref{thm:funct-dual} it preserves
   dualtity relations: if $A$ is left dual to $B$ in $\A$ through $\ev:
   A\otimes B \to I$ and $\coev: I\to B\otimes A$, then $A$ is left dual to $B$ in
   $\A\rev$ through
@@ -613,7 +613,7 @@ monoidal categories to be autonomous.
   \fk$. Let $\freemc{V}$ be the full subcategory of $\catVect$ which
   has tensor powers $V\tp{p}$ as objects; $\freemc{V}$ inherits a
   symmetric tensor structure from $\catVect$ (see
-  \csref{xmp:vec1}). For each $V\tp{p} \in \freemc{V}$ define maps
+  Example~\ref{xmp:vec1}). For each $V\tp{p} \in \freemc{V}$ define maps
   \begin{equation*}
     \ev: V\tp{p} \otimes V\tp{p} \ni (v_1, \ldots, v_p) \otimes (v'_1, \ldots, v'_p) \mapsto
     b(v_1, v'_1) \cdots b(v_p, v'_p) \in \fk \simeq I.
@@ -655,7 +655,7 @@ the following.
   balancing: $F\theta_A = \theta_{FA}$.
 \end{definition}
 
-By \csref{thm:rev}, a braiding $\tau$ determines a monoidal isomorphism
+By Theorem~\ref{thm:rev}, a braiding $\tau$ determines a monoidal isomorphism
 $F: \A \to \A\rev$; the inverse braiding $\tau'_{AB} := (\tau_{BA})\inv$
 induces another isomorphism $F': \A \to \A\rev$. A balancing $\theta$ is a
 natural equivalence between these two functors.\FIXME{Questo {\`e} l'unico

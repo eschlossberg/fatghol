@@ -26,7 +26,7 @@ corollary to the most general results of Reshetikhin and Turaev.
 However, proper statement of these requires quite a long preamble of
 category-related material; I would therefore just skim over the
 necessary definitions, and refer the interested reader to
-\csref{cha:btc} and~\ref{cha:rt} for precise statements, and to the
+Chapter~\ref{cha:btc} and~\ref{cha:rt} for precise statements, and to the
 foundational papers of Joyal and Street
 \cite{joyal-street;tensor-calculus, joyal-street;btc} for details,
 proofs, motivation and history.
@@ -34,7 +34,7 @@ proofs, motivation and history.
 As terminology in these matters is not (yet) generally agreed upon, I
 will adhere to nomenclature used by Joyal and Street in
 \cite{joyal-street;tensor-calculus, joyal-street;btc}. All relevant
-definitions are grouped in \csref{cha:btc}.
+definitions are grouped in Chapter~\ref{cha:btc}.
 
 
 \section{Graphical formalism for Symmetric Tensor Categories}
@@ -78,8 +78,8 @@ Let $\A$ be a symmetric autonomous tortile category. For an object $A
   \item an object of $\A$;
   \item a sign $\varepsilon_\ell$, that is, an orientation;
   \item a framing, that is, a map $N_\ell: [0,1] \to S^1$ such that
-    $N_\ell(0) = N_\ell(1) = 1$ (see \csref{sec:tortile} in
-    \csref{cha:btc} for motivation).
+    $N_\ell(0) = N_\ell(1) = 1$ (see Section~\ref{sec:tortile} in
+    Chapter~\ref{cha:btc} for motivation).
   \end{itemize}
   
   Additionally, each piece of type (f) is decorated by a morphism $f
@@ -104,11 +104,11 @@ signs $\epsilon_1$, \ldots, $\epsilon_r$, while the $s$ output strands are decor
 by objects $B_1$, \ldots, $B_s$ and signs $\eta_1$, \ldots, $\eta_s$.
 
 One can compose graph pieces $\Gamma_1$ and $\Gamma_2$ by stacking one on top
-of the other (see \csref{fig:gc-graph-composition}), if $\Src(\Gamma_1) =
+of the other (see Figure~\ref{fig:gc-graph-composition}), if $\Src(\Gamma_1) =
 \Tgt(\Gamma_2)$, i.e., the input legs of $\Gamma_1$ match the output legs of
 $\Gamma_2$ in number, color, orientation, and framing. The tensor product
 of two graph pieces $\Gamma_1$ and $\Gamma_2$ is defined by juxtaposition, as
-in \csref{fig:gc-graph-otimes}; note that no compatibility condition
+in Figure~\ref{fig:gc-graph-otimes}; note that no compatibility condition
 is required in this case. We have the following:
 \begin{align}
   \label{eq:src-comp-otimes}
@@ -123,7 +123,7 @@ is required in this case. We have the following:
 \end{align}
 
 We give the definition of the category of graphs in the arrows-only
-form (see \csref{cha:arrows}). 
+form (see Chapter~\ref{cha:arrows}). 
 \begin{definition}
   The $\A$-colored \emph{diagrams} category $\RTD[\A]$ is the category
   whose morphisms are generated from $\A$-colored elementary pieces
@@ -133,7 +133,7 @@ form (see \csref{cha:arrows}).
   
   The $\A$-colored \emph{graph} category $\RTE[\A]$ is the category
   whose set of morphisms is the quotient of $\Hom\RTD[\A]$ by the
-  Reidmeister-Reshetikhin-Turaev relations of \csref{fig:gc-rrt}.
+  Reidmeister-Reshetikhin-Turaev relations of Figure~\ref{fig:gc-rrt}.
 \end{definition}
 \begin{figure}[p]
   \centering\includegraphics{fig-001}
@@ -157,8 +157,8 @@ Let $\category{B}$ be a tensor category. A tensor functor
 $\RTD[\A]\to{\category{B}}$ is uniquely specified if we define it on the
 generators; it induces a tensor functor $\RTE[\A] \to \category{B}$ if
 it is compatible with relations (RRT1)--(RRT8) ---see
-\csref{fig:gc-rrt}.  In particular, taking $\category{B}=\A$ we find
-the following (see also \csref{thm:rt2} in \csref{cha:rt}).
+Figure~\ref{fig:gc-rrt}.  In particular, taking $\category{B}=\A$ we find
+the following (see also Theorem~\ref{thm:rt2} in Chapter~\ref{cha:rt}).
 \begin{theorem}[Reshetikhin-Turaev,
   \cite{reshetikhin-turaev;ribbon-graphs}]
   \label{thm:gc1}
@@ -253,7 +253,7 @@ more relation
 Since $\Hom\RTE[\A]$ is the set of all isotopy classes of RT-graphs
 embedded in 3-space, then $\Hom\RTG[\A]$ is the set of all (abstract)
 $1$-dimensional CW-complexes equipped with the additional data
-defining an $\A$-colored RT-graph (see \csref{cha:rt}), that is, for
+defining an $\A$-colored RT-graph (see Chapter~\ref{cha:rt}), that is, for
 each edge $\ell$:
 \begin{inparaenum}
 \item an object $A_\ell \in \A$,
@@ -269,7 +269,7 @@ and, finally, for each vertex $v$,
 Let $\A$ be a tortile autonomous symmetric tensor category. Then
 Reshetikhin-Turaev's graphical calculus induces a fully
 faithful\footnote{With the proviso that one should always choose the
-  inverses of the assignments in \csref{thm:gc1} for structure maps,
+  inverses of the assignments in Theorem~\ref{thm:gc1} for structure maps,
   e.g., for the braiding $\tau_{AB}$ one has to choose the
   representation as a ``crossing'' (see \textsl{(a)} below) and not
   the one as a ``vertex'' (see \textsl{(b)} below).
@@ -339,7 +339,7 @@ the particular realization chosen.
 
 Ribbon graphs arose in connection with a certain cellular
 decomposition of the moduli space of smooth complex curves (see
-\csref{sec:mgn-comb}). The connection is, very roughly, the following:
+Section~\ref{sec:mgn-comb}). The connection is, very roughly, the following:
 choose a ribbon graph $\Gamma$ of type $(0,0)$; one can use the cyclic
 order to ``fatten'' edges into thin ribbons --- so we turn the graph
 into a compact oriented surface with boundary $S(\Gamma)$.\FIXME{Tutto
@@ -398,7 +398,7 @@ the cyclic order induced by the total order on $\In(v)$ and $\Out(v)$:
   \item \label{M3} reverse orientation on edges;
   \item \label{M4} the first (resp. the last) edge in $\In(v)$ becomes
     the first (resp. the last) edge in $\Out(v)$ and vice-versa (see
-    \csref{fig:moving-edges-in-out}).
+    Figure~\ref{fig:moving-edges-in-out}).
   \end{enumerate}
 \end{lemma} 
 \begin{figure}
@@ -442,7 +442,7 @@ the cyclic order induced by the total order on $\In(v)$ and $\Out(v)$:
 
 Let $V$ be a vector space over $\fk$ equipped with a symmetric inner
 product $b\colon V\tp{2} \to \fk$. Construct the category $\btpc{V,b}$ as
-in \csref{sec:bosonic}; it is an autonomous tortile category and
+in Section~\ref{sec:bosonic}; it is an autonomous tortile category and
 $V\tp{p}$ is a self-dual object.
 \begin{definition}
   \label{dfn:rg-algebra}
@@ -454,7 +454,7 @@ More generally, one can define $\category{C}$-algebra structures, for
 any arbitrary tortile braided tensor category $\category{C}$.
 
 By definition, in any autonomous symmetric tensor category $\A$ there
-are natural isomorphisms (see \csref{sec:duality})
+are natural isomorphisms (see Section~\ref{sec:duality})
 \begin{equation}
   \label{eq:passing-up-and-down}
   \A(X\otimes Y, Z) \longleftrightarrow \A(X, Z\otimes\rdl{Y}),
@@ -482,7 +482,7 @@ In graphical notation, this reads:
       (1,2)*{Z}**\dir{-},%
       }\endxy}
 \end{equation*}
-Within $\btpc{V,b}$, maps in \csref{eq:passing-up-and-down} translate
+Within $\btpc{V,b}$, maps in formula~\ref{eq:passing-up-and-down} translate
 into linear isomorphisms:
 \begin{gather}
   \Hom(V\tp{p}\otimes V\tp{q}, V\tp{r}) \longleftrightarrow \Hom(V\tp{p},
@@ -508,10 +508,10 @@ for all $p,q,r \in \setZ$.
 Fix a cyclic algebra structure $\{T_r\}$ on $V$.  Each map $T_r$
 in turn defines linear maps $T_{p,q}\colon V\tp{p} \to V\tp{q}$, for all
 $p$ and $q$ such that $p+q=r$, via the isomorphisms
-\csref{eq:right-rot} and \csref{eq:left-rot}; cyclical
+formula~\ref{eq:right-rot} and formula~\ref{eq:left-rot}; cyclical
 invariance guarantees that $T_{p,q}$ does not depend on the
-particular sequence of isomorphisms \csref{eq:right-rot} and
-\csref{eq:left-rot}: any one yielding the right source and
+particular sequence of isomorphisms formula~\ref{eq:right-rot} and
+formula~\ref{eq:left-rot}: any one yielding the right source and
 target is good.
 \begin{remark}
   The tensors $T_r$ are \emph{generators} of the $\RG$-algebra
@@ -556,7 +556,7 @@ target is good.
   moves M1, M2. Since $V$ is self-dual, the graphical calculus
   $Z_{\btpc{V,b}}(\hat\Gamma_V)$ is independent of the orientation on the
   edges, i.e., it is invariant with respect to the move M1. Moreover
-  relations provided by \csref{eq:passing-up-and-down} give the
+  relations provided by formula~\ref{eq:passing-up-and-down} give the
   invariance of $Z_{\btpc{V,b}}(\hat\Gamma_V)$ with respect to moves of
   type M2:
   \begin{equation*}
@@ -649,7 +649,7 @@ algebra structure.
 \end{theorem}
 \begin{proof}
   A functor $Z\colon\SG\to\btpc{V,b}$ endows $V$ with a symmetric algebra
-  structure, as in the proof of \csref{thm:gc-cyc}.
+  structure, as in the proof of Theorem~\ref{thm:gc-cyc}.
   
   Conversely, assume we are given a cyclic algebra structure on $V$.
   Since the tensors $S_r$ are symmetric, they are, in particular,

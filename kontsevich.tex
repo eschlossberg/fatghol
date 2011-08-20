@@ -167,7 +167,7 @@ The intersection numbers of $\Mbar_{g,n}$ can be computed by choosing
 $N > 3g - 3 + n$; in the limit $N \to \infty$ we retrieve information on
 all moduli spaces. 
 
-The proof of \csref{thm:kontsevich} is broken up into a series of
+The proof of Theorem~\ref{thm:kontsevich} is broken up into a series of
 lemmas that will be proved in the rest of this chapter.
 
 
@@ -184,7 +184,7 @@ conjecture.
 
 \subsection{Combinatorial expression of Witten's classes}
 \label{sec:wittens-classes-comb}
-\FIXME{Tutta questa sezione pu{\`o} ridursi al solo \csref{thm:comb-bundle}?}
+\FIXME{Tutta questa sezione pu{\`o} ridursi al solo Theorem~\ref{thm:comb-bundle}?}
 Let $C_N$ be the cyclic group of order $N$. Define $B_N := \setR^N / C_N$
 to be the orbicell of sequences $[l_1, \ldots, l_N]$ of non-negative real
 numbers modulo cyclic permutations, endowed with the quotient
@@ -267,7 +267,7 @@ point $[\ell_{\alpha_1}, \ldots, \ell_{\alpha_N}] \in B_N \subseteq B$.
   $\Mbar_{g,n} \times \setR^n$. The inverse image of the bundle $E \to B$ under
   $b_j$ is naturally isomorphic to the $S^1$-bundle associated with
   the dual of the complex line bundle ${\Lb}_j$. The pull-back $\omega_j$ of
-  the form $\omega$ (defined in \csref{thm:comb-bundle}) under $b_j$
+  the form $\omega$ (defined in Theorem~\ref{thm:comb-bundle}) under $b_j$
   represents the class $c_1({\Lb}_j)$.
 \end{theorem}
 
@@ -401,7 +401,7 @@ particular case.
 
 A cyclic algebra structure will be introduced on the vector space
 $\Hermitian[N]$ of $N\times N$ Hermitian matrices, so that we can apply the
-general results of \csref{cha:fd} on Feynman diagrams.
+general results of Chapter~\ref{cha:fd} on Feynman diagrams.
 
 Let $V$ be an $N$-dimensional Hilbert space. The space $\End(V)$
 has a natural Hermitian inner product
@@ -564,7 +564,7 @@ graphs.
   with \eqref{eq:vertices}, we can conclude the proof.
 \end{proof}
 
-\begin{proof}[Proof of \csref{thm:kontsevich}]
+\begin{proof}[Proof of Theorem~\ref{thm:kontsevich}]
   Asymptotic expansions commute with the integral sign, therefore
   \begin{equation*}
     \int_{\Hn} \exp (\I/6 \cdot \tr X^3) \ud\mu_\Lambda(X) \asymp \sum_m
@@ -572,11 +572,11 @@ graphs.
       X^3/3)^m}. 
   \end{equation*}
   
-  By \csref{thm:FRT}, the $m$-th summand in the right-hand side
+  By Theorem~\ref{thm:FRT}, the $m$-th summand in the right-hand side
   can be expanded into a sum over (possibly non-connected) colored
   ribbon graphs with $m$ trivalent vertices. As $m$ ranges over
   non-negative integers, we get the exponential of the right-hand side
-  of \eqref{eq:KMI-F}, which completely proves \csref{thm:kontsevich}. 
+  of \eqref{eq:KMI-F}, which completely proves Theorem~\ref{thm:kontsevich}. 
 \end{proof}
 
 \begin{example}[The standard matrix model]
@@ -586,7 +586,7 @@ graphs.
       \Lambda_{c(\ell^-)}}
     = \sum_c 1 = N^{\card{\Holes{\Gamma}}}. 
   \end{equation*}
-  Therefore, according to \csref{thm:FRT},
+  Therefore, according to Theorem~\ref{thm:FRT},
   \begin{equation}
     \int_{\Hermitian[N]} \exp \left\{ \frac{1}{\hbar}\sum_{j=1}^{\infty}
       \frac{\tr X^j}{j}

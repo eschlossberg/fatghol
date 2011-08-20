@@ -71,7 +71,7 @@ a = 3.1415926 # a floating-point number
 \end{lstlisting}
 
 Multiple variables can be assigned at once, if the right-hand side is
-a list or tuple (see \csref{sec:lists} and~\ref{sec:tuples}). For
+a list or tuple (see Section~\ref{sec:lists} and~\ref{sec:tuples}). For
 example, the following code:
 \begin{codexmp}
   a, b, c = [1, 2, 3]
@@ -231,7 +231,7 @@ i.e., formal parameters that have not been specified in the function
 definition.  If the function signature ends with the special notation
 "**kwargs", then during each execution of the function body, the
 variable "kwargs" will be bound to a Python dictionary object (see
-\csref{sec:dicts}) mapping each parameter name to the actual value
+Section~\ref{sec:dicts}) mapping each parameter name to the actual value
 used in function invocation.  For example, assume "f" is a function
 defined this way:
 \begin{codexmp}
@@ -252,8 +252,8 @@ useful in conjunction with functions with a variable signature, which
 are however not mentioned here as they have not been used in the main
 code.)
 
-When "x" is a "list" or "tuple" object (see \csref{sec:lists} and
-\csref{sec:tuples}), the syntax "f(*x)" invokes function "f"
+When "x" is a "list" or "tuple" object (see Section~\ref{sec:lists} and
+Section~\ref{sec:tuples}), the syntax "f(*x)" invokes function "f"
 taking all its arguments from the list "x".  The number of items in
 "x" must match the number of formal arguments required by "f".  For
 example, if "x" is the list "[4, 2]", then "binomial(*x)" yields the
@@ -373,7 +373,7 @@ defines a method "__add__", then $x + y$ results in the method call
 $x$".__add__("$y$")".  The full list of special methods and their
 meaning is only available in the Python Language Reference
 \cite{python:reference}; the ones used in the listings of
-\csref{chap:algorithm} are:
+Chapter~\ref{chap:algorithm} are:
 \begin{basedescript}{
     \desclabelwidth{4em}
     \desclabelstyle{\nextlinelabel}
@@ -383,7 +383,7 @@ meaning is only available in the Python Language Reference
 \item[{\ttfamily \_\_getitem\_\_}] If $x$ has a method "__getitem__", then the
   look-up expression $x$"["$k$"]" is translated to the method call
   $x$".__getitem__("$k$")".
-\item[{\ttfamily \_\_init\_\_}] Instance initialization, see \csref{sec:classes}.
+\item[{\ttfamily \_\_init\_\_}] Instance initialization, see Section~\ref{sec:classes}.
 \item[{\ttfamily \_\_len\_\_}] Returns the length (number of elements) in a
   container.
 \item[{\ttfamily \_\_ne\_\_}] The opposite of "__eq__" (which see); if

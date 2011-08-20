@@ -31,7 +31,7 @@ direct approach to constructing a fatgraph complex by defining
 face operators through contraction of edges does not yield a
 simplicial complex: after a few contractions, loops appear, which
 cannot be contracted any more.  This mirrors the structure of Harer's
-$X - X_\infty$, as will be shown in \csref{sec:cell-structure}.
+$X - X_\infty$, as will be shown in Section~\ref{sec:cell-structure}.
 
 In contrast to the simpler method presented here, the techniques
 devised by Kontsevich are suitable to further generalization to any
@@ -384,8 +384,8 @@ orientation on $S$ induces the cyclic order at the vertices of $\iota(G)$.
 
 When confusion is likely to arise, we shall speak of \emph{abstract}
 fatgraphs, to mean the topological and combinatorial objects
-defined in \csref{dfn:fatgraphs}, as opposed to \emph{embedded}
-fatgraphs as in \csref{dfn:embedded-rg} below.
+defined in Definition~\ref{dfn:fatgraphs}, as opposed to \emph{embedded}
+fatgraphs as in Definition~\ref{dfn:embedded-rg} below.
 
 \begin{definition}\label{dfn:embedded-rg}
   An embedded fatgraph is a fatgraph $G$ endowed with a
@@ -454,7 +454,7 @@ We can give the topological Riemann surface $S(G)$ a complex analytic
 structure by means of the triangulation in \ref{lemma:S-functor}(b)
 and an analytic atlas.
 
-Recall that in \csref{lemma:S-functor}, a triangulation of the surface
+Recall that in Lemma~\ref{lemma:S-functor}, a triangulation of the surface
 $S(G)$ was defined, featuring a simplex $T_{\alpha^\pm}$ for each
 non-loop oriented edge, and two distinct simplexes for each oriented
 loop in $G$.
@@ -466,7 +466,7 @@ Define an atlas of $S(G)$:
   the two triangles having $\alpha$ as an edge.  Similarly, for each loop edge
   $\lambda$, construct domains $V_{\lambda'}$, $V_{\lambda''}$ from
   the two halves $\lambda'$, $\lambda''$ that $\lambda$ is cut into
-  in the construction of \csref{lemma:S-functor}.
+  in the construction of Lemma~\ref{lemma:S-functor}.
 \item For any boundary component $\beta \in \Holes{G}$, put $V_\beta := \bigl(
   \bigcup_{\alpha} T_\alpha^{(\beta)} \bigr)^\circ$, the interior part of the union of triangles
   bounded by all edges $\alpha$ bounding $\beta$.
@@ -555,7 +555,7 @@ $S(G, \ell)$.
 \begin{proof}
   When $f$ is an isomorphism that preserves the edge-lengths, it is
   clear that the homeomorphism $S(f)$ preserves the analytic atlas
-  given in \csref{sec:atlas}, so $S(f)$ turns out to be a complex
+  given in Section~\ref{sec:atlas}, so $S(f)$ turns out to be a complex
   analytic mapping.
 \end{proof}
 
@@ -564,7 +564,7 @@ $S(G, \ell)$.
 \label{sec:strebel}
 If $S$ is an $n$-punctured Riemann surface, then $S$ retracts onto a
 graph, however, this graph is not uniquely determined (see
-\csref{fig:sphere-retracts}).
+Figure~\ref{fig:sphere-retracts}).
 \begin{figure}[bt]
   %% Figura sphere3.fig
   \centering\includegraphics[width=\textwidth]{sfera3}
@@ -706,7 +706,7 @@ a direct system in $\category{Top}$, and we can form its direct limit.
 $\Tcomb_{g,n}$ is obtained by gluing topological simplices $\Delta(G)$ alongside
 the boundary: if $[G', \iota', \psi'_*]$ is obtained from $[G, \iota, \psi_*]$ by
 contraction of an edge $\alpha$, then $\Delta(G')$ is identified with the face
-of $\Delta(G)$ where $\ell_\alpha = 0$ by \csref{eq:embedding-cells}.
+of $\Delta(G)$ where $\ell_\alpha = 0$ by formula~\ref{eq:embedding-cells}.
 
 Points of the topological space $\Tcomb_{g,n}$ are (equivalence
 classes of) metrized embedded fatgraphs $[G, \iota, \psi_*, \ell]$, where $\ell
@@ -902,12 +902,12 @@ simplex $\{ b_* \in \setR^{n+1} | b_0 + \cdots + b_n = 1 \}$.
   There exists a $\Gamma_{g,n}$-equivariant homeomorphism $\Phi: \T_{g,n} \times
   \Delta^n \to |X - X_\infty|$.
 \end{theorem}
-This is infact another application of \csref{thm:JS}.  We only sketch
+This is infact another application of Theorem~\ref{thm:JS}.  We only sketch
 part of the proof here in order to highlight the features needed in the
 sequel. 
 
 Given a marked complex analytic curve $S$ and barycentric coordinates
-$b_0 + \cdots + b_n = 1$, by Jenkins-Strebel's \csref{thm:JS} there is a
+$b_0 + \cdots + b_n = 1$, by Jenkins-Strebel's Theorem~\ref{thm:JS} there is a
 quadratic differential $q$ that has poles at the marked points $\{ x_1,
 \ldots, x_n \}$ such that its second residue at $x_i$ is $b_i$.
 
@@ -959,7 +959,7 @@ that they cross transversely.
   Let $U = [u_1, \ldots, u_k] \in X - X_\infty$ be an arc-system on the Riemann
   surface $S_{g,n}$.  Any choice of barycentric coordinates $b_0 + \cdots +
   b_k = 1$ identifies a point in the associated geometric
-  symplex $|U| \subseteq |X - X_\infty|$; by the proof of Harer's \csref{thm:H}
+  symplex $|U| \subseteq |X - X_\infty|$; by the proof of Harer's Theorem~\ref{thm:H}
   this corresponds to a complex analytic structure on $S_{g,n}$ (a
   point in $\T_{g,n} \times \Delta^n$) determined by a quadratic differential $q
   = q(u, b_*)$, such that each arc $u_i$ is a regular curve in the
@@ -971,7 +971,7 @@ that they cross transversely.
   Conversely, suppose initially that $G$ has no loops.  Let ${\tilde
     G}$ be a fatgraph embedded in the surface $S = S(G)$.  Break up
   $S$ into closed triangles $\{ T_\alpha \}$ as in
-  \csref{lemma:S-functor}(b).  Form the dual graph to ${\tilde G}$:
+  Lemma~\ref{lemma:S-functor}(b).  Form the dual graph to ${\tilde G}$:
   for each $\{ T_{\alpha^\pm} \}$, let $u_\alpha^\pm$ be the arc
   connecting the midpoint of $\alpha \in \Edges{{\tilde G}}$ to the
   vertex of $T_{\alpha^\pm}$ opposite to $\alpha$, and let $u_\alpha$
@@ -1008,7 +1008,7 @@ then an order of the edges of ${\tilde G}$ is induced.
 
   Now let ${\tilde G}$ be an embedded fatgraph having a loop $\lambda \in
   \Edges{G}$, and let $U = \langle u_1, \ldots, u_k\rangle$ be the arc-system simplex
-  corresponding to ${\tilde G}$ according to \csref{lemma:arcs-to-rg}.
+  corresponding to ${\tilde G}$ according to Lemma~\ref{lemma:arcs-to-rg}.
   Contraction of $\lambda$ in ${\tilde G}$ is not admissible, as it would
   change the genus and/or the puncture number of ${\tilde G}$;
   correspondingly, if $U'$ is the face of $U$ obtained by omitting the
@@ -1028,7 +1028,7 @@ then an order of the edges of ${\tilde G}$ is induced.
   edge, and the PL isomorphism $|U| \isoarrow T({\tilde G})$ restricts
   to $|U'| \isoarrow T({\tilde G}')$ on the faces.
 \end{lemma}
-By \csref{lemma:PL-face}, the face operators on the two set of
+By Lemma~\ref{lemma:PL-face}, the face operators on the two set of
 simplices are compatible with this PL isomorphism, so we can glue
 isomorphisms $|\langle u_*\rangle| \to |G|$ to form a PL isomorphism $|X - X_\infty| \to
 \Tcomb_{g,n}$.
@@ -1133,7 +1133,7 @@ setting $\alpha_1 < \ldots < \alpha_p$.
   brevity, put $\Gamma := \Gamma_{g,n}$, $\T := \T_{g,n}$ and $\Tcomb :=
   \Tcomb_{g,n}$.  
 
-  By \csref{thm:HMT}, we have:
+  By Theorem~\ref{thm:HMT}, we have:
   \begin{equation*}
     H^\Gamma_*(\T, \setQ) = H^\Gamma_*(\Tcomb, \setQ). 
   \end{equation*}
@@ -1147,7 +1147,7 @@ setting $\alpha_1 < \ldots < \alpha_p$.
   cellularization with cells indexed by embedded fatgraphs of
   genus $g$ with $n$ numbered boundary components.  Let $R_p$ be a set
   of representatives for the orbits of $p$-cells under the action of
-  $\Gamma$.  By \csref{lemma:penner-kontsevich-bridge}, $R_p$ is in
+  $\Gamma$.  By Lemma~\ref{lemma:penner-kontsevich-bridge}, $R_p$ is in
   bijective correspondence with the set of abstract fatgraphs
   having $p$ edges, and the orientation of a cell translates directly
   to an orientation of the corresponding graph.  For each geometric
@@ -1157,7 +1157,7 @@ setting $\alpha_1 < \ldots < \alpha_p$.
   element $\Delta$ on which $\Gamma_{\tilde G}$ acts by the orientation
   character: $\tau \cdot \Delta = \pm \Delta$ depending on whether $\tau$ preserves or
   reverses the orientation of the cell $T{\tilde G}$.  By
-  \csref{lemma:isotropy}, there is an isomorphism between $\Gamma_{\tilde
+  Lemma~\ref{lemma:isotropy}, there is an isomorphism between $\Gamma_{\tilde
       G}$ and $\Aut G$; if $\tau \in \Gamma_{\tilde G}$ reverses
   (resp.~preserves) orientation of $T{\tilde G}$, then the
   corresponding $f \in \Aut G$ reverses (resp.~preserves) orientation on
@@ -1204,7 +1204,7 @@ setting $\alpha_1 < \ldots < \alpha_p$.
 
   Finally, we show that the differential $d^1: E^1_{p,0} \to E^1_{p-1,
     0}$ corresponds to the differential $D: W_p \to W_{p-1}$ under the
-  isomorphism \csref{eq:11}; this will end the proof.  Indeed, we
+  isomorphism formula~\ref{eq:11}; this will end the proof.  Indeed, we
   shall prove commutativity of the following diagram at the chain
   level:
   \begin{equation}
