@@ -657,10 +657,29 @@ class Fatgraph(object):
           >>> g4 = g.connect(1, 0, 0, 1)
           >>> g2 == g4
           True
+
+        Examples::
+        
+        1) Connecting different sides of the same edge may yield
+        different results::
+        
+          >>> g.connect(0, 0, 1, 0)  == Fatgraph([Vertex([0,1,2]), Vertex([4,2,5]), Vertex([0,4,3]), Vertex([1,5,3])])
+          True
+          
+          >>> g.connect(0, 1, 1, 0) == Fatgraph([Vertex([0,1,2]), Vertex([4,2,5]), Vertex([4,0,3]), Vertex([1,5,3])])
+          True
+
+        2) One can connect an edge to itself on different sides::
+        
+          >>> g.connect(0, 0, 0, 1) == Fatgraph([Vertex([0,1,2]), Vertex([5,2,1]), Vertex([0,4,3]), Vertex([5,4,3])])
+          True
+
+        3) And also with both ends on the same side::
+        
+          >>> g.connect(0, 0, 0, 0) == Fatgraph([Vertex([0,1,2]), Vertex([5,2,1]), Vertex([0,4,3]), Vertex([4,5,3])])
+          True
           
         """
-        assert edge1 != edge2, \
-               "Fatgraph.connect: `edge1` and `edge2` must be different."
         assert side1 in [0,1], \
                "Fatgraph.connect: Invalid value for `side1`: '%s' - should be 0 or 1" % side1
         assert side2 in [0,1], \
@@ -678,8 +697,14 @@ class Fatgraph(object):
         ## `midpoint1` new vertex to `v1b`.
         one_half1 = edge1
         other_half1 = self.num_edges + 1
-        ## break `edge2` in two halves; see above.
-        one_half2 = edge2
+        ## break `edge2` in two halves; if `edge2` is the same edge as
+        ## `edge1`, then we are breaking the second half of `edge1` in
+        ## two parts.  Otherwise, proceed as above.  In any case, the
+        ## "other half" of `edge2` needs a new edge index.
+        if edge2 == edge1:
+            one_half2 = other_half1
+        else:
+            one_half2 = edge2
         other_half2 = self.num_edges + 2
 
         ## assign new vertex indices
@@ -703,27 +728,39 @@ class Fatgraph(object):
         new_endpoints_v = self.endpoints_v + [(midpoint1_index, midpoint2_index)]
         new_endpoints_i = self.endpoints_i + [(2,2)]
         
-        # replace `edge1` with new `other_half1` in the second endpoint
         (v1a, v1b) = self.endpoints_v[edge1]
         (pos1a, pos1b) = self.endpoints_i[edge1]
-        new_vertices[v1b] = self._vertextype(new_vertices[v1b][:pos1b]
-                                             + [other_half1]
-                                             + new_vertices[v1b][pos1b+1:])
-
         new_endpoints_v[one_half1] = (v1a, midpoint1_index)
         new_endpoints_i[one_half1] = (pos1a, side1)
-        new_endpoints_v.append((midpoint1_index, v1b))  # other_half1
-        new_endpoints_i.append((opposite_side1, pos1b)) # other_half1
+        if edge1 != edge2:
+            # replace `edge1` with new `other_half1` in the second endpoint
+            new_vertices[v1b] = self._vertextype(new_vertices[v1b][:pos1b]
+                                                 + [other_half1]
+                                                 + new_vertices[v1b][pos1b+1:])
+            new_endpoints_v.append((midpoint1_index, v1b))  # other_half1
+            new_endpoints_i.append((opposite_side1, pos1b)) # other_half1
+        else:
+            # same edge, "other half" ends at the second endpoint
+            new_endpoints_v.append((midpoint1_index, midpoint2_index))
+            new_endpoints_i.append((opposite_side1, side2)) 
 
-        # replace `edge2` with new `other_half2` in the second endpoint
+        # replace `edge2` with new `other_half2` in the second
+        # endpoint; again we need to distinguish the special case when
+        # `edge1` and `edge2` are the same edge.
         (v2a, v2b) = self.endpoints_v[edge2]
         (pos2a, pos2b) = self.endpoints_i[edge2]
+        if edge1 != edge2:
+            new_endpoints_v[one_half2] = (v2a, midpoint2_index)
+            new_endpoints_i[one_half2] = (pos2a, side2)
+        else:
+            # `edge1 == edge2`, so `one_half2 == other_half1`
+            new_endpoints_v[one_half2] = (midpoint1_index, midpoint2_index)
+            new_endpoints_i[one_half2] = (opposite_side1, side2)
+        # "other half" of second edge *always* ends at the previous
+        # edge endpoint, so replace `edge2` in `v2b`.
         new_vertices[v2b] = self._vertextype(new_vertices[v2b][:pos2b]
                                              + [other_half2]
                                              + new_vertices[v2b][pos2b+1:])
-
-        new_endpoints_v[one_half2] = (v2a, midpoint2_index)
-        new_endpoints_i[one_half2] = (pos2a, side2)
         new_endpoints_v.append((midpoint2_index, v2b))  # other_half2
         new_endpoints_i.append((opposite_side2, pos2b)) # other_half2
 
