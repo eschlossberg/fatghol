@@ -99,70 +99,6 @@ def enumerate_set_product(p):
                     break
 
 
-def is_sequence_of_type(t, seq):
-    """Return `True` if all items of sequence `s` are of type `t`.
-
-    Examples::
-      >>> is_sequence_of_type(types.IntType, [1,2,3])
-      True
-      >>> is_sequence_of_type(types.IntType, [1,2,"xxx"])
-      False
-      >>> is_sequence_of_type(types.StringType, ["xxx","yyy"])
-      True
-    """
-    def is_type_t(item):
-        return (type(item) is t)
-    return reduce(operator.and_, map(is_type_t, seq), True)
-
-
-def is_sequence_of_integers(seq):
-    """Return `True` if all items of sequence `s` are of type `IntType`.
-
-    Examples::
-      >>> is_sequence_of_integers([1,2,3])
-      True
-      >>> is_sequence_of_integers([1,2,"xxx"])
-      False
-    """
-    return is_sequence_of_type(types.IntType, seq)
-
-
-def partitions(N,K):
-    """Return the list of partitions of a set with `N` elements into at most `K` parts.
-    """
-    if K == 1:
-        if N >= 3:
-            return [[N]]
-        else:
-            return []
-    result = []
-    for k in range(3,N-2):
-        for p in partitions(N-k,K-1):
-            result.append([k]+p)
-    return result
-
-
-def permutations(l, n=None):
-    """Iterate over all possible permutations of `n` symbols in a row of length `l`.
-
-    If `n` is not specified, it is taken to be equal to `l`.
-
-    Examples::
-      >>> list(permutations(1,5))
-      [[1], [2], [3], [4], [5]]
-      >>> list(permutations(2))
-      [[1, 2], [2, 1]]
-    """
-    if n is None:
-        n = l
-    for s0 in range(1,n+1):
-        if 1 == l:
-            yield [s0]
-        else:
-            for s1 in permutations(l-1,n-1):
-                yield [s0] + tr_inplace(s1, [s0], [n])
-
-
 def positive_int(arg):
     """Convert a string or number to a positive integer, if possible.
     Behaves just like the built-in `int` (which see), and additionally
@@ -173,6 +109,26 @@ def positive_int(arg):
     if result <= 0:
         raise ValueError("non-positive integer literal: %d" % result)
     return result
+
+
+class itranslate:
+    """Perform substitutions on a iterable, just like `str.translate`.
+    """
+    def __init__(self, subst, iterable):
+        self.mappings = subst
+        self.iterable = iterable
+    def __iter__(self):
+        return self
+    def next(self):
+        while True:
+            next = self.iterable.next()
+            if not self.mappings.has_key(next):
+                return next
+            translated = self.mappings[next]
+            if translated is None:
+                # skip this item
+                continue
+            return translated
 
 
 def _tr(elt, t1, t2):
@@ -222,6 +178,7 @@ def tr_inplace(s, t1, t2):
     for i in xrange(len(s)):
         s[i] = _tr(s[i], t1, t2)
     return s
+
 
 
 ## main: run tests
