@@ -53,6 +53,12 @@ class Vertex(CyclicList):
     #   2) we could not implement `rotate()` and friends: tuples are
     #      immutable.
 
+    __slots__ = [ '_num_loops' ]
+
+    def __init__(self, seq=None):
+        self._num_loops = None
+        CyclicList.__init__(self, seq)
+        
     def __cmp__(self, other):
         """Return negative if x<y, zero if x==y, positive if x>y.
         Unlike standard Python sequence comparison, vertices with
@@ -145,7 +151,19 @@ class Vertex(CyclicList):
             self.rotate(r)
         return self
 
-
+    def num_loops(self):
+        """Return the number of loops attached to this vertex."""
+        if self._num_loops is None:
+            seen = {}
+            loops = 0
+            for x in xrange(len(self)):
+                if self[x] in seen:
+                    loops += 1
+                else:
+                    seen[self[x]] = True
+            self._num_loops = loops
+        return self._num_loops
+                
 class Graph(object):
     """A fully-decorated ribbon graph.
 
@@ -402,7 +420,7 @@ class Graph(object):
                 # between graphs `self` and `other`
                 try:
                     # if there is any morphism, then return `True`
-                    self.isomorphisms_to(other).next()
+                    self.isomorphisms(other).next()
                     self._fasteq_cache[args] = True
                 except StopIteration:
                     # list of morphisms is empty, graphs are not equal.
@@ -446,10 +464,10 @@ class Graph(object):
     def automorphisms(self):
         """Enumerate automorphisms of this `Graph` object.
 
-        See `.isomorphisms_to()` for details of how a `Graph`
+        See `.isomorphisms()` for details of how a `Graph`
         isomorphism is represented.
         """
-        return self.isomorphisms_to(self)
+        return self.isomorphisms(self)
 
     
     def boundary_components(self):
@@ -915,7 +933,7 @@ class Graph(object):
         # no orientation reversing automorphism found
         return True
 
-    def isomorphisms_to(self, other):
+    def isomorphisms(self, other):
         """Iterate over isomorphisms from `self` to `other`.
 
         An isomorphism is represented by a tuple `(pv, rot, pe)` where:
@@ -931,23 +949,22 @@ class Graph(object):
         graph::
 
           >>> g1 = Graph([Vertex([2, 1, 1]), Vertex([2, 0, 0])])
-          >>> for f in g1.isomorphisms_to(g1): print f
-          ({0: 1, 1: 0}, (0, 0), {0: 1, 1: 0, 2: 2})
-          ({0: 0, 1: 1}, (0, 0), {0: 0, 1: 1, 2: 2})
+          >>> for f in g1.isomorphisms(g1): print f
+          ({0: 1, 1: 0}, [0, 0], {0: 1, 1: 0, 2: 2})
+          ({0: 0, 1: 1}, [0, 0], {0: 0, 1: 1, 2: 2})
 
         Or it can find the isomorphisms between two given graphs::
 
-          >>> for f in g1.isomorphisms_to(Graph([Vertex([2, 2, 0]), \
-                                                 Vertex([1, 1, 0])])):
-          ...   print f
-          ({0: 1, 1: 0}, (1, 1), {0: 2, 1: 1, 2: 0})
-          ({0: 0, 1: 1}, (1, 1), {0: 1, 1: 2, 2: 0})
+          >>> g2 = Graph([Vertex([2, 2, 0]), Vertex([1, 1, 0])])
+          >>> for f in g1.isomorphisms(g2): print f
+          ({0: 1, 1: 0}, [1, 1], {0: 2, 1: 1, 2: 0})
+          ({0: 0, 1: 1}, [1, 1], {0: 1, 1: 2, 2: 0})
 
         If there are no isomorphisms connecting the two graphs, then no
         item is returned by the iterator::
 
-          >>> g2 = Graph([Vertex([2, 1, 0]), Vertex([2, 0, 1])])
-          >>> list(g1.isomorphisms_to(g2))
+          >>> g3 = Graph([Vertex([2, 1, 0]), Vertex([2, 0, 1])])
+          >>> list(g1.isomorphisms(g3))
           []
 
         """
@@ -959,77 +976,80 @@ class Graph(object):
         
         # save valences as we have no guarantees that keys() method
         # will always return them in the same order
-        valences = vs1.keys()
+        vsk = vs1.keys()
 
-        assert set(valences) == set(vs2.keys()), \
-               "Graph.isomorphisms_to: "\
+        assert set(vsk) == set(vs2.keys()), \
+               "Graph.isomorphisms: "\
                " graphs `%s` and `%s` differ in vertex valences: `%s` vs `%s`" \
-               % (self, other, valences, vs2.keys())
-        assert dict((val, len(vs1[val])) for val in valences) \
-               == dict((val, len(vs2[val])) for val in valences), \
-               "Graph.isomorphisms_to: graphs `%s` and `%s`" \
+               % (self, other, vsk, vs2.keys())
+        assert dict((val, len(vs1[val])) for val in vsk) \
+               == dict((val, len(vs2[val])) for val in vsk), \
+               "Graph.isomorphisms: graphs `%s` and `%s`" \
                " have unequal vertex distribution by valence: `%s` vs `%s`" \
                % (self, other, vs1, vs2)
-        
-        # it's easier to compute vertex-preserving permutations
-        # starting from the order vertices are given in the valence
-        # spectrum; will rearrange them later.
-        domain = Permutation(concat([ vs1[val] for val in valences ])).inverse()
-        codomain = Permutation()
-        codomain.update(dict(concat(zip(vs1[val],vs2[val]) for val in valences)))
-        permutations_of_vertices_of_same_valence = [
-            [ tuple(codomain.itranslate(p))
-              for p in InplacePermutationIterator(vs1[val]) ]
-            for val in valences
-            ]
 
-        #: Permutations of the vertex order that preserve valence.
-        candidate_pvs = [
-            domain.rearrange(concat(ps))
+        src_indices = concat([ vs1[val] for val in vsk ])
+        permutations_of_vertices_of_same_valence = [
+            [ p[:] for p in InplacePermutationIterator(vs2[val]) ]
+            for val in vsk
+            ]
+        dst_index_permutations = [
+            concat(ps)
             for ps
             in SetProductIterator(permutations_of_vertices_of_same_valence)
             ]
 
-        # use "repetition patterns" to avoid mapping loop-free
-        # vertices into vertices with loops, and viceversa.
-        # FIXME: as loop-free vertices are much more common than
-        # looped ones, this might turn out to be slower than just
-        # checking all possible rotations.  Maybe just check
-        # the number of loops instead of building the full repetition pattern?
-        rps1 = [ v.repetition_pattern() for v in self.vertices ]
-        rps2 = [ v.repetition_pattern() for v in other.vertices ]
-        for vertex_index_map in candidate_pvs:
-            pvrots = [ [] for x in xrange(len(self.vertices)) ]
-            for (j, (b1, rp1), (b2, rp2)) \
-                    in izip(count(),
-                            rps1,
-                            (rps2[i] for i in vertex_index_map)):
-                # Items in pvrots are lists (of length
-                # `self.num_vertices`), composed of tuples
-                # `(i1,b1+s,i2,b2)`, meaning that vertex at index
-                # `i1` in `self` should be mapped to vertex at index
-                # `i2` in `other` with shift `s` and bases `b1` and `b2`
-                # (that is, `self.vertices[i1][b1+s:b1+s+len]` should be
-                # mapped linearly onto `other.vertices[i2][b2:b2+len]`).
-                # `rp1` is a kind of "derivative" of `v1`; we gather
-                # the displacement `b1+s` for `v1` by summing elements
-                # of rp1 up to -but not including- the `s`-th.
-                pvrots[j].extend([ (j,b1+sum(rp1[:s]),vertex_index_map[j],b2)
-                                   for s
-                                   in rp1.all_shifts_for_linear_eq(rp2) ])
-            for pvrot in SetProductIterator(pvrots):
+        ## Build a list of vertex-to-vertex mappings; each of these
+        ## mappings is a list of pairs `(i1, i2)`, where `i1` is a
+        ## vertex index in `g1` and `i2` is a vertex index in `g2`.
+        ## Vertices `i1` and `i2` have the same valence, and they must
+        ## also agree on secondary invariants, like the number of
+        ## loops.
+
+        # use number of attached loops as a secondary invariant
+        loops1 = [ v.num_loops() for v in self.vertices ]
+        loops2 = [ v.num_loops() for v in other.vertices ]
+
+        n = self.num_vertices
+        candidate_pvs = []
+        for dst_indices in dst_index_permutations:
+            vertex_mapping_is_good_candidate = True
+            # each `dsts` is a permutation of the vertex indices of `g2`
+            for i in xrange(n):
+                if loops1[src_indices[i]] != loops2[dst_indices[i]]:
+                    # cannot map `src` into `dst`, proceed to next `i`
+                    vertex_mapping_is_good_candidate = False
+                    break
+            if vertex_mapping_is_good_candidate:
+                candidate_pvs.append(Permutation(dict((src_indices[i], dst_indices[i])
+                                                      for i in xrange(n))))
+
+        ## Browse the list of vertex-to-vertex mappings; for each one, check:
+        ##   1. that it induces a permutation on the edge colors;
+        ##   2. that this permutation preserves the adjacency list;
+        ##   3. if there is a numbering on the boundary cycles, that it is
+        ##      preserved by the induced mapping.
+
+        dst_valences = [ len(v) for v in other.vertices ]
+        rots = [ range(val) for val in dst_valences ]
+        for pv in candidate_pvs:
+            # try mapping vertices with every possible rotation
+            # vertex at index `i1` in `self` should be mapped to
+            # vertex at index `i2` in `other` with shift `rot[i2]`
+            # (that is, `self.vertices[i1][0:len]` should be mapped
+            # linearly onto `other.vertices[i2][rot:rot+len]`).
+            for rot in SetProductIterator(rots):
                 pe = Permutation()
-                pe_is_ok = True  # optimistic default
-                for (i1,b1,i2,b2) in pvrot:
-                    v1 = self.vertices[i1]
-                    v2 = other.vertices[i2]
-                    if not pe.extend(v1[b1:b1+len(v1)],
-                                     v2[b2:b2+len(v2)]):
-                        # cannot extend, proceed to next `pvrot`
+                pe_is_ok = True  # optimistic start
+                for (src, dst) in pv.iteritems():
+                    shift = rot[dst]
+                    v1 = self.vertices[src]
+                    v2 = other.vertices[dst][shift:shift+dst_valences[dst]]
+                    if not pe.extend(v1, v2):
+                        # cannot extend, proceed to next `rot`
                         pe_is_ok = False
                         break
                 if pe_is_ok and (len(pe) > 0):
-                    pv = Permutation(t[2] for t in pvrot)
                     # Check that the combined action of `pv` and `pe`
                     # preserves the adjacency relation.  Note:
                     #   - we make list comprehensions of both adjacency lists
@@ -1042,10 +1062,10 @@ class Graph(object):
                                   for x in xrange(other.num_edges) ],
                                 [ set(pv.itranslate(self.endpoints[x]))
                                   for x in xrange(self.num_edges) ]):
-                        continue # to next `pvrot`
+                        continue # to next `rot`
                     if self.numbering is not None:
                         assert other.numbering is not None, \
-                               "Graph.isomorphisms_to: " \
+                               "Graph.isomorphisms: " \
                                "Numbered and un-numbered graphs mixed in arguments."
                         pe_does_not_preserve_bc = False
                         for bc in self.boundary_components():
@@ -1054,9 +1074,8 @@ class Graph(object):
                                 pe_does_not_preserve_bc = True
                                 break
                         if pe_does_not_preserve_bc:
-                            continue # to next `pvrot`
-                    rots = tuple(t[1]-t[3] for t in pvrot)
-                    yield (pv, rots, pe)
+                            continue # to next `rot`
+                    yield (pv, rot, pe)
 
     def numbering_get(self):
         """Return the numbering previously set on this instance via
@@ -1074,10 +1093,10 @@ class Graph(object):
           >>> g0 = Graph([Vertex([1,2,0]), Vertex([1,0,2])])
           >>> bc = g0.boundary_components()  # three b.c.'s
           >>> g0.numbering_set(enumerate(bc))
-          >>> g0.numbering_get()           \
-              == { (2, CyclicTuple((0, 2))), \
-                   (0, CyclicTuple((1, 0))), \
-                   (1, CyclicTuple((2, 1))) ]
+          >>> g0.numbering_get()             \
+              == { CyclicTuple((0, 2)): 2, \
+                   CyclicTuple((1, 0)): 0, \
+                   CyclicTuple((2, 1)): 1  }
           True
 
         When two boundary components are represented by the same edge
@@ -1153,7 +1172,7 @@ class Graph(object):
                " called with non-Graph argument `other`: %s" % other
         try:
             # if there is any morphism, then return `True`
-            iso = self.isomorphisms_to(other).next()
+            iso = self.isomorphisms(other).next()
             pv = iso[0]
             result = pv.sign()
             for (e0, e1) in [ (pv[e[0]], pv[e[1]])
@@ -1434,21 +1453,7 @@ class GivenValenceGraphsIterator(object):
             if not (current.is_canonical() and current.is_connected()):
                 continue
             
-            # now walk down the list and remove isomorphs
-            current_is_not_isomorphic_to_already_found = True
-            for candidate in self.graphs:
-                # if there is any isomorphism, then reject current
-                try:
-                    candidate.isomorphisms_to(current).next()
-                    # if we get here, an isomorphism has been found,
-                    # so try again with a new `current` graph
-                    current_is_not_isomorphic_to_already_found = False
-                    break
-                except StopIteration:
-                    # no isomorphism has been found, try with next
-                    # `candidate` graph
-                    pass
-            if current_is_not_isomorphic_to_already_found:
+            if not current in self.graphs:
                 self.graphs.append(current)
                 return current
             # otherwise, continue with next `current` graph
