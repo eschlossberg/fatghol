@@ -433,6 +433,8 @@ class Permutation(dict):
 
 @cache1
 def _factorial(n):
+    assert isinstance(n, (int, long)), \
+           "_factorial(): argument `%s` is no `int` nor `long`" % n
     if n < 2:
         return 1
     else:
@@ -467,6 +469,11 @@ class PermutationList(object):
       """
     def __init__(self, order):
         self.__order = order
+        self.__base_set = set(range(order))
+
+    def __contains__(self, item):
+        return len(item) == self.__order and set(item) == self.__base_set
+        
     def __getitem__(self, r):
         """Return permutation at `r`-th place."""
         n = self.__order
@@ -481,6 +488,7 @@ class PermutationList(object):
             perm[i+1 : i+j+1] = perm[i : i+j]
             perm[i] = temp
         return perm
+    
     def __len__(self):
         return _factorial(self.__order)
 
