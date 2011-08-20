@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 #
-"""
+"""Classes and functions to deal with ribbon graphs.
 """
 __docformat__ = 'reStructuredText'
 
@@ -212,7 +212,7 @@ class Graph(object):
                     continue
                 # append `(destination vertex, rotation shift)` to
                 # candidate destinations list
-                for delta in rp[i].all_shifts_for_list_eq(rp[j]):
+                for delta in rp[i].all_shifts_for_linear_eq(rp[j]):
                     candidates[i].append((j,delta))
 
         ## pass 2: for each vertex, pick a destination and return the resulting
@@ -340,12 +340,12 @@ class Graph(object):
             # note that q is now in its home position
             # whether or not an interchange was required
             return s
-        return reduce(operator.mul,
-                      [ sign_of_rotation(l,r)
-                        for l,r in
-                        ([ len(v) for v in self.vertices],
-                         automorphism[1]) ],
-                      sign_of_permutation(automorphism[0]))
+        return (-1 == reduce(operator.mul,
+                             [ sign_of_rotation(l,r)
+                               for l,r in
+                               izip([ len(v) for v in self.vertices],
+                                    automorphism[1]) ],
+                             sign_of_permutation(automorphism[0])))
 
     def is_canonical(self):
         """Return `True` if this `Graph` object is canonical.
@@ -490,6 +490,94 @@ class Graph(object):
         return self._valence_spectrum
         
 
+class MorphismIteratorFactory(object):
+    __slots__ = (
+        '_allowable_permutations',
+        '_permutation_domain',
+        )
+    def __init__(self, valence_spectrum):
+        (self._allowable_permutations, self._permutation_domain) \
+                                   = MorphismIteratorFactory.allowable_vertex_permutations(valence_spectrum)
+
+    def __call__(self, g1, g2):
+        """Return iterator over all candidate mappings from `g1` to `g2`.
+
+        Items of the iteration are lists (of length
+        `g1.num_vertices()`), composed of tuples `(i1,b1,i2,b2,s)`,
+        meaning that vertex at index `i1` in `g1` should be mapped to
+        vertex at index `i2` in `g2` with shift `s` and bases `b1` and
+        `b2` (that is, `g1.vertices[i1][b1+s:b1+s+len]` should be
+        mapped linearly on `g2.vertices[i2][b2:b2+len]`).
+        """
+        rps1 = [ v.repetition_pattern() for v in g1.vertices ]
+        rps2 = [ v.repetition_pattern() for v in g2.vertices ]
+        for vertex_index_map in self._allowable_permutations:
+            dests = [ [] ] * len(g1.vertices)
+            for i1,i2 in izip(self._permutation_domain, vertex_index_map):
+                (b1, rp1) = rps1[i1]
+                (b2, rp2) = rps2[i2]
+                # rp1 is a kind of "derivative" of v1; we gather the 
+                # displacement for v1 by summing elements of rp1 up to
+                # -but not including- `rp_shift`.
+                dests[i1] = dests[i1] + [ (i1,b1,i2,b2,sum(rp1[:s])) for s
+                                          in rp1.all_shifts_for_linear_eq(rp2) ]
+            for perm in enumerate_set_product(dests):
+                effective = Mapping()
+                effective_is_ok = True
+                for (i1,b1,i2,b2,shift) in perm:
+                    v1 = g1.vertices[i1]
+                    v2 = g2.vertices[i2]
+                    if not effective.extend(v1[b1+shift:b1+shift+len(v1)],v2[b2:b2+len(v2)]):
+                        # cannot extend, proceed to next `perm`
+                        effective_is_ok = False
+                        break
+                if effective_is_ok and (len(effective) > 0):
+                    # then `perm` really defines a graph morphism between `g1` and `g2`
+##                     print "DEBUG: found isomorphism of %s and %s:" % (g1, g2)
+##                     for (i1,b1,i2,b2,shift) in perm:
+##                         val = len(g1.vertices[i1])
+##                         print "DEBUG:   would map vertex %d to vertex %d (%s ~ %s)" \
+##                               % (i1, i2,
+##                                  g1.vertices[i1][b1+shift:b1+shift+val],
+##                                  g2[i2][b2:b2+val])
+##                     print "DEBUG:   under permutation %s" % effective
+                    yield perm
+
+    @staticmethod
+    def allowable_vertex_permutations(valence_spectrum):
+        """Return all permutations of vertices that preserve valence.
+        (A permutation `p` preserves vertex valence if vertices `v`
+        and `p[v]` have the same valence.)
+
+        The passed parameter `valence_spectrum` is a dictionary,
+        mapping vertex valence to the list of (indices of) vertices
+        having that valence.
+
+        Returns a pair `(list_of_mappings, domain)`.
+
+        Examples::
+          >>> MorphismIteratorFactory.allowable_vertex_permutations({ 3:[0,1] })
+          ([[1, 0], [0, 1]],
+           [0, 1])
+          >>> MorphismIteratorFactory.allowable_vertex_permutations({ 3:[0], 5:[1] })
+          ([[0, 1]],
+           [0, 1])
+        """
+        # save valences as we have no guarantees that keys() method
+        # will report them always in the same order
+        valences = valence_spectrum.keys()
+        vertex_to_vertex_mapping_domain = concat([ valence_spectrum[v] for v in valences ])
+        permutations_of_vertices_of_same_valence = [
+            [ p[:] for p in InplacePermutationIterator(valence_spectrum[v]) ]
+            for v in valences
+            ]
+        vertex_to_vertex_mappings = [
+            concat(ps)
+            for ps in enumerate_set_product(permutations_of_vertices_of_same_valence)
+            ]
+        return (vertex_to_vertex_mappings, vertex_to_vertex_mapping_domain)
+
+
 def all_graphs(vertex_valences):
     """Return all graphs having vertices of the given valences.
 
@@ -508,79 +596,24 @@ def all_graphs(vertex_valences):
 
     total_edges = sum(vertex_valences) / 2
 
-    def vertex_permutations(valence_spectrum):
-        """Return all permutations of vertices that preserve valence.
-        (A permutation `p` preserves vertex valence if vertices `v`
-        and `p[v]` have the same valence.)
-
-        The passed parameter `valence_spectrum` is a dictionary,
-        mapping vertex valence to the list of (indices of) vertices
-        having that valence.
-
-        Returns a pair `(list_of_mappings, domain)`.
-
-        Examples::
-          >>> vertex_permutation({ 3:[0,1] })
-          ([[1, 0], [0, 1]],
-           [0, 1])
-          >>> vertex_permutation({ 3:[0], 5:[1] })
-          ([[0, 1]],
-           [0, 1])
-        """
-        # save valences as we have no guarantees that keys() method
-        # will report them always in the same order
-        valences = valence_spectrum.keys()
-        vertex_to_vertex_mapping_domain = concat([ valence_spectrum[v] for v in valences ])
-        permutations_of_vertices_of_same_valence = [
-            [ p[:] for p in InplacePermutationIterator(valence_spectrum[v]) ]
-            for v in valences
-            ]
-        vertex_to_vertex_mappings = [
-            concat(ps)
-            for ps in enumerate_set_product(permutations_of_vertices_of_same_valence)
-            ]
-        return (vertex_to_vertex_mappings, vertex_to_vertex_mapping_domain)
-
     # we need the first graph in list to pre-compute some structural constants
     graph_iterator = all_canonical_decorated_graphs(vertex_valences, total_edges)
     graphs = [ graph_iterator.next() ]
 
     # the valence spectrum is the same for all graphs in the list
-    vertex_to_vertex_mappings, vertex_to_vertex_mapping_domain = \
-                               vertex_permutations(graphs[0].valence_spectrum())
+    morphisms = MorphismIteratorFactory(graphs[0].valence_spectrum())
 
     # now walk down the list and remove isomorphs
     for current in graph_iterator:
-        current_is_not_isomorphic_to_already_found = True
+        current_is_isomorphic_to_already_found = False
         for candidate in graphs:
-            if candidate == current:
-                current_is_not_isomorphic_to_already_found = False
+            for isomorphism in morphisms(candidate, current):
+                # if there is any isomorphism, then reject current
+                current_is_isomorphic_to_already_found = True
                 break
-            else:
-                for vertex_index_map in vertex_to_vertex_mappings:
-                    morphism = Mapping(total_edges)
-                    for i1,i2 in izip(vertex_to_vertex_mapping_domain, vertex_index_map):
-                        v1 = current.vertices[i1]
-                        (b1, rp1) = v1.repetition_pattern()
-                        v2 = candidate.vertices[i2]
-                        (b2, rp2) = v2.repetition_pattern()
-                        rp_shift = rp1.shift_for_list_eq(rp2)
-                        if rp_shift is None:
-                            # cannot map vertices, quit looping on vertices
-                            break
-                        # rp1 is a kind of "derivative" of v1; we gather the 
-                        #  displacement for v1 by summing elements of rp1 up to
-                        # -but not including- `rp_shift`.
-                        shift = sum(rp1[:rp_shift])
-                        if not morphism.extend(v1[b1+shift:b1+shift+len(v1)],v2[b2:b2+len(v2)]):
-                            # continue with next candidate
-                            morphism = None
-                            break
-                    if morphism and morphism.is_complete():
-                        # the two graphs are isomorphic
-                        current_is_not_isomorphic_to_already_found = False
-                        break
-        if current_is_not_isomorphic_to_already_found:
+            if current_is_isomorphic_to_already_found:
+                break
+        if not current_is_isomorphic_to_already_found:
             # add current to graph list
             graphs.append(current)
 
@@ -668,34 +701,36 @@ def all_canonical_decorated_graphs(vertex_valences, total_edges):
             yield g
 
 
-class Mapping:
-    """A mapping (in the mathematical sense) with a domain of fixed cardinality.
+class Mapping(dict):
+    """An incrementally constructible mapping.
 
-    Provides methods to incrementally construct the mapping by
-    extending an existing map with new source->destination pairs.  The
-    cardinality of the domain should be known in advance, and the
-    `Mapping` object is *complete* when all items in the domain have been
-    assigned a destination value.
+    Provides methods to incrementally construct the map by extending
+    an existing map with new source->destination pairs; the extension
+    will fail if any new source->destination assignment contrasts with
+    what is already there.
     """
-    def __init__(self, order):
-        self.order = order
-        self.map = {}
-    def __call__(self, src):
-        return self.map[src]
+    def apply(self, src):
+        return self[src]
     def extend(self, srcs, dsts):
         """Return `True` if the mapping can be extended by mapping
         elements of `srcs` to corresponding elements of `dsts`.
         Return `False` if any of the new mappings conflicts with an
         already established one.
+
+        Examples::
+          >>> m=Mapping(3)
+          >>> m.extend([0, 1], [0, 1])
+          True
+          >>> m.extend([1, 2], [0, 2])
+          False
+          >>> m.extend([2], [2])
+          True
         """
-        for i in range(0,len(srcs)):
-            if self.map.has_key(srcs[i]):
-                if self.map[srcs[i]] != dsts[i]:
-                    return False
-                else:
-                    pass
+        for src,dst in izip(srcs,dsts):
+            if self.has_key(src) and self[src] != dst:
+                return False
             else:
-                self.map[srcs[i]] = dsts[i]
+                self[src] = dst
         return True
     def extend_with_hash(self, mappings):
         """Return `True` if the mapping can be extended by mapping each
@@ -703,20 +738,12 @@ class Mapping:
         if any of the new mappings conflicts with an already
         established one.
         """
-        for src in mappings.keys():
-            if self.map.has_key(src):
-                if self.map[src] != mappings[src]:
-                    return False
-                else:
-                    pass
+        for src,dst in mappings.iteritems():
+            if self.has_key(src) and self[src] != dst:
+                return False
             else:
-                self.map[src] = mappings[src]
+                self[src] = dst
         return True
-    def is_complete(self):
-        return self.order == len(self.map.keys())
-    def is_assigned(self, src):
-        return self.map.has_key(src)
-
 
 
 ## main: run tests
