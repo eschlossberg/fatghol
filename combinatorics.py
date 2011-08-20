@@ -183,6 +183,8 @@ class Permutation(dict):
           -1
           >>> Permutation([2,0,1]).sign()
           1
+          >>> Permutation([3, 2, 0, 1]).sign()
+          -1
 
         The trivial permutations mapping a single element into
         itself and the empty permutation are assigned sign +1::
@@ -204,13 +206,17 @@ class Permutation(dict):
         """
         # copy Permutation values into a linear list
         p = self.values()
+        n = len(p)
         s = +1
         # get elements back in their home positions
-        for j in xrange(len(self)):
+        j = 0
+        while j < n:
             q = p[j]
             if q !=j :
                 p[j],p[q] = p[q],q # interchange p[j] and p[p[j]]
                 s = -s             # and account for the interchange
+            else:
+                j += 1
         # note that q is now in its home position
         # whether or not an interchange was required
         return s
