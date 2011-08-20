@@ -82,14 +82,70 @@ class Permutation(dict):
     
     __slots__ = []
 
-    def __init__(self, seq=[]):
-        """Constructor, loading items in the order they appear in `seq`."""
-        for (src, dst) in enumerate(seq):
-            self[src] = dst
+    def __init__(self, initial=[]):
+        """Constructor, with overloaded syntax.
+
+        Permutation()
+          New null permutation on 0 elements. Example::
+
+            >>> p0 = Permutation()
+            >>> len(p0)
+            0
+
+        Permutation(dict)
+          New permutation mapping keys of dict to their values.
+          Both should be non-negative integers::
+
+            >>> p1 = Permutation({0:1, 1:0, 2:2})
+
+          Can be passed a `Permutation` instance, returning
+          a new instance, equal to the given one (that is,
+          acts as a "copy constructor")::
+
+            >>> p2 = Permutation(p1)
+            >>> p2 == p1
+            True
+            >>> p2 is p1
+            False
+            
+        Permutation(seq)
+          New permutation mapping element `x` to element `seq[x]`.
+
+            >>> p3 = Permutation([1,0,2])
+            >>> p3 == p1
+            True
+          
+        """
+        if isinstance(initial, dict):
+            if __debug__:
+                for src,dst in initial.iteritems():
+                    assert 0 <= src
+                    assert 0 <= dst
+            dict.__init__(self, initial)
+        else:
+            dict.__init__(self, enumerate(initial))
             
     def __iter__(self):
         """Iterate over values."""
         return (self[x] for x in xrange(len(self)))
+
+    def inverse(self):
+        """Construct and return the inverse permutation.
+
+        Examples::
+
+          >>> p = Permutation({0:1, 1:2, 2:0})
+          >>> p.inverse()
+          {0: 2, 1: 0, 2: 1}
+
+          >>> p = Permutation([1, 0])
+          >>> p.inverse() == p
+          True
+          >>> p.inverse() is p
+          False
+        
+        """
+        return Permutation(dict((dst,src) for (src,dst) in self.iteritems()))
     
     def rearrange(self, seq):
         """Return a new list containing the items in `seq`, rearranged
@@ -188,14 +244,14 @@ class Permutation(dict):
 
           >>> s = [1, 0, 2]
           >>> p = Permutation([0, 2, 1]) # map 0->0, 1->2, 2->1
-          >>> p.translate(s)
+          >>> list(p.itranslate(s))
           [2, 0, 1]
         """
         for item in iter(iterable):
             assert item in self, \
                    "Permutation.itranslate(): " \
-                   "Got item `%s` which is not in the permutation domain. " \
-                   % (item,)
+                   "Got item `%s` which is not in the permutation domain `%s`. " \
+                   % (item, self.keys())
             yield self[item]
 
     
@@ -221,7 +277,7 @@ class Permutation(dict):
                 self[src] = dst
         return True
 
-    def extend_with_hash(self, mappings):
+    def update(self, mappings):
         """Return `True` if the mapping can be extended by mapping each
         key of `mappings` to the corresponding value.  Return `False`
         if any of the new mappings conflicts with an already
@@ -477,6 +533,48 @@ def PartitionIterator(N, K, min_=1, max_=None):
     """
     return itertools.chain(*[FixedLengthPartitionIterator(N,k,min_,max_)
                              for k in xrange(1,K+1)])
+
+
+
+def SortingPermutation(seq):
+    """Sort `seq` *in-place* with the CombSort11 algorithm, and return
+    the permutation of indices that transforms the original sequence
+    into the sorted one.
+
+    Examples::
+    
+      >>> SortingPermutation([3, 1, 2])
+      {0: 1, 1: 2, 2: 0}
+      
+      >>> SortingPermutation([0, 1, 2])
+      {0: 0, 1: 1, 2: 2}
+      
+    See http://en.wikipedia.org/wiki/Comb_sort for an explanation of
+    the "Comb sort" algorithm and the original pseudocode.
+    """
+    gap = len(seq)  # initialize gap size
+    indices = range(gap)
+    swap_occurred = False
+    while (gap > 1) or swap_occurred:
+        # update the gap value for a next comb
+        if gap > 1:
+            gap = int(gap / 1.247330950103979)
+            # adjust gap size for final steps of the sequence;
+            # see http://en.wikipedia.org/wiki/Comb_sort#Combsort11
+            if gap in (9, 10):
+                gap = 11
+        
+        # a single "comb" over the input list
+        swap_occurred = False 
+        for i in xrange(len(seq) - gap): # see shellsort for similar idea
+            j = i + gap
+            if seq[i] > seq[j]:
+                # swap seq[i] and seq[i+gap]
+                seq[i], seq[j] = seq[j], seq[i]
+                indices[i], indices[j] = indices[j], indices[i]
+                swap_occurred = True
+    return Permutation(indices)
+
 
 
 ## main: run tests
