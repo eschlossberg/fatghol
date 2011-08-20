@@ -46,14 +46,17 @@ class VectorSpace(object):
         self.base = base
         self.dimension = len(base)
 
-##     def __iter__(self):
-##         """Iterate over basis vectors."""
-##         return iter(self.base)
+    def __iter__(self):
+        """Iterate over basis vectors."""
+        return iter(self.base)
         
 ##     def __repr__(self):
 ##         return "VectorSpace(%s)" % self.base
 ##     def __str__(self):
 ##         return "<Vector space with base %s>" % self.base
+
+    def __len__(self):
+        return len(self.base)
     
     def coordinates(self, combo):
         """Return the (sparse) coordinate vector of `combo`.

@@ -391,6 +391,14 @@ class NumberedFatgraph(Fatgraph):
                 if (bc2 not in G2.numbering) \
                        or (G1.numbering[bc1] != G2.numbering[bc2]):
                     pe_does_not_preserve_bc = True
+                    # if bc2 not in G2.numbering:
+                    #     print ("DEBUG: Rejecting isomorphism %r between marked fatgraphs %r and %r:"
+                    #            " %r not in destination boundary cycles"
+                    #            % (iso, G1, G2, bc2))
+                    # else:
+                    #     print ("DEBUG: Rejecting isomorphism %r between marked fatgraphs %r and %r:"
+                    #            " boundary cycle %r has number %d in G1 and %d in G2"
+                    #            % (iso, G1, G2, bc2, G1.numbering[bc1], G2.numbering[bc2]))
                     break
             if pe_does_not_preserve_bc:
                 continue # to next underlying graph isomorphism

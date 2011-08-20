@@ -47,10 +47,8 @@ def graph_to_xypic(graph, g=None, n=None, orientable=None):
     result = r"\begin{flushleft}" +'\n'
     
     def vertex_label(v):
-        #return '[' + str.join("", map(str, v)) + ']'
         # vertices are labeled with lowercase latin letters
         return chr(97 + v)
-##     label = map(vertex_label, graph)
     K = graph.num_vertices
     result += r'\xy 0;<2cm,0cm>:%'+'\n'
 
@@ -67,22 +65,21 @@ def graph_to_xypic(graph, g=None, n=None, orientable=None):
         return 90+(k-1)*360/K
     for k in range(1,K+1):
         result += r'"v%d",{\xypolygon%d"v%dl"{~:{(1.20,0):}~={%d}~>{}}},' \
-                  % (k, 2*len(graph[k-1])-2, k, rotation_angle(K,k)) \
+                  % (k, 2*len(graph.vertices[k-1])-2, k, rotation_angle(K,k)) \
                   + '%\n'
 
     for l in xrange(graph.num_edges):
-        (v1, v2) = graph.endpoints_v[l]
-        (i1, i2) = graph.endpoints_i[l]
+        ((v1, i1), (v2, i2)) = graph.edges[l].endpoints
         if v1 != v2:
-            result += r'"v%d"*+\txt{%s};"v%d"*+\txt{%s}**\crv{"v%dl%d"&"v%dl%d"}?(.6)+/2em/*\txt{\bf %d},%%?(.3)*\dir{>},' \
+            result += r'"v%d"*+\txt{%s};"v%d"*+\txt{%s}**\crv{"v%dl%d"&"v%dl%d"}?(.6)*\txt{\bf %d},%%?(.3)*\dir{>},' \
                       % (v1+1, vertex_label(v1),
                          v2+1, vertex_label(v2),
                          v1+1, 1+graph.vertices[v1].index(l),
-                         v2+1, 1+graph[v2].index(l), graph.edge_numbering[l]) \
+                         v2+1, 1+graph.vertices[v2].index(l), graph.edge_numbering[l]) \
                       + '%\n'
         else:
             h = graph.vertices[v1].index(l)
-            result += r'"v%d"*+\txt{%s};"v%d"*+\txt{%s}**\crv{"v%dl%d"&"v%dl%d"}?(.6)+/2em/*\txt{\bf %d},%%?(.3)*\dir{>},' \
+            result += r'"v%d"*+\txt{%s};"v%d"*+\txt{%s}**\crv{"v%dl%d"&"v%dl%d"}?(.6)*\txt{\bf %d},%%?(.3)*\dir{>},' \
                       % (v1+1, vertex_label(v1),
                          v2+1, vertex_label(v2),
                          v1+1, h+1, v2+1, 1+graph.vertices[v1].index(l,h+1),
@@ -545,16 +542,25 @@ reverses the associated cell orientation.
 
 """ % {'genus':g, 'bc':n})
     tot = 0
-    for num_of_edges in xrange(1, len(graphs)):
-        if options.latex and graphs.module[num_of_edges].dimension > 0:
+    for num_of_edges in xrange(len(graphs)):
+        n = len(graphs.module[num_of_edges])
+        if n == 0:
+            continue
+        assert n > 0
+        if options.latex:
             outfile.write(r"""
             \subsection*{Fatgraphs with $%d$ edges}
 
             """ % (num_of_edges+1))
-        for (num, graph) in enumerate(graphs.module[num_of_edges]):
+        m, max_i, max_j = D[num_of_edges]
+        assert max_i == m.num_rows
+        assert max_j == m.num_columns
+        assert m.num_columns == len(graphs.module[num_of_edges]), \
+               "m.num_columns=%d len(graphs)=%d" % (m.num_columns, len(graphs.module[num_of_edges]))
+        for (j, graph) in enumerate(graphs.module[num_of_edges]):
             tot += 1
             if options.latex:
-                outfile.write((r"\subsection*{$G_{%d,%d}$}" % (num_of_edges,num)) + '\n')
+                outfile.write(("\\subsection*{$G_{%d,%d}$}\n" % (num_of_edges, j)))
 
                 # draw graph
                 outfile.write(graph_to_xypic(graph,
@@ -564,13 +570,14 @@ reverses the associated cell orientation.
                                              )+'\n')
 
                 # print differential
-                outfile.write(r"\subsubsection*{Differential}" + '\n')
+                outfile.write("\\subsubsection*{Differential}")
                 outfile.write(r"""
 \begin{equation*}
-  dG_{%d,%d} =
-                """ % (num_of_edges, num))
+  D(G_{%d,%d}) =
+                """ % (num_of_edges, j))
                 cnt = 0
-                for (num2, coeff) in enumerate(D[num_of_edges - 1][num]):
+                for i in xrange(m.num_rows):
+                    coeff = m.getEntry(i, j)
                     if coeff == 0:
                         continue # with next graph
                     elif coeff == +1:
@@ -579,7 +586,7 @@ reverses the associated cell orientation.
                         coeff = "-"
                     else:
                         coeff = "%+d" % coeff
-                    outfile.write(" %sG_{%d,%d}" % (coeff, num_of_edges-1, num2))
+                    outfile.write(" %sG_{%d,%d}" % (coeff, num_of_edges-1, i))
                     cnt += 1
                 if cnt == 0:
                     outfile.write("0")
@@ -607,16 +614,17 @@ reverses the associated cell orientation.
                     for (bcy, nr) in sorted(graph.numbering.iteritems(), cmp=cmp_):
                         outfile.write(r"\textsl{%s} & (%s) \\ " % (
                             fmt_(nr),
-                            str.join(",", [str(graph.edge_numbering[edge])
-                                           for edge in bcy]),
+                            str.join(",", [("(%s,%d,%d)"
+                                            % (chr(corner[0] + 97), corner[1], corner[2]))
+                                            for corner in bcy]),
                             )
                             + '\n')
                     outfile.write(r"\end{tabular}" + '\n\n')
 
                 # print python repr
-                outfile.write(r"\subsubsection*{Python representation}" + '\n')
-                outfile.write(r"{\small " + repr(graph) + "}") 
-                outfile.write('\n\n')
+                # outfile.write(r"\subsubsection*{Python representation}" + '\n')
+                # outfile.write(r"{\small " + repr(graph) + "}") 
+                # outfile.write('\n\n')
 
                 outfile.write(r"\vspace{1ex}\hrulefill\vspace{1ex}" + '\n')
             else:
