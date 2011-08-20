@@ -5,8 +5,9 @@
 __docformat__ = 'reStructuredText'
 
 
-from utils import *
+from combinatorics import InplacePermutationIterator
 from cyclic import CyclicList
+from utils import *
 
 from itertools import *
 import operator
@@ -90,45 +91,82 @@ class Graph(object):
         'endpoints',
         'vertices',
         )
-    def __init__(self, vertex_valences, edge_seq, vertex_factory=Vertex):
-        assert is_sequence_of_integers(vertex_valences), \
-               "Graph.__init__: parameter `vertex_valences` must be sequence of integers, "\
-               "but got '%s' instead" % vertex_valences
-        self._vertex_valences = vertex_valences
-        assert (sum(vertex_valences) % 2 ) == 0, \
-               "Graph.__init__: invalid parameter `vertex_valences`:"\
-               "sum of vertex valences must be even."
+    ## *Note:* the constructor for this class is overloaded.  We could
+    ## move the code making a `Graph` object out of vertex valences
+    ## and edge colorings to a separate factory function
+    ## `make_graph_from_edge_seq`, but then the constructor would need
+    ## to recompute `self._edge_seq` and `self._vertex_valences`.
+    ## Thus, we favor performance over code elegance and choose to
+    ## overload the ctor.
+    def __init__(self, vertices, edge_seq=None, vertex_factory=Vertex):
+        """Construct a `Graph` instance, taking either list of
+        vertices or the linear list of edges plus list of vertex
+        valences.
+
+        If argument `edge_seq` is `None`, then `vertices` must be a
+        sequence of `Vertex` class instances.  Note that the list of
+        vertices is assigned, *not copied* into the instance variable.
+
+        Otherwise, `vertices` must be a sorted list of vertex valences
+        and `edge_seq` a sequence of edge colorings, which are grouped
+        according to the vertex valences to form the Graph vertices
+        (by calling `vertex_factory` on each group of edges).
+
+        Examples::
+          **TO-DO**
+        """
+        # build graph for explicit vertex list
+        if edge_seq is None:
+            assert is_sequence_of_type(Vertex, vertices), \
+                   "Graph.__init__: parameter `vertices` must be" \
+                   " sequence of `Vertex` instances."
+            self.vertices = vertices
+            self._vertex_valences = tuple(len(v) for v in vertices)
+            self._edge_seq = tuple(chain(*[iter(v) for v in vertices]))
+
+        # build graph from linear list and vertex valences
+        else:
+            assert is_sequence_of_integers(vertices), \
+                   "Graph.__init__: parameter `vertices` must be" \
+                   " sequence of integers, but got '%s' instead" \
+                   % vertices
+            self._vertex_valences = vertices
+            assert (sum(vertices) % 2 ) == 0, \
+                   "Graph.__init__: invalid parameter `vertices`:"\
+                   "sum of vertex valences must be even."
+
+            assert is_sequence_of_integers(edge_seq), \
+                   "Graph.__init__: parameter `edge_seq` must be sequence of integers, "\
+                   "but got '%s' instead" % edge_seq
+
+            # record this for fast comparison and contractions
+            self._edge_seq = tuple(edge_seq)
+
+            # Break up `edge_seq` into smaller sequences corresponding to vertices.
+            self.vertices = []
+            base = 0
+            for current_vertex_index in xrange(len(vertices)):
+                VLEN = vertices[current_vertex_index]
+                # FIXME: this results in `edge_seq` being copied into smaller
+                # subsequences; can we avoid this by defining a list-like object
+                # "vertex" as a "view" on a portion of an existing list?
+                self.vertices.append(vertex_factory(edge_seq[base:base+VLEN]))
+                base += VLEN
+
+        # init code common to both ctor variants:
 
         self._num_edges = sum(self._vertex_valences) / 2
-        self._num_vertices = len(self._vertex_valences)
+        self._num_vertices = len(self.vertices)
         # these values will be computed on-demand
         self._num_boundary_components = None
         self._genus = None
         self._valence_spectrum = None
         
-        assert is_sequence_of_integers(edge_seq), \
-               "Graph.__init__: parameter `edge_seq` must be sequence of integers, "\
-               "but got '%s' instead" % edge_seq
-
-        # record this for fast comparison and contractions
-        self._edge_seq = tuple(edge_seq)
-        
-        # Break up `edge_seq` into smaller sequences corresponding to vertices.
-        self.vertices = []
         # `self.endpoints` is the adjacency list of this graph.  For
         # each edge, store a pair `(v1, v2)` where `v1` and `v2` are
         # indices of endpoints.
         self.endpoints = [ [] for dummy in xrange(self._num_edges) ]
-        base = 0
-        for current_vertex_index in xrange(len(vertex_valences)):
-            VLEN = vertex_valences[current_vertex_index]
-            # FIXME: this results in `edge_seq` being copied into smaller
-            # subsequences; can we avoid this by defining a list-like object
-            # "vertex" as a "view" on a portion of an existing list?
-            self.vertices.append(vertex_factory(edge_seq[base:base+VLEN]))
-            base += VLEN
-
-            # build adjacency list as we go along
+        for current_vertex_index in xrange(len(self.vertices)):
             for edge in self.vertices[current_vertex_index]:
                 self.endpoints[edge].append(current_vertex_index)
 
@@ -155,7 +193,7 @@ class Graph(object):
         """
         # build enpoints vector for the final check that a constructed map
         # is an automorphism
-        ev = self.endpoints[:]
+        ev = list(self.endpoints)
         ev.sort()
 
         # gather valences and repetition pattern at
@@ -665,62 +703,6 @@ class ConnectedGraphsIterator(object):
 
         # no more graphs to generate
         raise StopIteration
-
-
-class InplacePermutationIterator:
-    """Iterate over all permutations of a given sequence.
-
-    The given sequence `seq` is altered as new permutations are
-    requested through the `next()` method.
-
-    The code is a port of the C++ STL one, as described in:
-      http://marknelson.us/2002/03/01/next-permutation
-
-    Examples::
-      >>> [ x[:] for x in InplacePermutationIterator([0]) ]
-      [[0]]
-      >>> [ x[:] for x in InplacePermutationIterator([0,1]) ]
-      [[1, 0], [0, 1]]
-      >>> [ x[:] for x in InplacePermutationIterator([0,1,2])]
-      [[0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0], [0, 1, 2]]
-    """
-    def __init__(self, seq, start=0, end=None):
-        self.seq = seq
-        self.start = start
-        if end is None:
-            end = len(self.seq)
-        self.end = end
-        if (start == end):
-            self.enumeration_finished = True
-        else:
-            self.enumeration_finished = False
-    def __iter__(self):
-        return self
-    def next(self):
-        """Return next permutation of initially given `sequence`."""
-        if self.enumeration_finished:
-            raise StopIteration
-        i = self.end - 1
-        while True:
-            if (i == self.start):
-                self.seq.reverse()
-                self.enumeration_finished = True
-                return self.seq
-            j = i
-            i -= 1
-            if self.seq[i] < self.seq[j]:
-                k = self.end-1
-                while self.seq[i] >= self.seq[k]:
-                    k -= 1
-                # swap seq[i] and seq[k]
-                self.seq[i],self.seq[k] = self.seq[k],self.seq[i]
-                # reverse slice seq[j:] *in-place*
-                if self.end-2 == j:
-                    self.seq[j],self.seq[-1] = self.seq[-1],self.seq[j]
-                else:
-                    for l in xrange(0, (self.end - 1 - j) / 2):
-                        self.seq[j+l],self.seq[-1-l] = self.seq[-1-l],self.seq[j+l]
-                return self.seq
 
 
 class Mapping(dict):
