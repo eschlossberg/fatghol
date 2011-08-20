@@ -49,19 +49,27 @@ class _IteratorRecorder(object):
     **WARNING:** This is not thread-safe!
     """
 
-    __slots__ = ['iterable', 'history']
+    __slots__ = ['done', 'iterable', 'history']
     
     def __init__(self, iterable):
         self.iterable = iterable
         self.history = []
-        #Cacheable.__init__(self)
+        self.done = False
 
     def __iter__(self):
         return self.replay()
 
     def advance(self):
         """Record next item from the source iterator."""
-        self.history.append(self.iterable.next())
+        if self.done:
+            raise StopIteration
+        else:
+            try:
+                self.history.append(self.iterable.next())
+            except StopIteration:
+                self.done = True
+                del self.iterable
+                raise
 
     def replay(self):
         """Return a new player."""
@@ -93,6 +101,7 @@ class _IteratorReplayer(Iterator):
             return self.master.history[self.pos]
         except StopIteration:
             self.done = True
+            del self.master
             raise
 
 
@@ -147,28 +156,6 @@ def fcache(func, *args):
         result = func(*args)
         rcache[key] = result
         return result
-
-
-@decorator
-def fcache_iterator(func, *args):
-    """Cache results of a function returning an iterator/generator.
-
-    Iterator results cannot be cached like any other object, because
-    they need to return the same set of values each time the
-    generating function is invoked.
-    """
-    try:
-        rcache = func._cache
-    except AttributeError:
-        rcache = func._cache = {}
-    key = (func.func_name, args)
-    try:
-        return rcache[key].replay()
-    except KeyError:
-        result = _IteratorRecorder(func(*args))
-        rcache[key] = result
-        return result.replay()
-
 
 
 @decorator
