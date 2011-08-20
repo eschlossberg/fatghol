@@ -394,7 +394,7 @@ def is_null_matrix(A, cast=Rational):
 
 def matrix_product(A, B):
     """Return the matrix product of `A` and `B`."""
-    assert len(A) == len(B[0]), \
+    assert len(B)>0 and len(A) == len(B[0]), \
            "homology.matrix_product:"\
            " multiplying (%d x %d)-matrix A with (%d x %d)-matrix B."\
            % (len(A[0]), len(A), len(B[0]), len(B))
