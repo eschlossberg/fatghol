@@ -80,51 +80,25 @@ class Vertex(CyclicList):
 
     __slots__ = []
 
-    def __cmp__(self, other):
-        """Return negative if x<y, zero if x==y, positive if x>y.
-        Unlike standard Python sequence comparison, vertices with
-        lower valence come first, and two vertices are only compared
-        lexicographically if they have the same valence::
-
-          >>> cmp(Vertex([0,1,2]), Vertex([0,1,2,3,4]))
-          -1
-          >>> cmp(Vertex([0,1,2,3,4]), Vertex([0,1,2]))
-          1
-          
-          >>> cmp(Vertex([0,1,2]), Vertex([0,1,2]))
-          0
-          
-          >>> cmp(Vertex([0,1,2,3]), Vertex([0,0,1,1]))
-          1
-          >>> cmp(Vertex([0,0,1,1]), Vertex([0,1,2,3]))
-          -1
-          
-        """
-        result = cmp(len(self), len(other))
-        if 0 == result:
-            if super(Vertex, self).__eq__(other):
-                return 0
-            else:
-                if super(Vertex, self).__lt__(other):
-                    return -1
-                else:
-                    return +1
-        return result
-
     def __str__(self):
         return repr(self)
     
-    @maybe(ocache0)
     def num_loops(self):
-        """Return the number of loops attached to this vertex."""
-        seen = {}
-        loops = 0
-        for x in xrange(len(self)):
-            if self[x] in seen:
-                loops += 1
-            else:
-                seen[self[x]] = True
-        return loops
+        """Return the number of loops attached to this vertex.
+
+        Examples::
+
+          >>> Vertex([0,1,2]).num_loops()
+          0
+          >>> Vertex([0,1,0,1]).num_loops()
+          2
+          >>> Vertex([0,0,1,2,3]).num_loops()
+          1
+          
+        """
+        # no. of loops = (no. of attached edges) - (no. of distinct attached edges)
+        return len(self) - len(set(self))
+
 
 
 class EqualIfIsomorphic(Cacheable):
