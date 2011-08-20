@@ -1,4 +1,4 @@
-\RCSID $Id: gc.tex,v 1.2 2003/06/23 17:38:08 murri Exp $
+\RCSID $Id: gc.tex,v 1.3 2003/09/09 16:12:30 murri Exp $
 %auto-ignore
 
 
@@ -26,10 +26,11 @@ derive the needed rather simple instances of graphical calculus as a
 corollary to the most general results of Reshetikhin and Turaev.
 However, proper statement of these requires quite a long preamble of
 category-related material; I would therefore just skim over the
-necessary definitions, and refer the interested reader \csref{cha:rt}
-and~\ref{cha:btc} for precise statements, and to the foundational
-papers of Joyal and Street \cite{joyal-street;tensor-calculus,
-  joyal-street;btc} for details, proofs, motivation and history.
+necessary definitions, and refer the interested reader to
+\csref{cha:btc} and~\ref{cha:rt} for precise statements, and to the
+foundational papers of Joyal and Street
+\cite{joyal-street;tensor-calculus, joyal-street;btc} for details,
+proofs, motivation and history.
 
 As terminology in these matters is not yet generally agreed upon, I
 will adhere to nomenclature used by Joyal and Street in
@@ -467,11 +468,11 @@ an arbitrary tortile braided tensor category $\category{C}$.
 
 By definition, in any autonomous symmetric tensor category $\A$ there
 are natural isomorphisms (see \csref{sec:duality})
-\begin{equation*}\label{eq:passing-up-and-down}
+\begin{equation}\label{eq:passing-up-and-down}
   \A(X\otimes Y, Z) \longleftrightarrow \A(X, Z\otimes\rdl{Y}),
   \qquad
   \A(X\otimes Y, Z) \longleftrightarrow \A(Y, \ldl{X}\otimes Z),
-\end{equation*}
+\end{equation}
 for all $X, Y, Z \in \A$. For instance, the second bijection above maps
 a morphism $f\colon X \otimes Y \to Z$ to the composition
 \begin{equation*}

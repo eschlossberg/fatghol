@@ -1,4 +1,4 @@
-\RCSID $Id: prelim.tex,v 1.2 2003/06/23 17:38:08 murri Exp $
+\RCSID $Id: prelim.tex,v 1.3 2003/09/09 16:12:30 murri Exp $
 %auto-ignore
 
 
@@ -18,7 +18,7 @@ the $\Hom$-sets of the category $\A$, i.e., $\Hom\A := \bigcup_{A,B \in \A}
 The symbol $\Perm{k}$ stands for the group of permutations on $k$
 letters.
 
-The degree $i$ component of a graded object $M$ will be denoted
+The degree $i$ component of a graded object $M^\#$ will be denoted
 $M^i$; the grading group will always be $\setZ$. Elements of a graded
 object appearing as exponents to a number will stand for their degree,
 i.e., $(-1)^a := (-1)^{\deg a}$; therefore, $(-1)^{ab} \not=
@@ -45,8 +45,7 @@ assume $\fk = \setC$.
   K$.
 \end{definition}
 
-Any dg-algebra is a (graded) associative commutative algebra; write
-$\#$ for the underlying functor that ``forgets the differential''.
+Any dg-algebra is a (graded) associative commutative algebra.
 
 \begin{definition}
   A $K$-dg-module $M$ is a $K$-bimodule such that:
@@ -58,8 +57,9 @@ $\#$ for the underlying functor that ``forgets the differential''.
   \end{enumerate}
 \end{definition}
 
-There is an obvious underlying functor $\#$ from the category of
-$K$-dg-modules to the category of $K$-modules.
+There is an obvious underlying functor $\#$ that ``forgets the
+differential'', from the category of $K$-dg-modules to the category of
+$K$-modules.
 
 \begin{definition}
   For every two $K$-dg-modules $M$, $N$ we define the module of
@@ -106,8 +106,9 @@ The verification that these maps satisfy the axioms of a balanced
 braided symmetric category is an easy calculation.  The usual
 definition of the dual object $\rdl{M} := \Hom_K(M, K)$ gives an
 obvious evaluation map $\ev_M : M \otimes \rdl{M} \ni m \otimes \rdl{m} \mapsto
-\pairing{m}{\rdl{m}} \in K$, but we cannot guarantee the existence of a
-matching coevaluation morphism unless $M$ is a free module.
+\pairing{m}{\rdl{m}} \in K$, but one cannot generally assert the
+existence of a matching coevaluation morphism unless $M$ is a free
+module.
 
 The above structure maps
 \eqref{eq:dgm-braiding}--\eqref{eq:dgm-balancing} induce a balanced
@@ -115,7 +116,7 @@ symmetric braided category structure on the subcategory $\catMod_K$ of
 degree $0$ $K$-bimodules; note that the braiding on $\catMod_K$ is the
 trivial one: $\tau_{MN}: m\otimes n \mapsto n\otimes m$.
 \begin{remark}
-  In fact, Eilenberg-Kelly \cite{eilenberg-kelly;monoidal-categories}
+  In fact, Eilenberg and Kelly \cite{eilenberg-kelly;monoidal-categories}
   show that there are just two possible braidings on $\catMod_K^\setZ$:
   the trivial one given by
   \begin{equation*}
@@ -161,7 +162,7 @@ Also define $\chi(\sigma; x_1, \ldots, x_n)$ by:
 \begin{equation}
   \label{eq:aksz}
   \chi(\sigma; x_1, \dots, x_n) x_1 \otimes \dots \otimes x_n =
-  (-1)^\sigma \tau_\sigma (x_1 \otimes \dots \otimes x_n), 
+  (-1)^\sigma \varepsilon(\sigma; x_1, \ldots, x_n)
   \qquad \sigma\in\Perm{n}.
 \end{equation}
 We shall omit $x_1, \dots, x_n$ from the above when it will be clear
@@ -192,16 +193,16 @@ ordering of the factors which gives ``unsigned'' contraction, and then
 define contraction of any permutation of the factors
 $\left\{\Hom(M_i,N_i), M_i\right\}_{i\in I}$ by first applying a
 twist $\tau_\sigma$ to get the fixed ``standard'' ordering, and then the
-contraction before. Formally, let:
+contraction before. Formally:
 \begin{enumerate}
-\item $\Hom(M,N) \otimes M \ni f\otimes x \mapsto f(x) \in N$;
-\item $\bigotimes_i (\Hom(M_i, N_i) \otimes M_i) \ni (f_1\otimes x_1)
+\item let $c: \Hom(M,N) \otimes M \ni f\otimes x \mapsto f(x) \in N$;
+\item let $c: \bigotimes_i (\Hom(M_i, N_i) \otimes M_i) \ni (f_1\otimes x_1)
   \otimes \dots (f_k\otimes x_k) \mapsto f_1(x_1) \otimes \dots
   \otimes f_k(x_k) \in \bigotimes N_i$;
 \item let $W_{2i-1} := \Hom(M_i, N_i)$, $W_{2i} := M_i$, for $i =
   1, \dots, k$; define the contraction
   \begin{equation*}
-    {\textstyle \bigotimes_{j=1}^{2k}} W_{\sigma_j} \to
+    c: {\textstyle \bigotimes_{j=1}^{2k}} W_{\sigma_j} \to
     {\textstyle \bigotimes_{i=1}^k} N_i
   \end{equation*}
   by 
@@ -239,6 +240,8 @@ are actually independent of the chosen basis $(v_i)$. The balancing
 map \eqref{eq:dgm-balancing} is compatible with taking duals, so
 $\catVect^\setZ$ is a tortile category.
 \begin{remark}\label{rem:ev-rev}
+  \FIXME{{\`E} coerente con la regola dei segni data sopra?  Sembra di s{\`\i},
+  ma allora non c'{\`e} differenza\ldots}
   Note that, although $V^{\lor\lor} \simeq V$, the reverse-order evaluation
   and coevaluation maps $\ev'_V$, $\coev'_V$ differ from
   $\ev_{\rdl{V}}$ and $\coev_{\rdl{V}}$ by a sign, because of the

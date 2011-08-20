@@ -2,7 +2,7 @@
 %%
 %% v0.3 -- 2001-11-28  Riccardo Murri
 %%
-%% $Id: csref.sty,v 1.4 2003/06/23 17:38:08 murri Exp $
+%% $Id: csref.sty,v 1.5 2003/09/09 16:12:30 murri Exp $
 %%
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesPackage{csref}
@@ -10,7 +10,7 @@
 %%
 %% Preliminary declarations
 %%
-\let\csr@ref=\ref% just to provide a default; may be overridden by options
+%
 %%
 %% Options
 %%
@@ -74,11 +74,11 @@
 \newcommand*\renewcsref[1]{%
   \@ifundefined{csr@#1@label}{%
     \PackageError{csref}{Environment `#1' not previously defined.}%
-    {The command \protect\renewcsref\space can be used only after\MessageBreak%
-      a \protect\newcsref\space has been issued for the same
-      environment.\MessageBreak% 
-      Perhaps you meant\MessageBreak to use \protect\newcsref\space%
-      instead?}%
+    {The command \protect\renewcsref\space can be used only after%
+      \MessageBreak%
+      a \protect\newcsref\space has been issued for the same environment.%
+      \MessageBreak% 
+      Perhaps you meant to use \protect\newcsref\space instead?}%
     }{%
     \@namedef{csr@#1@label}##1{%
       \expandafter\global\@namedef{csr@##1@ref}{%
@@ -126,6 +126,7 @@
 %
 \AtBeginDocument{% we need to do this *after* hyperref, refcheck,
                  % etc., do we?
+  \@ifundefined{csr@ref}{\let\csr@ref=\ref}{}%
   \let\csr@saved@label=\label%
   \let\label=\cslabel%
 }%

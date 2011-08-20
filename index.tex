@@ -1,8 +1,8 @@
 %%% index.tex -- Generico contenitore per matematica in lingua inglese.
 %%%
-%%% $Id: index.tex,v 1.2 2003/06/23 17:38:08 murri Exp $
+%%% $Id: index.tex,v 1.3 2003/09/09 16:12:30 murri Exp $
 %%%
- \documentclass[a4paper,reqno,openany,draft]{amsbook}
+\documentclass[a4paper,reqno,openany,draft]{amsbook}
 
 %%%
 %%% DEBUG!
@@ -10,7 +10,7 @@
 \usepackage{debug} % debugging code
 %\usepackage[outline]{draftcopy}
 \usepackage{rcs}
-
+%\def\RCSID$#1${}
 
 %%%
 %%% NOTAZIONI MATEMATICHE
@@ -100,7 +100,7 @@
 %% `paralist' -- Miglior supporto per le liste
 %%
 \usepackage[newitem,newenum]{paralist}
-\defaultenum{\slshape 1)}{\slshape a)}{\slshape i)}{A.}
+\setdefaultenum{\slshape 1)}{\slshape a)}{\slshape i)}{A.}
 %\defaultitem{$\triangleright$}{}{}{}
 
 %%
@@ -126,6 +126,7 @@
 %%
 %% `nomencl' -- Indice delle notazioni
 %%
+
 \usepackage[refpage]{nomencl} % indice dei simboli
 \let\nx=\nomenclature
 \makeglossary % per l'indice dei simboli
@@ -144,7 +145,7 @@
 %%%
 %%% Cominciamo...
 %%%
-%\includeonly{kontsevich}
+\includeonly{kontsevich,construction}
 \begin{document}
 
 \include{title}
@@ -152,6 +153,7 @@
 \include{gc}
 \include{fd}
 \include{kontsevich}
+\include{construction}
 
 \appendix
 \include{arrows}
