@@ -51,9 +51,14 @@ def persistent_id(o):
     try:
         return o._persistent_id
     except AttributeError:
-        id = _unique.next()
-        o._persistent_id = id
-        return id
+        # no `_persistent_id`, add one
+        try:
+            id = _unique.next()
+            o._persistent_id = id
+            return id
+        except AttributeError:
+            # o's __dict__ is not writable, fall back to hash()
+            return hash(o)
 
 
 __cache1 = {}
