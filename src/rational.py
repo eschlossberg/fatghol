@@ -262,7 +262,7 @@ class Rational(object):
         return new
     
 
-    def _neg__(self):
+    def __neg__(self):
         return Rational(-self.numerator, self.denominator, _normalize=False)
 
 
@@ -284,7 +284,7 @@ class Rational(object):
         return "%s/%s" % (self.numerator, self.denominator)
 
 
-    def __sub__(self):
+    def __sub__(self, other):
         new = Rational(self.numerator, self.denominator, _normalize=False)
         new -= other
         return new
