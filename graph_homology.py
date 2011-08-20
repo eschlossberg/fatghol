@@ -25,17 +25,16 @@ def FatgraphComplex(g, n):
     min_edges = 2*g + n - 1
     ## Maximum number of edges is reached in graphs with all vertices
     ## tri-valent, so, combining Euler's formula with `3*V = 2*E`, we
-    ## get: `E = 6*g + 3*n - 6`.  Since the differential is given by
-    ## contraction of edges, we get a total length for the fatgraph
-    ## complex of: `4*g +2*n - 5`.
-    length = 4*g + 2*n - 4  #: total length of the fatgraph complex
+    ## get: `E = 6*g + 3*n - 6`.  These are also graphs corresponding
+    ## to top-dimensional cells.
+    top_dimension = 6*g + 3*n - 6
 
     #: list of primitive graphs, graded by number of edges
-    generators = [ [] for dummy in xrange(length) ]
+    generators = [ [] for dummy in xrange(top_dimension) ]
 
     # gather graphs
     for val in vertex_valences_for_given_g_and_n(g, n):
-        grade = sum(val)/2 - min_edges
+        grade = sum(val)/2 - 1
         for graph in ConnectedGraphsIterator(val):
             # add if correct `g` and `n`
             if (graph.genus() == g) and \
@@ -43,8 +42,8 @@ def FatgraphComplex(g, n):
                 generators[grade].append(graph)
 
     # build chain complex
-    C = ChainComplex(length)
-    for i in xrange(length):
+    C = ChainComplex(top_dimension)
+    for i in xrange(top_dimension):
         # set support module and differential
         C[i] = (FatgraphComplexSlice(generators[i]),
                 graph_homology_differential)
@@ -104,8 +103,8 @@ class FatgraphComplexSlice(VectorSpace):
                     # replace graph with canonical
                     canonical = self.base_aliases[graph.edge_seq]
                 else:
-                    # try to determine which graph in base `graph` is
-                    # isomorphic to.
+                    # try to determine which element in base `graph`
+                    # is isomorphic to.
                     for gg in self.base:
                         if graph == gg:
                             canonical = gg
