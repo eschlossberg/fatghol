@@ -576,14 +576,7 @@ class NumberedFatgraphPool(object):
             representation of `g2` - these should fail as they don't
             preserve the boundary cycles.
             """
-            result = Permutation() #: map induced by `f` on boundary cycles
-            for (src, bc1) in enumerate(g1.boundary_cycles):
-                bc2 = f.transform_boundary_cycle(bc1)
-                try:
-                    result[src] = g2.boundary_cycles.index(bc2)
-                except KeyError:
-                    return None
-            return result
+            pass
 
         def compute_nb_map(pull_back_bcy_map, src, dst):
             """
@@ -629,13 +622,13 @@ class NumberedFatgraphPool(object):
         f0_push_fwd = Permutation(enumerate(
             g1.boundary_cycles.index(g0.contract_boundary_cycle(bcy, e1, e2))
             for bcy in g0.boundary_cycles
-            ))
+            )).inverse()
         assert len(f0_push_fwd) == len(g1.boundary_cycles)
         assert len(f0_push_fwd) == g0.num_boundary_cycles
         if __debug__:
             p1 = NumberedFatgraphPool(g1)
             for (i, nb) in enumerate(self.numberings):
-                nb_ = f0_push_fwd.inverse().rearranged(nb)
+                nb_ = f0_push_fwd.rearranged(nb)
                 i_ = p1._index(nb_)[0]
                 assert p1[i_] == self[i].contract(edge)
 
@@ -643,29 +636,16 @@ class NumberedFatgraphPool(object):
         ##    if there is no such isomorphisms, then stop iteration.
         ##    The reason for having this map go in the opposite direction as `f0`
         ##    is to avoid inverting its push-forward.  (Thus saving a little complexity.)
-
-        # if there is no isomorphism from `g2` to `g1`, the "for" loop
-        # down here will not run, so we need a way to detect that a
-        # valid isomorphism has been found.
-        f1_found = False
-        for f1 in Fatgraph.isomorphisms(g2, g1):
-            f1_push_fwd = push_fwd(f1, g2, g1)
-            if f1_push_fwd is None:
-                continue # with next isomorphism
-            # now check that every numbering of `g0` can be mapped to
-            # a numbering on `g2` through the composite map `f1^(-1) * f0`
-            def pull_back(nb): return f1_push_fwd.rearranged(f0_push_fwd.inverse().rearranged(nb))
-            try:
-                nb_map, a_map = compute_nb_map(pull_back, self, other)
-            except KeyError:
-                continue # with next isomorphism
-            # if we got to this point, the `f1` is a graph
-            # automorphism that induces a map on the boundary cycles
-            f1_found = True
-            break # correct `f1` found
-        if not f1_found:
-            # no isomorphism between `g1` and `g2`, stop here.
-            raise StopIteration
+        f1 = Fatgraph.isomorphisms(g1,g2).next()
+        f1_push_fwd = Permutation(enumerate(
+            g2.boundary_cycles.index(f1.transform_boundary_cycle(bc1))
+            for bc1 in g1.boundary_cycles
+            )).inverse()
+        # now check that every numbering of `g0` can be mapped to
+        # a numbering on `g2` through the composite map `f1^(-1) * f0`
+        def pull_back(nb):
+            return f1_push_fwd.rearranged(f0_push_fwd.rearranged(nb))
+        nb_map, a_map = compute_nb_map(pull_back, self, other)
 
         # check that non-orientable contractions have been caught by
         # the above code.
