@@ -1,6 +1,50 @@
 #! /usr/bin/env python
 #
-"""Cyclic sequences.
+"""Cyclic sequence factories.
+
+Defines a type factory `CyclicSequence`, which can be applied to any
+sequence-like type to produce a"cyclic" variant, that is, indices wrap
+around: if `a` is such a cyclic sequence, then `a[i] == a[i + len(a)]`
+for any index `i`.  For example::
+
+  >>> clist = CyclicSequence(list)
+  >>> a = clist([0,1,2,3])
+  >>> len(a)
+  4
+  >>> a[1] == a[5]
+  True
+  >>> a[1] == a[9]
+  True
+
+More generally, `a[i] == a[j]` if `i = j mod len(a)`::
+
+  >>> a[5] # == a[2]
+  1
+  >>> a[-7] # == a[2]
+  1
+
+By default, this module exports cyclic variants of the standard
+`tuple` and `list` sequences::
+
+  CyclicTuple = CyclicSequence(tuple)
+  CyclicList = CyclicSequence(list)
+
+`CyclicSequence` assumes that an instance of the base (non-cyclic)
+type can be instanciated by passing to it only one argument, namely,
+the initialization sequence.  (This is how the standard sequence types
+`list` and `tuple` behave.)  For types needing a more complex
+construction, a factory function must be passed as second argument:
+the factory function accepts the initialization sequence and returns
+an instance of the base type.  For example, this is how one can define
+cyclic variants of the sequences provided by the `array` module::
+
+  # cyclic versions of sequences in the `array` module
+  from array import array
+  CyclicIntArray = CyclicSequence(array, lambda seq: array('i', seq))
+  CyclicUIntArray = CyclicSequence(array, lambda seq: array('I', seq))
+  CyclicLongArray = CyclicSequence(array, lambda seq: array('l', seq))
+  CyclicULongArray = CyclicSequence(array, lambda seq: array('L', seq))
+
 """
 __docformat__ = 'reStructuredText'
 
