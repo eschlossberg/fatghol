@@ -73,7 +73,9 @@
   \expandafter\csr@addtocontexts\csname #1\endcsname%
   \@namedef{csr@#1@label}##1{%
     \csr@tempa={\expandafter\gdef\csname csr@##1@ref\endcsname{%
-        \csname csr@#1@refcmd\endcsname{##1}}}%
+        \csname csr@#1@refcmd\endcsname{##1}%
+      }%
+    }%
     \the\csr@tempa%
     \immediate\write\@auxout{\the\csr@tempa}%
   }%
@@ -100,15 +102,45 @@
       \MessageBreak% 
       Perhaps you meant to use \protect\newcsref\space instead?}}%
     {\defcsref{#1}}}%
+%% Environment name |document| is used for all chapter and section
+%% references, so it needs special casing.
+\let\csr@saved@startsection=\@startsection%
+\def\@startsection#1{%
+  \gdef\csr@last@sect{#1}%
+  \csr@saved@startsection{#1}%
+}%
+\let\csr@saved@appendix=\appendix%
+\def\appendix{%
+  \let\csr@chapter@label=\csr@appendix@label%
+  \csr@saved@appendix%
+}%
+\let\csr@saved@secdef=\secdef%
+\def\csr@gobble@atsign#1{\if @#1\else#1\fi}%
+\def\csr@butfirst#1{\expandafter\@gobble\string#1}%
+\def\secdef#1{%
+  \edef\csr@sectioning@command{\expandafter\string\noexpand #1}%
+  \gdef\csr@last@sect{%
+    \expandafter\expandafter\expandafter\csr@gobble@atsign%
+    \expandafter\@gobble\csr@sectioning@command%
+  }%
+  \csr@saved@secdef{#1}%
+}%
+\def\csr@last@sect{default}%
+\xdef\csr@@document{\expandafter\noexpand\csname document\endcsname}%
+\def\csr@read@context{%
+  \xdef\csr@current{\expandafter\noexpand\csname\@currenvir\endcsname}%
+  \ifx\csr@current\csr@@document%
+    % redefine to use last section name as environ name
+    \xdef\csr@current{\expandafter\noexpand\csname\csr@last@sect\endcsname}%
+  \fi%
+  \edef\csr@current@name@i{\expandafter\string\csr@current}%
+  \xdef\csr@current@name{\expandafter\@gobble\csr@current@name@i}%
+}%
 %% The |\ifcsr@contextnotfound| is needed to take a default action if
 %% a environment-name is not found in the list |\csr@contexts|.
 \newif\ifcsr@contextnotfound%
 \csr@contextnotfoundtrue% pessimistic default
-\def\csr@read@context{%
-  \xdef\csr@current{\expandafter\noexpand\csname\@currenvir\endcsname}%
-}%
 \def\csr@context@check#1{%
-  \csr@read@context% 
   \expandafter\ifx\csr@current#1%
     \csr@contextnotfoundfalse% pheeew!
     \expandafter\aftergroup%
@@ -116,17 +148,18 @@
   \fi%
 }%
 \DeclareRobustCommand*\cslabel[1]{%
-  \ifcsr@debug%
-    \PackageInfo{csref}{DEBUG: About to define label `#1' of %
-      environment type `\@currenvir'}%
-  \fi%
   \@bsphack%
   \begingroup%
+    \csr@read@context% 
+    \ifcsr@debug%
+      \PackageInfo{csref}{DEBUG: Defining label `#1' %
+        of environment type `\csr@current@name'}%
+    \fi%
     \let\@elt=\csr@context@check%
     \csr@contexts%
     \ifcsr@contextnotfound%
-      \PackageWarning{csref}{Environment `\@currenvir' unknown;\space%
-        using default reference format}%
+      \PackageWarning{csref}{Environment `\csr@current@name' %
+        unknown; using default reference format}%
       \aftergroup\csr@default@label%
     \fi%
   \endgroup{#1}%
@@ -136,8 +169,8 @@
 \DeclareRobustCommand*\csref[1]{%
   \@ifundefined{csr@#1@ref}{%
       \PackageWarning{csref}{No saved environment type for label `#1', %
-        falling back to \protect\ref}%
-      \ref{#1}%
+        falling back to plain \protect\csr@ref}%
+      \csr@ref{#1}%
     }{%
       \csname csr@#1@ref\endcsname%
     }%
@@ -150,31 +183,40 @@
   \let\label=\cslabel%
   % Package amsmath compatibility
   \@ifundefined{ltx@label}%
-    {\relax}%
+    {}%
     {\let\ltx@label\cslabel}%
 }%
 %
 %
 %
 \newcsref{default}{\csr@ref{#1}}%
-\providecommand\sectionrefname{Section}%
 \@ifundefined{sectionname}% hack for AMS document classes
-  {}%
-  {\def\sectionrefname{\sectionname}}%
-\newcsref{document}{\sectionrefname~\csr@ref{#1}}%
+  {\providecommand\sectionrefname{Section}}%
+  {\providecommand\sectionrefname{\sectionname}}%
 %%
 %% If the environment named in the first argument is defined, then
 %% act just like a |\newcsref|; if it is undefined, then this macro is
 %% a no-op.
 %%
 \def\newcsref@ifdefined#1{%
-  \@ifundefined{#1}
+  \@ifundefined{#1}%
     {\@gobble}% eat up second argument
     {\newcsref{#1}}% define a new \csref
 }%
 %%
 %% Provide defaults for common environments.
 %%
+\newcsref@ifdefined{part}{\partname~\csr@ref{#1}}%
+\newcsref@ifdefined{chapter}{\chaptername~\csr@ref{#1}}%
+\newcsref@ifdefined{appendix}{\appendixname~\csr@ref{#1}}%
+\newcsref@ifdefined{section}{\sectionrefname~\csr@ref{#1}}%
+\newcsref@ifdefined{subsection}{\sectionrefname~\csr@ref{#1}}%
+\newcsref@ifdefined{subsubsection}{\sectionrefname~\csr@ref{#1}}%
+\newcsref@ifdefined{paragraph}{Paragraph~\csr@ref{#1}}% FIXME: name?
+\newcsref@ifdefined{subparagraph}{Paragraph~\csr@ref{#1}}%
+%
+% standard environments
+%
 \newcsref@ifdefined{theorem}{Theorem~\csr@ref{#1}}%
 \newcsref@ifdefined{lemma}{Lemma~\csr@ref{#1}}%
 \newcsref@ifdefined{proposition}{Proposition~\csr@ref{#1}}%
@@ -188,7 +230,6 @@
 \newcsref@ifdefined{table}{\tablename~\csr@ref{#1}}%
 \newcsref@ifdefined{enumerate}{\csr@ref{#1}}%
 \newcsref@ifdefined{itemize}{\csr@ref{#1}}%
-% \newcsref@ifdefined{app}{Appendix}% <-- FIXME!!
 %
 %% environments from 'amsmath' package:
 \newcsref@ifdefined{align}{\eqref{#1}}%
