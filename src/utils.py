@@ -32,6 +32,19 @@ def concat(seqs):
     return reduce(operator.add, seqs)
 
 
+## conditional application of decorators
+def maybe(deco, default=False, cond=None):
+    if cond is None:
+        try:
+            cond = deco.enabled
+        except AttributeError:
+            cond = default
+    if cond:
+        return deco
+    else:
+        return (lambda fn: fn)
+
+
 def positive_int(arg):
     """Convert a string or number to a positive integer, if possible.
     Behaves just like the built-in `int` (which see), and additionally

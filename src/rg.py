@@ -15,6 +15,7 @@ from copy import copy
 import operator
 from itertools import chain,count,izip
 import types
+import weakref
 
 
 ## application-local imports
@@ -24,8 +25,8 @@ from cache import (
     ocache_iterator,
     ocache_symmetric,
     ocache_weakref,
-    fcache_iterator,
     Cacheable,
+    cache_id
     )
 from combinatorics import (
     InplacePermutationIterator,
@@ -42,6 +43,7 @@ from iterators import (
 import persist
 from utils import (
     concat,
+    maybe,
     sign,
     )
 
@@ -112,7 +114,7 @@ class Vertex(CyclicList):
     def __str__(self):
         return repr(self)
     
-    @ocache0
+    @maybe(ocache0)
     def num_loops(self):
         """Return the number of loops attached to this vertex."""
         seen = {}
@@ -139,7 +141,7 @@ class EqualIfIsomorphic(Cacheable):
         Cacheable.__init__(self)
 
     
-    @ocache_symmetric
+    @maybe(ocache_symmetric)
     def __eq__(self, other):
         """Return `True` if `self` and `other` are isomorphic."""
 
@@ -459,7 +461,8 @@ class Fatgraph(EqualIfIsomorphic):
             triples `(v, i, j)`, where `i` and `j` are consecutive (in
             the cyclic order sense) indices at a vertex `v`.
             """
-            self.origin = graph
+            # use a weakref so not to create a reference cycle and ease GC
+            self.origin = weakref.proxy(graph) if graph else None
             frozenset.__init__(self, triples)
             if __debug__:
                 if graph is not None:
@@ -491,7 +494,7 @@ class Fatgraph(EqualIfIsomorphic):
             return Fatgraph.BoundaryCycle(triples)
                 
 
-    @ocache0
+    @maybe(ocache0)
     def boundary_cycles(self):
         """Return a list of boundary cycles of this `Fatgraph` object.
 
@@ -501,16 +504,16 @@ class Fatgraph(EqualIfIsomorphic):
         i+1` or `i` and `j` are the starting and ending indices)::
         
           >>> Fatgraph([Vertex([2,1,0]),Vertex([2,0,1])]).boundary_cycles()
-          [BoundaryCycle([(1, 0, 1), (0, 2, 0)]),
-           BoundaryCycle([(1, 1, 2), (0, 1, 2)]),
-           BoundaryCycle([(1, 2, 0), (0, 0, 1)])]
+          [BoundaryCycle([(1, 2, 0), (0, 0, 1)]),
+           BoundaryCycle([(0, 1, 2), (1, 1, 2)]),
+           BoundaryCycle([(0, 2, 0), (1, 0, 1)])]
 
         This verbose representation allows one to distinguish the
         boundary cycles made from the same set of edges::
 
           >>> Fatgraph([Vertex([0,1,2,0,1,2])]).boundary_cycles()
-          [BoundaryCycle([(0, 0, 1), (0, 2, 3), (0, 4, 5)]),
-           BoundaryCycle([(0, 0, 5), (0, 3, 4), (0, 1, 2)])]
+          [BoundaryCycle([(0, 2, 3), (0, 4, 5), (0, 0, 1)]),
+           BoundaryCycle([(0, 1, 2), (0, 3, 4), (0, 5, 0)])]
         """
         assert self.num_external_edges == 0, \
                "Fatgraph.boundary_cycles: "\
@@ -908,7 +911,7 @@ class Fatgraph(EqualIfIsomorphic):
         return image_edge_numbering.sign()
 
 
-    @ocache_weakref
+    @maybe(ocache_weakref)
     def contract(self, edgeno):
         """Return new `Fatgraph` obtained by contracting the specified edge.
 
@@ -1077,7 +1080,7 @@ class Fatgraph(EqualIfIsomorphic):
         return xrange(self.num_edges)
 
     
-    @ocache0
+    @maybe(ocache0)
     def edge_orbits(self):
         """Compute orbits of the edges under the action of graph
         automorphism group, and a representative for each orbit.
@@ -1093,7 +1096,7 @@ class Fatgraph(EqualIfIsomorphic):
 
           >>> g = Fatgraph([Vertex([0,1,2]), Vertex([0,1,2])])
           >>> g.edge_orbits()
-          { 0:[0,1,2] }
+          { 0: [0, 1, 2] }
           
         """
         orbits = dict( (x,[x]) for x in xrange(self.num_edges) )
@@ -1116,7 +1119,7 @@ class Fatgraph(EqualIfIsomorphic):
         return orbits
 
 
-    @ocache0
+    @maybe(ocache0)
     def edge_pair_orbits(self):
         """Compute orbits of pairs `(edge1, edge2)` under the action
         of graph automorphism group, and a representative for each
@@ -1403,7 +1406,7 @@ class Fatgraph(EqualIfIsomorphic):
         return True
 
 
-    @ocache_iterator
+    @maybe(ocache_iterator)
     def isomorphisms(g1, g2):
         """Iterate over `Fatgraph` isomorphisms from `g1` to `g2`.
 
@@ -1699,7 +1702,7 @@ class Fatgraph(EqualIfIsomorphic):
             # list of morphisms is empty, graphs are not equal.
             return 0
 
-    @ocache0
+    @maybe(ocache0)
     def valence_spectrum(self):
         """Return a dictionary mapping valences into vertex indices.
 
@@ -1735,11 +1738,11 @@ class Fatgraph(EqualIfIsomorphic):
                " %d vertex indices" % (result, self.num_vertices)
         return result
 
-    @ocache0
+    @maybe(ocache0)
     def vertex_valences(self):
         return frozenset(len(v) for v in self.vertices)
 
-    @ocache0
+    @maybe(ocache0)
     def vertex_valence_distribution(self):
         spec = self.valence_spectrum()
         return dict((v, len(spec[v]))
@@ -1968,13 +1971,14 @@ class NumberedFatgraph(Fatgraph):
                % (repr(self.underlying), canonical)
     
 
-    @ocache_weakref
+    @maybe(ocache_weakref)
     def contract(self, edgeno):
         """Return a new `NumberedFatgraph` instance, obtained by
         contracting the specified edge.
 
         Examples::
 
+          >>> BoundaryCycle = Fatgraph.BoundaryCycle
           >>> g0 = NumberedFatgraph(Fatgraph([Vertex([1, 2, 1]), Vertex([2, 0, 0])]),
           ...                       numbering={BoundaryCycle([(0, 1, 2), (1, 2, 0),
           ...                                                 (0, 0, 1), (1, 0, 1)]): 0,
@@ -2057,7 +2061,7 @@ class NumberedFatgraph(Fatgraph):
                                 numbering=new_numbering)
         
 
-    #@ocache_iterator
+    #@maybe(ocache_iterator)
     def isomorphisms(self, other):
         """Iterate over isomorphisms from `self` to `other`.
 
@@ -2154,9 +2158,8 @@ class NumberedFatgraph(Fatgraph):
     
     
 
-#@fcache_iterator
 def MgnTrivalentGraphsRecursiveGenerator(g, n):
-    """Iterate over all connected trivalent fatgraphs having the
+    """Return a list of all connected trivalent fatgraphs having the
     prescribed genus `g` and number of boundary cycles `n`.
     
     Examples::
@@ -2242,15 +2245,17 @@ def MgnTrivalentGraphsRecursiveGenerator(g, n):
                                     yield Fatgraph.bridge2(G1, x1, 1, G2, x2, 1)
 
         unique = []
+        discarded = 0
         for G in graphs(g,n):
             # XXX: should this check be done in graphs(g,n)?
             if (G.genus(), G.num_boundary_cycles()) != (g,n) \
                    or (G in unique):
+                discarded += 1
                 continue
             unique.append(G)
             yield G
 
-        logging.debug("  MgnTrivalentGraphsRecursiveGenerator(%d,%d) done, found %d unique graphs." % (g,n, len(unique)))
+        logging.debug("  MgnTrivalentGraphsRecursiveGenerator(%d,%d) done: %d unique graphs, discarded %d duplicates." % (g,n, len(unique), discarded))
 
 
 
@@ -2304,6 +2309,7 @@ class MgnGraphsIterator(BufferingIterator):
         # initialize superclass with list of trivalent graphs
         BufferingIterator.__init__(self, trivalent)
 
+
     def refill(self):
         if self._num_vertices == 0:
             raise StopIteration
@@ -2325,7 +2331,7 @@ class MgnGraphsIterator(BufferingIterator):
         self._batch = next_batch
         self._num_vertices -= 1
 
-        logging.debug("  Found %d distinct unique fatgraphs with %d vertices, discarded %d.",
+        logging.debug("  Found %d distinct unique fatgraphs with %d vertices, discarded %d duplicates.",
                      len(next_batch), 1+self._num_vertices, discarded)
         return next_batch
 

@@ -6,19 +6,13 @@ __docformat__ = 'reStructuredText'
 
 ## stdlib imports
 
+import gc
 import sys
 import logging
 
+## application-local imports
 
-## fatgraphs 
-
-from graph_homology import FatgraphComplex
-from rg import (
-    Fatgraph,
-    MgnGraphsIterator,
-    )
 from utils import positive_int
-from valences import vertex_valences_for_given_g_and_n
 
 
 ## utility functions
@@ -142,39 +136,46 @@ def do_valences(g,n):
 
 # parse command-line options
 from optparse import OptionParser
-parser = OptionParser(usage="""Usage: %prog [options] action [arg ...]
+parser = OptionParser(version="3.4",
+    usage="""Usage: %prog [options] action [arg ...]
 
-    Actions:
+Actions:
 
-      valences G N
-        Print the vertex valences occurring in M_{g,n} graphs
+  valences G N
+    Print the vertex valences occurring in M_{g,n} graphs
 
-      graphs G N
-        Print the graphs occurring in M_{g,n}
+  graphs G N
+    Print the graphs occurring in M_{g,n}
 
-      homology G N
-        Print homology ranks of M_{g,n}
+  homology G N
+    Print homology ranks of M_{g,n}
 
-      shell
-        Start an interactive PyDB shell.
-      
-      selftest
-        Run internal code tests and report failures.
-        
+  shell
+    Start an interactive PyDB shell.
+  
+  selftest
+    Run internal code tests and report failures.
     """)
+parser.add_option("-C", "--cache",
+                  action="count", dest="cache", default=0,
+                  help="""Turn on internal result caching (trade speed for memory).  With '-C', cache graph attributes and equality testing results: this gives a good speedup with a reasonable memory increase.  With '-CC', cache also isomorphism groups: the speedup is larger, but the memory usage can be more than double.""")
 parser.add_option("-l", "--logfile",
                   action='store', dest='logfile', default=None,
                   help="Redirect log messages to the named file (by default log messages are output to STDERR).")
 parser.add_option("-n", "--silent",
                   action='store_true', dest='silent', default=False,
-                  help="No output at all: useful for timing the algorithm.")
+                  help="No output at all: only useful for timing the algorithm.")
 parser.add_option("-L", "--latex",
                   action='store_true', dest='latex', default=False,
-                  help="Output results in LaTeX format.")
+                  help="Output list of M_{g,n} graphs as a LaTeX file.")
 parser.add_option("-o", "--output", dest="outfile", default=None,
                   help="Output file for all actions.")
 parser.add_option("-O", "--feature", dest="features", default=None,
-                  help="Enable optional speedup or tracing features.")
+                  help="""Enable optional speedup or tracing features:
+                  * pydb -- run Python debugger if an error occurs
+                  * psyco -- run the Psyco JIT compiler
+                  * profile -- dump profiler statistics in a .pf file.
+                  Different features may be combined by separating them with a comma, as in '-O pydb,profile'.""")
 parser.add_option("-v", "--verbose",
                   action="store_false", dest="quiet", default=True,
                   help="Print informational and status messages as the computation goes on.")
@@ -226,7 +227,44 @@ if options.features is not None:
             logging.debug("Started call profiling with 'hotshot' module.")
         except ImportError:
             logging.warning("Could not import 'hotshot' - call profiling *not* enabled.")
-            
+
+
+# configure caching
+
+from cache import (
+    ocache0,
+    ocache_iterator,
+    ocache_symmetric,
+    ocache_weakref,
+    )
+
+if options.cache is not None:
+    ocache0.enabled = True
+    ocache_weakref.enabled = True
+    ocache_symmetric.enabled = True
+    # only enable iterator caching wih "-CC"
+    if options.cache > 1:
+        ocache_iterator.enabled = True
+    # this reduces memory usage at the cost of some speed
+    gc.enable()
+    if options.cache < 3:
+        gc.set_threshold(256, 4, 4)
+else:
+    # default: no caching at all
+    ocache_iterator.enabled = False
+    ocache_symmetric.enabled = False
+    ocache_weakref.enabled = False
+
+# fat-graph handling routines need to be loaded *after* the cache module
+# (in order for caching to be a runtime-selectable option)
+from graph_homology import FatgraphComplex
+from rg import (
+    Fatgraph,
+    MgnGraphsIterator,
+    )
+from valences import vertex_valences_for_given_g_and_n
+
+
 
 # hack to allow 'N1,N2,...' or 'N1 N2 ...' syntaxes
 for (i, arg) in enumerate(args):
@@ -292,7 +330,7 @@ elif 'selftest' == args[0]:
                     logging.warning("  module '%s' had no doctests." % module)
         finally:
             file.close()
-    
+
     # second, try known cases and inspect results
     for (g, n, ok) in [ (0,3, [0,0,1]),
                         (1,1, [0,0,1]),
