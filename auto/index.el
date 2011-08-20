@@ -1,11 +1,9 @@
 (TeX-add-style-hook "index"
- (function
-  (lambda ()
+ (lambda ()
     (LaTeX-add-bibliographies
      "math")
     (LaTeX-add-environments
      "theorem"
-     "thmsec"
      "lemma"
      "proposition"
      "claim"
@@ -27,45 +25,35 @@
      '("Oo" ["argument"] 0)
      '("vv" 1)
      '("Holes" 1)
+     '("Legs" 1)
      '("Edges" 1)
      '("Vertices" 1)
-     '("ftpc" 1)
      '("btpc" 1)
      '("tpc" 1)
      '("freemsc" 1)
      '("freemc" 1)
+     '("textsuperscript" 1)
+     '("textsubscript" 1)
      "theoremname"
+     "ksz"
+     "aksz"
      "A"
      "B"
      "rev"
      "catN"
+     "Ao"
      "Conf"
      "T"
      "Lb"
      "Hn"
-<<<<<<< TREE
-     "xyc"
-     "nx")
-=======
      "Harmonic"
      "ad"
      "rel"
      "xyc")
->>>>>>> MERGE-SOURCE
     (TeX-run-style-hooks
-     "csref"
-     "graphicx"
-     "final"
-     "csref"
-     "nomencl"
-     "refpage"
-     "hyperref"
-     "url"
-     "mdwtab"
-     "mdwlist"
-     "paralist"
-     "newitem"
-     "newenum"
+     "miscmath"
+     "amsthm"
+     "xytree"
      "rg"
      "xy"
      "ps"
@@ -76,9 +64,14 @@
      "arc"
      "knot"
      "poly"
-     "miscmath"
-     "amsthm"
-     "rcs"
+     "paralist"
+     "newitem"
+     "newenum"
+     "url"
+     "hyperref"
+     "graphicx"
+     "final"
+     "csref"
      "debug"
      "latex2e"
      "amsbook10"
@@ -96,5 +89,6 @@
      "kontsevich"
      "arrows"
      "btc"
-     "rt"))))
+     "rt"
+     "operads")))
 

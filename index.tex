@@ -1,8 +1,29 @@
-%%% index.tex -- Generico contenitore per matematica in lingua inglese.
-%%%
-%%% $Id: index.tex,v 1.7 2006/05/25 07:02:56 rmurri Exp $
+%%% index.tex -- Master LaTeX file.
 %%%
 \documentclass[a4paper,reqno,openany,draft]{amsbook}
+
+
+\usepackage[debug]{csref}
+%\usepackage{mdwlist}
+%\usepackage{mdwtab}
+\usepackage[final]{graphicx}
+\usepackage{hyperref}
+\usepackage{url}
+
+\usepackage[newitem,newenum]{paralist}
+\setdefaultenum{\slshape 1)}{\slshape a)}{\slshape i)}{A.}
+%\defaultitem{$\triangleright$}{}{}{}
+
+\usepackage[ps,dvips,xdvi,colour,all,arc,knot,poly]{xy}
+\everyxy={/r24pt/:} % scala per i diagrammi
+\def\xyc#1\endxyc{\xy*!LC\xybox{#1}\endxy}
+
+\usepackage{rg} % vertici e buche di grafi a nastro
+
+\usepackage{xytree}
+\setlength{\treegap}{24pt}  
+\setlength{\treeheight}{18pt}
+
 
 %%%
 %%% DEBUG!
@@ -22,11 +43,10 @@
 
 \newtheorem{theorem}{Theorem}[chapter]
 \newtheorem*{theorem*}{Theorem}
-\newtheorem{thmsec}{Theorem}[section]
-\newtheorem{lemma}{Lemma}[section]
+\newtheorem{lemma}[theorem]{Lemma}
 \newtheorem{proposition}[theorem]{Proposition}
-\newtheorem{claim}{Claim}[chapter]
-\newtheorem{conjecture}{Conjecture}[chapter]
+\newtheorem{claim}[theorem]{Claim}
+\newtheorem{conjecture}[theorem]{Conjecture}
 \newtheorem{corollary}[theorem]{Corollary}
 
 \theoremstyle{remark}
@@ -35,10 +55,11 @@
 \newtheorem*{notations}{Notations}
 
 \theoremstyle{definition}
-\newtheorem{definition}{Definition}[section]
+\newtheorem{definition}[theorem]{Definition}
 \newtheorem{example}{Example}[chapter]
 
-\numberwithin{equation}{section} % numerazione delle equazioni
+\numberwithin{equation}{section}
+
 
 %%
 %% Notazioni matematiche di *questo* articolo
@@ -82,9 +103,10 @@
 \newcommand{\ad}{\textrm{ad}} % adjoint action ad[X,Y]
 
 % decomposizione cellulare dei grafi a nastro
-\newcommand{\Vertices}[1]{#1^{(0)}}
-\newcommand{\Edges}[1]{#1^{(1)}}
-\newcommand{\Holes}[1]{#1^{(2)}}
+\newcommand{\Vertices}[1]{V(#1)}
+\newcommand{\Edges}[1]{E(#1)}
+\newcommand{\Legs}[1]{L(#1)}
+\newcommand{\Holes}[1]{B(#1)}
 
 % medie sui grafi
 \newcommand{\vv}[1]{V(#1)}
@@ -98,64 +120,11 @@
 % omotopia
 \newcommand{\rel}{\sim}
 
-%%
-%% `xy' --- grafica
-%%
-\usepackage[ps,dvips,xdvi,colour,all,arc,knot,poly]{xy}
-\everyxy={/r24pt/:} % scala per i diagrammi
-\def\xyc#1\endxyc{\xy*!LC\xybox{#1}\endxy}
-
-\usepackage{rg} % vertici e buche di grafi a nastro
-
-\usepackage{xytree}
-\setlength{\treegap}{24pt}  
-\setlength{\treeheight}{18pt}
-
-
-%%
-%% `paralist' -- Miglior supporto per le liste
-%%
-\usepackage[newitem,newenum]{paralist}
-\setdefaultenum{\slshape 1)}{\slshape a)}{\slshape i)}{A.}
-%\defaultitem{$\triangleright$}{}{}{}
-
-%%
-%% `mdwlist' -- \suspend / \resume list environments
-%%
-\usepackage{mdwlist}
-
-%%
-%% `mdwtab' -- better support for tables
-%%
-\usepackage{mdwtab}
-
-%%
-%% `url' -- Inserimento di URL
-%%
-\usepackage{url}
-
-%%
-%% `hyperref' -- Collegamenti ipertestuali
-%%
-\usepackage{hyperref}
-
-
-%%
-%% `graphicx' -- inclusione di grafica esterna
-%%
-\usepackage[final]{graphicx}
-
-
-%%
-%% `csref' -- genera automaticamente il nome di un riferimento.
-%%
-\usepackage[debug]{csref}
-%\let\csref\autoref
 
 %%%
 %%% Cominciamo...
 %%%
-%\includeonly{kontsevich,construction}
+\includeonly{graphcomplex}
 \begin{document}
 
 \include{title}

@@ -15,9 +15,14 @@ curves $\M_{g,n}$.
 
 Here we give construction of the ribbon graph complex, deriving it as
 a relative of Harer's arc-system complex
-\cite{harer;cohomological-dimension, harer;cohomology-of-moduli}, and
-prove the isomorphism of its homology with the rational (co)homology
-of $\M_{g,n}$.  The main ingredient of this construction is a cell
+\cite{harer;cohomological-dimension,
+  harer;cohomology-of-moduli}\FIXME{Non sono affatto sicuro che gli
+  arc-system siano stati introdotti da Harer; forse Penner o un altro?
+  Per\`o non \`e molto importante chi li ha introdotti, quanto che qui si
+  costruisce il complesso dei grafi a nastro parallelamente a come
+  Harer costruisce quello degli arc-system.}, and prove the
+isomorphism of its homology with the rational (co)homology of
+$\M_{g,n}$.  The main ingredient of this construction is a cell
 decomposition of $\M_{g,n}$ based on a theorem of Jenkins and Strebel
 \cite{strebel;quadratic-differentials;1983}.  This ribbon graph
 complex is the same complex that one gets by applying Kontsevich'
@@ -28,6 +33,124 @@ An exposition of Kontsevich' work, complete with full details, can be
 found in \cite{conant-vogtmann;2003}.  The techniques devised by
 Kontsevich were later extended by Getzler and Kapranov
 \cite{getzler-kapranov} and Markl \cite{markl;cyclic}.
+
+
+
+\section{Ribbon graphs}
+\label{sec:ribbon-graphs}
+
+There are two distinct definitions of ribbon graphs, one capturing the
+combinatorial and computable aspect and one of a topological nature.
+They are equivalent and will be used interchangeably in the sequel.
+
+\begin{definition}
+  \label{dfn:ribbon-graphs}
+  A ribbon graph is equivalently defined as either:
+  \begin{enumerate}
+  \item\label{item:rg1} A finite CW-complex of pure dimension 1,
+    together with an assignment, for each vertex $\gamma$, of a cyclic
+    ordering of the edges incident at $\gamma$.
+  \item\label{item:rg2} A finite set $L$ together with three bijective
+    maps $\sigma_0, \sigma_1, \sigma_2 : L \to L$ subject to the conditions:
+    \begin{itemize}
+    \item $\sigma_1$ is involutive: $\sigma_1^2 = \id$;
+    \item $\sigma_0 \circ \sigma_2 = \sigma_1$.
+    \end{itemize}
+  \end{enumerate}
+  Unless otherwise specified, we assume that all vertices of a ribbon
+  graph have valence at least 3, or, in the combinatorial picture,
+  that every orbit of $\sigma_0$ has at least 3 distinct elements.
+\end{definition}
+
+To pass from the topological description to the combinatorial one,
+take $L$ to be the set of \emph{oriented} edges of the CW-complex
+underlying a ribbon graph.  Define $\sigma_1:L\to L$ as the orientation
+reversal on edges.  Define $\sigma_0:L\to L$ by means of the cyclic order at
+vertices: let $L(v)$ be the subset of edges in $L$ that \emph{end} at
+a vertex $\gamma$, the cyclic order on edges incident at $\gamma$ induces a
+cyclic order on $L(v)$.  If $l\in L(v)$ then define $\sigma_0(l)$ as the
+successor to $l$ in the cyclic order on $L(v)$.  Finally, define $\sigma_2$
+by means of $\sigma_2=\sigma_0^{-1}\sigma_1$.
+
+Vice versa, let $L_i$ be the set of orbits of the map $\sigma_i$.  Take
+$L_0$ to be the set of 0-cells; for each $\{l,l'\} \in L_1$, glue a
+1-cell to the 0-cells corresponding to the $\sigma_0$ orbits of $l$ and
+$l'$.  The cyclic order at each vertex is induced by the action of
+$\sigma_0$.
+
+If $G$ is a ribbon graph, denote $\Vertices{G}$, $\Edges{G}$ and
+$\Legs{G}$ the sets of vertices, (unoriented) edges and oriented edges
+(at times called ``legs'' or ``half-edges'').  In the combinatorial
+description, $\Vertices{G}$ is the set $L_0$ of orbits of $\sigma_0$,
+$\Edges{G}$ is the set $L_1$ of orbits of $\sigma_1$, and $\Legs{G}$ is
+plainly the set $L$.  Denote $\Holes{G}$ the set $L_2$ of orbits of
+$\sigma_2$; its elements are certain homology 1-cycles on $G$, called
+``boundary components'' (see below).  Also in the topological
+description, it will be convenient to identify a boundary component
+$\beta$ with the set of edges it is made of, and a vertex $\gamma$ with the set
+of edges incident to it.
+
+
+\subsection{From ribbon graphs to Riemann surfaces}
+\label{sec:rg-to-surfaces}
+
+Let $G = (L, \sigma_0, \sigma_1, \sigma_2)$ be a ribbon graph; passing to the
+topological description, we associate a 0-cell with every $\sigma_0$-orbit
+in $L$, and a 1-cell with every $\sigma_1$-orbit.  Extend this procedure
+and glue a punctured 2-cell along any $\sigma_2$-orbit: if $\{l, \sigma_2l, \ldots,
+\sigma_2^kl\}$ is a $\sigma_2$-orbit (in the order it is swept by $\sigma_2$) and
+$\sigma_2^{k+1}l = l$, then attach a punctured 2-disk so that its oriented
+border is the 1-cycle formed by the graph edges corresponding to
+$\sigma_2^il$.  
+
+Thus we have constructed a punctured Riemann surface $S(G)$, such that
+$G$ is a deformation retract of $S(G)$; boundary components
+$\Holes{G}$ are the support of 1-cycles in $H^1(G)$ that correspond
+under the retraction to small loops around the punctures in $S(G)$.
+
+If $S(G)$ has genus $g$ and $n$ punctures, then:
+\begin{equation*}
+  \chi(G) = \chi(S(G)) = 2 - 2g - n,
+\end{equation*}
+so we can define, for any ribbon graph $G$, the \emph{genus} $g$ and the
+\emph{puncture number} $n$, as given by the above relation.
+
+
+\subsection{The category of ribbon graphs}
+\label{sec:rg-category}
+
+In the topological description, a morphism of ribbon graphs $G$, $G'$
+is a cellular map $f:G\to G'$ such that, for each vertex $\gamma$ of $G$, the
+preimage $f^{-1}(U)$ of a small neighbourhood of $\gamma$ retracts in $G$
+onto a tree (i.e., it has no nontrivial homological cycles).  In the
+combinatorial description, a morphism of ribbon graphs $G = (L; \sigma_0,
+\sigma_1, \sigma_2)$ and $G' = (L'; \sigma_0', \sigma_1', \sigma_2')$ is defined as a map
+$f:L\to L'$ that commutes with the structure maps: $\sigma'_i\circ f = f\circ\sigma_i$.
+
+Let $G$ be a ribbon graph, and $G'$ be the CW-complex obtained by
+contracting an edge $\alpha \in \Edges{G}$ to a point.  $G'$ inherits a
+ribbon graph structure from $G$: the cyclic order at the vertex formed
+by collapsing $\alpha$ is obtained by plugging the edges incident at one
+endpoint of $\alpha$ in the place of $\alpha$ at the cyclic order at the other
+endpoint.  In the combinatorial picture, if $\alpha = \{ l^+, l^- \} \in L_1$,
+then $\Legs{G'} = L \textbackslash{} \alpha$ and
+\begin{equation*}
+  \sigma'_i(l) :=
+  \begin{cases}
+    \sigma_i(l)   
+    & \text{if $l \not= \sigma_i^{-1}(l^{\pm})$} 
+    \\
+    \sigma_i(l^{\pm})   
+    & \text{if $l = \sigma_i^{-1}(l^{\pm})$}
+  \end{cases}
+\end{equation*}
+These contraction morphisms play a major role in manipulation of
+ribbon graphs.
+\begin{lemma}
+  Any morphism of ribbon graphs is a composition of isomorphisms and
+  contractions. 
+\end{lemma}
+
 
 
 \section{Moduli Spaces of Curves}
@@ -148,6 +271,10 @@ strings move, they draw ``tubes''; when tubes join, they form a
 punctured surface. This simple idea is the link between string theory
 and the moduli space of curves. 
 
+
+\subsection{A complex structure on $S(G)$}
+\label{sec:atlas}
+
 Let $S$ be an $n$-punctured Riemann surface: $S$ retracts onto a
 graph. This graph is not uniquely determined (see
 \csref{fig:sphere-retracts}).
@@ -162,62 +289,27 @@ We look forward to refining this correspondence: let us introduce more
 structure on the graph.
 \begin{definition}
   \label{dfn:metric-ribbon-graphs}
-  A metric ribbon graph is the data of a type (0,0) ribbon graph (see
-  \csref{dfn:ribbon-graphs}) equipped with a real positive number
-  $\ell_\alpha$ for each edge $\alpha$.
+  A metric ribbon graph is the data of ribbon graph $G$ equipped with
+  a real positive number $\ell_\alpha$ for each edge $\alpha \in \Edges{G}$.
 \end{definition}
 
-One can use the cyclic order to ``fatten'' edges of a graph $G$ into
-thin ribbons\footnote{Hence the names ``ribbon graph'' and
-  ``fatgraph''.}  (see \csref{fig:fattening-edges}), so to obtain a
-compact oriented Riemann surface with boundary $\tilde S(G)$.
-Viceversa, any graph $G$, embedded in a oriented Riemann surface,
-inherits a cyclic order from the orientation.
-\begin{figure}[htbp]
-  \begin{equation*}
-    \includegraphics{fatten}
-  \end{equation*}
-  \caption{Fattening edges at a vertex with cyclic order.}
-  \label{fig:fattening-edges} 
-\end{figure} 
-Now glue punctured disks alongside the boundary of $\tilde S(G)$ to
-get a punctured Riemann surface $S(G)$. Obviously,
-\begin{equation*}
-  \chi(G) = \chi(S(G)) = 2 - 2g - n,
-\end{equation*}
-so we can define, for a ribbon graph $G$, the \emph{genus} $g$ and the
-\emph{puncture number} $n$, as given by the above relation.
+We can give the topological Riemann surface $S(G)$ a complex structure
+by means of a triangulation and an analytic atlas.
 
-Notice that this fattening procedure actually selects some homological
-$1$-cycles in $G$, those corresponding to the boundary components of
-$\tilde S(G)$. By abuse of language, we shall call these $1$-cycles
-``boundary components'' or ``holes'', for short.
-
-Denote $\Vertices{G}$, $\Edges{G}$ and $\Holes{G}$ the
-sets of vertices, edges and holes of a graph $G$. It will be
-convenient to identify a hole $\beta$ with the set of edges it is made
-of, and a vertex $\gamma$ with the set of edges incident to it.
-
-
-\subsection{A complex structure on $S(G)$}
-\label{sec:atlas}
-Let us give the topological Riemann surface $S(G)$ a complex
-structure, by means of a triangulation and an analytic atlas.
-
-In the course of the construction of $S(G)$, two punctured disk
-have been glued on the sides of an edge $\alpha \in \Edges{G}$: call
-them $\alpha^+$ and $\alpha^-$. Let $T_\alpha^+$ and $T_\alpha^-$ be the triangles
-delimited by $\alpha$ and the radii joining endpoints of $\alpha$ with the
-puncture of $\alpha^\pm$. The collection $\{T_\alpha^\pm : \alpha \in \Edges{G}\}$
-is a triangulation of $S(G)$.
+In the course of the construction of $S(G)$, two punctured disk have
+been glued on the sides of an edge $\alpha \in \Edges{G}$: call them $\alpha^+$
+and $\alpha^-$; they are not necessarily distinct.  Let $T_\alpha^+$ and $T_\alpha^-$
+be the triangles delimited by $\alpha$ and the radii joining endpoints of
+$\alpha$ with the puncture of $\alpha^\pm$. The collection $\{T_\alpha^\pm : \alpha \in
+\Edges{G}\}$ is a triangulation of $S(G)$.
 
 Define an atlas of $S(G)$:
 \begin{itemize}
-\item for any edge $\alpha$, put $V_\alpha := (T_\alpha^+ \cup T_\alpha^-)^\circ$;
-\item for any hole $\beta$, put $V_\beta := \bigl( \bigcup_{\alpha} T_\alpha \bigr)^\circ$
-  for all $\alpha$ bounding $\beta$;
-\item for any vertex $\gamma$, put $V_\gamma := \bigl( \bigcup_\alpha T_a^\pm \bigr)^\circ$
-  for all $\alpha$ incident to $\gamma$.
+\item for any edge $\alpha \in \Edges{G}$, put $V_\alpha := (T_\alpha^+ \cup T_\alpha^-)^\circ$;
+\item for any boundary component $\beta \in \Holes{G}$, put $V_\beta := \bigl(
+  \bigcup_{\alpha} T_\alpha \bigr)^\circ$ for all $\alpha$ bounding $\beta$;
+\item for any vertex $\gamma \in \Vertices{G}$, put $V_\gamma := \bigl( \bigcup_\alpha T_a^\pm
+  \bigr)^\circ$ for all $\alpha$ incident to $\gamma$.
 \end{itemize}
 \begin{figure}[btp]
   %% Figura atlas.fig
@@ -266,61 +358,95 @@ the complex structure on $S(G)$; this will allow for a different
 construction of the moduli space $\M_{g,n}$.
 
 
-\subsection{The Strebel construction}
+\subsection{The Jenkins-Strebel Theorem}
 \label{sec:strebel}
-A theorem proved by K. Strebel in the 1960's provides an inverse
-route: the construction of ribbon graphs from smooth complex curves.
+A theorem proved independently by J.~A. Jenkins \cite{jenkins;annals}
+and K.~Strebel \cite{strebel;quadratic-differentials;1983} provides
+the key tool for the inverse route: the construction of ribbon graphs
+from smooth complex curves.
 
 \begin{definition}
   A quadratic differential $q$ on a Riemann surface $S$ is a
   (meromorphic) section of $(T^*S)\tp2$.
 \end{definition}
 The set of vectors in $T_zS$ on which $q$ takes real non-negative
-values forms a real line in $T_zS$: therefore, they make up a foliation
-on $S$. The non-compact leaves together with zeroes of $q$ form the
-``critical locus'' of $q$.
+values forms a real line in $T_zS$: therefore, they make up a
+foliation $F = F_qS$ on $S \textbackslash{} \{\text{poles of $q$}\}$. The non-compact
+leaves of $F$ together with zeroes of $q$ form the ``critical locus''
+of $q$.  
+
+The set of vectors ion $T_zS$ on which $q$ takes a purely imaginary
+value form a perpendicular foliation $F^\perp$, whose leaves connect
+either two distinct poles $x_i$ and $x_j$, or a pole $x_i$ and a zero
+$v_j$.
 
 Every quadratic differential $q$ induces a metric (away from the
 critical locus) by $ds^2 = \abs{q(z)} \cdot \abs{\ud z}$.
 
-\begin{theorem}[Strebel, {\cite[Theorem 23.2 and
+\begin{theorem}[Jenkins, Strebel; {\cite[Theorem 23.2 and
     23.5]{strebel;quadratic-differentials;1983}}] For any complex
   analytic curve $S$ with $n$ marked points $x_1, \ldots, x_n$, and any
   assignment of real positive numbers $p_1, \ldots, p_n$, there exists one
-  and only one meromorphic quadratic differential $q$ such that:
-  \begin{enumerate}
-  \item the critical locus of $q$ is a graph $G$ embedded in $S$;
-  \item the poles of $q$ reside in the marked points $x_1, \ldots, x_n$
-    with second residue $p_1, ..., p_n$;
-  \item every compact leaf circling around $x_i$ has length $p_i$ in the flat
+  and only one quadratic differential $q$ such that:
+  \begin{itemize}
+  \item the only poles of $q$ occur at the marked points $x_1, \ldots, x_n$
+    with second residue $p_1, ..., p_n$, that is, in a local
+    coordinate $z_i$ near $x_i$ we have:
+    \begin{equation*}
+      q = p_i^2 (\d z_i / z_i) + \text{higher order terms};
+    \end{equation*}
+  \item the non-critical real trajectories of $F_q$ are simple closed
+    circles around $x_i$.
+  \end{itemize}
+  Furthermore, $q$ has the following properties:
+  \begin{itemize}
+  \item every closed leaf circling around $x_i$ has length $p_i$ in the flat
     metric induced by $q$.
-  \end{enumerate}
+  \item the critical locus of $q$ is a graph $G$ embedded in $S$;
+  \item the complement $S \textbackslash{} G$ of the critical locus is a collection
+    of disks $\{D_i\}_{i=1,\ldots,n}$, each one centered at a pole $x_i$, and
+    the projective class of the collection of radii of disks $\{D_i\}$
+    equals the projective class $[p_1, \ldots, p_n]$.
+  \end{itemize}
 \end{theorem}
 The critical graph $G$ inherits a structure of ribbon graph with
-metric from the ambient surface $S$; the length of an edge $\alpha$ is the
+metric from the ambient surface $S$: the length of an edge $\alpha$ is the
 one measured in the metric induced by the quadratic
-differential. Furthermore, Strebel's theory states that $G$ has a
+differential. Furthermore, Jenkins-Strebel's theory states that $G$ has a
 vertex of valence $k+2$ where $q$ has a zero of order $k$, therefore,
 vertices of $G$ have valence $\geq3$.
 
 Since the markings $x_1, \ldots, x_n$ are \emph{ordered}, $G$ has an
 additional structure of \emph{numbered} graph, that is, it is endowed
 with a bijection $h: \Holes{G} \to \{1, \ldots, n\}$. 
+
+
+\subsection{Embedded ribbon graphs}
+\label{sec:embedded-rg}
+
+
+
+
+\subsection{Construction of the combinatorial analogues of $\T_{g,n}$
+  and $\M_{g,n}$}
+\label{sec:mgn-comb-construction}
+
+Let $G$ be a metrized ribbon graph of genus $g$ with $n$ numbered
+boundary components.  A topological cell $\Delta_G \subseteq \M_{g,n}$ is spanned
+when varying the metric data $(\ell_\alpha)_{\alpha \in \Edges{G}}$; gluing these
+cells one recovers the whole $\M_{g,n}$. We show here a quick
+construction of $\M_{g,n}$ and $\T_{g,n}$, following
+\cite{kontsevich;intersection-theory;1992} and
+\cite{penner;teichmuller-theory}
+
 \begin{definition}
   \label{dfn:strebel-graphs}
   Define a category $\Strebel[g,n]$, whose objects are metric numbered
   ribbon graphs with genus $g$ and $n$ holes, all whose vertices have
-  valence $\geq3$ (call them ``Strebel graphs'', for short) .  Morphisms
+  valence $\geq3$ (call them ``JS graphs'', for short).  Morphisms
   $G \to G'$ are compositions of graph isomorphisms and contractions of
   an edge $\alpha \in \Edges{G}$.
 \end{definition}
-
-Let $G$ be a Strebel graph of genus $g$ with $n$ holes.  A topological
-cell $\Delta_G \subseteq \M_{g,n}$ is spanned when varying the metric data
-$(\ell_\alpha)_{\alpha \in \Edges{G}}$; gluing these cells one recovers the whole
-$\M_{g,n}$. We show here a quick construction of $\M_{g,n}$,
-apparently due to Kontsevich
-\cite{kontsevich;intersection-theory;1992}.
 
 Call a set $X \subseteq \Edges{G}$ negligible whenever it is \emph{not} the
 support of a non-trivial homological cycle.  Define
@@ -328,9 +454,9 @@ support of a non-trivial homological cycle.  Define
   \label{eq:kontsevich-3}
   M(G) := \{ \ell: \Edges{G} \to \setR_{>0} | \text{the zero set of $\ell$ is negligible}\}.
 \end{equation*}
-It is a contravariant functor from the category of Strebel graphs to
-the category of topological spaces: if $G'$ is obtained from $G$ by
-contracting the edge $\alpha$, then
+It is a contravariant functor from the category of $\Strebel[g,n]$ of
+metrized numbered ribbon graphs to the category of topological spaces:
+if $G'$ is obtained from $G$ by contracting the edge $\alpha$, then
 \begin{equation*}
   M(G') = \{ \ell \in M(G) | \ell_\alpha = 0 \}.
 \end{equation*}
@@ -340,7 +466,8 @@ contracting the edge $\alpha$, then
   \begin{equation*}
     \Mcomb_{g,n} := \varinjlim M(G),
   \end{equation*}
-  with $G$ in the category $\Strebel[g,n]$ of Strebel graphs.
+  with $G$ in the category $\Strebel[g,n]$ of metrized numbered ribbon
+  graphs.
 \end{definition}
 \begin{remark}
   $\Mcomb_{g,n}$ is obtained by gluing orbicells $M(G)$ (quotient of
@@ -365,8 +492,8 @@ contrafunctor $\overline{M}(G)$ and a topological space:
 $\Mbarcomb_{g,n}$ turns out to be a compactification of the orbifold
 $\Mcomb_{g,n}$. 
 
-\begin{theorem}[Mumford, Harer, Penner, Thurston;
-  \cite{looijenga;cellular-decomposition}] 
+\begin{theorem}[Harer, Mumford, Thurston;
+  \cite{harer;cohomological-dimension, looijenga;cellular-decomposition}] 
   The Strebel construction defines morphisms
   \begin{equation*}
     \M_{g,n} \times \setR_{>0}^n \to \Mcomb_{g,n}, \qquad \Mbar_{g,n} \times
