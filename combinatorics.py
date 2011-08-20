@@ -71,6 +71,143 @@ class SetProductIterator:
                 raise StopIteration
 
 
+class Permutation(dict):
+    """A permutation of a finite set.
+
+    Provides methods to incrementally construct the map by extending
+    an existing map with new source->destination pairs; the extension
+    will fail if any new source->destination assignment contrasts with
+    what is already there.
+    """
+    
+    __slots__ = []
+
+    def __init__(self, seq=[]):
+        """Constructor, loading items in the order they appear in `seq`."""
+        for (src, dst) in enumerate(seq):
+            self[src] = dst
+            
+    def __iter__(self):
+        """Iterate over values."""
+        return (self[x] for x in xrange(len(self)))
+    
+    def rearrange(self, seq):
+        """Return a new list containing the items in `seq`, rearranged
+        according to this permutation.
+
+        Examples::
+
+          >>> s = ['a','b','c']
+          >>> p = Permutation([2,0,1])
+          >>> p.rearrange(s)
+          ['c', 'a', 'b']
+        """
+        assert len(seq) == len(self), \
+               "Permutation.rearrange: " \
+               " cannot rearrange a sequence of length %d" \
+               " using a permutation of a different length (%d)" \
+               % (len(seq), len(self))
+        return [ seq[self[x]] for x in xrange(len(self)) ]
+
+    def sign(self):
+        """Return sign of this `Permutation`.
+
+        Examples::
+
+          >>> Permutation([0,1,2]).sign()
+          1
+          >>> Permutation([0,2,1]).sign()
+          -1
+          >>> Permutation([2,0,1]).sign()
+          1
+
+        The trivial permutations mapping a single element into
+        itself and the empty permutation are assigned sign +1::
+
+          >>> Permutation([0]).sign()
+          1
+
+          >>> Permutation([]).sign()
+          1
+
+        This is an adaptation of the `perm_sign` code by John Burkardt
+        (see it among the collection at
+        http://orion.math.iastate.edu/burkardt/f_src/subset/subset.f90
+        or http://www.scs.fsu.edu/~burkardt/math2071/perm_sign.m ); it
+        computes the sign by counting the number of interchanges
+        required to change the given permutation into the identity
+        one.
+
+        """
+        # copy Permutation values into a linear list
+        p = self.values()
+        s = +1
+        # get elements back in their home positions
+        for j in xrange(len(self)):
+            q = p[j]
+            if q !=j :
+                p[j],p[q] = p[q],q # interchange p[j] and p[p[j]]
+                s = -s             # and account for the interchange
+        # note that q is now in its home position
+        # whether or not an interchange was required
+        return s
+
+
+    def translate(self, seq):
+        """Alter `seq`, applying this permutation to the value of its items.
+        Return modified sequence.
+
+        For this to work, items in `seq` must be integers in the range
+        from 0 up to (and excluding) the length of this permutation.
+        Otherwise a `KeyError` is raised.
+
+        Examples::
+
+          >>> s = [1, 0, 2]
+          >>> p = Permutation([0, 2, 1]) # map 0->0, 1->2, 2->1
+          >>> p.translate(s)
+          [2, 0, 1]
+        """
+        for i in xrange(len(seq)):
+            seq[i] = self[seq[i]]
+        return seq
+    
+    def extend(self, srcs, dsts):
+        """Return `True` if the mapping can be extended by mapping
+        elements of `srcs` to corresponding elements of `dsts`.
+        Return `False` if any of the new mappings conflicts with an
+        already established one.
+
+        Examples::
+          >>> m=Permutation()
+          >>> m.extend([0, 1], [0, 1])
+          True
+          >>> m.extend([1, 2], [0, 2])
+          False
+          >>> m.extend([2], [2])
+          True
+        """
+        for src,dst in itertools.izip(srcs,dsts):
+            if self.has_key(src) and self[src] != dst:
+                return False
+            else:
+                self[src] = dst
+        return True
+
+    def extend_with_hash(self, mappings):
+        """Return `True` if the mapping can be extended by mapping each
+        key of `mappings` to the corresponding value.  Return `False`
+        if any of the new mappings conflicts with an already
+        established one.
+        """
+        for src,dst in mappings.iteritems():
+            if self.has_key(src) and self[src] != dst:
+                return False
+            else:
+                self[src] = dst
+        return True
+
+
 class PermutationList:
     """Simulate a (read-only) list of all permutations of a prescribed order.
 
@@ -208,53 +345,6 @@ class InplacePermutationIterator:
                     for l in xrange(0, (self.end - 1 - j) / 2):
                         self.seq[j+l],self.seq[-1-l] = self.seq[-1-l],self.seq[j+l]
                 return self.seq
-
-
-def sign_of_permutation(p):
-    """Return sign of permutation `p`.
-
-    A permutation of N elements is represented as a linear
-    list `p`, whose items are the numbers 0,1,...,N-1: `p`
-    maps `i` to `p[i]`.
-
-    Examples::
-
-      >>> sign_of_permutation([0,1,2])
-      1
-      >>> sign_of_permutation([0,2,1])
-      -1
-      >>> sign_of_permutation([2,0,1])
-      1
-
-    The trivial permutations mapping a single element into
-    itself and the empty permutation are assigned sign +1::
-
-      >>> sign_of_permutation([0])
-      1
-
-      >>> sign_of_permutation([])
-      1
-
-    This is an adaptation of the `perm_sign` code by John Burkardt
-    (see it among the collection at
-    http://orion.math.iastate.edu/burkardt/f_src/subset/subset.f90
-    or http://www.scs.fsu.edu/~burkardt/math2071/perm_sign.m ); it
-    computes the sign by counting the number of interchanges
-    required to change the given permutation into the identity
-    one.
-
-    """
-    n = len(p)
-    s = +1
-    # get elements back in their home positions
-    for j in xrange(n):
-        q = p[j]
-        if q !=j :
-            p[j],p[q] = p[q],q # interchange p[j] and p[p[j]]
-            s = -s             # and account for the interchange
-    # note that q is now in its home position
-    # whether or not an interchange was required
-    return s
 
 
 class FixedLengthPartitionIterator:
