@@ -44,20 +44,13 @@ def FatgraphComplex(g, n):
     generators = [ NumberedFatgraphsList() for dummy in xrange(top_dimension) ]
 
     # gather graphs
-    _grade = None
     for graph in MgnNumberedGraphsIterator(g,n):
         grade = graph.num_edges - 1
+        # XXX: not needed anymore with recursive generation
         if not graph.is_oriented():
             continue
         generators[grade].append(graph, key=graph.underlying)
 
-        # since `MgnGraphsIterator` returns graphs in blocks with
-        # equal number of edges, we can use that for logging purposes
-        # and provide a simple-minded progress report
-        if grade != _grade:
-            logging.debug("  Now generating %d-edge graphs ...", grade)
-            _grade = grade
-        
     # build chain complex
     C = ChainComplex(top_dimension)
     for i in xrange(top_dimension):
