@@ -9,12 +9,29 @@
 \newcommand{\FIXME}[1]{{\color{red}\footnote{\sffamily #1}}}
 \usepackage[T1]{fontenc}
 \usepackage{mdwlist}
+%  \renewenvironment{description}{%
+%    \begin{basedescript}{%
+%        \renewcommand{\makelabel}[1]{\bfseries ##1}%
+%      }%
+%    }{%
+%    \end{basedescript}%
+%  }
 %\usepackage{mdwtab}
 \usepackage[final]{graphicx}
 \usepackage{hyperref}
-\usepackage{listings}
-  \lstloadlanguages{Python}
-  \lstset{language=Python}
+\usepackage[final]{listings}
+  \lstloadlanguages{Python}%
+  \lstset{language=Python,%
+          basicstyle=\ttfamily,%
+          commentstyle=\normalfont\small,%
+          texcl,mathescape=true,%
+          numbers=left,%
+          numberstyle=\small,%
+          stepnumber=1,%
+          firstnumber=last%
+        }
+  \let\l=\lstinline
+  %\lstnewenvironment{py}{\lstset{numbers=none}}{}
 \usepackage[newitem,newenum]{paralist}
   \setdefaultenum{\slshape (1)}{\slshape (a)}{\slshape (i)}{A.}
   %\setdefaultitem{\blacktriangleright}{\smalltriangleright}{$\bullet$}{$\circ$}
@@ -155,7 +172,7 @@
 %%%
 %%% Cominciamo...
 %%%
-%\includeonly{dfiz}
+\includeonly{python}
 \begin{document}
 
 \setlength{\parindent}{0pt}
@@ -181,8 +198,7 @@
 %%
 %% Bibliografia
 %%
-\bibliography{math}
-\bibliography{tech}
+\bibliography{math,tech}
 \bibliographystyle{halpha}
 
 
