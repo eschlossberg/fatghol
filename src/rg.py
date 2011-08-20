@@ -997,57 +997,6 @@ class Fatgraph(EqualIfIsomorphic):
         # 4. Remove second endpoint from list of new vertices:
         del new_vertices[v2]
 
-        # vertices with index below `v2` keep their numbering
-        renumber_vertices = dict((x,x) for x in xrange(v2))
-        # vertex `v2` is mapped to vertex `v1`
-        renumber_vertices[v2] = v1
-        # vertices with index above `v2` are now shifted down one place
-        renumber_vertices.update(dict((x+1,x)
-                                      for x in xrange(v2, self.num_vertices)))
-        
-        # renumber attachment indices, according to the mating of
-        # vertices `v1` and `v2`:
-        # - on former vertex `v1`:
-        #   * indices (pos1+1)..l1 are mapped to 0..(l1-pos1-1)
-        #     in the mated vertex;
-        #   * index pos1 is deleted;
-        #   * indices 0..pos1-1 are mapped to (l1-pos1)..l1-1;
-        renumber_pos1 = dict((x, x-pos1-1)
-                             for x in xrange(pos1+1, l1+1))
-        renumber_pos1.update(dict((x, l1-pos1+x)
-                                  for x in xrange(pos1)))
-        # - on former vertex `v2`:
-        #   * indices (pos2+1)..l2 are mapped to l1..(l1+l2-pos2-1);
-        #   * index pos2 is deleted;
-        #   * indices 0..pos2-1 are mapped to (l1+l2-pos2)..l1+l2-1:
-        renumber_pos2 = dict((x, l1-pos2-1+x)
-                             for x in xrange(pos2+1, l2+1))
-        renumber_pos2.update(dict((x, l1+l2-pos2+x)
-                                  for x in xrange(pos2)))
-        # build the new edges: except for edges insisting on vertices
-        # `v1` and `v2`, we just need to renumber the vertex indices,
-        # and keep attachment indices untouched.
-        def transform_endpoint(e):
-            (v, a) = e
-            if v == v1:
-                return (v1, renumber_pos1[a])
-            elif v == v2:
-                return (v1, renumber_pos2[a])
-            else:
-                return (renumber_vertices[v], a)
-        new_edges = []
-        for (nr, edge) in enumerate(self.edges):
-            if nr == edgeno:
-                # skip contracted edge
-                continue
-            elif edge.meets(v1) or edge.meets(v2):
-                new_edges.append(Edge(transform_endpoint(edge.endpoints[0]),
-                                      transform_endpoint(edge.endpoints[1])))
-            else:
-                # XXX: re-use same `Edge` instances if vertex index does not change
-                new_edges.append(Edge((renumber_vertices[edge.endpoints[0][0]], edge.endpoints[0][1]),
-                                      (renumber_vertices[edge.endpoints[1][0]], edge.endpoints[1][1])))
-
         ## Orientation of the contracted graph.
         cut = self.edge_numbering[edgeno]
         # edges with index below the contracted one are untouched
@@ -1062,8 +1011,6 @@ class Fatgraph(EqualIfIsomorphic):
         
         # build new graph
         return Fatgraph(new_vertices,
-                        edges = new_edges,
-                        num_edges = self.num_edges-1,
                         orientation = new_edge_numbering,
                         )
 
