@@ -78,9 +78,8 @@ def CyclicSequence(base, factory=None):
             if SYS_MAXINT == j:
                 # __setslice__ is passed `sys.maxint` as second value
                 # when taking slices of the form `[n:]`.  In this
-                # case, just fall back to standard Python operation.
+                # case, fall back to standard Python operation.
                 return base.__setslice__(self, i, j, other)
-                j = l
             l = len(self)
             #: sup of the range
             a = max(i,j)
@@ -219,13 +218,26 @@ def CyclicSequence(base, factory=None):
 
             Examples::
               >>> a=CyclicList([3,2,1])
-              >>> a.rotate(1)
-              >>> a
+              >>> a.rotate(1); a
               [2, 1, 3]
-              >>> a.rotate(-1)
-              >>> a
+
+            If `n` is negative, rotate rightwards by `abs(n)`
+            positions::
+              >>> a.rotate(-1); a
               [3, 2, 1]
+
+            Rotating by 0 or by a multiple of the list length, will
+            leave the sequence unchanged::
+              >>> a=CyclicList([3,2,1])
+              >>> a.rotate(0); a
+              [3, 2, 1]
+              >>> a.rotate(3); a
+              [3, 2, 1]
+              >>> a.rotate(6); a
+              [3, 2, 1]
+            
             """
+            n %= len(self)
             self[:] = self[n:] + self[:n]
           
     return type("Cyclic" + str(base.__name__).capitalize(),

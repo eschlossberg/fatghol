@@ -302,8 +302,8 @@ def PartitionIterator(N, K, min_=1, max_=None):
     partition.
 
     Examples::
-      >>> list(PartitionIterator(3,1))
-      [(3,)]
+      >>> list(PartitionIterator(2,1))
+      [(2,)]
       >>> list(PartitionIterator(3,3))
       [(3,), (2, 1), (1, 1, 1)]
       >>> list(PartitionIterator(8,3,2))
