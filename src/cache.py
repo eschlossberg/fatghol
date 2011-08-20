@@ -40,25 +40,27 @@ class _TimeBasedUnique(Iterator):
 _unique = _TimeBasedUnique()
 
 
-def persistent_id(o):
-    """Return the persistent ID of object `o`.
-    If `o` has no `._persistent_id` attribute, then set it and return a
-    new persistent id value.
+class PermanentID(object):
+    """Instances of this class return a `hash` value which is unique
+    and guaranteed not to be re-used.
 
-    Persistent IDs are unique and are guaranteed not to be re-used
-    during the lifetime of a program.
+    In contrast, Python's standard `hash()` function returns a value
+    based on the intance memory address, which *can* be re-used during
+    the lifetime of a program.
     """
+
+    def __init__(self):
+        self.__id = _unique.next()
+
+    def permanent_id(self):
+        return self.__id
+
+
+def permanent_id(o):
     try:
-        return o._persistent_id
+        return o.permanent_id()
     except AttributeError:
-        # no `_persistent_id`, add one
-        try:
-            id = _unique.next()
-            o._persistent_id = id
-            return id
-        except AttributeError:
-            # o's __dict__ is not writable, fall back to hash()
-            return hash(o)
+        return id(o)
 
 
 __cache1 = {}
@@ -74,7 +76,7 @@ def cache1(func, obj):
     use a `__slots__` declaration.
     """
     rcache = __cache1.setdefault(func.func_name, {})
-    key = persistent_id(obj)
+    key = permanent_id(obj)
     if key in rcache:
         return rcache[key]
     else:
@@ -95,7 +97,7 @@ def cache(func, obj, *args):
     use a `__slots__` declaration.
     """
     rcache = __cache2.setdefault(func.func_name, {})
-    oid = persistent_id(obj)
+    oid = permanent_id(obj)
     key = (oid, args)
     if key in rcache:
         return rcache[key]
@@ -119,8 +121,8 @@ def cache_symmetric(func, o1, o2):
     use a `__slots__` declaration.
     """
     rcache = __cache_symmetric.setdefault(func.func_name, {})
-    key = frozenset([persistent_id(o1),
-                     persistent_id(o2)])
+    key = frozenset([permanent_id(o1),
+                     permanent_id(o2)])
     if key in rcache:
         return rcache[key]
     else:
@@ -187,7 +189,7 @@ def cache_iterator(func, obj, *args):
     generating function is invoked.
     """
     rcache = __cache_iterator.setdefault(func.func_name, {})
-    oid = persistent_id(obj)
+    oid = permanent_id(obj)
     key = (oid, args)
     if key in rcache:
         return rcache[key].replay()

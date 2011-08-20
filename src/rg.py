@@ -23,6 +23,7 @@ from cache import (
     cache1,
     cache_iterator,
     cache_symmetric,
+    PermanentID,
     )
 from combinatorics import (
     InplacePermutationIterator,
@@ -63,7 +64,7 @@ class VertexCache(object):
         return "rg.VertexCache"
 
 
-class Vertex(CyclicList):
+class Vertex(PermanentID, CyclicList):
     """A (representative of) a vertex of a ribbon graph.
 
     A vertex is represented by the cyclically ordered list of its
@@ -76,9 +77,8 @@ class Vertex(CyclicList):
     #   2) we could not implement `rotate()` and friends: tuples are
     #      immutable.
 
-##     __slots__ = [ '_num_loops' ]
-
     def __init__(self, seq=None):
+        PermanentID.__init__(self)
         CyclicList.__init__(self, seq)
         
     def __cmp__(self, other):
@@ -225,7 +225,7 @@ class EqualIfIsomorphic(object):
 
 
 
-class Fatgraph(EqualIfIsomorphic):
+class Fatgraph(EqualIfIsomorphic, PermanentID):
     """A fully-decorated ribbon graph.
 
     Exports a (read-only) sequence interface, through which vertices
@@ -372,6 +372,9 @@ class Fatgraph(EqualIfIsomorphic):
             else:
                 self.edge_numbering = [ x for x in xrange(self.num_edges) ]
 
+        # set this instance's _persistent_id
+        PermanentID.__init__(self)
+        
         # before computing invariants, check that internal data
         # structures are in a consistent state
         assert self._ok()
@@ -462,9 +465,6 @@ class Fatgraph(EqualIfIsomorphic):
 
     def __getitem__(self, index):
         return self.vertices[index]
-
-    def __hash__(self):
-        return self._persistent_id
 
     def __iter__(self):
         """Return iterator over vertices."""
@@ -1279,9 +1279,9 @@ class Fatgraph(EqualIfIsomorphic):
         
           >>> g = Fatgraph([Vertex([0,1,2]), Vertex([0,2,1])])
           >>> g1 = g.hangcircle(0, 0)
-          >>> g2 = g.hangcircle(0, 1)
           >>> g1 == Fatgraph([Vertex([0,1,2]), Vertex([3,2,1]), Vertex([0,3,4]), Vertex([5,5,4])])
           True
+          >>> g2 = g.hangcircle(0, 1)
           >>> g2 == Fatgraph([Vertex([0,1,2]), Vertex([3,2,1]), Vertex([3,0,4]), Vertex([5,5,4])])
           True
 
@@ -1484,9 +1484,10 @@ class Fatgraph(EqualIfIsomorphic):
         # no orientation reversing automorphism found
         return True
 
+
     @cache_iterator
-    def isomorphisms(self, other):
-        """Iterate over isomorphisms from `self` to `other`.
+    def isomorphisms(g1, g2):
+        """Iterate over `Fatgraph` isomorphisms from `g1` to `g2`.
 
         An isomorphism is represented by a tuple `(pv, rot, pe)` where:
 
@@ -1518,105 +1519,184 @@ class Fatgraph(EqualIfIsomorphic):
           >>> g3 = Fatgraph([Vertex([2, 1, 0]), Vertex([2, 0, 1])])
           >>> list(g1.isomorphisms(g3))
           []
-
-        Examples::
-
         """
-        ## Compute all permutations of vertices that preserve valence.
-        ## (A permutation `p` preserves vertex valence if vertices `v`
-        ## and `p[v]` have the same valence.)
-        vs1 = self.valence_spectrum()
-        vs2 = other.valence_spectrum()
         
-        # save valences as we have no guarantees that keys() method
-        # will always return them in the same order
-        vsk = vs1.keys()
+        # As this procedure is quite complex, we break it into a
+        # number of auxiliary functions.
+        
+        def starting_vertices(graph):
+            """
+            Return the pair `(valence, vertices)`, which minimizes the
+            product of valence with the number of vertices of that
+            valence.
 
-        # graphs differ in vertex valences, no isomorphisms
-        if not set(vsk) == set(vs2.keys()):
-            return
-        # graphs have unequal vertex distribution by valence, no isomorphisms
-        if not  dict((val, len(vs1[val])) for val in vsk) \
-               == dict((val, len(vs2[val])) for val in vsk):
-            return
+            Examples::
 
-        src_indices = concat([ vs1[val] for val in vsk ])
-        permutations_of_vertices_of_same_valence = [
-            list(reversed([ p[:] for p in InplacePermutationIterator(vs2[val]) ]))
-            for val in vsk
-            ]
-        dst_index_permutations = [
-            concat(ps)
-            for ps
-            in SetProductIterator(permutations_of_vertices_of_same_valence)
-            ]
+              >>> g = Fatgraph([Vertex([0,1,2]), Vertex([0,2,3]), Vertex([3,4,4,5,5])])
+              >>> g.starting_vertices()
+              (5, [Vertex([3, 4, 4, 5, 5])])
+            """
+            val = max(graph.vertex_valences())
+            vs = None
+            n = len(graph.vertices)+1
+            for (val_, vs_) in graph.valence_spectrum().iteritems():
+                n_ = len(vs_)
+                if (n_*val_ < n*val) \
+                       or (n_*val_ == n*val and val_<val):
+                    val = val_
+                    vs = vs_
+                    n = n_
+            return (val, vs)
+                
+        def admissible_vertex_mappings(v, g, ixs):
+            """Iterate over all (indices of) vertices in `g`, which
+            `v` *could* be mapped to (that is, the destination vertex
+            matches `v` in valence and number of loops.
 
-        ## Build a list of vertex-to-vertex mappings; each of these
-        ## mappings is a list of pairs `(i1, i2)`, where `i1` is a
-        ## vertex index in `g1` and `i2` is a vertex index in `g2`.
-        ## Vertices `i1` and `i2` have the same valence, and they must
-        ## also agree on secondary invariants, like the number of
-        ## loops.
+            Third argument `ixs` restricts the search to the given
+            subset of vertex indices in `g`.
+            """
+            for i in ixs:
+                dest_v = g.vertices[i]
+                if len(v) == len(dest_v) \
+                   and v.num_loops() == dest_v.num_loops():
+                    yield i
 
-        # use number of attached loops as a secondary invariant
-        loops1 = [ v.num_loops() for v in self.vertices ]
-        loops2 = [ v.num_loops() for v in other.vertices ]
+        class CannotExtendMap(Exception):
+            """Exception raised by `extend_map` on failure to extend a
+            partial map.
+            """
+            pass
 
-        n = self.num_vertices
-        candidate_pvs = []
-        for dst_indices in dst_index_permutations:
-            vertex_mapping_is_good_candidate = True
-            # each `dsts` is a permutation of the vertex indices of `g2`
-            for i in xrange(n):
-                if loops1[src_indices[i]] != loops2[dst_indices[i]]:
-                    # cannot map `src` into `dst`, proceed to next `i`
-                    vertex_mapping_is_good_candidate = False
-                    break
-            if vertex_mapping_is_good_candidate:
-                candidate_pvs.append(Permutation(dict((src_indices[i],
-                                                       dst_indices[i])
-                                                      for i in xrange(n))))
+        def extend_map(m, g1, i1, r, g2, i2):
+            """Extend map `m` by mapping the `i1`-th vertex in `g1` to
+            the `i2`-th vertex in `g2` (and rotating the source vertex
+            by `r` places leftwards).  Return the extended map `(pv,
+            rot, pe)`.
 
-        ## Browse the list of vertex-to-vertex mappings; for each one, check:
-        ##   1. that it induces a permutation on the edge colors;
-        ##   2. that this permutation preserves the adjacency list;
-        ##   3. if there is a numbering on the boundary cycles, that it is
-        ##      preserved by the induced mapping.
+            The partial map `m` is represented as a triple `(pv, rot,
+            pe)` as in `Fatgraph.isomorphism` (which see), with the
+            additional proviso that unassigned items in `rot` are
+            represented by `None`.
+            """
+            (pv, rots, pe) = m
+            v1 = g1.vertices[i1]
+            v2 = g2.vertices[i2]
+            if r < 0:
+                r += len(v2)
 
-        dst_valences = [ len(v) for v in other.vertices ]
-        rots = [ range(val) for val in dst_valences ]
-        for pv in candidate_pvs:
-            # try mapping vertices with every possible rotation
-            # vertex at index `i1` in `self` should be mapped to
-            # vertex at index `i2` in `other` with shift `rot[i2]`
-            # (that is, `self.vertices[i1][0:len]` should be mapped
-            # linearly onto `other.vertices[i2][rot:rot+len]`).
-            for rot in SetProductIterator(rots):
-                pe = Permutation()
-                pe_is_ok = True  # optimistic start
-                for (src, dst) in pv.iteritems():
-                    shift = rot[dst]
-                    v1 = self.vertices[src]
-                    v2 = other.vertices[dst][shift:shift+dst_valences[dst]]
-                    if not pe.extend(v1, v2):
-                        # cannot extend, proceed to next `rot`
-                        pe_is_ok = False
-                        break
-                if pe_is_ok and (len(pe) > 0):
-                    # Check that the combined action of `pv` and `pe`
-                    # preserves the adjacency relation.  Note:
-                    #   - we make list comprehensions of both adjacency lists
-                    #     to avoid inverting `pe`: that is, we compare the
-                    #     the adjacency lists in the order they have in `self`,
-                    #     but with the vertex numbering from `other`;
-                    #   - elements of the adjacency lists are made into
-                    #     `set`s for unordered comparison;
-                    if 0 != cmp([ set(other.endpoints_v[pe[x]])
-                                  for x in xrange(other.num_edges) ],
-                                [ set(pv.itranslate(self.endpoints_v[x]))
-                                  for x in xrange(self.num_edges) ]):
-                        continue # to next `rot`
-                    yield (pv, rot, pe)
+            if pv.has_key(i1):
+                if pv[i1] != i2 or (rots[i1] - r) % len(v2) != 0:
+                    raise CannotExtendMap
+                else:
+                    # this pair has already been added
+                    return m
+
+            pv[i1] = i2
+            rots[i1] = r
+
+            # rotating `v1` leftwards is equivalent to rotating `v2` rightwards...
+            v2 = v2[r:r+len(v2)]
+            if not pe.extend(v1, v2):
+                raise CannotExtendMap
+
+            return (pv, rots, pe)
+
+        def neighbors(m, g1, i1, g2, i2):
+            """List of vertex-to-vertex mappings that extend map
+            `m` in the neighborhood of of `i1` (in the domain) and
+            `i2` (in the codomain).
+
+            Return a list of triplets `(src, dst, rot)`, where:
+               * `src` is the index of a vertex in `g1`,
+                 connected to `i1` by an edge `x`;
+               * `dst` is the index of a vertex in `g2`,
+                 connected to `i2` by the image (according to `m`)
+                 of edge `x`;
+               * `rot` is the rotation to be applied to `g1[src]`
+                 so that edge `x` and its image appear
+                 at the same index position;
+            
+            XXX: prune vertices that are already mapped by `m`?
+            """
+            result = []
+            for x in g1[i1]:
+                    src_endpoints_v = g1.endpoints_v[x]
+                    # ignore loops
+                    if src_endpoints_v[0] == src_endpoints_v[1]:
+                        continue # to next `x`
+                    src_endpoints_i = g1.endpoints_i[x]
+                    src_v = src_endpoints_v[0] if (src_endpoints_v[1] == i1) else src_endpoints_v[1]
+                    # ignore vertices that are already in the domain of `m`
+                    if src_v in m[0]:
+                        continue # to next `x`
+                    src_i = src_endpoints_i[0] if (src_endpoints_v[1] == i1) else src_endpoints_i[1]
+                    dst_endpoints_v = g2.endpoints_v[m[2][x]]
+                    dst_endpoints_i = g2.endpoints_i[m[2][x]]
+                    dst_v = dst_endpoints_v[0] if (dst_endpoints_v[1] == i2) else dst_endpoints_v[1]
+                    dst_i = dst_endpoints_i[0] if (dst_endpoints_v[1] == i2) else dst_endpoints_i[1]
+                    # array of (source vertex index, dest vertex index, rotation)
+                    result.append((src_v, dst_v, dst_i-src_i))
+            return result
+            
+        # if graphs differ in vertex valences, no isomorphisms
+        vs1 = g1.valence_spectrum()
+        vs2 = g2.valence_spectrum()
+        if not set(vs1.keys()) == set(vs2.keys()):
+            return # StopIteration
+        # if graphs have unequal vertex distribution by valence, no isomorphisms
+        for val in g1.vertex_valences():
+            if len(vs1[val]) != len(vs2[val]):
+                return # StopIteration
+
+        (val, vs) = starting_vertices(g1)
+        src0 = vs[0]
+        v1 = g1[src0]
+        for dst0 in admissible_vertex_mappings(v1, g2, vs2[val]):
+            for rot0 in xrange(val):
+                try:
+                    # pass 0: init new (pv, rot, pe) triple
+                    pv = Permutation()
+                    rot = [ None for x in xrange(g1.num_vertices) ]
+                    pe = Permutation()
+
+                    # pass 1: map `v1` to `v2` and build map
+                    # of neighboring vertices for next pass
+                    pv[src0] = dst0
+                    rot[src0] = rot0
+                    if not pe.extend(v1, g2[dst0][rot0:rot0+val]):
+                        continue # to next `rot0`
+                    if __debug__:
+                        for x in v1:
+                            assert x in pe, "Edge `%d` of vertex `%s` (in graph `%s`) not mapped to any edge of graph `%s` (at line 1740, `pe=%s`)" % (x, v1, g1, g2, pe)
+
+                    # pass 2: extend map to neighboring vertices
+                    m = (pv, rot, pe)
+                    nexts = neighbors(m, g1, src0, g2, dst0)
+                    while len(m[0]) < g1.num_vertices:
+                        neighborhood = []
+                        for (i1, i2, r) in nexts:
+                            m = extend_map(m, g1, i1, r, g2, i2)
+                            if __debug__:
+                                for x in g1[i1]:
+                                    assert x in m[2], "Edge `%d` of vertex `%s` (in graph `%s`) not mapped to any edge of graph `%s` (at line 1751, `pe=%s`)" % (x, g1[i1], g1, g2, m[2])
+                            neighborhood += neighbors(m, g1, i1, g2, i2)
+                        nexts = neighborhood
+
+                # extension failed in the above block, continue with next candidate
+                except CannotExtendMap:
+                    continue # to next `rot0`
+
+                # sanity checks
+                assert len(m[0]) == g1.num_vertices
+                assert len(m[2]) == g1.num_edges
+                assert set(m[0].keys()) == set(range(g1.num_vertices))
+                assert set(m[0].values()) == set(range(g2.num_vertices))
+                assert set(m[2].keys()) == set(range(g1.num_edges))
+                assert set(m[2].values()) == set(range(g2.num_edges))
+
+                # finally
+                yield m
 
 
     @cache1
@@ -1738,7 +1818,6 @@ class Fatgraph(EqualIfIsomorphic):
                     for v in spec.iterkeys())
     
     
-
 def MakeNumberedGraphs(graph):
     """Return all distinct (up to isomorphism) decorations of
     `Fatgraph` instance `graph` with a numbering of the boundary
