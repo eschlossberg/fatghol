@@ -13,7 +13,7 @@ import logging
 ## application-local imports
 
 from homology import *
-from rg import MgnGraphsIterator, Fatgraph, Vertex
+from rg import MakeNumberedGraphs, MgnGraphsIterator, Fatgraph, Vertex
 from valences import vertex_valences_for_given_g_and_n
 
 
@@ -45,10 +45,11 @@ def FatgraphComplex(g, n):
     # gather graphs
     _grade = None
     for graph in MgnGraphsIterator(g,n):
-        if not graph.is_oriented():
-            continue
         grade = graph.num_edges - 1
-        generators[grade].append(graph)
+        for ng in MakeNumberedGraphs(graph):
+            if not ng.is_oriented():
+                continue
+            generators[grade].append(ng)
 
         # since `MgnGraphsIterator` returns graphs in blocks with
         # equal number of edges, we can use that for logging purposes
@@ -84,11 +85,6 @@ def graph_homology_differential(graph):
     for l in xrange(graph.num_edges):
         if not graph.is_loop(l):
             dg = graph.contract(l)
-            assert dg.numbering is not None, \
-                   "graph_homology_differential: "\
-                   " contraction of graph `%s` by edge %d yields"\
-                   " un-numbered graph `%s`."\
-                   % (graph, l, dg)
             if dg.is_oriented():
                 result.append((dg, sign_exp(graph.edge_numbering[l])))
     return result

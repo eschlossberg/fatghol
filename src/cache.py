@@ -40,7 +40,7 @@ class PersistentCount(Iterator):
             stored = open(self.__filename, 'r')
             self.counted = int(stored.read(), 16)
             stored.close()
-        except IOError:
+        except (IOError, ValueError):
             self.counted = firstval - 1
         self.__file = open(self.__filename, 'w')
 
