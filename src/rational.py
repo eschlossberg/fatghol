@@ -310,10 +310,10 @@ class Rational(object):
     def __mul__(first, second):
         result_numerator = first.numerator
         result_denominator = first.denominator
-        second_numerator = second.numerator
-        second_denominator = second.denominator
-        
         try:
+            second_numerator = second.numerator
+            second_denominator = second.denominator
+        
             # avoid overflow and preserve normalization
             gcd1 = gcd(result_numerator, second_denominator)
             gcd2 = gcd(second_numerator, result_denominator)
@@ -346,7 +346,10 @@ class Rational(object):
 
 
     def __str__(self):
-        return "%s/%s" % (self.numerator, self.denominator)
+        if self.denominator == 1:
+            return str(self.numerator)
+        else:
+            return "%s/%s" % (self.numerator, self.denominator)
 
 
     def __sub__(first, second):
