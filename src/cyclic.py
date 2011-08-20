@@ -82,20 +82,20 @@ class CyclicList(list):
         """Compare `self` with all possible translations of `other`."""
         if len(other) != len(self):
             return False
-        elif None == self.shift_for_list_eq(other):
+        elif None == self.shift_for_linear_eq(other):
             return False
         else:
             return True
 
-    def shift_for_list_eq(self, other, start=0):
+    def shift_for_linear_eq(self, other, start=0):
         """Return minimum shift index `b >= start` such that `self[b:b+len]==other` as Python lists.
 
         Examples::
           >>> a=CyclicList([1,2,3])
           >>> b=CyclicList([2,3,1])
-          >>> a.shift_for_list_eq(b)
+          >>> a.shift_for_linear_eq(b)
           1
-          >>> a.shift_for_list_eq(b,2) is None
+          >>> a.shift_for_linear_eq(b,2) is None
           True
         """
         l = len(self)
@@ -116,11 +116,11 @@ class CyclicList(list):
                 shift += 1
         return None
 
-    def all_shifts_for_list_eq(self, other):
+    def all_shifts_for_linear_eq(self, other):
         start = 0
         l = len(self)
         while start < l:
-            shift = self.shift_for_list_eq(other, start)
+            shift = self.shift_for_linear_eq(other, start)
             if shift is None:
                 break
             else:
@@ -205,20 +205,20 @@ class CyclicArray(array):
         """Compare `self` with all possible translations of `other`."""
         if len(other) != len(self):
             return False
-        elif None == self.shift_for_list_eq(other):
+        elif None == self.shift_for_linear_eq(other):
             return False
         else:
             return True
 
-    def shift_for_list_eq(self, other, start=0):
+    def shift_for_linear_eq(self, other, start=0):
         """Return minimum shift index `b >= start` such that `self[b:b+len]==other` as Python lists.
 
         Examples::
           >>> a=CyclicArray([1,2,3])
           >>> b=CyclicArray([2,3,1])
-          >>> a.shift_for_list_eq(b)
+          >>> a.shift_for_linear_eq(b)
           1
-          >>> a.shift_for_list_eq(b,2) is None
+          >>> a.shift_for_linear_eq(b,2) is None
           True
         """
         l = len(self)
@@ -239,11 +239,11 @@ class CyclicArray(array):
                 shift += 1
         return None
 
-    def all_shifts_for_list_eq(self, other):
+    def all_shifts_for_linear_eq(self, other):
         start = 0
         l = len(self)
         while start < l:
-            shift = self.shift_for_list_eq(other, start)
+            shift = self.shift_for_linear_eq(other, start)
             if shift is None:
                 break
             else:
