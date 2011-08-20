@@ -1,6 +1,6 @@
 %%% index.tex -- Master LaTeX file.
 %%%
-\documentclass[a4paper,oldfontcommands]{memoir}
+\documentclass[a4paper,titlepage,oldfontcommands]{memoir}
 \usepackage{prelim2e}
 
 %%% standard utility packages
@@ -12,211 +12,33 @@
 
 
 %%% document appearance and style
+\usepackage{beton} % main text font
+\usepackage{euler} % math font
 
-\usepackage{beton}
-\usepackage{euler}
-
-\usepackage{mdwlist}
-%  \renewenvironment{description}{%
-%    \begin{basedescript}{%
-%        \renewcommand{\makelabel}[1]{\bfseries ##1}%
-%      }%
-%    }{%
-%    \end{basedescript}%
-%  }
-%\usepackage{mdwtab}
-\usepackage[newitem,newenum]{paralist}
-  \setdefaultenum{\slshape (1)}{\slshape (a)}{\slshape (i)}{A.}
-  %\setdefaultitem{\blacktriangleright}{\smalltriangleright}{$\bullet$}{$\circ$}
-  \setdefaultitem{\guillemotright}{\guilsinglright}{$-$}{*}
+\usepackage{my/mdwlist} % customize list appearance
 
 
 %%% specialized utilities
-
-\usepackage{fancyvrb}
-  \DefineShortVerb{\"}
-
-\usepackage[final]{listings}%
-  \def\codefont{\ttfamily}%
-  \newcommand\q[1]{{\codefont #1}}%
-  \newcommand\qq[1]{`\q{#1}'}%
-  \lstloadlanguages{Python}%
-  \lstset{language=Python,%
-          %fancyvrb,%
-          escapechar=|,% "|" is almost unused in Python
-          basicstyle=\codefont,%
-          commentstyle=\normalfont\small,%
-          texcl,mathescape=true,%
-          showspaces=false,%
-          showstringspaces=false,%
-          xleftmargin=2em,%
-          numbers=left,%
-          numberstyle=\tiny,%
-          stepnumber=1,%
-          firstnumber=last%
-        }%
-  \lstnewenvironment{code}{}{}%
-  \lstnewenvironment{codexmp}{\lstset{numbers=none,xleftmargin=1em}}{}%
-  \newcommand{\n}[1]{\begingroup\def\x{\csname label\endcsname{l:#1}}\x\endgroup}
-  \newcommand{\nr}[1]{\begingroup\def\x{\csname ref\endcsname{l:#1}}\x\endgroup}
-
-% \usepackage[debug]{csref}
-%   \newcsref{theorem}{Theorem~\ref{#1}}%
-%   \newcsref{lemma}{Lemma~\ref{#1}}%
-%   \newcsref{proposition}{Proposition~\ref{#1}}%
-%   \newcsref{claim}{Claim~\ref{#1}}%
-%   \newcsref{conjecture}{Conjecture~\ref{#1}}%
-%   \newcsref{example}{Example~\ref{#1}}%
-%   \newcsref{definition}{Definition~\ref{#1}}%
-%   \newcsref{corollary}{Corollary~\ref{#1}}%
-%   \newcsref{remark}{Remark~\ref{#1}}%
-
-%% package FIXME
-\makeatletter%
-\newcounter{fixme@note}\stepcounter{fixme@note}%
-\newcommand{\FIXME}[1]{%
-  \begingroup%
-    \def\thefootnote{\fnsymbol{footnote}}%
-    \colorbox{red}{\footnotemark[\value{fixme@note}]}%
-    \footnotetext[\value{fixme@note}]%
-    {\sffamily \colorbox{red}{FIXME:} #1}%
-  \endgroup%
-  \stepcounter{fixme@note}%
-}%
-\makeatother%
-
-\usepackage[ps,dvips,xdvi,colour,all,arc,knot,poly]{xy}
-  \everyxy={/r24pt/:} % scala per i diagrammi
-  \def\xyc#1\endxyc{\xy*!LC\xybox{#1}\endxy}
-
-\usepackage{rg} % vertici e buche di grafi a nastro
-
-\usepackage{xytree}
-\setlength{\treegap}{24pt}  
-\setlength{\treeheight}{18pt}
+\usepackage{my/fixme}    % provide \FIXME
+\usepackage{my/fancyvrb} % use `"' for short verbatims
+\usepackage{my/listings} % typeset Python code
 
 
 %%% mathematics
-\usepackage[reqno]{amsmath}
+\usepackage{my/amsmath} % theorem-like environments, etc.
+\usepackage{my/miscmath}% notazioni addizionali
 
-\usepackage{amsthm}
-\providecommand{\theoremname}{Theorem}
-
-\newtheorem{theorem}{Theorem}[chapter]
-\newtheorem*{theorem*}{Theorem}
-\newtheorem{lemma}[theorem]{Lemma}
-\newtheorem{proposition}[theorem]{Proposition}
-\newtheorem{claim}[theorem]{Claim}
-\newtheorem{conjecture}[theorem]{Conjecture}
-\newtheorem{corollary}[theorem]{Corollary}
-
-\theoremstyle{definition}
-\newtheorem{definition}[theorem]{Definition}
-\newtheorem{example}[theorem]{Example}
-
-\theoremstyle{remark}
-\newtheorem{remark}[theorem]{Remark}
-\newtheorem*{ack}{Acknowledgments}
-\newtheorem*{notations}{Notations}
-
-\numberwithin{equation}{section}
+\usepackage{my/xy}
+\usepackage{rg} % vertici e buche di grafi a nastro
+\usepackage{my/xytree}
 
 
-%%%
-%%% NOTAZIONI MATEMATICHE
-%%%
-
-\usepackage{miscmath} % simboli vari
-
-\providecommand{\textsubscript}[1]{$\sb{#1}$}
-\providecommand{\textsuperscript}[1]{$\sp{#1}$}
-
-\renewcommand\k\fk % campo k
-\renewcommand\d\ud % differenziale d
-
-\newcommand{\ksz}{\epsilon} % segno di koszul
-\newcommand{\aksz}{\chi}    % segno di koszul alternante
-
-\newcommand{\A}{\category{A}}     % generic category A
-\newcommand{\B}{\category{B}}     % generic category B
-\newcommand{\rev}{\sptext{rev}}
-\newcommand{\catN}{\category{N}}        % generic category N
-
-\newcommand{\freemc}[1]{#1^{\otimes}}   % free monoidal category 
-\newcommand{\freemsc}[1]{#1^{\Box}}     % free monoidal signed category 
-\newcommand{\tpc}[1]{\langle #1 \rangle}% tensor powers category
-\newcommand{\btpc}[1]{\langle#1\rangle^+}% (bosonic) tensor powers category
-
-\newcommand{\Oo}[1][]{\operad{O}_{#1}}  % generic operad O
-\newcommand{\Ao}{\operad{A}}            % associative operad A
-\newcommand{\RTD}[1][]{\operad{D}_{#1}} % operad of RT diagrams
-\newcommand{\RTE}[1][]{\operad{D}'_{#1}}% operad of embedded RT graphs
-\newcommand{\RTG}[1][]{\operad{G}_{#1}} % operad of RT graphs
-\newcommand{\RG}{\operad{R}}            % operad of cyclic (Ribbon) graphs
-\newcommand{\ERG}{\operad{\widetilde R}}% operad of embedded Ribbon graphs
-\newcommand{\SG}[1][]{\operad{S}_{#1}}  % operad of symmetric graphs
-
-\newcommand{\Strebel}[1][]{\mathcal{S}_{#1}}
-\newcommand{\Conf}{\text{\rm Conf}}
-\newcommand{\Lb}{\mathcal{L}}
-\newcommand{\Hn}{\mathcal{H}}
-
-\newcommand{\Harmonic}{\mathcal{H}} % space of harmonic functions
-
-\newcommand{\ad}{\textrm{ad}} % adjoint action ad[X,Y]
-
-% decomposizione cellulare dei grafi a nastro
-\newcommand{\Vertices}[1]{V(#1)}
-\newcommand{\Edges}[1]{E(#1)}
-\newcommand{\Legs}[1]{L(#1)}
-\newcommand{\Holes}[1]{B(#1)}
-
-\newcommand{\comb}{\sptext{comb}}
-\newcommand{\T}{\mathcal{T}}
-\newcommand{\Tcomb}{\T\comb}
-\newcommand{\M}{\mathcal{M}}       % spazio dei moduli di curve lisce
-\newcommand{\Mbar}{\overline{\M}}  % compattificazione
-\newcommand{\Mcomb}{\M\comb}       % triangolazione di Mumford-Harer
-\newcommand{\Mbarcomb}{\Mbar\comb}
-
-\newcommand{\R}{\mathcal{R}}       % complesso dei grafi a nastro
-
-
-\newcommand{\Hermitian}[1][\relax]
-  {\mathcal{H}}   % spazio delle matrici hermitiane
-%  {{\mathcal{H}\ifx#1\relax\else(#1)\fi}}   % spazio delle matrici hermitiane
-
-
-% spazi negativi
-\newcommand{\negquad}{\hskip-.5em\relax}
-\newcommand{\negqquad}{\hskip-1.5em\relax}
-
-
-% medie sui grafi
-\newcommand{\expval}[1]{\langle\!\langle#1\rangle\!\rangle}
-\newcommand{\X}{\mathcal{X}}
-\newcommand{\vv}[1]{V(#1)}
-\newcommand{\biggint}[2][]{%
-\Biggl\langle\Biggl\langle#2\Biggr\rangle\Biggr\rangle_{#1}}
-\newcommand{\gint}[2][]{%
-  \left\langle\!\left\langle#2\right\rangle\!\right\rangle_{#1}}
-\newcommand{\ginttriv}[2][]{%
-  \left\langle\!\left\langle#2\right\rangle\!\right\rangle_{#1}\triv}
-
-% decomposizione ciclica
-\newcommand{\dec}{\sbtext{\rm dec}}
-\newcommand{\res}{\sbtext{\rm res}}
-
-% omotopia
-\newcommand{\rel}{\sim}
-
-
-%%% hyperref
-%\usepackage{hyperref}
+%% always better to load hyperref last...
+\usepackage{hyperref}
 
 
 %%% document
-\includeonly{algorithm,python}
+\includeonly{title,graphcomplex,algorithm,python}
 \begin{document}
 \VerbatimFootnotes% from `fancyvrb`
 
@@ -230,6 +52,8 @@
 
 
 \mainmatter
+\maxsecnumdepth{subsection}
+\setsecnumdepth{subsection}
 
 \include{prelim}
 \include{graphcomplex}
@@ -240,12 +64,15 @@
 \include{kontsevich}
 \include{dfiz}
 
-\appendix
+\appendix\appendixpage
 \include{arrows}
 \include{btc}
 \include{rt}
 \include{operads}
 \include{python}
+
+
+\backmatter
 
 %%
 %% Bibliografia
@@ -253,8 +80,6 @@
 \bibliography{math,tech}
 \bibliographystyle{halpha}
 
-
-\backmatter
 
 \end{document}
 

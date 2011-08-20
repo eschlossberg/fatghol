@@ -1,0 +1,13 @@
+%% package FIXME
+\makeatletter%
+\newcounter{fixme@note}\stepcounter{fixme@note}%
+\newcommand{\FIXME}[1]{%
+  \begingroup%
+    \def\thefootnote{\roman{fixme@note}}%
+    \colorbox{red}{\footnotemark[\value{fixme@note}]}%
+    \footnotetext[\value{fixme@note}]%
+    {\sffamily \colorbox{red}{FIXME:} #1}%
+  \endgroup%
+  \stepcounter{fixme@note}%
+}%
+\makeatother%

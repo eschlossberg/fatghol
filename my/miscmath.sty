@@ -1,0 +1,86 @@
+\usepackage{miscmath}
+
+%%
+%% notazioni matematiche addizionali usate in questo documento
+%%
+\providecommand{\textsubscript}[1]{$\sb{#1}$}
+\providecommand{\textsuperscript}[1]{$\sp{#1}$}
+
+\renewcommand\k\fk % campo k
+\renewcommand\d\ud % differenziale d
+
+\newcommand{\ksz}{\epsilon} % segno di koszul
+\newcommand{\aksz}{\chi}    % segno di koszul alternante
+
+\newcommand{\A}{\category{A}}     % generic category A
+\newcommand{\B}{\category{B}}     % generic category B
+\newcommand{\rev}{\sptext{rev}}
+\newcommand{\catN}{\category{N}}        % generic category N
+
+\newcommand{\freemc}[1]{#1^{\otimes}}   % free monoidal category 
+\newcommand{\freemsc}[1]{#1^{\Box}}     % free monoidal signed category 
+\newcommand{\tpc}[1]{\langle #1 \rangle}% tensor powers category
+\newcommand{\btpc}[1]{\langle#1\rangle^+}% (bosonic) tensor powers category
+
+\newcommand{\Oo}[1][]{\operad{O}_{#1}}  % generic operad O
+\newcommand{\Ao}{\operad{A}}            % associative operad A
+\newcommand{\RTD}[1][]{\operad{D}_{#1}} % operad of RT diagrams
+\newcommand{\RTE}[1][]{\operad{D}'_{#1}}% operad of embedded RT graphs
+\newcommand{\RTG}[1][]{\operad{G}_{#1}} % operad of RT graphs
+\newcommand{\RG}{\operad{R}}            % operad of cyclic (Ribbon) graphs
+\newcommand{\ERG}{\operad{\widetilde R}}% operad of embedded Ribbon graphs
+\newcommand{\SG}[1][]{\operad{S}_{#1}}  % operad of symmetric graphs
+
+\newcommand{\Strebel}[1][]{\mathcal{S}_{#1}}
+\newcommand{\Conf}{\text{\rm Conf}}
+\newcommand{\Lb}{\mathcal{L}}
+\newcommand{\Hn}{\mathcal{H}}
+
+\newcommand{\Harmonic}{\mathcal{H}} % space of harmonic functions
+
+\newcommand{\ad}{\textrm{ad}} % adjoint action ad[X,Y]
+
+% decomposizione cellulare dei grafi a nastro
+\newcommand{\Vertices}[1]{V(#1)}
+\newcommand{\Edges}[1]{E(#1)}
+\newcommand{\Legs}[1]{L(#1)}
+\newcommand{\Holes}[1]{B(#1)}
+
+\newcommand{\comb}{\sptext{comb}}
+\newcommand{\T}{\mathcal{T}}
+\newcommand{\Tcomb}{\T\comb}
+\newcommand{\M}{\mathcal{M}}       % spazio dei moduli di curve lisce
+\newcommand{\Mbar}{\overline{\M}}  % compattificazione
+\newcommand{\Mcomb}{\M\comb}       % triangolazione di Mumford-Harer
+\newcommand{\Mbarcomb}{\Mbar\comb}
+
+\newcommand{\R}{\mathcal{R}}       % complesso dei grafi a nastro
+
+
+\newcommand{\Hermitian}[1][\relax]
+  {\mathcal{H}}   % spazio delle matrici hermitiane
+%  {{\mathcal{H}\ifx#1\relax\else(#1)\fi}}   % spazio delle matrici hermitiane
+
+
+% spazi negativi
+\newcommand{\negquad}{\hskip-.5em\relax}
+\newcommand{\negqquad}{\hskip-1.5em\relax}
+
+
+% medie sui grafi
+\newcommand{\expval}[1]{\langle\!\langle#1\rangle\!\rangle}
+\newcommand{\X}{\mathcal{X}}
+\newcommand{\vv}[1]{V(#1)}
+\newcommand{\biggint}[2][]{%
+\Biggl\langle\Biggl\langle#2\Biggr\rangle\Biggr\rangle_{#1}}
+\newcommand{\gint}[2][]{%
+  \left\langle\!\left\langle#2\right\rangle\!\right\rangle_{#1}}
+\newcommand{\ginttriv}[2][]{%
+  \left\langle\!\left\langle#2\right\rangle\!\right\rangle_{#1}\triv}
+
+% decomposizione ciclica
+\newcommand{\dec}{\sbtext{\rm dec}}
+\newcommand{\res}{\sbtext{\rm res}}
+
+% omotopia
+\newcommand{\rel}{\sim}
