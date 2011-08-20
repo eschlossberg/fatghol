@@ -648,12 +648,12 @@ The set of vectors in $T_zS$ on which $q$ takes real non-negative
 values forms a real line in $T_zS$: therefore, they make up a
 foliation $F = F_qS$ on $S \setminus \{\text{poles of $q$}\}$. The non-compact
 leaves of $F$ together with zeroes of $q$ form the ``critical locus''
-of $q$.  
+of $q$.  Call $F$ the ``horizontal'' foliation associated with $q$.
 
 The set of vectors in $T_zS$ on which $q$ takes a purely imaginary
 value form a perpendicular foliation $F^\perp$, whose leaves connect
 either two distinct poles $x_i$ and $x_j$, or a pole $x_i$ and a zero
-$v_j$.
+$v_j$.  Call $F^\perp$ the ``vertical'' foliation associated with $q$.
 
 Every quadratic differential $q$ induces a metric (away from the
 critical locus) by $\ud s^2 = \abs{q(z)} \cdot \abs{\ud z}$.
@@ -735,8 +735,10 @@ $\pi$ induces a triangulation of $\M_{g,n}$ (resp.\ $\T_{g,n}$).
 Harer \cite{harer;cohomological-dimension}, introduced a simplicial
 spine for the Teichm\"uller space $\T_{g,n}$.  
 
-If $X$ is any semi-simplicial complex, denote by $X'$ its first
-barycentric subdivision, and by $|X|$ its geometric realization.
+If $X$ is any semi-simplicial complex, denote by $|X|$ its geometric
+realization.  Denote by $X'$ the first barycentric subdivision of $X$,
+that is, $X'$ has a $k$-simplex $(\sigma_0 > \sigma_1 > \cdots > \sigma_k)$ for any chain
+of $k+1$ simplices in $X$ such that $\sigma_{i+1}$ is a face of $\sigma_i$.
 
 
 \subsection{Arc-systems}
@@ -764,41 +766,247 @@ If $u$ is any arc in $S$, denote by $[u]$ its isotopy class rel~$\{x_1,
   \end{itemize}
   An arc-system $[u_1, \ldots, u_k]$ is said to \emph{fill up} the curve
   $S$ iff all connected components of $S - \bigcup\{u_i\} - \{x_1,\ldots x_n\}$ are
-  either disks or punctured disks.
+  either disks or once-punctured disks.
 \end{definition}
+Note that a connected component of the complement of a filling
+arc-system can only be punctured at a marked point $x_i$.
 
 Arc-systems may be organized into a semi-simplicial complex.
 \begin{definition}
-  $\U$ is the semi-simplicial complex having a simplex $\langle u_1, \ldots, u_k\rangle$
+  $U$ is the semi-simplicial complex having a simplex $\langle u_1, \ldots, u_k\rangle$
   for every rank $k$ arc-system $[u_1, \ldots u_k]$, with the proviso that
   $\langle u'_1, \ldots, u'_l\rangle$ is a face of $\langle u_1, \ldots, u_k\rangle$ iff $\{ [u'_1], \ldots,
   [u'_l] \} \subset \{ [u_1], \ldots, [u_k] \}$.
   
-  $\U_0$ is the subcomplex of all those simplices $\langle u_1, \ldots, u_k\rangle$
+  $U_0$ is the subcomplex of all those simplices $\langle u_1, \ldots, u_k\rangle$
   that do not fill up the surface $S$.
 \end{definition}
+By definition of $U_0$, any simplex in $U$ whose vertices are a subset
+of the vertices of $\sigma_\bullet \in U_0$ is itself a simplex in $U_0$.
 
 Let $U'$, $U_0'$ be the first barycentric subdivisions of $U$
 and $U_0$, respectively.
+
+There is a natural action of $\tau \in \Gamma_{g,n}$ on $U$ given by $\tau \cdot [u_1, \ldots
+u_k] := [\tau \circ u_1, \ldots, \tau \circ u_k]$; it preserves $U_0$, so it restricts to
+an action on $U \setminus U_0$.
+
+Let $\Delta^{n-1}$ be the $(n-1)$-dimensional geometric simplex.
+\begin{theorem}[Harer, {\cite[Theorem
+    1.3]{harer;cohomological-dimension}}]
+  \label{thm:H}
+  There exists a $\Gamma_{g,n}$-equivariant homeomorphism $\Phi: \T_{g,n} \times
+  \Delta^{n-1} \to |U \setminus U_0|$.
+\end{theorem}
+This is infact another application of \csref{thm:JS1}.  We only sketch
+part of proof here in order to highlight the features needed in the
+sequel. 
+
+Given a marked complex analytic curve $S$, and barycentric coordinates
+$b_0 + \cdots + b_n = 1$, by Jenkins-Strebel's \csref{thm:JS1}, there is a
+quadratic differential $q$ that has poles at the marked points $\{ x_1,
+\ldots, x_n \}$ such that its second residue at $x_i$ is $b_i$.
+
+Form the horizontal and vertical foliations $F$, $F^\perp$ induced by $q$,
+as in \ref{sec:strebel}.  Leaves of $F^\perp$ either connect a marked
+point $x_i$ (a pole of $q$) to another pole or to a zero point of $q$.
+Let $F^\perp_0$ be the collection of leaves of $F^\perp$ that join poles of
+$q$; it breaks up into parallel families, where two leaves are
+parallel iff they are connected by a homotopy in $S$ fixing the zeroes
+and the poles of $q$.  Select one leaf $u_j$ from each family, and
+form an arc-system $u = [u_1, \ldots, u_k]$.
+
+Let $G$ be the critical graph of $q$.  Each edge $\alpha \in \Edges{G}$ meets
+only \emph{one} arc $u_i$, and they intersect transversally and at one
+point only.  Therefore we can associate with every arc $u_i$ the
+$q$-length $\ell_i$ of the unique edge $\alpha$ intersecting $u_i$.  
+
+Let $\Phi(S, b_*)$ be the point in the geometric simplex $|\langle u_1, \ldots u_k\rangle|$
+corresponding to the projective class $[\ell_1:\cdots:\ell_k]$.  This defines a
+map $\Phi$ from $\T_{g,n} \times \Delta^n$ to $|U \setminus U_0|$, which is
+proven to be a homeomorphism \cite{harer;cohomological-dimension,
+  harer;cohomological-dimension,looijenga;cellular-decomposition}.
+
+\begin{remark}
+  \label{rem:approaching-face}
+  When the length $\ell_j$ approaches $0$, the point $\Phi(S, b_*)$
+  approaches a point on a face of the simplex $|\langle u_1, \ldots, u_k\rangle|$; this
+  face is identified with the simplex $|\langle u_1, \ldots, \hat{u_j}, \ldots, u_k\rangle|$.
+\end{remark}
+
+
+\subsection{The equivariant spine for $\T_{g,n}$}
+\label{sec:spine}
 
 \begin{definition}
   Let $Y'$ be the collection of simplices in $U'$ having no face in
   $U_0'$; equivalently, $\sigma_\bullet \in Y'$ iff every vertex of $\sigma_\bullet$
   lies in $U' \setminus U_0'$.
 \end{definition}
-$Y'$ is a full subcomplex of $U'$.
+$Y'$ is a full subcomplex of $U'$; vice versa, if $(\sigma_0 > \sigma_1 > \cdots >
+\sigma_k) \in Y'$, then \emph{no} $\sigma_i$ belongs to $U_0'$.  
 
-There is a natural action of $\Gamma_{g,n}$ on $U$ given by $g \cdot [u_1, \ldots
-u_k] = [g \circ u_1, \ldots, g \circ u_k]$; it preserves $U_0$, so it restricts to
-an action on $U \setminus U_0$.
+It can be proved that $Y'$ is 
 
-Let $\Delta^{n-1}$ be the $(n-1)$-dimensional geometric simplex.
-\begin{theorem}[Harer, {\cite[Theorem
-  1.3]{harer;cohomological-dimension}}]
-There exists a $\Gamma_{g,n}$-equivariant homeomorphism $\Phi: \T_{g,n} \times
-\Delta^{n-1} \to |X \setminus X_0|$.
+The action of $\Gamma_{g,n}$ on $U'$ preserves $Y'$.
+\begin{theorem}[Harer, {\cite[theorem
+    2.1]{harer;cohomological-dimension}}]
+  \label{thm:spine}
+  The semi-simplicial complex $U'$ has an equivariant deformation
+  retraction on $Y'$.  This retraction provides a
+  $\Gamma_{g,n}$-equivariant homotopy equivalence between $U' \setminus U_0'$ and
+  $Y'$.
 \end{theorem}
-This is another consequence of \ref{thm:JS}
+
+The complex $Y'$ is isomorphic to the first barycentric subdivision of
+a $4g - 5 + 2n$ dimensional complex $Y$, the dual complex to $U'$,
+constructed as follows:
+\begin{itemize}
+\item $Y$ has a 0-simplex for every maximal arc-system that fills up the
+  reference surface $T$; each such arc-system has $N = 6g - 7 + 3n$ arcs.
+\item $Y$ has a 1-simplex for every arc-system formed by $N-1$ arcs:
+  each such arc-system has two completions to a maximal arc-system.
+\item By recursively iterating this construction, we can construct the
+  higher-dimensional simplices in $Y$.\FIXME{Non \`e cos\`\i{} ovvio:
+    bisogna mostrare che i completamenti di un arc-system dato ad uno
+    massimale si organizzano in un simplesso.  Harer usa un teorema di
+    struttura per il complesso degli arc-system. Ma forse l'intera
+    descrizione di $Y$ pu\`o essere omessa qui, perch\'e ci interessa solo
+    il complesso dei grafi a nastro.}
+\end{itemize}
+Notice that, at a minimum, $2g - 2 +n$ curves are required to fill up
+$T$, so $Y$ is $4g - 5 + 2n$ dimensional.
+
+
+
+\section{The ribbon graph complex}
+\label{sec:ribbon-graph-complex}
+
+Finally, we can translate Harer's spine in terms of ribbon graphs and
+use it to construct a complex that computes the homology of
+$\M_{g,n}$.  The route to it is a bit convoluted, as the direct
+approach to constructing a ribbon graph complex by defining face
+operators through admissible contractions does not yield a simplicial
+complex: after a few contractions, loops appear, which cannot be
+contracted any more.  This mirrors the structure of $U \setminus U_o$, as will
+be shown in \ref{sec:contractions-and-topology}.
+
+\begin{definition}
+  \label{dfn:rg-complex}
+  Let $\R$ be the semi-simplicial complex whose vertices are
+  \emph{abstract} ribbon graphs, and whose face operators are given by
+  admissible contractions.
+\end{definition}
+In other words, given ribbon graphs $G$ and $G'$, we identify $G'$
+with a face of $G$ iff there exists a non-loop edge $\alpha \in \Edges{G}$
+such that $G'$ is the contraction of $G$ by $\alpha$.
+
+Similarly, we construct the complex of embedded ribbon graphs.
+\begin{definition}
+  \label{dfn:erg-complex}
+  Let $\tilde\R$ be the semi-simplicial complex whose vertices are
+  \emph{embedded} ribbon graphs, and whose face operators are given by
+  admissible contractions.
+\end{definition}
+
+The mapping class group $\Gamma_{g,n}$ acts on $\tilde\R$ by changing the
+embedding; we have $\R_{g,n} \simeq \tilde\R_{g,n} / \Gamma_{g,n}$.
+
+
+\subsection{From arc-systems to ribbon graphs}
+\label{sec:arcs-to-rg}
+
+Let $u = [u_1, \ldots, u_k]$ be an arc-system on $T_{g,n}$ uniquely
+labeling a simplex $\Delta(u)$ in $U \setminus U_0$.  Any choice of barycentric
+coordinates $b_0 + \cdots + b_k = 1$ in $\Delta(u)$ identifies a point in $|U \setminus
+U_0|$.  By the proof of Harer's \csref{thm:H} this corresponds to a
+complex structure on $T_{g,n}$ (a point in $\T_{g,n} \times \Delta^n$)
+determined by a quadratic differential $q = q(u, b_*)$, such that each
+arc $u_i$ is a regular curve in the vertical foliation $F^\perp$
+associated to $q$.
+
+Let $G$ be the critical graph of $q$.  By the statement and the
+remarks following \csref{thm:JS1}, $G$ has the structure of a
+\emph{embedded} ribbon graph.
+
+Let $\alpha_k$ be the only edge of $G$ meeting the arc $u_k \in u$; we can
+put a metric on $G$ by letting the length of $\alpha_k$ be $b_k$, the
+barycentric coordinate on the side of $u_k$.  Therefore $G$ has the
+structure of a \emph{metrized} embedded ribbon graph.
+
+By the 1-1 correspondence of arcs in $u$ and edges of $G$, any order
+of the vertices of $\Delta(u)$ translates to an order of the edges of $G$.
+
+We can sum up the above construction in the following statement.
+\begin{lemma}
+  \label{lemma:arcs-to-rg}
+  There's a 1-1 correspondence between arc-systems $u \in U \setminus U_0$ and
+  embedded ribbon graphs in $\tilde G \in \ERG[g,n]$; $\tilde G$ is the
+  dual graph to $u$ in the ambient surface $T_{g,n}$.
+
+  To any point in $|U \setminus U_0|$, there corresponds a \emph{metrized}
+  embedded ribbon graph, the barycentric coordinates in simplexes of
+  $|U \setminus U_0|$ directly translating to edge-lengths of $\tilde G$.
+
+  Finally, if an order of the vertices of the simplex $\Delta(u)$ is given,
+  then an order of the edges of $\tilde G$ is induced.
+\end{lemma}
+
+
+\subsection{Contraction of edges and the cell complex structure}
+\label{sec:contractions-and-topology}
+
+In \csref{sec:arcs-to-rg}, a PL isomorphism was actually constructed
+between the geometric simplex $|\langle u_*\rangle|$ and $|\tilde G|$, the
+geometric simplex spanned by varying lengths of edges in
+$\Edges{\tilde G}$.  By \csref{lemma:approaching-face}, the face
+operators on the two set of simplices are compatible with this PL
+isomorphism, so we can glue isomorphisms $|\langle u_*\rangle| \to |G|$ to form a PL
+isomorphism $|U \setminus U_0| \to \Tcomb_{g,n}$.
+
+Recall that the cells that make up $\Tcomb_{g,n}$ are indexed by
+embedded ribbon graphs, and let $\tilde G \in \ERG[g,n]$ be an embedded
+ribbon graph. If no edge of $\tilde G$ is a loop, then any contraction
+of an edge in $\tilde G$ produces an embedded ribbon graph in
+$\ERG[g,n]$, which again corresponds to a simplex in $U \setminus U_0$.
+Therefore, embedded ribbon graphs with no loops identify cells
+entirely contained in $U \setminus U_0$. 
+
+Now let $\tilde G$ be an embedded ribbon graph having a loop $\lambda \in
+\Edges{G}$, and let $u = \langle u_1, \ldots, u_k\rangle$ be the arc-system simplex
+corresponding to $\tilde G$ according to \csref{lemma:arcs-to-rg}.
+Contraction of $\lambda$ in $\tilde G$ is not admissible, as it would change
+the genus and/or the puncture number of $\tilde G$.  Correspondingly,
+if $u'$ be the face of $u$ obtained by omitting the unique arc
+that intersects $\lambda$, then $u'$ does not fill up the ambient surface.
+
+Vice versa, suppose that $u' \in U_0$ is such that adding a single arc
+$u_0$ to $u'$ determines a simplex belonging to $U \setminus U_0$.  Let
+$\tilde G$ be the embedded ribbon graph, dual to $\langle u_0, u'\rangle$.  It's
+simple to see then:
+\begin{enumerate}
+\item The arc $u_0$ is entirely contained in a connected component $W$
+  of $T \setminus |u'|$, and this $W$ is either a punctured disk or a disk
+  with a slit in the middle.  Indeed, let $W' := W \setminus |u_0|$; since
+  $\langle u_0, u'\rangle$ belongs to $U \setminus U_0$, then $W'$ is a topological disk.
+  The border of $W'$ is union of the arcs $u_i$, where each arc occurs
+  at most two times, and, for those that occur two times, the two
+  copies have equal length in the metric of $T$.  The arc $u_0$ occurs
+  two times on the border of $W'$, and we get $W$ by isometrically
+  gluing $W'$ along the two copies of $u_0$. 
+\item The arc $u_0$ connects the puncture or slit in $W$ with the
+  border of $W$.
+\item The edge $\lambda$ of $\tilde G$ corresponding to $u_0$ is a loop.
+\end{enumerate}
+
+The following sums up the content of this section.
+\begin{lemma}
+  \label{lemma:erg-loop}
+  Embedded ribbon graphs with a loop correspond to arc-system simplices
+  in $U$ with a face on $U_0$; every loop in a ribbon graph $\tilde G$
+  corresponds to a face on $U_0$ in the dual arc-system.
+\end{lemma}
+
 
 
 %%% Local Variables: 
