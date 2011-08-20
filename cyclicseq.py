@@ -93,6 +93,9 @@ def CyclicSequence(base, factory=None):
 
         ## equality predicates
         ##
+        def __hash__(self):
+            return sum(hash(self[x:x+len(self)]) for x in xrange(len(self)))
+        
         def __eq__(self, other):
             """Return `True` if `self` is linearly equal to `other`
             with all indices shifted by a fixed amount."""
