@@ -275,18 +275,35 @@ if 'shell' == args[0]:
 # selftest -- run doctests and acceptance tests on simple cases
 elif 'selftest' == args[0]:
     import doctest
-    # FIXME: run doctests on *all* modules...
-    logging.debug("Running Python doctest on '%s' module..." % __name__)
-    (failed, tested) = doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE)
-    if failed>0:
-        logging.error("  module '%s' FAILED %d tests of %d." % (__name__, failed, tested))
-        print("Module '%s' FAILED %d tests of %d." % (__name__, failed, tested))
-    else:
-        if tested>0:
-            logging.debug("  module '%s' passed all doctests." % __name__)
-            print("Module '%s' passed all doctests." % __name__)
-        else:
-            logging.warning("  module '%s' had no doctests." % __name__)
+    import imp
+    for module in [ 'rg',
+                    'homology',
+                    'graph_homology',
+                    'combinatorics',
+                    'iterators',
+                    'cyclicseq',
+                    ]:
+        try:
+            file, pathname, description = imp.find_module(module)
+            m = imp.load_module(module, file, pathname, description)
+            logging.debug("Running Python doctest on '%s' module..." % module)
+            # temporarily turn off logging to avoid cluttering the output
+            logging.getLogger().setLevel(logging.ERROR)
+            # run doctests
+            (failed, tested) = doctest.testmod(m, name=module, optionflags=doctest.NORMALIZE_WHITESPACE)
+            # restore normal logging level
+            logging.getLogger().setLevel(log_level)
+            if failed>0:
+                logging.error("  module '%s' FAILED %d tests of %d." % (module, failed, tested))
+                print("Module '%s' FAILED %d tests of %d." % (module, failed, tested))
+            else:
+                if tested>0:
+                    logging.debug("  module '%s' passed all doctests." % module)
+                    print("Module '%s' passed all doctests." % module)
+                else:
+                    logging.warning("  module '%s' had no doctests." % module)
+        finally:
+            file.close()
     
     # second, try known cases and inspect results
     for (g, n, ok) in [ (0,3, [0,0,1]),
