@@ -119,7 +119,7 @@ def factorial(n):
     assert isinstance(n, (int, long)), \
            "factorial(): argument `%s` is no `int` nor `long`" % n
     if n < 0:
-        return sign_exp(n)*factorial(-n)
+        return minus_one_exp(n)*factorial(-n)
     if n < 2:
         return 1
     else:
@@ -127,7 +127,7 @@ def factorial(n):
 
     
 
-def sign_exp(m):
+def minus_one_exp(m):
     """Return (-1) to the power `m`. """
     if (m % 2) == 0:
         return +1
@@ -403,7 +403,7 @@ class Permutation(dict):
                 return False
         return True
         
-    def rearrange(self, seq):
+    def rearranged(self, seq):
         """Return a new list containing the items in `seq`, rearranged
         according to this permutation.
 
@@ -411,7 +411,7 @@ class Permutation(dict):
 
           >>> s = ['a','b','c']
           >>> p = Permutation(enumerate([2,0,1]))
-          >>> p.rearrange(s)
+          >>> p.rearranged(s)
           ['c', 'a', 'b']
         """
         assert len(seq) == len(self), \
