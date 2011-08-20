@@ -1,35 +1,40 @@
-#. scrivere `NumberedGraph.projection()`: ritorna 1,0,-1 a seconda
-   dell'orientazione relativa.
+#. Riscrivere `.isomorphisms_to()`:
 
-#. Nuovo metodo di generazione dei grafi:
+     - semplificare la generazione della mappa di vertici in vertici;
 
-   1) genera tutti i possibili grafi con *un solo* vertice, dati `g`
-      ed `n` -- o equivalentemente, genera tutti i possibili
-      accoppiamenti di indici di 0..(2g+n-1);
+     - eliminare l'uso dei "repetition_pattern": il numero di loop
+       insistenti su un vertice è più semplice da calcolare ed è
+       sicuramente un invariante altrettanto buono.
 
-   2) genera tutti i possibili alberi terminanti in (2g+n-1) foglie ed
-      aventi nodi con le valenze permesse;
+#. Inserire esempio dei grafi che fallivano l'equivalenza nei
+   doctest di __eq__.
 
-   3) combina i risultati di 1) e 2) per produrre una lista di grafi
-      da ridurre eliminando gli isomorfi.
+#. Usare ``rational.py`` in luogo di NZMATH.
 
-   Da qui in poi si procede come con l'attuale sistema, eccetto che i
-   grafi prodotti sono automaticamente connessi ed in forma canonica.
-
+#. Trasformare `.numbering` in una `property`.  Usare la forma
+   accettata da `.numbering_set()` anche nei doctest e rimuovere il
+   test `isinstance` in `Graph.__init__`.
 
 
-IN FORSE
-========
 
-#. effettua il controllo di connessione direttamente sulla
-   rappresentazione lineare del grafo; se non è connesso, non si
-   invoca nemmeno il costruttore Graph.__init__.
-   
-     - In `ConnectedGraphsIterator`, suddividere direttamente la
-       rappresentazione lineare in pezzi corrispondenti ai vertici, e
-       controllare la connessione.
+DONE
+====
 
-     - In `Graph.__init__`, si può rimuovere il ctor con
-       valenze+rappr.lineare. 
+#. Rimuovere ogni riferimento a `edge_seq`.
 
-     - `Graph.is_connected` rimane per completezza ma non è più usata.
+#. Rinominare `*_factory` in `*type`: `vertex_factory` -> `vertextype`
+
+
+
+ABANDONED
+=========
+
+#. Completare il meccanismo di tracciamento delle contrazioni dei
+   grafi, in modo da ridurre il numero delle comparazioni.
+
+   -- bisogna tenere traccia di questa struttura in `graph_homology.py`,
+      non aggiungere tutta questa roba in `Graph`
+
+#. Usare `kwargs.pop` invece di `kwargs.get`; rimuoverlo del tutto per
+   i parametri non pubblici.
+
