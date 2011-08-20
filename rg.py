@@ -1009,6 +1009,105 @@ class Fatgraph(object):
                      num_external_edges = self.num_external_edges)
 
 
+    def hangcircle(self, edge, side):
+        """Return a new `Fatgraph`, formed by attaching a circle with
+        a new edge to a new trivalent vertex in the middle of `edge`.
+
+          >>> g = Fatgraph([Vertex([0,1,2]), Vertex([0,2,1])])
+          >>> g1 = g.hangcircle(0, 0)
+          >>> g1 is g
+          False
+          
+        Argument `side` controls which side of `edge` the circle is
+        hung to (valid values are 0 or 1), i.e., which of the two
+        inequivalent cyclic orders the new trivalent vertices will be
+        given::
+        
+          >>> g = Fatgraph([Vertex([0,1,2]), Vertex([0,2,1])])
+          >>> g1 = g.hangcircle(0, 0)
+          >>> g2 = g.hangcircle(0, 1)
+          >>> g1 == Fatgraph([Vertex([0,1,2]), Vertex([3,2,1]), Vertex([0,3,4]), Vertex([5,5,4])])
+          True
+          >>> g2 == Fatgraph([Vertex([0,1,2]), Vertex([3,2,1]), Vertex([3,0,4]), Vertex([5,5,4])])
+          True
+
+        It is worth noting that the new graph will have 3 edges more
+        than the original one::
+
+          >>> g.num_edges
+          3
+          >>> g1.num_edges
+          6
+          
+        """
+        assert side in [0,1], \
+               "Fatgraph.hangcircle: Invalid value for `side`: '%s' - should be 0 or 1" % side1
+        
+        opposite_side = 0 if side else 1
+
+        ## assign edge indices
+        
+        ## break `edge` in two halves: if `v1` and `v2` are the
+        ## endpoints of `edge`, then the "one_half" edge extends from
+        ## the `v1` endpoint of `edge1` to the new vertex
+        ## `midpoint`; the "other_half" edge extends from the
+        ## `midpoint` new vertex to `v2`.
+        one_half = edge
+        other_half = self.num_edges
+
+        connecting_edge = self.num_edges + 1
+        circling_edge = self.num_edges + 2
+        
+        ## assign new indices to new vertices
+        midpoint_index = self.num_vertices
+        T_index = self.num_vertices + 1
+
+        ## two new vertices are added: the mid-point of `edge`, and
+        ## the vertex `T` lying on the circle.
+        if side:
+            midpoint = self._vertextype([other_half, one_half, connecting_edge])
+        else:
+            midpoint = self._vertextype([one_half, other_half, connecting_edge])
+        T = self._vertextype([circling_edge, circling_edge, connecting_edge])
+        new_vertices = self.vertices + [midpoint, T]
+
+        ## new edge endpoints:
+        ## - start with a copy of the original ednpoints:
+        new_endpoints_v = copy(self.endpoints_v)
+        new_endpoints_i = copy(self.endpoints_i)
+
+        ## - replace `edge` with new `other_half` in the second endpoint:
+        (v1, v2) = self.endpoints_v[edge]
+        (pos1, pos2) = self.endpoints_i[edge]
+        new_endpoints_v[one_half] = (v1, midpoint_index)
+        new_endpoints_i[one_half] = (pos1, side)
+        new_vertices[v2] = self._vertextype(new_vertices[v2][:pos2]
+                                             + [other_half]
+                                             + new_vertices[v2][pos2+1:])
+        new_endpoints_v.append((midpoint_index, v2))  # other_half1
+        new_endpoints_i.append((opposite_side, pos2)) # other_half1
+
+        ## - the connecting edge has endpoints in the mid-point of
+        ## `edge` and in `T`, and is *always* in third position:
+        new_endpoints_v.append((midpoint_index, T_index))
+        new_endpoints_i.append((2,2))
+
+        ## - the circling edge is a loop with vertex `T`
+        new_endpoints_v.append((T_index, T_index))
+        new_endpoints_i.append((0,1))
+        
+        # finally, build new graph 
+        new_edge_numbering = self.edge_numbering + \
+                             [other_half, connecting_edge, circling_edge]
+        return Fatgraph(new_vertices,
+                     vertextype = self._vertextype,
+                     endpoints = (new_endpoints_v, new_endpoints_i),
+                     num_edges = self.num_edges + 3,
+                     num_external_edges = self.num_external_edges,
+                     orientation = new_edge_numbering,
+                     )
+    
+        
     def is_canonical(self):
         """Return `True` if this `Fatgraph` object is canonical.
 
