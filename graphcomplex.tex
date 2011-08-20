@@ -372,7 +372,7 @@ ${\tilde \iota' \circ f}$.
   An embedded ribbon graph has no automorphisms other than the identity.
 \end{lemma}
 \begin{proof}
-  Suppose $[f] \in \Aut_\ERG[G, \iota, \psi_*]$, then $f:G\to G$ is an abstract
+  Suppose $[f] \in \Aut_{\ERG}[G, \iota, \psi_*]$, then $f:G\to G$ is an abstract
   ribbon graph automorphism, so it induces a ${\tilde f}: S(G) \to S(G)$
   which is a \emph{homeomorphism}.  By definition, there is a homotopy
   connecting ${\tilde \iota}: S(G) \to S$ and ${\tilde \iota'} \circ {\tilde f}:
@@ -508,14 +508,14 @@ surface $S(G)$ endowed with this complex analytic structure.
 \end{remark}
 
 
-\subsection{Construction of $\Tcomb{g,n}$ and $\Mcomb{g,n}$}
+\subsection{Construction of $\Tcomb_{g,n}$ and $\Mcomb_{g,n}$}
 \label{sec:mgn-comb-construction}
 
 Let $G$ be a metrized ribbon graph of genus $g$ with $n$ numbered
 boundary components.  A topological cell $\Delta(G) \subseteq \M_{g,n}$ is spanned
 when varying the metric data $(\ell_\alpha)_{\alpha \in \Edges{G}}$; gluing these
 cells one recovers the whole $\M_{g,n}$.  A construction of
-$\Tcomb{g,n}$ can be found in \cite{penner:math.GT/0210326}, although
+$\Tcomb_{g,n}$ can be found in \cite{penner:math.GT/0210326}, although
 the actual procedure mimicks
 \cite{kontsevich;intersection-theory;1992}.
 
@@ -548,17 +548,17 @@ contravariant functor on the category of embedded ribbon graphs:
     nascosto che non funziona col limite diretto?  Per esempio si fa a
     meno del lemma~\ref{lemma:erg-no-aut}.  }%
   \begin{equation*}
-    \Tcomb{g,n} := \varinjlim T\Delta[G, \iota, \psi_*],
+    \Tcomb_{g,n} := \varinjlim T\Delta[G, \iota, \psi_*],
   \end{equation*}
   where $[G, \iota, \psi_*]$ ranges in the category $\ERG{g,n}$ of embedded
   ribbon graphs of genus $g$ with $n$ numbered boundary components.
 \end{definition}
-$\Tcomb{g,n}$ is obtained by gluing topological cells $\Delta(G)$ alongside
+$\Tcomb_{g,n}$ is obtained by gluing topological cells $\Delta(G)$ alongside
 the boundary: if $[G', \iota', \psi'_*]$ is obtained from $[G, \iota, \psi_*]$ by
 contraction of an edge $\alpha$, then $\Delta(G')$ is identified with the face
 of $\Delta(G)$ where $\ell_\alpha = 0$ by \csref{eq:embedding-cells}.
 
-Elements of the topological space $\Tcomb{g,n}$ are (equivalence
+Elements of the topological space $\Tcomb_{g,n}$ are (equivalence
 classes of) metrized embedded ribbon graphs $[G, \iota, \psi_*, \ell]$, where $\ell
 \in T\Delta[G, \iota, \psi_*]$; it is easy to check that any $[G, \iota, \psi_*, \ell] \in
 \Tcomb_{g,n}$ has a unique representative such that $\ell_\alpha > 0$ for all
@@ -569,25 +569,25 @@ well-defined; write $p_j$ for the perimeter of the $j$-th hole.
   The combinatorial moduli space of curves is the direct limit of the
   functor $\Delta$:
   \begin{equation*}
-    \Mcomb{g,n} := \varinjlim \Delta(G),
+    \Mcomb_{g,n} := \varinjlim \Delta(G),
   \end{equation*}
   where $G$ ranges in the category $\RG{g,n}$ of abstract ribbon
   graphs of genus $g$ with $n$ numbered boundary components.
 \end{definition}
 
-The functorial action of $\Gamma_{g,n}$ on $\ERG_{g,n}$ induces an action
-on $\Tcomb{g,n}$.
+The functorial action of $\Gamma_{g,n}$ on $\ERG{g,n}$ induces an action
+on $\Tcomb_{g,n}$.
 \begin{lemma}
   \label{lemma:penner-kontsevich-bridge}
-  $\Mcomb{g,n}$ is the quotient space (in the orbifold sense) of
-  $\Tcomb{g,n}$ by the action of the mapping class group $\Gamma_{g,n}$.
+  $\Mcomb_{g,n}$ is the quotient space (in the orbifold sense) of
+  $\Tcomb_{g,n}$ by the action of the mapping class group $\Gamma_{g,n}$.
 \end{lemma}
 \begin{proof}
   If $G \in \RG{g,n}$ is any abstract ribbon graph, then map $\Delta(G)$ into
-  $\Tcomb{g,n} / \Gamma_{g,n}$ by the following: pick any representative
+  $\Tcomb_{g,n} / \Gamma_{g,n}$ by the following: pick any representative
   embedding ${\tilde G} = [G, \iota, \psi_*] \in \ERG{g,n}$ of $G$ and compose
   the isomorphism $\Delta(G) \cong T\Delta(\tilde G)$ with the quotient
-  projection $T\Delta(\tilde G) \to \Tcomb{g,n}/\Gamma_{g,n}$.  The mapping
+  projection $T\Delta(\tilde G) \to \Tcomb_{g,n}/\Gamma_{g,n}$.  The mapping
   is well-defined: if $[G, \iota, \psi_*]$ and $[G, \iota', \psi'_*]$ are two
   distinct embeddedings of $G$, then ${\tilde \iota}, {\tilde \iota'}: S(G) \to
   S$ are homemorphisms, and, for any $\ell \in \Delta(G)$, $\iota' \circ \iota^{-1}$ is
@@ -595,8 +595,8 @@ on $\Tcomb{g,n}$.
   Therefore, if $\phi := (\iota')^{-1} \circ \iota$, then $[G, \iota, \psi_*] = \phi \cdot [G, \iota',
   \psi'_*]$.
 
-  By definition of direct limit, a map $\Phi$ is induced $\Mcomb{g,n} \to
-  \Tcomb{g,n} / \Gamma_{g,n}$.  It is surjective: every point in $\Tcomb /
+  By definition of direct limit, a map $\Phi$ is induced $\Mcomb_{g,n} \to
+  \Tcomb_{g,n} / \Gamma_{g,n}$.  It is surjective: every point in $\Tcomb /
   \Gamma$ is a projection of a point $[G, \iota, \psi_*] \in \Tcomb$, therefore it
   is in the image of $G \in \Mcomb$.  $\Phi$ is injective: if $G$ and $G'$
   map to the same point in $\Tcomb / \Gamma$, then there is some $\phi \in \Gamma$
@@ -614,7 +614,12 @@ to the same procedure as in $\Tcomb$: if $G'$ is a contraction of $G$,
 then $M(G')$ is a face of $M(G)$). Therefore, $\Mcomb_{g,n}$ is a
 orbifold.
 
-\subsubsection{Kontsevich' compactification of $\Mcomb{g,n}$}
+The cell $M(G)$ has real dimension $\card{\Edges{G}}$; therefore,
+cells of maximal dimension are given by graphs with all vertices of
+valence $3$. The union of these cells is a dense subset of
+$\Mcomb_{g,n}$ with non-void interior.
+
+\subsubsection{Kontsevich' compactification of $\Mcomb_{g,n}$}
 \label{sec:comp-mcomb}
 The construction of $\Mcomb_{g,n}$ can be done with slightly changed
 rules: if we define a set $X \subseteq \Edges{G}$ to be negligible iff it does
@@ -655,7 +660,7 @@ critical locus) by $\ud s^2 = \abs{q(z)} \cdot \abs{\ud z}$.
 
 \begin{theorem}[Jenkins, Strebel; {\cite[Theorem 23.2 and
     23.5]{strebel;quadratic-differentials;1983}}] 
-  \label{thm:JS1}
+  \label{thm:JS}
   For any complex analytic curve $S$ with $n$ marked points $x_1, \ldots,
   x_n$, and any assignment of real positive numbers $p_1, \ldots, p_n$,
   there exists one and only one quadratic differential $q$ such that:
@@ -664,7 +669,7 @@ critical locus) by $\ud s^2 = \abs{q(z)} \cdot \abs{\ud z}$.
     with second residue $p_1, ..., p_n$, that is, in a local
     coordinate $z_i$ near $x_i$ we have:
     \begin{equation*}
-      \sqrt{q} = p_i (\d z_i / z_i) + \text{higher order terms};
+      q = -p_i^2 (\d z_i^2 / z_i^2) + \text{higher order terms};
     \end{equation*}
   \item the non-critical real trajectories of $F_q$ are simple closed
     circles around $x_i$.
@@ -692,94 +697,108 @@ additional structure of \emph{numbered} graph, that is, it is endowed
 with a bijection $h: \Holes{G} \to \{1, \ldots, n\}$.
 
 
+\subsection{Relation with $\M_{g,n}$ and $\T_{g,n}$}
+\label{sec:nocomb}
+
 \begin{theorem}[Harer, Mumford, Thurston;
   \cite{harer;cohomological-dimension,
     looijenga;cellular-decomposition, penner:math.GT/0210326}] 
-  The Strebel construction defines morphisms
+  The Jenkins-Strebel construction defines morphisms
   \begin{equation*}
-    \M_{g,n} \times \setR_{>0}^n \to \Mcomb_{g,n}, \qquad \Mbar_{g,n} \times
-    \setR_{>0}^n \to \Mbarcomb_{g,n}.
+    \T_{g,n} \times \setR_{>0}^n \to \Tcomb_{g,n}, 
+    \qquad
+    \M_{g,n} \times \setR_{>0}^n \to \Mcomb_{g,n}, 
+    \qquad 
+    \Mbar_{g,n} \times \setR_{>0}^n \to \Mbarcomb_{g,n}.
   \end{equation*}
-  The first of these is a homeomorphism and, more, an orbifold
-  equivalence. The inverse map
+  The first of these is a homeomorphism and the second is an orbifold
+  equivalence. 
+
+  The inverse map
   \begin{equation*}
+    \Tcomb_{g,n} \to \T_{g,n} \times \setR_{>0}^n \to \setR_{>0}^n,
+    \qquad
     \Mcomb_{g,n} \to \M_{g,n} \times \setR_{>0}^n \to \setR_{>0}^n
   \end{equation*}
   is the perimeter map $\pi := (p_1, \ldots, p_n)$.  
 \end{theorem}
 
 For any given $p^\circ = (p_1^\circ, \ldots, p_n^\circ) \in \setR_{>0}^n$, the fiber
-$\pi^{-1}(p^\circ)$ is isomorphic to $\M_{g,n}$, thus, $\pi$ induces a
-triangulation of $\M_{g,n}$.
-
-The cell $M(G)$ has real dimension $\card{\Edges{G}}$; therefore,
-cells of maximal dimension are given by graphs with all vertices of
-valence $3$. The union of these cells is a dense subset of
-$\Mcomb_{g,n}$ with non-void interior.
+$\pi^{-1}(p^\circ)$ is isomorphic to $\M_{g,n}$ (resp.\ $\T_{g,n}$), thus,
+$\pi$ induces a triangulation of $\M_{g,n}$ (resp.\ $\T_{g,n}$).
 
 
 
-\section{Arc-systems and their complexes}
+\section{Harer's equivariant spine for Teichm\"uller space}
+\label{sec:spine}
+
+Harer \cite{harer;cohomological-dimension}, introduced a simplicial
+spine for the Teichm\"uller space $\T_{g,n}$.  
+
+If $X$ is any semi-simplicial complex, denote by $X'$ its first
+barycentric subdivision, and by $|X|$ its geometric realization.
+
+
+\subsection{Arc-systems}
 \label{sec:arc-systems}
 
-Harer \cite{harer;cohomological-dimension}, introduced the arc-systems
-complex as a tool to reckon the (co)homology of the moduli space
-$\M_{g,n}$.
-
-Let $S_{g,n}$ be a topological compact oriented Riemann surface of
+Let $T_{g,n}$ be a topological compact oriented Riemann surface of
 fixed genus $g$ with $n$ marked points $x_1, \ldots, x_n$.  Regard points
-in the moduli space $\M_{g,n}$ as equivalence classes $(C,x,f)$ of a
-complex curve $C$ with a marking $x:\{1,\ldots,n\}\to C$ and a homeomorphism
-$f:C\to S_{g,n}$ with the reference surface (see
+in the moduli space $\M_{g,n}$ as equivalence classes $(S,x,\varphi)$ of a
+complex analytic curve $S$ with a marking $x:\{1,\ldots,n\}\to S$ and a
+homeomorphism $\varphi:S\to T_{g,n}$ with the reference surface (see
 \csref{sec:alternate-Mgn}).
 
-If $\alpha$ is any arc in $C$, denote by $[\alpha]$ its isotopy class rel~$\{x_1,
+If $u$ is any arc in $S$, denote by $[u]$ its isotopy class rel~$\{x_1,
 \ldots, x_n\}$.
-
 \begin{definition}
-  An arc-system $[\alpha_1, \ldots, \alpha_k]$ of rank $k$ is an isotopy class
-  rel~$\{x_1, \ldots, x_n\}$ of $k$ properly imbedded arcs $\alpha_i : [0,1] \to C$
+  An arc-system $[u_1, \ldots, u_k]$ of rank $k$ is an isotopy class
+  rel~$\{x_1, \ldots, x_n\}$ of $k$ properly imbedded arcs $u_i : [0,1] \to S$
   such that:
   \begin{itemize}
-  \item every $\alpha_i$ has its endpoints in the set $\{x_1, \ldots, x_n\}$;
-  \item if $i \neq j$, then $\alpha_i$ meet $\alpha_j$ only at endpoints, if at all;
-  \item no $\alpha_i$ is null-homotopic rel~$\{x_1, \ldots, x_n\}$;
-  \item no $\alpha_i$ is homotopic rel~$\{x_1, \ldots, x_n\}$ to $\alpha_j$, for $i \neq
+  \item every $u_i$ has its endpoints in the set $\{x_1, \ldots, x_n\}$;
+  \item if $i \neq j$, then $u_i$ meet $u_j$ only at endpoints, if at all;
+  \item no $u_i$ is null-homotopic rel~$\{x_1, \ldots, x_n\}$;
+  \item no $u_i$ is homotopic rel~$\{x_1, \ldots, x_n\}$ to $u_j$, for $i \neq
     j$;
   \end{itemize}
-  An arc-system $[\alpha_1, \ldots, \alpha_k]$ is said to \emph{fill up} the curve
-  $C$ iff all connected components of $C - \bigcup\{\alpha_i\} - \{x_1,\ldots x_n\}$ are
+  An arc-system $[u_1, \ldots, u_k]$ is said to \emph{fill up} the curve
+  $S$ iff all connected components of $S - \bigcup\{u_i\} - \{x_1,\ldots x_n\}$ are
   either disks or punctured disks.
 \end{definition}
 
 Arc-systems may be organized into a semi-simplicial complex.
 \begin{definition}
-  $X$ is the semi-simplicial complex having a simplex $\langle\alpha_1, \ldots, \alpha_k\rangle$
-  for every rank $k$ arc-system $[\alpha_1, \ldots \alpha_k]$, with the proviso that
-  $\langle\beta_1, \ldots, \beta_l\rangle$ is a face of $\langle\alpha_1, \ldots, \alpha_k\rangle$ iff $\{ [\beta_1], \ldots, [\beta_l]
-  \} \subset \{ [\alpha_1], \ldots, [\alpha_k] \}$.
+  $\U$ is the semi-simplicial complex having a simplex $\langle u_1, \ldots, u_k\rangle$
+  for every rank $k$ arc-system $[u_1, \ldots u_k]$, with the proviso that
+  $\langle u'_1, \ldots, u'_l\rangle$ is a face of $\langle u_1, \ldots, u_k\rangle$ iff $\{ [u'_1], \ldots,
+  [u'_l] \} \subset \{ [u_1], \ldots, [u_k] \}$.
   
-  $X_\infty$ is the subcomplex of all those simplices $\langle\alpha_1, \ldots, \alpha_k\rangle$
+  $\U_0$ is the subcomplex of all those simplices $\langle u_1, \ldots, u_k\rangle$
   that do not fill up the surface $S$.
 \end{definition}
+
+Let $U'$, $U_0'$ be the first barycentric subdivisions of $U$
+and $U_0$, respectively.
+
+\begin{definition}
+  Let $Y'$ be the collection of simplices in $U'$ having no face in
+  $U_0'$; equivalently, $\sigma_\bullet \in Y'$ iff every vertex of $\sigma_\bullet$
+  lies in $U' \setminus U_0'$.
+\end{definition}
+$Y'$ is a full subcomplex of $U'$.
+
+There is a natural action of $\Gamma_{g,n}$ on $U$ given by $g \cdot [u_1, \ldots
+u_k] = [g \circ u_1, \ldots, g \circ u_k]$; it preserves $U_0$, so it restricts to
+an action on $U \setminus U_0$.
 
 Let $\Delta^{n-1}$ be the $(n-1)$-dimensional geometric simplex.
 \begin{theorem}[Harer, {\cite[Theorem
   1.3]{harer;cohomological-dimension}}]
 There exists a $\Gamma_{g,n}$-equivariant homeomorphism $\Phi: \T_{g,n} \times
-\Delta^{n-1} \to X \setminus X_\infty$.
+\Delta^{n-1} \to |X \setminus X_0|$.
 \end{theorem}
-
-Let $X^\circ$, $X_\infty^\circ$ be the first barycentric subdivisions of $X$
-and $X_\infty$, respectively.
-
-\begin{definition}
-  Let $Y^\circ$ be the collection of simplices in $X^\circ$ having no face in
-  $X_\infty^\circ$; equivalently, $\sigma_\bullet \in Y^\circ$ iff every vertex of $\sigma_\bullet$
-  lies in $X^\circ \setminus X_\infty^\circ$.  $Y^\circ$ is a full subcomplex of $X^\circ$.
-\end{definition}
-
-
+This is another consequence of \ref{thm:JS}
 
 
 %%% Local Variables: 
@@ -787,5 +806,3 @@ and $X_\infty$, respectively.
 %%% TeX-master: "index"
 %%% x-symbol-8bits: nil
 %%% End: 
-
-
