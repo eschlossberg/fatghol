@@ -4,7 +4,8 @@
 __docformat__ = 'reStructuredText'
 
 
-from rg import all_graphs,vertex_valences_for_given_g_and_n,Graph
+from rg import Graph,ConnectedGraphsIterator
+from valences import vertex_valences_for_given_g_and_n
 import sys
 from utils import positive_int
 
@@ -178,8 +179,8 @@ elif 'graphs' == args[0]:
     # compute graphs matching given vertex sequences
     graphs = []
     for vertex_pattern in args:
-        vertex_list = map(int, vertex_pattern.split(','))
-        graphs += all_graphs(vertex_list)
+        valences = map(int, vertex_pattern.split(','))
+        graphs += tuple(ConnectedGraphsIterator(valences))
 
     # output results
     if not options.silent:
@@ -196,7 +197,8 @@ elif 'graphs' == args[0]:
                 outfile.write("%s\n" % ((graph,
                                          graph.genus(),
                                          graph.num_boundary_components(),
-                                         graph.has_orientation_reversing_automorphism()),))
+                                         graph.has_orientation_reversing_automorphism(),
+                                         ),))
         outfile.write("\n")
         outfile.write("Found %d graphs.\n" % len(graphs))
         outfile.write("\n")
