@@ -405,7 +405,12 @@ class Graph(object):
                     visited_edges.add(l)
                 visited_vertices.add(vi)
         return (len(visited_vertices) == len(self.vertices))
-            
+
+    def is_loop(self, edge):
+        """Return `True` if `edge` is a loop (i.e., the two endpoint coincide).
+        """
+        return self.endpoints[edge][0] == self.endpoints[edge][1]
+        
     def is_orientation_reversing(self, automorphism):
         """Return `True` if `automorphism` reverses orientation of this `Graph` instance."""
         def sign_of_rotation(l,r=1):
@@ -785,6 +790,9 @@ class ConnectedGraphsIterator(object):
                 # add current to graph list
                 self.graphs.append(current)
                 return current
+            else:
+                # return tuple (current, alias)
+                return (current, candidate)
 
         # no more graphs to generate
         raise StopIteration
