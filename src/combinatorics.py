@@ -210,6 +210,53 @@ class InplacePermutationIterator:
                 return self.seq
 
 
+def sign_of_permutation(p):
+    """Return sign of permutation `p`.
+
+    A permutation of N elements is represented as a linear
+    list `p`, whose items are the numbers 0,1,...,N-1: `p`
+    maps `i` to `p[i]`.
+
+    Examples::
+
+      >>> sign_of_permutation([0,1,2])
+      1
+      >>> sign_of_permutation([0,2,1])
+      -1
+      >>> sign_of_permutation([2,0,1])
+      1
+
+    The trivial permutations mapping a single element into
+    itself and the empty permutation are assigned sign +1::
+
+      >>> sign_of_permutation([0])
+      1
+
+      >>> sign_of_permutation([])
+      1
+
+    This is an adaptation of the `perm_sign` code by John Burkardt
+    (see it among the collection at
+    http://orion.math.iastate.edu/burkardt/f_src/subset/subset.f90
+    or http://www.scs.fsu.edu/~burkardt/math2071/perm_sign.m ); it
+    computes the sign by counting the number of interchanges
+    required to change the given permutation into the identity
+    one.
+
+    """
+    n = len(p)
+    s = +1
+    # get elements back in their home positions
+    for j in xrange(n):
+        q = p[j]
+        if q !=j :
+            p[j],p[q] = p[q],q # interchange p[j] and p[p[j]]
+            s = -s             # and account for the interchange
+    # note that q is now in its home position
+    # whether or not an interchange was required
+    return s
+
+
 class FixedLengthPartitionIterator:
     """Iterate over partitions of integer `N` into *exactly* `K`
     positive integers.
