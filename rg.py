@@ -672,9 +672,9 @@ class Fatgraph(object):
           
         """
         assert side1 in [0,1], \
-               "Fatgraph.connect: Invalid value for `side1`: '%s' - should be 0 or 1" % side1
+               "Fatgraph.bridge: Invalid value for `side1`: '%s' - should be 0 or 1" % side1
         assert side2 in [0,1], \
-               "Fatgraph.connect: Invalid value for `side2`: '%s' - should be 0 or 1" % side2
+               "Fatgraph.bridge: Invalid value for `side2`: '%s' - should be 0 or 1" % side2
         
         opposite_side1 = 0 if side1 else 1
         opposite_side2 = 0 if side2 else 1
@@ -767,6 +767,165 @@ class Fatgraph(object):
                      )
     
     
+
+    def bridge2(self, edge1, side1, other, edge2, side2):
+        """Return a new `Fatgraph`, formed by connecting the midpoints
+        of `edge1` on `self` and `edge2` on `other`.
+        
+          >>> g1 = Fatgraph([Vertex([0,1,2]), Vertex([0,2,1])])
+          >>> g2 = Fatgraph([Vertex([0,1,2,0,1,2])])
+          >>> g = Fatgraph.bridge2(g1, 0, 0, g2, 1, 1)
+          >>> g is g1
+          False
+          >>> g is g2
+          False
+          >>> g == Fatgraph([Vertex([0,1,2]), Vertex([6,2,1]), Vertex([3,4,5,3,7,5]), Vertex([0,6,8]), Vertex([4,7,8])])
+          True
+          
+        New trivalent vertices are inserted in the middle of the
+        connected edges.  Arguments `side1` and `side2` control which
+        side the new edge is attached to (valid values are 0 or 1),
+        i.e., which of the two inequivalent cyclic orders the new
+        trivalent vertices will be given (see `Fatgraph.bridge()`).
+        
+        It is worth noting that this procedure adds 3 edges and 2
+        vertices to the edge total of `self` and `other`::
+        
+          >>> g.num_edges == g1.num_edges + g2.num_edges + 3
+          True
+          >>> g.num_vertices == g1.num_vertices + g2.num_vertices + 2
+          True
+          
+        This function is obviously symmetric: the triplets `self, edge1, side1`
+        and `other, edge2, side2` can be swapped and the result stays the
+        same (up to isomorphisms)::
+
+          >>> g_ = Fatgraph.bridge2(g2, 1, 1, g1, 0, 0)
+          >>> g == g_
+          True
+
+        *Caveat:* If `self == other` then the resulting graph is made
+         up of *two copies* of `self` with a new edge connecting
+         `edge1` on one copy and `edge2` on the other.
+         
+        """
+        assert side1 in [0,1], \
+               "Fatgraph.bridge2: Invalid value for `side1`: '%s' -- should be 0 or 1" % side1
+        assert side2 in [0,1], \
+               "Fatgraph.bridge2: Invalid value for `side2`: '%s' -- should be 0 or 1" % side2
+
+        ## First, build a (non-connected) graph from the disjoint
+        ## union of `self` and `other`.
+
+        # Edges of `other` are renumbered depending on whether
+        # they are internal of external edges:
+        #   - internal edges in `other` have numbers ranging from 0 to
+        #     `other.num_edges`: they get new numbers starting from
+        #     `self.num_edges` and counting upwards
+        renumber_other_edges = dict((x,x+self.num_edges)
+                                    for x in xrange(other.num_edges))
+        #   - external edges in `other` have *negative* indices: they
+        #     are renumbered starting from `self.num_external_edges-1`
+        #     and counting downwards.
+        renumber_other_edges.update((x,-self.num_external_edges+x)
+                                    for x in xrange(other.num_external_edges))
+        # Orientation needs the same numbering:
+        new_edge_numbering = self.edge_numbering \
+                             + list(itranslate(renumber_other_edges, other.edge_numbering))
+        # Similarly, vertices of `self` retain indices `[0..v]`, while
+        # vertices of `other` follow.
+        new_vertices = self.vertices \
+                       + [ self._vertextype(itranslate(renumber_other_edges, ov))
+                           for ov in other.vertices ]
+        renumber_other_vertices = dict((x, x+self.num_vertices)
+                                       for x in xrange(other.num_vertices))
+        # vertex indices need to be shifted for endpoints
+        new_endpoints_v = self.endpoints_v \
+                          + [ (renumber_other_vertices[x], renumber_other_vertices[y])
+                              for (x,y) in other.endpoints_v ]
+        # but vertex positions are the same
+        new_endpoints_i = self.endpoints_i + other.endpoints_i
+
+        # FIXME: From this point onwards, the code basically is the
+        # same as in `Fatgraph.bridge`, copied and edited here for
+        # efficiency reasons.
+
+        edge2 = renumber_other_edges[edge2] # need new number
+        
+        opposite_side1 = 0 if side1 else 1
+        opposite_side2 = 0 if side2 else 1
+
+        ## assign edge indices
+        connecting_edge = self.num_edges + other.num_edges
+        ## break `edge1` in two halves: if `v1a` and `v1b` are the
+        ## endpoints of `edge1`, then the "one_half" edge extends from
+        ## the `v1a` endpoint of `edge1` to the new vertex
+        ## `midpoint1`; the "other_half" edge extends from the
+        ## `midpoint1` new vertex to `v1b`.
+        one_half1 = edge1
+        other_half1 = connecting_edge + 1
+        ## break `edge2` in two halves; same as above.
+        one_half2 = edge2
+        other_half2 = connecting_edge + 2
+
+        ## assign new vertex indices
+        midpoint1_index = len(new_vertices)
+        midpoint2_index = midpoint1_index + 1
+
+        if side1:
+            midpoint1 = self._vertextype([other_half1, one_half1, connecting_edge])
+        else:
+            midpoint1 = self._vertextype([one_half1, other_half1, connecting_edge])
+
+        if side2:
+            midpoint2 = self._vertextype([other_half2, one_half2, connecting_edge])
+        else:
+            midpoint2 = self._vertextype([one_half2, other_half2, connecting_edge])
+
+        ## two new vertices are added: the mid-points of the connected edges.
+        new_vertices += [midpoint1, midpoint2]
+        ## the connecting edge has endpoints in the mid-points of
+        ## `edge1` and `edge2`, and is *always* in third position.
+        new_endpoints_v += [(midpoint1_index, midpoint2_index)]
+        new_endpoints_i += [(2,2)]
+        
+        (v1a, v1b) = new_endpoints_v[edge1]
+        (pos1a, pos1b) = new_endpoints_i[edge1]
+        new_endpoints_v[one_half1] = (v1a, midpoint1_index)
+        new_endpoints_i[one_half1] = (pos1a, side1)
+        # replace `edge1` with new `other_half1` in the second endpoint
+        new_vertices[v1b] = self._vertextype(new_vertices[v1b][:pos1b]
+                                             + [other_half1]
+                                             + new_vertices[v1b][pos1b+1:])
+        new_endpoints_v.append((midpoint1_index, v1b))  # other_half1
+        new_endpoints_i.append((opposite_side1, pos1b)) # other_half1
+
+        # replace `edge2` with new `other_half2` in the second
+        # endpoint; again we need to distinguish the special case when
+        # `edge1` and `edge2` are the same edge.
+        (v2a, v2b) = new_endpoints_v[edge2]
+        (pos2a, pos2b) = new_endpoints_i[edge2]
+        new_endpoints_v[one_half2] = (v2a, midpoint2_index)
+        new_endpoints_i[one_half2] = (pos2a, side2)
+        # "other half" of second edge *always* ends at the previous
+        # edge endpoint, so replace `edge2` in `v2b`.
+        new_vertices[v2b] = self._vertextype(new_vertices[v2b][:pos2b]
+                                             + [other_half2]
+                                             + new_vertices[v2b][pos2b+1:])
+        new_endpoints_v.append((midpoint2_index, v2b))  # other_half2
+        new_endpoints_i.append((opposite_side2, pos2b)) # other_half2
+
+        # build new graph 
+        new_edge_numbering +=  [other_half1, other_half2, connecting_edge]
+        return Fatgraph(new_vertices,
+                     vertextype = self._vertextype,
+                     endpoints = (new_endpoints_v, new_endpoints_i),
+                     num_edges = self.num_edges + other.num_edges + 3,
+                     num_external_edges = self.num_external_edges + other.num_external_edges,
+                     orientation = new_edge_numbering,
+                     )
+
+
     def _cmp_orient(self, other, iso):
         pe = iso[2]
         image_edge_numbering = Permutation(dict((self.edge_numbering[x],
