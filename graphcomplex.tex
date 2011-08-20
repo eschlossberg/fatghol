@@ -13,7 +13,7 @@ construction gives birth to a chain complex whose homology is
 isomorphic to the (co)homology of the moduli space of smooth punctured
 curves $\M_{g,n}$.
 
-Here we give construction of the ribbon graph complex, deriving it as
+Here we give a construction of the ribbon graph complex, deriving it as
 a relative of Harer's arc-system complex
 \cite{harer;cohomological-dimension,
   harer;cohomology-of-moduli}\FIXME{Non sono affatto sicuro che gli
@@ -27,12 +27,13 @@ decomposition of $\M_{g,n}$ based on a theorem of Jenkins and Strebel
 \cite{strebel;quadratic-differentials;1983}.  This ribbon graph
 complex is the same complex that one gets by applying Kontsevich'
 construction in the associative case; however, the proof given here is
-very specific to $\M_{g,n}$ and cannot be extended.
+specific to $\M_{g,n}$ and does not trivially extend to other cases.
 
-An exposition of Kontsevich' work, complete with full details, can be
-found in \cite{conant-vogtmann;2003}.  The techniques devised by
-Kontsevich were later extended by Getzler and Kapranov
-\cite{getzler-kapranov} and Markl \cite{markl;cyclic}.
+A different construction of the graph complex, complete with full
+details, is given in \cite{conant-vogtmann;2003}, closely following
+Kontsevich' original work.  The techniques devised by Kontsevich were
+later extended by Getzler and Kapranov \cite{getzler-kapranov} and
+Markl \cite{markl;cyclic}.
 
 
 
@@ -272,7 +273,9 @@ its image $\iota(G) \subseteq S$.
 
 \begin{definition}\label{dfn:embedded-rg}
   An embedded ribbon graph is a pair $[G, \iota]$ composed of a ribbon
-  graph and a homotopy equivalence class of embeddings $\iota:G\to S$.
+  graph and an equivalence class of embeddings $\iota:G\to S$ modulo the
+  action of $\Diff_0(S)$ (the group of diffeomorphisms that are
+  homotopic to the identity mapping).
 
   A morphism $[f]$ from $[G, \iota]$ to $[G', \iota']$ is given by the
   following data:\FIXME{Alla lettera, questa definizione \`e sbagliata:
@@ -296,14 +299,14 @@ ribbon graphs to the category of abstract ribbon graphs, sending $[G,
 \begin{lemma}\label{lemma:morphism-of-embedded-rg}
   If $[f] \in \Hom([G,\iota], [G',\iota'])$ is an isomorphism in the category of
   embedded ribbon graphs, then $f\in\Hom(G,G')$ is an isomorphism in the
-  category of (abstract) ribbon graphs.
+  category of abstract ribbon graphs.
 \end{lemma}
 \begin{proof}
   By definition, there is a morphism $[f']: [G',\iota'] \to [G,\iota]$ and
   diffeomorphisms $\phi$, $\phi'$ such that $\phi \circ \iota = \iota' \circ f$ and $\phi' \circ \iota' =
-  \iota \circ f'$.  Then $\phi' \circ \phi \circ \iota = \iota \circ f' \circ f$; since $\iota$ is continuous
+  \iota \circ f'$.  Then $\phi' \circ \phi \circ \iota = \iota \circ f' \circ f$; since $\iota$ is a continuous
   bijection with its image, so is $f' \circ f$, therefore $f$ is an
-  isomorphism of (abstract) ribbon graphs, and $f'$ its inverse.
+  isomorphism of abstract ribbon graphs, and $f'$ its inverse.
 \end{proof}
 
 
@@ -343,12 +346,12 @@ We look forward to refining this correspondence: let us introduce more
 structure on the graph.
 \begin{definition}
   \label{dfn:metric-ribbon-graphs}
-  A metric ribbon graph is the data of ribbon graph $G$ equipped with
+  A metrized ribbon graph $(G, \ell)$ is a ribbon graph $G$ equipped with
   a real positive number $\ell_\alpha$ for each edge $\alpha \in \Edges{G}$.
 \end{definition}
 
-We can give the topological Riemann surface $S(G)$ a complex structure
-by means of a triangulation and an analytic atlas.
+We can give the topological Riemann surface $S(G)$ a complex
+structure by means of a triangulation and an analytic atlas.
 
 In the course of the construction of $S(G)$, two punctured disk have
 been glued on the sides of an edge $\alpha \in \Edges{G}$: call them $\alpha^+$
@@ -405,11 +408,21 @@ satisfy the following:
   $m$ is the valence of the vertex $\gamma$.
 \end{itemize}
 
-In the end, we have come upon a complex analytic structure on
-$S(G)$, which depends on the perimeters $p_1, \ldots, p_n$ of holes $\beta_1,
-\ldots, \beta_n$. By varying these (real positive) parameters, one can vary
-the complex structure on $S(G)$; this will allow for a different
+In the end, we have come upon a complex analytic structure on $S(G)$,
+which depends on the perimeters $p_1, \ldots, p_n$ of boundary components
+$\beta_1, \ldots, \beta_n$. By varying these (real positive) parameters, one can
+vary the complex structure on $S(G)$; this will allow for a different
 construction of the moduli space $\M_{g,n}$.
+
+The perimeters $p_1$, \ldots, $p_n$ depend on the matric data $\ell_\alpha$,
+therefore the complex analytic structure on $S(G)$ actually depends on
+the metrized graph $(G, \ell)$.  Let $S(G, \ell)$ denote the Riemann
+surface $S(G)$ endowed with this complex analytic structure.
+
+\begin{remark}
+  Note that the above procedure actually equips any metrized ribbon
+  graph $(G, \ell)$ with an embedding $\iota: G \to S(G, \ell)$.
+\end{remark}
 
 
 \subsection{From surfaces to graphs: the Jenkins-Strebel Theorem}
@@ -429,7 +442,7 @@ foliation $F = F_qS$ on $S \textbackslash{} \{\text{poles of $q$}\}$. The non-co
 leaves of $F$ together with zeroes of $q$ form the ``critical locus''
 of $q$.  
 
-The set of vectors ion $T_zS$ on which $q$ takes a purely imaginary
+The set of vectors in $T_zS$ on which $q$ takes a purely imaginary
 value form a perpendicular foliation $F^\perp$, whose leaves connect
 either two distinct poles $x_i$ and $x_j$, or a pole $x_i$ and a zero
 $v_j$.
