@@ -1,0 +1,35 @@
+#. scrivere `NumberedGraph.projection()`: ritorna 1,0,-1 a seconda
+   dell'orientazione relativa.
+
+#. Nuovo metodo di generazione dei grafi:
+
+   1) genera tutti i possibili grafi con *un solo* vertice, dati `g`
+      ed `n` -- o equivalentemente, genera tutti i possibili
+      accoppiamenti di indici di 0..(2g+n-1);
+
+   2) genera tutti i possibili alberi terminanti in (2g+n-1) foglie ed
+      aventi nodi con le valenze permesse;
+
+   3) combina i risultati di 1) e 2) per produrre una lista di grafi
+      da ridurre eliminando gli isomorfi.
+
+   Da qui in poi si procede come con l'attuale sistema, eccetto che i
+   grafi prodotti sono automaticamente connessi ed in forma canonica.
+
+
+
+IN FORSE
+========
+
+#. effettua il controllo di connessione direttamente sulla
+   rappresentazione lineare del grafo; se non è connesso, non si
+   invoca nemmeno il costruttore Graph.__init__.
+   
+     - In `ConnectedGraphsIterator`, suddividere direttamente la
+       rappresentazione lineare in pezzi corrispondenti ai vertici, e
+       controllare la connessione.
+
+     - In `Graph.__init__`, si può rimuovere il ctor con
+       valenze+rappr.lineare. 
+
+     - `Graph.is_connected` rimane per completezza ma non è più usata.

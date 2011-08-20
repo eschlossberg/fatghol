@@ -169,8 +169,35 @@ class Permutation(dict):
           [2, 0, 1]
         """
         for i in xrange(len(seq)):
+            assert seq[i] in self, \
+                   "Permutation.translate(): " \
+                   "Got item `%s` which is not in the permutation domain. " \
+                   % (seq[i],)
             seq[i] = self[seq[i]]
         return seq
+    
+    def itranslate(self, iterable):
+        """Create an iterator returning items from `iterable`,
+        permuted according to this `Permutation` instance.
+
+        For this to work, items in `iterable` must be integers in the
+        range from 0 up to (and excluding) the length of this
+        permutation.  Otherwise a `KeyError` is raised.
+
+        Examples::
+
+          >>> s = [1, 0, 2]
+          >>> p = Permutation([0, 2, 1]) # map 0->0, 1->2, 2->1
+          >>> p.translate(s)
+          [2, 0, 1]
+        """
+        for item in iter(iterable):
+            assert item in self, \
+                   "Permutation.itranslate(): " \
+                   "Got item `%s` which is not in the permutation domain. " \
+                   % (item,)
+            yield self[item]
+
     
     def extend(self, srcs, dsts):
         """Return `True` if the mapping can be extended by mapping

@@ -12,7 +12,7 @@ from combinatorics import (
     SetProductIterator,
     Permutation
     )
-from cyclicseq import CyclicList
+from cyclicseq import CyclicList,CyclicTuple
 from utils import (
     concat,
     deep_cmp,
@@ -132,6 +132,7 @@ class Graph(object):
         'edge_seq',
         'edge_seq_aliases',
         'endpoints',
+        'numbering',
         'num_edges',
         'num_vertices',
         'vertices',
@@ -144,7 +145,8 @@ class Graph(object):
     ## to recompute `self.edge_seq_aliases` and `self._vertex_valences`.
     ## Thus, we favor performance over code elegance and choose to
     ## overload the ctor.
-    def __init__(self, vertices, edge_seq=None, vertex_factory=Vertex):
+    def __init__(self, vertices, edge_seq=None, vertex_factory=Vertex,
+                 numbering=None, **kwargs):
         """Construct a `Graph` instance, taking either list of
         vertices or the linear list of edges plus list of vertex
         valences.
@@ -222,26 +224,54 @@ class Graph(object):
 
         # init code common to both ctor variants:
 
+        #: Number of edge colors
         self.num_edges = sum(self._vertex_valences) / 2
+
+        #: Number of vertices
         self.num_vertices = len(self.vertices)
+        
         # these values will be computed on-demand
+
+        #: Cached boundary cycles of this graph; see
+        #  `.boundary_components()` for an explanation of the
+        #  format. This is initially `None` and is actually computed on
+        #  first invocation of the `.boundary_components()` method.
         self._boundary_components = None
+        
+        #: Cached number of boundary cycles of this graph; this is
+        #  initially `None` and is actually computed on first invocation
+        #  of the `.num_boundary_components()` method.
         self._num_boundary_components = None
+
+        #: Order on the boundary cycles, or `None`.
+        self.numbering = numbering
+
+        #: Cached genus; initially `None`, and actually computed on
+        #  first invocation of the `.genus()` method.
         self._genus = None
+
+        #: Valence spectrum; initially `None`, and actually computed on
+        #  first invocation of the `.valence_spectrum()` method.
         self._valence_spectrum = None
+
+        #: Factory method to make a `Vertex` instance from a linear
+        #  list of incident edge colorings.
         self._vertex_factory = vertex_factory
         
         #: edge sequence(s) identifying this graph; `self.edge_seq`
         #  always counts as an alias.
         self.edge_seq_aliases = set(self.edge_seq)
         
-        # `self.endpoints` is the adjacency list of this graph.  For
-        # each edge, store a pair `(v1, v2)` where `v1` and `v2` are
-        # indices of endpoints.
+        #: Adjacency list of this graph.  For each edge, store a pair
+        #  `(v1, v2)` where `v1` and `v2` are indices of endpoints.
         self.endpoints = [ [] for dummy in xrange(self.num_edges) ]
         for current_vertex_index in xrange(len(self.vertices)):
             for edge in self.vertices[current_vertex_index]:
                 self.endpoints[edge].append(current_vertex_index)
+
+        # override default values with provided `kwargs`
+        for var in kwargs:
+            setattr(self, var, kwargs[var])
 
     def __eq__(self, other):
         """Return `True` if Graphs `self` and `other` are isomorphic.
@@ -250,7 +280,34 @@ class Graph(object):
 
           >>> Graph([Vertex([1,0,0,1])]) == Graph([Vertex([1,1,0,0])])
           True
-        """
+
+          >>> Graph([Vertex([2,0,0]), Vertex([2,1,1])]) \
+                == Graph([Vertex([2,2,0]), Vertex([1,1,0])])
+          True
+
+          >>> Graph([Vertex([2,0,1]), Vertex([2,0,1])]) \
+                == Graph([Vertex([2,1,0]), Vertex([2,0,1])])
+          False
+
+          >>> Graph([Vertex([2,0,1]), Vertex([2,0,1])]) \
+                == Graph([Vertex([2,0,0]), Vertex([2,1,1])])
+          False
+
+          >>> Graph([Vertex([2,0,0]), Vertex([2,1,1])]) \
+                == Graph([Vertex([1,1,0,0])])
+          False
+
+        Graph instances equipped with a numbering are compared as
+        numbered graphs (that is, the isomorphism should transform the
+        numbering on the source graph onto the numbering of the
+        destination)::
+
+          >>> Graph([Vertex([2,0,1]), Vertex([2,1,0])], numbering=[0,1,2]) \
+                == Graph([Vertex([2,0,1]), Vertex([2,1,0])], numbering=[0,2,1])
+          True
+
+        
+          """
         assert isinstance(other, Graph), \
                "Graph.__eq__:" \
                " called with non-Graph argument `other`: %s" % other
@@ -259,15 +316,15 @@ class Graph(object):
             return False
         # if there is any representative edge sequence in common,
         # then these must be different presentations of the same graph
-        if 0 != len(self.edge_seq_aliases.intersection(other.edge_seq_aliases)):
-            return True
+        #if 0 != len(self.edge_seq_aliases.intersection(other.edge_seq_aliases)):
+        #    return True
 
         # else, go the long way: try to find an explicit isomorphims
         # between graphs `self` and `other`
-        morphisms = MorphismIteratorFactory(self.valence_spectrum())
+        isomorphisms = MorphismIteratorFactory(self.valence_spectrum())
         try:
             # if there is any morphism, then return `True`
-            morphisms(self, other).next()
+            isomorphisms(self, other).next()
             return True
         except StopIteration:
             # list of morphisms is empty, graphs are not equal.
@@ -284,10 +341,14 @@ class Graph(object):
         return iter(self.vertices)
 
     def __repr__(self):
-        return "Graph(%s)" % (repr(self.vertices))
+        if self.numbering is None:
+            return "Graph(%s)" % (repr(self.vertices))
+        else:
+            return "Graph(%s, numbering=%s)" % (repr(self.vertices),
+                                                self.numbering)
     
     def __str__(self):
-        return str(self.vertices)
+        return repr(self)
 
     def add_alias(self, alias):
         """Add an edge sequence alias.
@@ -323,100 +384,96 @@ class Graph(object):
         edges::
 
           >>> Graph([Vertex([2,1,0]),Vertex([2,0,1])]).boundary_components()
-          [[2, 0], [1, 2], [0, 1]]
+          [(2, 0), (1, 2), (0, 1)]
 
         If both sides of an edge belong to the same boundary
         component, that edge appears twice in the list::
 
           >>> Graph([Vertex([2,1,1]),Vertex([2,0,0])]).boundary_components()
-          [[2, 0, 2, 1], [1], [0]]
+          [(2, 0, 2, 1), (1,), (0,)]
           
           >>> Graph([Vertex([2,1,0]),Vertex([2,1,0])]).boundary_components()
-          [[2, 1, 0, 2, 1, 0]]
+          [(2, 1, 0, 2, 1, 0)]
           
         """
-        # try to return the cached value
-        if self._boundary_components is not None:
-            return self._boundary_components
+        # if no cached result, compute it now...
+        if self._boundary_components is None:
+            # micro-optimizations
+            L = self.num_edges
+            ends = self.endpoints
 
-        # otherwise, compute it now...
-        
-        # micro-optimizations
-        L = self.num_edges
-        ends = self.endpoints
-
-        # pass1: build a "copy" of `graph`, replacing each edge
-        # coloring with a triplet `(other, index, edge)` pointing to
-        # the other endpoint of that same edge: the element at
-        # position `index` in vertex `other`.
-        pass1 = []
-        for (vertex_index, vertex) in enumerate(self.vertices):
-            replacement = []
-            for (current_index, edge) in enumerate(vertex):
-                (v1, v2) = ends[edge]
-                if v1 != v2:
-                    if ends[edge][0] == vertex_index:
-                        other_end = ends[edge][1]
+            # pass1: build a "copy" of `graph`, replacing each edge
+            # coloring with a triplet `(other, index, edge)` pointing to
+            # the other endpoint of that same edge: the element at
+            # position `index` in vertex `other`.
+            pass1 = []
+            for (vertex_index, vertex) in enumerate(self.vertices):
+                replacement = []
+                for (current_index, edge) in enumerate(vertex):
+                    (v1, v2) = ends[edge]
+                    if v1 != v2:
+                        if ends[edge][0] == vertex_index:
+                            other_end = ends[edge][1]
+                        else:
+                            other_end = ends[edge][0]
+                        other_index = self.vertices[other_end].index(edge)
                     else:
-                        other_end = ends[edge][0]
-                    other_index = self.vertices[other_end].index(edge)
-                else:
-                    other_end = v1 # == v2, that is *this* vertex
-                    # presume `current_index` is *not* the first
-                    # occurrence of edge
-                    other_index = vertex.index(edge)
-                    if other_index == current_index:
-                        # indeed it is, take next occurrence
-                        other_index = vertex.index(edge, current_index+1)
-                # replace other_index with index of *next* edge
-                # (in the vertex cyclic order)
-                if other_index == len(self.vertices[other_end])-1:
-                    other_index = 0
-                else:
-                    other_index += 1
-                replacement.append((other_end, other_index, edge))
-            pass1.append(replacement)
+                        other_end = v1 # == v2, that is *this* vertex
+                        # presume `current_index` is *not* the first
+                        # occurrence of edge
+                        other_index = vertex.index(edge)
+                        if other_index == current_index:
+                            # indeed it is, take next occurrence
+                            other_index = vertex.index(edge, current_index+1)
+                    # replace other_index with index of *next* edge
+                    # (in the vertex cyclic order)
+                    if other_index == len(self.vertices[other_end])-1:
+                        other_index = 0
+                    else:
+                        other_index += 1
+                    replacement.append((other_end, other_index, edge))
+                pass1.append(replacement)
 
-        # pass2: now build a linear list, each element of the list
-        # corresponding to an half-edge, of triples `(pos, seen,
-        # edge)` where `pos` is the index in this list where the other
-        # endpoint of that edge is located, `seen` is a flag, set to
-        # `False` for half-edges that have not yet been walked
-        # through, and `edge` is the corresponding edge.
-        pass2 = []
-        # build indices to the where each vertex begins in the linear list
-        vi=[0]
-        for vertex in self.vertices:
-            vi.append(vi[-1]+len(vertex))
-        # build list from collapsing the 2-level structure
-        for vertex in pass1:
-            for triplet in vertex:
-                pass2.append([vi[triplet[0]]+triplet[1], False, triplet[2]])
+            # pass2: now build a linear list, each element of the list
+            # corresponding to an half-edge, of triples `(pos, seen,
+            # edge)` where `pos` is the index in this list where the other
+            # endpoint of that edge is located, `seen` is a flag, set to
+            # `False` for half-edges that have not yet been walked
+            # through, and `edge` is the corresponding edge.
+            pass2 = []
+            # build indices to the where each vertex begins in the linear list
+            vi=[0]
+            for vertex in self.vertices:
+                vi.append(vi[-1]+len(vertex))
+            # build list from collapsing the 2-level structure
+            for vertex in pass1:
+                for triplet in vertex:
+                    pass2.append([vi[triplet[0]]+triplet[1], False, triplet[2]])
 
-        # pass3: pick up each element of the linear list, and follow it
-        # until we come to an already marked one.
-        result = []
-        pos = 0
-        while pos < len(pass2):
-            # fast forward to an element that we've not yet seen
-            while (pos < len(pass2)) and (pass2[pos][1] == True):
+            # pass3: pick up each element of the linear list, and follow it
+            # until we come to an already marked one.
+            result = []
+            pos = 0
+            while pos < len(pass2):
+                # fast forward to an element that we've not yet seen
+                while (pos < len(pass2)) and (pass2[pos][1] == True):
+                    pos += 1
+                if pos >= len(pass2):
+                    break
+                # walk whole chain of edges
+                i = pos
+                result.append([]) # new boundary component
+                while pass2[i][1] == False:
+                    result[-1].append(pass2[i][2])
+                    pass2[i][1] = True
+                    i = pass2[i][0]
                 pos += 1
-            if pos >= len(pass2):
-                break
-            # walk whole chain of edges
-            i = pos
-            result.append([]) # new boundary component
-            while pass2[i][1] == False:
-                result[-1].append(pass2[i][2])
-                pass2[i][1] = True
-                i = pass2[i][0]
-            pos += 1
 
-        # save result for later reference
-        self._boundary_components = result
+            # save result for later reference
+            self._boundary_components = [ CyclicTuple(bc) for bc in result ]
         
         # that's all, folks!
-        return result
+        return self._boundary_components
 
     def contract(self, edgeno):
         """Return new `Graph` obtained by contracting the specified edge.
@@ -440,6 +497,27 @@ class Graph(object):
           Graph([Vertex([1, 0, 1, 0])])
           >>> Graph([Vertex([2,1,0]), Vertex([2,1,0])]).contract(2)
           Graph([Vertex([1, 0, 1, 0])])
+
+        If boundary components have already been computed, they are
+        adapted and set in the contracted graph too::
+
+          >>> g1 = Graph([Vertex([2,1,1]), Vertex([2,0,0])])
+          >>> g1.boundary_components() # compute b.c.'s
+          [(2, 0, 2, 1), (1,), (0,)]
+          >>> g2 = g1.contract(2)
+          >>> g2.boundary_components()
+          [(0, 1), (1,), (0,)]
+
+          >>> g1 = Graph([Vertex([2,1,0]), Vertex([2,0,1])])
+          >>> g1.boundary_components() # compute b.c.'s
+          [(2, 0), (1, 2), (0, 1)]
+          >>> g2 = g1.contract(2)
+          >>> g2.boundary_components()
+          [(0,), (1,), (0, 1)]
+
+        In the above examples, notice that any reference to edge `2`
+        has been removed from the boundary cycles after contraction.
+          
         """
         # check that we are not contracting a loop
         assert self.endpoints[edgeno][0] != self.endpoints[edgeno][1], \
@@ -483,9 +561,17 @@ class Graph(object):
         # and remove second endpoint from list of new vertices
         del new_vertices[i2]
 
+        bc = None
+        if self._boundary_components is not None:
+            bc = [ CyclicTuple(itranslate(subst, c))
+                   for c in self._boundary_components ]
+        
         # build new graph in canonical form
         return Graph(sorted(v.make_canonical() for v in new_vertices),
-                     vertex_factory=self._vertex_factory)
+                     vertex_factory=self._vertex_factory,
+                     numbering=self.numbering,
+                     _boundary_components = bc)
+
         
     def edges(self):
         """Iterate over edge colorings."""
@@ -680,21 +766,46 @@ class MorphismIteratorFactory(object):
       - `pe` is a permutation of the edge colors: edge `i` in `g1`
         is mapped to edge `pe[i]` in `g2`.
 
-    Examples::
+    Create a `MorphismIteratorFactory` instance with the "valence
+    spectrum" of a graph (see the `.valence_spectrum()` method of the
+    `Graph` class)::
 
-      >>> g = Graph([Vertex([2, 1, 1]), Vertex([2, 0, 0])])
-      >>> morphisms=MorphismIteratorFactory(g.valence_spectrum())
-      >>> for f in morphisms(g, Graph([Vertex([2, 2, 0]), Vertex([1, 1, 0])])):
+      >>> g1 = Graph([Vertex([2, 1, 1]), Vertex([2, 0, 0])])
+      >>> morphisms=MorphismIteratorFactory(g1.valence_spectrum())
+
+    A `MorphismIteratorFactory` instance can be used to iterate over
+    the automorphism group of a graph::
+    
+      >>> for f in morphisms(g1, g1): print f
+      ({0: 1, 1: 0}, (0, 0), {0: 1, 1: 0, 2: 2})
+      ({0: 0, 1: 1}, (0, 0), {0: 0, 1: 1, 2: 2})
+
+    Or it can find the isomorphisms between two given graphs::
+    
+      >>> for f in morphisms(g1, \
+                             Graph([Vertex([2, 2, 0]), Vertex([1, 1, 0])])):
       ...   print f
       ({0: 1, 1: 0}, (1, 1), {0: 2, 1: 1, 2: 0})
       ({0: 0, 1: 1}, (1, 1), {0: 1, 1: 2, 2: 0})
 
-
-      >>> for f in morphisms(g, g):
+    Note that you can re-use the same `MorphismIteratorFactory`
+    instance for graphs having the same valence spectrum::
+    
+      >>> g2 = Graph([Vertex([2, 1, 0]), Vertex([2, 0, 1])])
+      >>> for f in morphisms(g2, g2):
       ...   print f
       ({0: 1, 1: 0}, (0, 0), {0: 1, 1: 0, 2: 2})
+      ({0: 1, 1: 0}, (2, 1), {0: 2, 1: 1, 2: 0})
+      ({0: 1, 1: 0}, (1, 2), {0: 0, 1: 2, 2: 1})
       ({0: 0, 1: 1}, (0, 0), {0: 0, 1: 1, 2: 2})
-      
+      ({0: 0, 1: 1}, (2, 1), {0: 2, 1: 0, 2: 1})
+      ({0: 0, 1: 1}, (1, 2), {0: 1, 1: 2, 2: 0})
+
+    If there are no isomorphisms connecting the two graphs, then no
+    item is returned by the iterator::
+
+      >>> list(morphisms(g1, g2))
+      []
 """
 
     __slots__ = (
@@ -778,33 +889,92 @@ class MorphismIteratorFactory(object):
                     #     but with the vertex numbering from `g2`;
                     #   - elements of the adjacency lists are made into
                     #     `set`s for unordered comparison;
-                    #   - *copy* the objects to pass through `pv.translate`,
-                    #     as `pv.translate` does in-place modify of its argument.
                     if 0 != cmp([ set(g2.endpoints[pe[x]])
                                   for x in xrange(g2.num_edges) ],
-                                [ set(pv.translate(copy(g1.endpoints[x])))
+                                [ set(pv.itranslate(g1.endpoints[x]))
                                   for x in xrange(g1.num_edges) ]):
-                        # continue with next `pvrot`
-                        continue
+                        continue # to next `pvrot`
+                    if g1.numbering is not None:
+                        assert g2.numbering is not None, \
+                               "MorphismIteratorFactory: " \
+                               "Numbered and un-numbered graphs mixed in arguments."
+                        assert len(g1.numbering) == len(g2.numbering), \
+                               "MorphismIteratorFactory: " \
+                               "Arguments differ in number of boundary components."
+                        # `pb` maps b.c. numbers in `g1` to b.c. number in `g2`
+                        pb = Permutation()
+                        pb.extend(g1.numbering, g2.numbering)
+                        # Check that `pe` transforms b.c. of `g1` to
+                        # the corresponding ones in `g2`.
+                        bc1 = g1.boundary_components()
+                        bc2 = g2.boundary_components()
+                        pe_does_not_preserve_bc = False
+                        for (i1, i2) in pb.iteritems():
+                            if 0 != cmp(bc2[i2],
+                                        CyclicList(pe.itranslate(bc1[i1]))):
+                                pe_does_not_preserve_bc = True
+                                break
+                        if pe_does_not_preserve_bc:
+                            continue # to next `pvrot`
                     rots = tuple(t[1]-t[3] for t in pvrot)
                     yield (pv, rots, pe)
 
 
-class ConnectedGraphsIterator(object):
-    """Iterate over all connected graphs having vertices of the
-    prescribed valences.
+class BufferingIterator(object):
+    
+    __slots__ = ('__buffer',)
+
+    def __init__(self, initial=None):
+        if initial is None:
+            self.__buffer = []
+        else:
+            self.__buffer = list(initial)
+    
+    def __iter__(self):
+        return self
+
+    def next(self):
+        """Return next item from queue, refilling queue if empty."""
+        # try to refill buffer if empty
+        if 0 == len(self.__buffer):
+            self.__buffer.extend(self.refill())
+
+        # if still empty after refill, then iteration has ended
+        if 0 == len(self.__buffer):
+            raise StopIteration
+
+        return self.__buffer.pop(0)
+
+    def refill(self):
+        """Return a list of new items to store in the buffer.
+
+        At end of iteration, `refill` may either raise
+        `StopIteration`, or just return an empty list.
+
+        Sub-classes should override this method: the default
+        implementation just signals `StopIteration`.
+        """
+        raise StopIteration
+
+        
+class ConnectedGraphsIterator(BufferingIterator):
+    """Iterate over all connected numbered graphs having vertices of
+    the prescribed valences.
     
     Examples::
 
-      >>> list(ConnectedGraphsIterator([4]))
-      [Graph([Vertex([1, 0, 1, 0])]),
-       Graph([Vertex([1, 1, 0, 0])])]
+      >>> for g in ConnectedGraphsIterator([4]): print g
+      Graph([Vertex([1, 0, 1, 0])], numbering=[0])
+      Graph([Vertex([1, 1, 0, 0])], numbering=[0, 2, 1])
+      Graph([Vertex([1, 1, 0, 0])], numbering=[1, 0, 2])
+      Graph([Vertex([1, 1, 0, 0])], numbering=[1, 2, 0])
 
-      >>> list(ConnectedGraphsIterator([3,3]))
-      [Graph([Vertex([2, 0, 1]), Vertex([2, 0, 1])]),
-       Graph([Vertex([2, 1, 0]), Vertex([2, 0, 1])]),
-       Graph([Vertex([2, 1, 1]), Vertex([2, 0, 0])])]
-    
+      >>> for g in ConnectedGraphsIterator([3,3]): print g
+      Graph([Vertex([2, 0, 1]), Vertex([2, 0, 1])], numbering=[0])
+      Graph([Vertex([2, 1, 0]), Vertex([2, 0, 1])], numbering=[0, 2, 1])
+      Graph([Vertex([2, 1, 1]), Vertex([2, 0, 0])], numbering=[0, 2, 1])
+      Graph([Vertex([2, 1, 1]), Vertex([2, 0, 0])], numbering=[1, 0, 2])
+      Graph([Vertex([2, 1, 1]), Vertex([2, 0, 0])], numbering=[1, 2, 0])
 
     Generation of all graphs with prescribed vertex valences `(v_1,
     v_2, ..., v_n)` goes this way:
@@ -852,10 +1022,10 @@ class ConnectedGraphsIterator(object):
             starting_edge_seq += [l,l]
         self._edge_seq_iterator = InplacePermutationIterator(starting_edge_seq)
 
-    def __iter__(self):
-        return self
-    
-    def next(self):
+        # initialize superclass
+        BufferingIterator.__init__(self)
+
+    def refill(self):
         for edge_seq in self._edge_seq_iterator:
             current = Graph(self._vertex_valences,
                             edge_seq,
@@ -883,9 +1053,10 @@ class ConnectedGraphsIterator(object):
                     # `candidate` graph
                     pass
             if current_is_not_isomorphic_to_already_found:
-                # add current to graph list
                 self.graphs.append(current)
-                return current
+                # push all distinct numberings of this graph into
+                # the iterator buffer
+                return MakeNumberedGraphs(current)
             else:
                 # record `current` as alias of `candidate` and proceed to next graph
                 candidate.add_alias(current.edge_seq)
@@ -893,6 +1064,54 @@ class ConnectedGraphsIterator(object):
         # no more graphs to generate
         raise StopIteration
 
+
+def MakeNumberedGraphs(graph):
+    """Return all distinct (up to isomorphism) decorations of `graph`
+    with a numbering of the boundary cycles.
+
+    Examples::
+
+      >>> g1 = Graph([Vertex([2,0,0]), Vertex([2,1,1])])
+      >>> MakeNumberedGraphs(g1)
+      [Graph([Vertex([2, 0, 0]), Vertex([2, 1, 1])], numbering=[0, 2, 1]),
+       Graph([Vertex([2, 0, 0]), Vertex([2, 1, 1])], numbering=[1, 0, 2]),
+       Graph([Vertex([2, 0, 0]), Vertex([2, 1, 1])], numbering=[1, 2, 0])]
+       
+    Note that, when only one numbering out of many possible ones is
+    returned because of isomorphism, the returned numbering may not be
+    the trivial one (it is actually the first permutation of 0..n
+    returned by `InplacePermutationIterator`)::
+
+      >>> g2 = Graph([Vertex([2,1,0]), Vertex([2,0,1])])
+      >>> MakeNumberedGraphs(g2)
+      [Graph([Vertex([2, 1, 0]), Vertex([2, 0, 1])], numbering=[0, 2, 1])]
+
+    When the graph has only one boundary component, there is only one
+    possible numbering, which is actually returned::
+    
+      >>> g3 = Graph([Vertex([1,0,1,0])])
+      >>> MakeNumberedGraphs(g3)
+      [Graph([Vertex([1, 0, 1, 0])], numbering=[0])]
+      
+    """
+    graphs = []
+    for numbering in \
+            InplacePermutationIterator(range(graph.num_boundary_components())):
+        # make a copy of `g` with the given numbering
+        g = copy(graph)
+        g.numbering = numbering[:]
+
+        # only add `g` to list if it is *not* isomorphic to a graph
+        # already in the list
+        add_g_to_list = True
+        for gg in graphs:
+            if g == gg:
+                add_g_to_list = False
+                break
+        if add_g_to_list:
+            graphs.append(g)
+
+    return graphs
 
 
 ## main: run tests
