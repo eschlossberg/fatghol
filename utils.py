@@ -12,6 +12,20 @@ import types
 
 
 
+def concat(seqs):
+    """Return concatenation of all sequences in `seqs`.
+
+    Examples::
+      >>> concat([[0]])
+      [0]
+      >>> concat([[0],[1]])
+      [0, 1]
+      >>> concat(['a','b'])
+      'ab'
+    """
+    return reduce(operator.add, seqs)
+        
+
 def deep_cmp(s1,s2):
     """Compare items in `s1` and `s2`, recursing into subsequences.
 
