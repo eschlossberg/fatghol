@@ -516,15 +516,16 @@ boundary components.  A topological cell $\Delta(G) \subseteq \M_{g,n}$ is spann
 when varying the metric data $(\ell_\alpha)_{\alpha \in \Edges{G}}$; gluing these
 cells one recovers the whole $\M_{g,n}$.  A construction of
 $\Tcomb_{g,n}$ can be found in \cite{penner:math.GT/0210326}, although
-the actual procedure mimicks
+the procedure outlined here mimicks
 \cite{kontsevich;intersection-theory;1992}.
 
 Call a set $X \subseteq \Edges{G}$ negligible whenever it is \emph{not} the
 support of a non-trivial homological cycle.  For an abstract ribbon
-graph $G$, define:
+graph $G$, define a topological simplex $\Delta(G)$:
 \begin{equation*}
   \label{eq:rg-cells-moduli}
-  \Delta(G) := \{ \ell: \Edges{G} \to \setR_{\geq0} | \text{the zero set of $\ell$ is negligible}\}.
+  \Delta(G) := \{ \ell: \Edges{G} \to \setR_{\geq0}, \sum_{\alpha\in\Edges{G}} \ell_\alpha=1 
+    | \text{the zero set of $\ell$ is negligible} \}.
 \end{equation*}
 It is a contravariant functor from the category of abstract ribbon
 graphs to the category of topological spaces: if $G'$ is obtained from
@@ -553,7 +554,7 @@ contravariant functor on the category of embedded ribbon graphs:
   where $[G, \iota, \psi_*]$ ranges in the category $\ERG{g,n}$ of embedded
   ribbon graphs of genus $g$ with $n$ numbered boundary components.
 \end{definition}
-$\Tcomb_{g,n}$ is obtained by gluing topological cells $\Delta(G)$ alongside
+$\Tcomb_{g,n}$ is obtained by gluing topological simplices $\Delta(G)$ alongside
 the boundary: if $[G', \iota', \psi'_*]$ is obtained from $[G, \iota, \psi_*]$ by
 contraction of an edge $\alpha$, then $\Delta(G')$ is identified with the face
 of $\Delta(G)$ where $\ell_\alpha = 0$ by \csref{eq:embedding-cells}.
@@ -608,19 +609,19 @@ on $\Tcomb_{g,n}$.
 
 As in the final part of the proof of
 \csref{lemma:penner-kontsevich-bridge}, we can see that the image
-$M(G) \subseteq \Mcomb$ of a cell $\Delta(G)$ is the quotient of $\Delta(G)$ by $\Aut
-G$.  The orbicells $M(G)$ are glued alongside the boundary, according
-to the same procedure as in $\Tcomb$: if $G'$ is a contraction of $G$,
-then $M(G')$ is a face of $M(G)$). Therefore, $\Mcomb_{g,n}$ is a
-orbifold.
+$M(G) \subseteq \Mcomb$ of a simplex $\Delta(G)$ is the quotient of $\Delta(G)$ by $\Aut
+G$.  The orbi-simplices $M(G)$ are glued alongside the boundary,
+according to the same procedure as in $\Tcomb$: if $G'$ is a
+contraction of $G$, then $M(G')$ is a face of $M(G)$). Therefore,
+$\Mcomb_{g,n}$ is a orbifold.
 
 The cell $M(G)$ has real dimension $\card{\Edges{G}}$; therefore,
-cells of maximal dimension are given by graphs with all vertices of
-valence $3$. The union of these cells is a dense subset of
+simplices of maximal dimension are labeled by graphs with all vertices
+of valence $3$. The union of these cells is a dense subset of
 $\Mcomb_{g,n}$ with non-void interior.
 
 \subsubsection{Kontsevich' compactification of $\Mcomb_{g,n}$}
-\label{sec:comp-mcomb}
+\label{sec:mbarcomb}
 The construction of $\Mcomb_{g,n}$ can be done with slightly changed
 rules: if we define a set $X \subseteq \Edges{G}$ to be negligible iff it does
 not contain \emph{all} edges bounding a hole, then we can define a
@@ -733,7 +734,9 @@ $\pi$ induces a triangulation of $\M_{g,n}$ (resp.\ $\T_{g,n}$).
 \label{sec:spine}
 
 Harer \cite{harer;cohomological-dimension}, introduced a simplicial
-spine for the Teichm\"uller space $\T_{g,n}$.  
+spine for the Teichm\"uller space $\T_{g,n}$, which, when recast in
+terms of ribbon graphs, provides the needed link between the ribbon
+graph complex and cohomology of $\M_{g,n}$.
 
 If $X$ is any semi-simplicial complex, denote by $|X|$ its geometric
 realization.  Denote by $X'$ the first barycentric subdivision of $X$,
@@ -891,27 +894,6 @@ complex: after a few contractions, loops appear, which cannot be
 contracted any more.  This mirrors the structure of $U \setminus U_o$, as will
 be shown in \ref{sec:contractions-and-topology}.
 
-\begin{definition}
-  \label{dfn:rg-complex}
-  Let $\R$ be the semi-simplicial complex whose vertices are
-  \emph{abstract} ribbon graphs, and whose face operators are given by
-  admissible contractions.
-\end{definition}
-In other words, given ribbon graphs $G$ and $G'$, we identify $G'$
-with a face of $G$ iff there exists a non-loop edge $\alpha \in \Edges{G}$
-such that $G'$ is the contraction of $G$ by $\alpha$.
-
-Similarly, we construct the complex of embedded ribbon graphs.
-\begin{definition}
-  \label{dfn:erg-complex}
-  Let $\tilde\R$ be the semi-simplicial complex whose vertices are
-  \emph{embedded} ribbon graphs, and whose face operators are given by
-  admissible contractions.
-\end{definition}
-
-The mapping class group $\Gamma_{g,n}$ acts on $\tilde\R$ by changing the
-embedding; we have $\R_{g,n} \simeq \tilde\R_{g,n} / \Gamma_{g,n}$.
-
 
 \subsection{From arc-systems to ribbon graphs}
 \label{sec:arcs-to-rg}
@@ -1002,13 +984,97 @@ simple to see then:
 The following sums up the content of this section.
 \begin{lemma}
   \label{lemma:erg-loop}
+  The 1-1 correspondence between embedded ribbon graphs and
+  arc-systems in $U \setminus U_0$ is compatible with the face operators, that
+  is, each admissible contraction $\tilde G'$ of an embedded ribbon
+  graph $\tilde G$ is mapped to a face $u'$ of the arc-system $u$
+  corresponding to $\tilde G$.
+
   Embedded ribbon graphs with a loop correspond to arc-system simplices
   in $U$ with a face on $U_0$; every loop in a ribbon graph $\tilde G$
   corresponds to a face on $U_0$ in the dual arc-system.
 \end{lemma}
 
 
+\subsection{The complex of chains of ribbon graphs}
+\label{sec:chains}
 
+Combining Lemmas~\ref{lemma:arcs-to-rg} and~\ref{lemma:erg-loop}, we
+can find an isomorphism of $Y'$ into the semi-simplicial complex
+$\ERG'$ whose simplices are chains of admissible contractions of
+ribbon graphs, i.e., a simplex of $\ERG'$ is $({\tilde G}_0
+\overset{f_0}\to {\tilde G}_1 \overset{f_1}\to \cdots \overset{f_k}\to {\tilde
+  G}_k)$ where all maps $d_i$ are (compositions of) contractions of
+non-loop edges.  Notice that $f_i$ is not required to contract one
+edge only: it may \emph{contract many edges simultaneously}, provided
+none of them is a loop.  The $i$-th face operator of a simplex in
+$\ERG'$ composes the contractions around the $i$-th graph in the
+chain:
+\begin{multline*}
+  d_i({\tilde G}_0 \overset{f_0}\to \cdots \xrightarrow{f_{i-1}} {\tilde
+    G}_i \overset{f_i}\to \cdots \overset{f_k}\to {\tilde G}_k) \\
+  = ({\tilde G}_0 \overset{f_0}\to \cdots {\tilde
+    G}_{i-1} \xrightarrow{f_{i-1} \circ f_i} {\tilde G_{i+1}} 
+    \xrightarrow{f_{i+1}} \cdots \overset{f_k}\to {\tilde G}_k)
+\end{multline*}
+Indeed, $\ERG'$ is the subset of nondegenerate simplices of the nerve
+of a modified version of the category $\ERG$, where keep only
+contractions and the identity as morphisms.\FIXME{%
+  Forse \`e meglio appunto fare tutta questa costruzione come nervo di
+  una categoria opportuna?  Si accorderebbe anche di pi\`u con lo stile
+  della costruzione di $\Tcomb$ e $\Mcomb$. }%
+
+\begin{definition}
+  An orientation of the simplex $\Delta = ({\tilde G}_0 \overset{f_0}\to {\tilde
+    G}_1 \overset{f_1}\to \cdots \overset{f_k}\to {\tilde G}_k)$ is a linear
+  ordering of the edges of $\tilde G_i$ such that the contraction maps
+  $f_i$ carry the ordering along: if $\alpha, \alpha' \in \Edges{{\tilde G}_{i+1}}$ then
+  \begin{equation*}
+    \alpha < \alpha' \Rightarrow \min f_i^{-1}(\alpha) \leq \min f_i^{-1}(\alpha').
+  \end{equation*}
+
+  An oriented simplex is a pair $(\Delta, \omega)$ consisting of a simplex $\Delta \in
+  \ERG'$ and an orientation $\omega$.
+\end{definition}
+The above condition may be informally recast into saying that is
+monotone increasing on edges that are not contracted.
+\begin{lemma}
+  An orientation of the simplex $({\tilde G}_0 \overset{f_0}\to {\tilde
+    G}_1 \overset{f_1}\to \cdots \overset{f_k}\to {\tilde G}_k)$ is uniquely
+  determined by a linear order of the set $\Edges{{\tilde G}_0}$.
+\end{lemma}
+\begin{proof}
+  It suffices to show that we can transfer the ordering on
+  $\Edges{{\tilde G}_0}$ to $\Edges{{\tilde G}_1}$ through a
+  contraction $f: {\tilde G}_0 \to {\tilde G}_1$.
+  The morphism $f$ induces a injective mapping $f^*: \Edges{{\tilde
+      G}_1} \to \Edges{{\tilde G}_0}$ sending an edge $\alpha \in
+  \Edges{{\tilde G}_1}$ to the unique $\alpha' \in \Edges{{\tilde G}_1}$ that
+  is mapped homeorphically onto $\alpha$ by $f$.  Thus, we can pull back
+  the linear order by defining: $\alpha < \beta$ iff $f^*(\alpha) < f^*(\beta)$. 
+\end{proof}
+
+Denote $-\omega$ the opposite orientation to $\omega$.
+
+Construct the chain complex associated to the semi-simplicial complex
+$\ERG'$ as usual.  Let $\ERG{g,n}'(k)$ be the set of \emph{oriented}
+simplices in $\ERG'{g,n}$ whose lead graph has $k$ vertices;
+contraction morphisms then send $\ERG'{g,n}(k)$ to $\ERG'{g,n}(k-1)$.
+Let $C^k(\ERG', \setQ)$ be the free vector space over $\setQ$ generated by
+$\ERG'{g,n}(k)$, modulo the relation $(\Delta, \omega) = -(\Delta, -\omega)$.
+
+
+\subsection{Equivariant cohomology of $\T_{g,n}$ by chains of ribbon graphs}
+\label{sec:chains}
+
+Denote $\T := \T{g,n}$ and $\Gamma := \Gamma_{g,n}$.  By \csref{thm:H}
+and\ref{thm:spine} we have
+\begin{equation*}
+  H^\Gamma_*(\T, \setQ) = H^\Gamma_*(Y', \setQ).
+\end{equation*}
+
+
+
 %%% Local Variables: 
 %%% mode: latex
 %%% TeX-master: "index"
