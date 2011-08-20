@@ -24,6 +24,8 @@ def is_sequence_of_type(t, seq):
       False
       >>> is_sequence_of_type(types.StringType, ["xxx","yyy"])
       True
+      >>> is_sequence_of_type(types.IntType, [0])
+      True
     """
     def is_type_t(item):
         return (type(item) is t)
