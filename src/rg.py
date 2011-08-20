@@ -2419,13 +2419,14 @@ def MgnTrivalentGraphsRecursiveGenerator(g, n):
 
     ## M_{0,3} - induction base
     if (g,n) == (0,3):
-        for G in [ Fatgraph([Vertex([1, 2, 1]), Vertex([2, 0, 0])]) ,
-                   Fatgraph([Vertex([1, 0, 2]), Vertex([2, 0, 1])]) ]:
-            yield G
+        yield Fatgraph([Vertex([1, 2, 1]), Vertex([2, 0, 0])])
+        yield Fatgraph([Vertex([1, 0, 2]), Vertex([2, 0, 1])])
+        logging.debug("  MgnTrivalentGraphsRecursiveGenerator(0,3) done.")
 
     ## M_{1,1} - induction base
     elif (g,n) == (1,1):
         yield Fatgraph([Vertex([1, 0, 2]), Vertex([2, 1, 0])])
+        logging.debug("  MgnTrivalentGraphsRecursiveGenerator(1,1) done.")
 
     ## General case
     else:
@@ -2540,7 +2541,7 @@ class MgnGraphsIterator(BufferingIterator):
         self.n = n
         
         # Gather all 3-valent graphs.
-        trivalent = list(MgnTrivalentGraphsRecursiveGenerator(g,n))
+        trivalent = list(trivalent_graphs_generator(g,n))
 
         #: Fatgraphs to be contracted at next `.refill()` invocation
         self._batch = trivalent

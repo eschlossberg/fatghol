@@ -46,7 +46,7 @@ def FatgraphComplex(g, n):
     # gather graphs
     for graph in MgnNumberedGraphsIterator(g,n):
         grade = graph.num_edges - 1
-        # XXX: not needed anymore with recursive generation
+        # XXX: not needed anymore with recursive generation?
         if not graph.is_oriented():
             continue
         generators[grade].append(graph, key=graph.underlying)
