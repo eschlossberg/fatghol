@@ -33,6 +33,8 @@ def FatgraphComplex(g, n):
     differentials to compute the graph homology of the space
     `M_{g,n}`.
     """
+    logging.info("Stage I: Computing fat graphs complex for g=%d, n=%d ...", g, n)
+
     ## Minimum number of edges is attained when there's only one
     ## vertex; so, by Euler's formula `V - E + n = 2 - 2*g`, we get:
     ## `E = 2*g + n - 1`.

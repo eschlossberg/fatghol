@@ -2315,7 +2315,7 @@ class MgnGraphsIterator(BufferingIterator):
                         next_batch.append(dg)
                     else:
                         discarded += 1
-        logging.debug("  Found %d distinct unique fatgraphs with %d vertices, discarded %d duplicates.",
+        logging.info("  Found %d distinct unique fatgraphs with %d vertices, discarded %d duplicates.",
                      len(self._batch), self._num_vertices, discarded)
 
         self._batch = next_batch

@@ -6,9 +6,18 @@ __docformat__ = 'reStructuredText'
 
 ## stdlib imports
 
-import gc
 import sys
+# require Python 2.5
+if sys.version_info < (2,5,0,'final',0):
+    sys.stderr.write("Program %s requires Python at least version 2.5,"
+                     " but this Python interpreter is version %s. Aborting."
+                     % (sys.argv[0], sys.version.split()[0]))
+    sys.exit(1)
+
+import gc
 import logging
+import resource
+
 
 ## application-local imports
 
@@ -119,15 +128,13 @@ def do_homology(g, n):
 
     Return array of homology ranks.
     """
-    logging.debug("Computing fat graphs complex for g=%d, n=%d ...", g, n)
     graph_complex = FatgraphComplex(g,n)
 
-    logging.debug("Computing homology ranks ...")
     hs = list(reversed(graph_complex.compute_homology_ranks()))
 
     # compare orbifold Euler characteristics
     chi = graph_complex.orbifold_euler_characteristics
-    logging.info("  Computed orbifold Euler characteristics: %s" % chi)
+    logging.info("Computed orbifold Euler characteristics: %s" % chi)
     if g==0:
         chi_hz = factorial(n-3) * sign_exp(n-3)
     elif g==1:
@@ -163,28 +170,28 @@ def do_homology(g, n):
         elif g>2:
             # according to Bini-Harer arXiv:math/0506083, p. 10
             es = [None, # g==0 already done above
-                  None, 
-                  None,
-                  # n==1     2        3        4           5           6             7             8
-                  [    8,    6,       4,     -10,         30,       -660,         6540,        79200],
-                  [   -2,  -10,     -24,     -24,       -360,       2352,       -37296,       501984],
-                  [   12,   26,      92,     182,       1674,     -16716,       238980,     -3961440],
-                  [    0,  -46,    -206,     188,      -7512,     124296,     -2068392,     37108656],
-                  [   38,  120,     676,   -1862,      71866,   -1058676,     21391644,   -422727360],
-                  [ -166, -630,   -5362,   16108,    -680616,   12234600,   -259464240,   5719946400],
-                  [  748, 2132,   29632, -323546,    7462326, -164522628,   3771668220, -90553767840],
-                  [-1994, 6078, -213066, 4673496, -106844744, 2559934440, -64133209320,    1.664e+12],
+                  None, # g==1
+                  None, # g==2
+                  # n==1  n==2     n==3     n==4        n==5        n==6          n==7          n==8
+                  [    8,    6,       4,     -10,         30,       -660,         6540,        79200], # g==3
+                  [   -2,  -10,     -24,     -24,       -360,       2352,       -37296,       501984], # g==4
+                  [   12,   26,      92,     182,       1674,     -16716,       238980,     -3961440], # g==5
+                  [    0,  -46,    -206,     188,      -7512,     124296,     -2068392,     37108656], # g==6
+                  [   38,  120,     676,   -1862,      71866,   -1058676,     21391644,   -422727360], # g==7
+                  [ -166, -630,   -5362,   16108,    -680616,   12234600,   -259464240,   5719946400], # g==8
+                  [  748, 2132,   29632, -323546,    7462326, -164522628,   3771668220, -90553767840], # g==9
+                  [-1994, 6078, -213066, 4673496, -106844744, 2559934440, -64133209320,    1.664e+12], # g==10
                   ]
             return es[g][n]
         else:
             raise ValueError("No Euler characteristics known for M_{g,n},"
                              " where g=%s and n=%s" % (g,n))
 
-    logging.info("Expected Euler characteristics: %s" % e(g,n))
     e_ = 0
     for i in xrange(len(hs)):
         e_ += sign_exp(i)*hs[i]
     logging.info("Computed Euler characteristics: %s" % e_)
+    logging.info("  Expected Euler characteristics: %s" % e(g,n))
     if e_ != e(g,n):
         logging.error("Computed and expected Euler characteristics do not match:"
                       " %s vs %s" % (e_, e(g,n)))
@@ -219,9 +226,12 @@ def do_valences(g,n):
 
 ## main
 
+# disable core dumps
+resource.setrlimit(resource.RLIMIT_CORE, (0,0))
+
 # parse command-line options
 from optparse import OptionParser
-parser = OptionParser(version="3.4",
+parser = OptionParser(version="3.5",
     usage="""Usage: %prog [options] action [arg ...]
 
 Actions:
@@ -243,26 +253,26 @@ Actions:
     """)
 parser.add_option("-C", "--cache",
                   action="count", dest="cache", default=0,
-                  help="""Turn on internal result caching (trade speed for memory).  With '-C', cache graph attributes and equality testing results: this gives a good speedup with a reasonable memory increase.  With '-CC', cache also isomorphism groups: the speedup is larger, but the memory usage can be more than double.""")
-parser.add_option("-l", "--logfile",
-                  action='store', dest='logfile', default=None,
-                  help="Redirect log messages to the named file (by default log messages are output to STDERR).")
-parser.add_option("-n", "--silent",
-                  action='store_true', dest='silent', default=False,
-                  help="No output at all: only useful for timing the algorithm.")
-parser.add_option("-L", "--latex",
-                  action='store_true', dest='latex', default=False,
-                  help="Output list of M_{g,n} graphs as a LaTeX file.")
-parser.add_option("-o", "--output", dest="outfile", default=None,
-                  help="Output file for all actions.")
-parser.add_option("-O", "--feature", dest="features", default=None,
+                  help="""Turn on internal result caching (trade memory for speed).  With '-C', cache graph attributes and equality testing results: this gives a small speedup with a reasonable memory increase.  With '-CC', cache also isomorphism groups: the speedup is nearly double, but the memory usage can be more than doubled.""")
+parser.add_option("-f", "--feature", dest="features", default=None,
                   help="""Enable optional speedup or tracing features:
                   * pydb -- run Python debugger if an error occurs
                   * psyco -- run the Psyco JIT compiler
                   * profile -- dump profiler statistics in a .pf file.
-                  Different features may be combined by separating them with a comma, as in '-O pydb,profile'.""")
+                  Several features may be enabled by separating them with a comma, as in '-f pydb,profile'.""")
+parser.add_option("-l", "--logfile",
+                  action='store', dest='logfile', default=None,
+                  help="Redirect log messages to the named file (by default log messages are output to STDERR).")
+parser.add_option("-L", "--latex",
+                  action='store_true', dest='latex', default=False,
+                  help="Output list of M_{g,n} graphs as a LaTeX file.")
+parser.add_option("-o", "--output", dest="outfile", default=None,
+                  help="Save results into named file.")
+parser.add_option("-O", "--optimize",
+                  action="store_true", dest="optimize", default=False,
+                  help="Turn on Python bytecode optimizer.")
 parser.add_option("-v", "--verbose",
-                  action="store_false", dest="quiet", default=True,
+                  action="count", dest="verbose", default=0,
                   help="Print informational and status messages as the computation goes on.")
 (options, args) = parser.parse_args()
 
@@ -277,8 +287,10 @@ if options.logfile is None:
 else:
     log_output = file(options.logfile, 'a')
 
-if options.silent or options.quiet:
+if options.verbose == 0:
     log_level = logging.ERROR
+elif options.verbose == 1:
+    log_level = logging.INFO
 else:
     log_level = logging.DEBUG
 
@@ -287,6 +299,15 @@ logging.basicConfig(level=log_level,
                     format="%(asctime)s [%(levelname)s] %(message)s",
                     datefmt="%H:%M:%S")
     
+# ensure the proper optimization level is selected
+if __debug__ and options.optimize:
+    try:
+        import os
+        os.execl(sys.executable, *([sys.executable, '-OO'] + sys.argv))
+    finally:
+        logging.warning("Could not execute '%s', ignoring '-O' option." 
+                        % str.join(" ", [sys.executable, '-OO'] + sys.argv))
+
 # enable optional features
 if options.features is not None:
     features = options.features.split(",")
@@ -475,9 +496,9 @@ elif 'valences' == args[0]:
 
     logging.debug("Computing vertex valences occurring in g=%d,n=%d fatgraphs ...", g, n)
     vvs = do_valences(g,n)
-    if not options.silent:
-        for vv in vvs:
-            outfile.write("%s\n" % str(vv))
+    for vv in vvs:
+        outfile.write("%s\n" % str(vv))
+
 
 # graphs -- list graphs from given g,n
 elif "graphs" == args[0]:
@@ -507,110 +528,109 @@ elif "graphs" == args[0]:
     graphs, D = do_graphs(g,n)
 
     # output results
-    if not options.silent:
-        if options.latex:
+    if options.latex:
+        outfile.write(r"""
+\documentclass[a4paper,twocolumn]{article}
+\usepackage{amsmath}
+\usepackage[color,curve,line,poly,xdvi]{xy}
+\begin{document}
+\section*{Fatgraphs labeling cells of $M_{%(genus)d,%(bc)d}$}
+
+The graph $G_{l,k}$ is the $k$-th graph in the
+set of graphs of genus $%(genus)d$ with $l$ edges and $%(bc)d$
+boundary cycles.
+
+The crossed-out graphs are those having an automorphism that
+reverses the associated cell orientation.
+
+""" % {'genus':g, 'bc':n})
+    tot = 0
+    for num_of_edges in xrange(1, len(graphs)):
+        if options.latex and graphs.module[num_of_edges].dimension > 0:
             outfile.write(r"""
-    \documentclass[a4paper,twocolumn]{article}
-    \usepackage{amsmath}
-    \usepackage[color,curve,line,poly,xdvi]{xy}
-    \begin{document}
-    \section*{Fatgraphs labeling cells of $M_{%(genus)d,%(bc)d}$}
+            \subsection*{Fatgraphs with $%d$ edges}
 
-    The graph $G_{l,k}$ is the $k$-th graph in the
-    set of graphs of genus $%(genus)d$ with $l$ edges and $%(bc)d$
-    boundary cycles.
+            """ % (num_of_edges+1))
+        for (num, graph) in enumerate(graphs.module[num_of_edges]):
+            tot += 1
+            if options.latex:
+                outfile.write((r"\subsection*{$G_{%d,%d}$}" % (num_of_edges,num)) + '\n')
 
-    The crossed-out graphs are those having an automorphism that
-    reverses the associated cell orientation.
-    
-    """ % {'genus':g, 'bc':n})
-        tot = 0
-        for num_of_edges in xrange(1, len(graphs)):
-            if options.latex and graphs.module[num_of_edges].dimension > 0:
-                outfile.write(r"""
-                \subsection*{Fatgraphs with $%d$ edges}
-                
-                """ % (num_of_edges+1))
-            for (num, graph) in enumerate(graphs.module[num_of_edges]):
-                tot += 1
-                if options.latex:
-                    outfile.write((r"\subsection*{$G_{%d,%d}$}" % (num_of_edges,num)) + '\n')
-
-                    # draw graph
-                    outfile.write(graph_to_xypic(graph,
-                                                 graph.genus(),
-                                                 graph.num_boundary_components(),
-                                                 graph.is_oriented(),
-                                                 )+'\n')
-
-                    # print differential
-                    outfile.write(r"\subsubsection*{Differential}" + '\n')
-                    outfile.write(r"""
-\begin{equation*}
-  dG_{%d,%d} =
-                    """ % (num_of_edges, num))
-                    cnt = 0
-                    for (num2, coeff) in enumerate(D[num_of_edges - 1][num]):
-                        if coeff == 0:
-                            continue # with next graph
-                        elif coeff == +1:
-                            coeff = "+"
-                        elif coeff == -1:
-                            coeff = "-"
-                        else:
-                            coeff = "%+d" % coeff
-                        outfile.write(" %sG_{%d,%d}" % (coeff, num_of_edges-1, num2))
-                        cnt += 1
-                    if cnt == 0:
-                        outfile.write("0")
-                    outfile.write(r"""
-\end{equation*}
-                    """)
-
-                    # print boundary cycles
-                    if graph.numbering is not None:
-                        outfile.write(r"\subsubsection*{Boundary cycles}" + '\n')
-                        outfile.write(r"\begin{tabular}{rl}" + '\n')
-                        def fmt_(nr):
-                            if isinstance(nr, (set, frozenset)):
-                                return str.join(",", [str(elt) for elt in nr])
-                            else:
-                                return str(nr)
-                        def cmp_(x,y):
-                            x = x[1]
-                            y = y[1]
-                            if isinstance(x, (set, frozenset)):
-                                x = min(x)
-                            if isinstance(y, (set, frozenset)):
-                                y = min(y)
-                            return cmp(x,y) 
-                        for (bcy, nr) in sorted(graph.numbering.iteritems(), cmp=cmp_):
-                            outfile.write(r"\textsl{%s} & (%s) \\ " % (
-                                fmt_(nr),
-                                str.join(",", [str(graph.edge_numbering[edge])
-                                               for edge in bcy]),
-                                )
-                                + '\n')
-                        outfile.write(r"\end{tabular}" + '\n\n')
-
-                    # print python repr
-                    outfile.write(r"\subsubsection*{Python representation}" + '\n')
-                    outfile.write(r"{\small " + repr(graph) + "}") 
-                    outfile.write('\n\n')
-
-                    outfile.write(r"\vspace{1ex}\hrulefill\vspace{1ex}" + '\n')
-                else:
-                    outfile.write("%s\n" % ((graph,
+                # draw graph
+                outfile.write(graph_to_xypic(graph,
                                              graph.genus(),
                                              graph.num_boundary_components(),
                                              graph.is_oriented(),
-                                             ),))
+                                             )+'\n')
+
+                # print differential
+                outfile.write(r"\subsubsection*{Differential}" + '\n')
+                outfile.write(r"""
+\begin{equation*}
+  dG_{%d,%d} =
+                """ % (num_of_edges, num))
+                cnt = 0
+                for (num2, coeff) in enumerate(D[num_of_edges - 1][num]):
+                    if coeff == 0:
+                        continue # with next graph
+                    elif coeff == +1:
+                        coeff = "+"
+                    elif coeff == -1:
+                        coeff = "-"
+                    else:
+                        coeff = "%+d" % coeff
+                    outfile.write(" %sG_{%d,%d}" % (coeff, num_of_edges-1, num2))
+                    cnt += 1
+                if cnt == 0:
+                    outfile.write("0")
+                outfile.write(r"""
+\end{equation*}
+                """)
+
+                # print boundary cycles
+                if graph.numbering is not None:
+                    outfile.write(r"\subsubsection*{Boundary cycles}" + '\n')
+                    outfile.write(r"\begin{tabular}{rl}" + '\n')
+                    def fmt_(nr):
+                        if isinstance(nr, (set, frozenset)):
+                            return str.join(",", [str(elt) for elt in nr])
+                        else:
+                            return str(nr)
+                    def cmp_(x,y):
+                        x = x[1]
+                        y = y[1]
+                        if isinstance(x, (set, frozenset)):
+                            x = min(x)
+                        if isinstance(y, (set, frozenset)):
+                            y = min(y)
+                        return cmp(x,y) 
+                    for (bcy, nr) in sorted(graph.numbering.iteritems(), cmp=cmp_):
+                        outfile.write(r"\textsl{%s} & (%s) \\ " % (
+                            fmt_(nr),
+                            str.join(",", [str(graph.edge_numbering[edge])
+                                           for edge in bcy]),
+                            )
+                            + '\n')
+                    outfile.write(r"\end{tabular}" + '\n\n')
+
+                # print python repr
+                outfile.write(r"\subsubsection*{Python representation}" + '\n')
+                outfile.write(r"{\small " + repr(graph) + "}") 
+                outfile.write('\n\n')
+
+                outfile.write(r"\vspace{1ex}\hrulefill\vspace{1ex}" + '\n')
+            else:
+                outfile.write("%s\n" % ((graph,
+                                         graph.genus(),
+                                         graph.num_boundary_components(),
+                                         graph.is_oriented(),
+                                         ),))
+    outfile.write("\n")
+    outfile.write("Found %d graphs total.\n" % tot)
+    outfile.write("\n")
+    if options.latex:
+        outfile.write(r"\end{document}")
         outfile.write("\n")
-        outfile.write("Found %d graphs total.\n" % tot)
-        outfile.write("\n")
-        if options.latex:
-            outfile.write(r"\end{document}")
-            outfile.write("\n")
 
 
 # vertices -- list graphs for given vertex valences
@@ -697,9 +717,10 @@ elif 'homology' == args[0]:
     hs = do_homology(g, n)
 
     # print results
-    if not options.silent:
-        for (i, h) in enumerate(hs):
-            outfile.write("h_%d(M_{%d,%d}) = %d\n" % (i, g, n, h))
+    for (i, h) in enumerate(hs):
+        outfile.write("h_%d(M_{%d,%d}) = %d\n" % (i, g, n, h))
+    if options.outfile is not None:
+        logging.info("Results written to file '%s'" % options.outfile)
 
 
 else:
@@ -721,4 +742,21 @@ try:
 except:
     pass
 
+# print CPU time usage
+cputime_s = resource.getrusage(resource.RUSAGE_SELF)[0]
+seconds = cputime_s % 60
+minutes = int(cputime_s / 60)
+hours = int(minutes / 60)
+days = int(hours / 24)
+if days > 0:
+    elapsed = "%d days, %d hours, %d minutes and %2.3f seconds" % (days, hours, minutes, seconds)
+elif hours > 0:
+    elapsed = "%d hours, %d minutes and %2.3f seconds" % (hours, minutes, seconds)
+elif minutes > 0:
+    elapsed = "%d minutes and %2.3f seconds" % (minutes, seconds)
+else:
+    elapsed = "%2.3f seconds" % seconds
+logging.info("CPU time used: " + elapsed)
+
+# That's all folks!
 logging.debug("Done: %s" % str.join(" ", sys.argv))
