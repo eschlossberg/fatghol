@@ -156,17 +156,15 @@ class Graph(object):
     # all instance attribute names.
     __slots__ = [
         '_boundary_components',
-        '_contractions',
-        '_contraction_coefficients',
+        '_fasteq_cache',
         '_genus',
+        '_id',
+        '_id_factory',
+        '_numbering',
         '_num_boundary_components',
-        '_parent',
-        '_seqnr',
-        '_siblings',
         '_valence_spectrum',
-        '_vertex_factory',
+        '_vertextype',
         '_vertex_valences',
-        'edge_seq',
         'endpoints',
         'numbering',
         'num_edges',
@@ -175,7 +173,8 @@ class Graph(object):
         'vertices',
         ]
 
-    def __init__(self, vertices, vertex_factory=Vertex, **kwargs):
+    def __init__(self, vertices, vertextype=Vertex,
+                 __fasteq_cache={}, __id_factory=count(), **kwargs):
         """Construct a `Graph` instance, taking list of vertices.
 
         Argument `vertices` must be a sequence of `Vertex` class
@@ -191,17 +190,46 @@ class Graph(object):
                "Graph.__init__: parameter `vertices` must be" \
                " sequence of `Vertex` instances."
 
-        #: list of vertices 
+        #: class-wide cache for `__eq__` results
+        self._fasteq_cache = __fasteq_cache
+
+        #: unique numeric id of this `Graph` object; id's of deleted
+        #: object should *not* be re-used
+        self._id = __id_factory.next()
+        self._id_factory = __id_factory
+        
+        # the following values will be computed on-demand
+
+        #: Cached boundary cycles of this graph; see
+        #  `.boundary_components()` for an explanation of the
+        #  format. This is initially `None` and is actually computed on
+        #  first invocation of the `.boundary_components()` method.
+        self._boundary_components = kwargs.get('_boundary_components', None)
+
+        #: Cached genus; initially `None`, and actually computed on
+        #  first invocation of the `.genus()` method.
+        self._genus = kwargs.get('_genus', None)
+
+        #: cached number of boundary cycles of this graph; this is
+        #  initially `None` and is actually computed on first invocation
+        #  of the `.num_boundary_components()` method.
+        self._num_boundary_components = kwargs.get('_num_boundary_components',
+                                                   None)
+
+        #: Valence spectrum; initially `None`, and actually computed on
+        #  first invocation of the `.valence_spectrum()` method.
+        self._valence_spectrum = kwargs.get('_valence_spectrum', None)
+
+        #: Factory method to make a `Vertex` instance from a linear
+        #  list of incident edge colorings.
+        self._vertextype = vertextype
+        
+        #: list of vertices
         self.vertices = vertices
         
         #: list of vertex valences 
         self._vertex_valences = tuple(sorted(kwargs.get('_vertex_valences',
                                                         (len(v) for v in vertices))))
-
-        #: edge sequence from which this is/could be built
-        self.edge_seq = kwargs.get('edge_seq',
-                                   tuple(chain(*[iter(v)
-                                                 for v in vertices])))
 
         #: Number of edge colors
         self.num_edges = kwargs.get('num_edges',
@@ -215,52 +243,7 @@ class Graph(object):
         
         #: Order on the boundary cycles, or `None`.
         self.numbering = kwargs.get('numbering', None)
-        # XXX: should correct docstrings, and remove `isinstance()` check below
-        if self.numbering is not None and not isinstance(self.numbering, dict):
-            self.numbering_set(self.numbering)
 
-        # the following values will be computed on-demand
-
-        #: Cached boundary cycles of this graph; see
-        #  `.boundary_components()` for an explanation of the
-        #  format. This is initially `None` and is actually computed on
-        #  first invocation of the `.boundary_components()` method.
-        self._boundary_components = kwargs.get('_boundary_components', None)
-
-        #: Graphs obtained by contraction of edges.  (The children
-        #  obtained by contracting edge `l` is at list position `[l]`)
-        self._contractions = kwargs.get('_contractions',
-                                        [None] * self.num_edges)
-        
-        #: Orientation of graphs resulting from contraction of edges;
-        #: starts as `+1` and might be changed in `MgnGraphsIterator`
-        #: if a contraction : is replaced by another (canonical)
-        #: representative.
-        self._contraction_coefficients = kwargs.get('_contraction_coefficients',
-                                                    [1] * self.num_edges)
-        
-        #: Cached genus; initially `None`, and actually computed on
-        #  first invocation of the `.genus()` method.
-        self._genus = kwargs.get('_genus', None)
-
-        #: cached number of boundary cycles of this graph; this is
-        #  initially `None` and is actually computed on first invocation
-        #  of the `.num_boundary_components()` method.
-        self._num_boundary_components = kwargs.get('_num_boundary_components',
-                                                   None)
-
-        #: For un-numbered graphs, the list of numbered variants
-        #  produced by `MakeNumberedGraphs` is recorded here.
-        self._siblings = kwargs.get('_siblings', None)
-        
-        #: Valence spectrum; initially `None`, and actually computed on
-        #  first invocation of the `.valence_spectrum()` method.
-        self._valence_spectrum = kwargs.get('_valence_spectrum', None)
-
-        #: Factory method to make a `Vertex` instance from a linear
-        #  list of incident edge colorings.
-        self._vertex_factory = vertex_factory
-        
         if 'endpoints' not in kwargs:
             #: Adjacency list of this graph.  For each edge, store a pair
             #  `(v1, v2)` where `v1` and `v2` are indices of endpoints.
@@ -272,10 +255,8 @@ class Graph(object):
                                % (edge, self.num_edges)
                     self.endpoints[edge].append(current_vertex_index)
         else:
-##             self.endpoints = [ tuple(pv.itranslate(ep))
-##                                for ep in kwargs.get('endpoints') ]
             self.endpoints = kwargs.get('endpoints')
-            
+
         assert self._ok()
 
     def _ok(self):
@@ -320,8 +301,9 @@ class Graph(object):
                 assert cnt == 1, \
                        "External edge %d appears in %d vertices" \
                        % (edge, cnt)
-        return True
         
+        return True
+
     def __eq__(self, other):
         """Return `True` if Graphs `self` and `other` are isomorphic.
 
@@ -352,80 +334,86 @@ class Graph(object):
         destination)::
 
           >>> Graph([Vertex([2,0,1]), Vertex([2,1,0])], \
-                     numbering={CyclicTuple((0,1)): 0, \
-                                CyclicTuple((0,2)): 1, \
-                                CyclicTuple((2,1)): 2 } ) \
+                     numbering=[(0, CyclicTuple((0,1))), \
+                                (1, CyclicTuple((0,2))), \
+                                (2, CyclicTuple((2,1))) ] ) \
               == Graph([Vertex([2,0,1]), Vertex([2,1,0])], \
-                        numbering={CyclicTuple((1,0)): 0, \
-                                   CyclicTuple((0,2)): 2, \
-                                   CyclicTuple((2,1)): 1})
+                        numbering=[(0, CyclicTuple((1,0))), \
+                                   (2, CyclicTuple((0,2))), \
+                                   (1, CyclicTuple((2,1))) ])
           True
 
           >>> Graph([Vertex([1, 0, 0, 2, 2, 1])], \
-                     numbering={CyclicTuple((2,)):    0, \
-                                CyclicTuple((0,2,1)): 1, \
-                                CyclicTuple((0,)):    3, \
-                                CyclicTuple((1,)):    2 }) \
+                     numbering=[(0, CyclicTuple((2,))), \
+                                (1, CyclicTuple((0,2,1))), \
+                                (3, CyclicTuple((0,))), \
+                                (2, CyclicTuple((1,))) ]) \
                 == Graph([Vertex([2, 2, 1, 1, 0, 0])], \
-                          numbering={CyclicTuple((2,)):    0, \
-                                     CyclicTuple((0,)):    1, \
-                                     CyclicTuple((2,1,0)): 3, \
-                                     CyclicTuple((1,)):    2})
+                          numbering=[(0, CyclicTuple((2,))), \
+                                     (1, CyclicTuple((0,))), \
+                                     (3, CyclicTuple((2,1,0))), \
+                                     (2, CyclicTuple((1,))) ])
           False
         
           >>> Graph([Vertex([1, 0, 0, 2, 2, 1])], \
-                     numbering={CyclicTuple((2,)):    0, \
-                                CyclicTuple((0,2,1)): 1, \
-                                CyclicTuple((0,)):    3, \
-                                CyclicTuple((1,)):    2 }) \
+                     numbering=[(0, CyclicTuple((2,))), \
+                                (1, CyclicTuple((0,2,1))), \
+                                (3, CyclicTuple((0,))), \
+                                (2, CyclicTuple((1,))) ]) \
                 == Graph([Vertex([2, 2, 1, 1, 0, 0])], \
-                          numbering={CyclicTuple((2,)):    3, \
-                                     CyclicTuple((0,)):    0, \
-                                     CyclicTuple((2,1,0)): 2, \
-                                     CyclicTuple((1,)):    1 })
+                          numbering=[(3, CyclicTuple((2,))), \
+                                     (0, CyclicTuple((0,))), \
+                                     (2, CyclicTuple((2,1,0))), \
+                                     (1, CyclicTuple((1,))) ])
           False
 
           >>> Graph([Vertex([3, 2, 2, 0, 1]), Vertex([3, 1, 0])], \
-                    numbering={CyclicTuple((2,)):      0,  \
-                               CyclicTuple((0, 1)):    1,  \
-                               CyclicTuple((3, 1)):    2,  \
-                               CyclicTuple((0, 3, 2)): 3}) \
+                    numbering=[(0, CyclicTuple((2,))),  \
+                               (1, CyclicTuple((0, 1))),  \
+                               (2, CyclicTuple((3, 1))),  \
+                               (3, CyclicTuple((0, 3, 2))) ]) \
               == Graph([Vertex([2, 3, 1]), Vertex([2, 1, 3, 0, 0])], \
-                       numbering={CyclicTuple((0,)):      0, \
-                                  CyclicTuple((1, 3)):    2, \
-                                  CyclicTuple((3, 0, 2)): 3, \
-                                  CyclicTuple((2, 1)):    1})
+                       numbering=[(0, CyclicTuple((0,))), \
+                                  (2, CyclicTuple((1, 3))), \
+                                  (3, CyclicTuple((3, 0, 2))), \
+                                  (1, CyclicTuple((2, 1))) ])
           True
           
-          """
+        """
         assert isinstance(other, Graph), \
                "Graph.__eq__:" \
                " called with non-Graph argument `other`: %s" % other
-        # shortcuts
-        if ((self.num_edges != other.num_edges)
-            or (self.num_vertices != other.num_vertices)
-            or (self._vertex_valences != other._vertex_valences)):
-            return False
-        if (self.vertices == other.vertices) \
-           and (self.endpoints == other.endpoints) \
-           and (self.numbering == other.numbering):
-            return True
-
-        # else, go the long way: try to find an explicit isomorphims
-        # between graphs `self` and `other`
-        try:
-            # if there is any morphism, then return `True`
-            self.isomorphisms_to(other).next()
-            return True
-        except StopIteration:
-            # list of morphisms is empty, graphs are not equal.
-            return False
+        # try cached result first
+        args = frozenset([self._id, other._id])
+        if args not in self._fasteq_cache:
+            # shortcuts
+            if (self is other) or (self._id == other._id):
+                self._fasteq_cache[args] = True
+            elif ((self.num_edges != other.num_edges)
+                or (self.num_vertices != other.num_vertices)
+                or (self._vertex_valences != other._vertex_valences)):
+                self._fasteq_cache[args] = False
+            elif (self.vertices == other.vertices) \
+               and (self.endpoints == other.endpoints) \
+               and (self.numbering == other.numbering):
+                self._fasteq_cache[args] = True
+            else:
+                # go the long way: try to find an explicit isomorphims
+                # between graphs `self` and `other`
+                try:
+                    # if there is any morphism, then return `True`
+                    self.isomorphisms_to(other).next()
+                    self._fasteq_cache[args] = True
+                except StopIteration:
+                    # list of morphisms is empty, graphs are not equal.
+                    self._fasteq_cache[args] = False
+        return self._fasteq_cache[args]
 
     def __getitem__(self, index):
         return self.vertices[index]
 
     def __hash__(self):
-        return hash(self.edge_seq)
+        return self._id
 
     def __iter__(self):
         """Return iterator over vertices."""
@@ -584,12 +572,33 @@ class Graph(object):
         # that's all, folks!
         return self._boundary_components
 
+    def clone(self):
+        """Return a new `Graph` instance, sharing all attribute values
+        with this one, except for the following ones:
+
+          `_id`
+            unique for each instance
+
+          `_id_factory`
+            shared among all instances
+
+        """
+        return Graph(self.vertices,
+                     endpoints = self.endpoints,
+                     num_edges = self.num_edges,
+                     num_vertices = self.num_vertices,
+                     numbering = self.numbering,
+                     vertextype = self._vertextype,
+                     _boundary_components = self._boundary_components,
+                     _genus = self._genus,
+                     _num_boundary_components = self._num_boundary_components,
+                     _valence_spectrum = self._valence_spectrum,
+                     _vertex_valences = self._vertex_valences,
+                     )
+        
     def contract(self, edgeno):
         """Return new `Graph` obtained by contracting the specified edge.
 
-        The returned graph is presented in canonical form, that is,
-        vertices are ordered lexicographically, longest ones first.
-        
         Examples::
 
           >>> Graph([Vertex([2,2,0]), Vertex([0,1,1])]).contract(0)
@@ -639,119 +648,81 @@ class Graph(object):
                " must be in range 0..%d" \
                % (edgeno, self.num_edges)
 
-        if self._contractions[edgeno] is None:
-            # store position of the edge to be contracted at the endpoints
-            i1 = min(self.endpoints[edgeno])
-            i2 = max(self.endpoints[edgeno])
-            pos1 = self.vertices[i1].index(edgeno)
-            pos2 = self.vertices[i2].index(edgeno)
+        # store position of the edge to be contracted at the endpoints
+        i1 = min(self.endpoints[edgeno])
+        i2 = max(self.endpoints[edgeno])
+        pos1 = self.vertices[i1].index(edgeno)
+        pos2 = self.vertices[i2].index(edgeno)
 
-            # Build new list of vertices, removing the contracted edge and
-            # shifting all indices above:
-            #   - edges numbered 0..edgeno-1 are unchanged;
-            #   - edges numbered `edgeno+1`.. are renumbered, 
-            #     shifting the number down one position.
-            renumber_edges = dict((i+1,i)
-                                  for i in xrange(edgeno, self.num_edges))
-            #   - edge `edgeno` is removed (subst with `None`)
-            renumber_edges[edgeno] = None  
-            # See `itranslate` in utils.py for how this prescription is
-            # encoded in the `renumber_edges` mapping.
-            new_vertices = [ self._vertex_factory(itranslate(renumber_edges, v))
-                             for v in self.vertices ]
+        # Build new list of vertices, removing the contracted edge and
+        # shifting all indices above:
+        #   - edges numbered 0..edgeno-1 are unchanged;
+        #   - edges numbered `edgeno+1`.. are renumbered, 
+        #     shifting the number down one position.
+        renumber_edges = dict((i+1,i)
+                              for i in xrange(edgeno, self.num_edges))
+        #   - edge `edgeno` is removed (subst with `None`)
+        renumber_edges[edgeno] = None  
+        # See `itranslate` in utils.py for how this prescription is
+        # encoded in the `renumber_edges` mapping.
+        new_vertices = [ self._vertextype(itranslate(renumber_edges, v))
+                         for v in self.vertices ]
 
-            # Mate endpoints of contracted edge:
-            # 0. make copies of vertices `v1`, `v2` so that subsequent
-            #    operations do not alter the (possibly) shared `Vertex`
-            #    object.
-            v1 = copy(new_vertices[i1])
-            v2 = copy(new_vertices[i2])
-            # 1. Rotate endpoints `v1`, `v2` so that the given edge
-            #    appears *last* in `v1` and *first* in `v2` (*Note:*
-            #    the contracted edge has already been deleted from
-            #    `v1` and `v2`, so index positions need to be adjusted):
-            if (0 < pos1) and (pos1 < len(v1)):
-                v1.rotate(pos1)
-            if (0 < pos2) and (pos2 < len(v2)):
-                v2.rotate(pos2)
-            # 2. Join vertices by concatenating the list of incident
-            # edges:
-            v1.extend(v2)
+        # Mate endpoints of contracted edge:
+        # 0. make copies of vertices `v1`, `v2` so that subsequent
+        #    operations do not alter the (possibly) shared `Vertex`
+        #    object.
+        v1 = copy(new_vertices[i1])
+        v2 = copy(new_vertices[i2])
+        # 1. Rotate endpoints `v1`, `v2` so that the given edge
+        #    appears *last* in `v1` and *first* in `v2` (*Note:*
+        #    the contracted edge has already been deleted from
+        #    `v1` and `v2`, so index positions need to be adjusted):
+        if (0 < pos1) and (pos1 < len(v1)):
+            v1.rotate(pos1)
+        if (0 < pos2) and (pos2 < len(v2)):
+            v2.rotate(pos2)
+        # 2. Join vertices by concatenating the list of incident
+        # edges:
+        v1.extend(v2)
 
-            # set new `v1` vertex in place of old first endpoint, 
-            new_vertices[i1] = v1
-            # and remove second endpoint from list of new vertices
-            del new_vertices[i2]
+        # set new `v1` vertex in place of old first endpoint, 
+        new_vertices[i1] = v1
+        # and remove second endpoint from list of new vertices
+        del new_vertices[i2]
 
-            # vertices with index above `i2` are now shifted down one place
-            renumber_vertices = dict((i+1,i)
-                                     for i in xrange(i2, self.num_vertices))
-            # vertex `i2` is mapped to vertex `i1`
-            renumber_vertices[i2] = i1
-            new_endpoints = [ tuple(itranslate(renumber_vertices, ep))
-                              for ep in  self.endpoints ]
-            del new_endpoints[edgeno]
+        # vertices with index above `i2` are now shifted down one place
+        renumber_vertices = dict((i+1,i)
+                                 for i in xrange(i2, self.num_vertices))
+        # vertex `i2` is mapped to vertex `i1`
+        renumber_vertices[i2] = i1
+        new_endpoints = [ tuple(itranslate(renumber_vertices, ep))
+                          for ep in  self.endpoints ]
+        del new_endpoints[edgeno]
 
-            numbering = None
-            if self.numbering is not None:
-                numbering = [ (n, CyclicTuple(itranslate(renumber_edges, bcy)))
-                              for (bcy, n) in self.numbering.itertiems() ]
+        numbering = None
+        if self.numbering is not None:
+            numbering = [ (n, CyclicTuple(itranslate(renumber_edges, bcy)))
+                          for (bcy, n) in self.numbering.iteritems() ]
 
-            bc = None
-            if self._boundary_components is not None:
-                if numbering is not None:
-                    bc = list(numbering.iterkeys())
-                else:
-                    bc = [ CyclicTuple(itranslate(renumber_edges, bcy))
-                           for bcy in self._boundary_components ]
+        bc = None
+        if self._boundary_components is not None:
+            if numbering is not None:
+                bc = [ bcy for (n,bcy) in numbering ]
+            else:
+                bc = [ CyclicTuple(itranslate(renumber_edges, bcy))
+                       for bcy in self._boundary_components ]
 
-            # build new graph 
-            self._contractions[edgeno] = \
-                                       Graph(new_vertices,
-                                             vertex_factory =
-                                                 self._vertex_factory,
-                                             endpoints = new_endpoints,
-                                             num_edges = self.num_edges - 1,
-                                             num_external_edges =
-                                                 self.num_external_edges,
-                                             numbering = numbering)
-            # set origin
-            self._contractions[edgeno]._parent = (self, edgeno)
-            # pre-computed b.c. for speed-up
-            self._contractions[edgeno]._boundary_components = bc
+        # build new graph 
+        return Graph(new_vertices,
+                     vertextype = self._vertextype,
+                     endpoints = new_endpoints,
+                     num_edges = self.num_edges - 1,
+                     num_external_edges = self.num_external_edges,
+                     numbering = numbering,
+                     _boundary_components = bc,
+                     )
             
-        elif (self.numbering is not None) \
-             and (self._contractions[edgeno].numbering is None):
-            # see above for the meaning of `renumber_edges`
-            renumber_edges = dict((i+1,i)
-                                  for i in xrange(edgeno, self.num_edges))
-            renumber_edges[edgeno] = None  
-            self._contractions[edgeno]._parent = (self, edgeno)
-            self._contractions[edgeno].numbering_set(
-                (n, CyclicTuple(itranslate(renumber_edges, bcy)))
-                for (bcy, n) in self.numbering.iteritems()
-                )
-            
-            assert set(self._contractions[edgeno]._boundary_components) == \
-                   set(self._contractions[edgeno].numbering.iterkeys()), \
-                   "Graph.contract:" \
-                   " numbered b.c.'s after contraction differ"\
-                   " from boundary components computed from"\
-                   " non-numbered sibling graph"
-            if __debug__:
-                cnt = [0] * (self.num_edges - 1)
-                for bc in self._contractions[edgeno]._boundary_components:
-                    for edge in bc:
-                        cnt[edge] += 1
-                for x in xrange(len(cnt)):
-                    assert cnt[x] == 2, \
-                           "Graph.contract:"\
-                           " edge %d occurs %d times "\
-                           " in boundary components "\
-                           " of contracted graph `%s`"\
-                           % (x, cnt[x], self._contractions[edgeno])
-                   
-        return self._contractions[edgeno]
         
     def edges(self):
         """Iterate over edge colorings."""
@@ -780,7 +751,7 @@ class Graph(object):
                " into %d-valent vertex `%s`" \
                % (G.num_external_edges, G,
                   len(self.vertices[v]), self.vertices[v])
-        vertextype = self._vertex_factory # micro-optimization
+        vertextype = self._vertextype # micro-optimization
 
         # edges of `G` are renumbered depending on whether
         # they are internal of external edges:
@@ -805,7 +776,7 @@ class Graph(object):
                         + [ vertextype(itranslate(renumber_g_edges, gv))
                             for gv in G.vertices ])
 
-        return Graph(new_vertices, vertex_factory=vertextype,
+        return Graph(new_vertices, vertextype=vertextype,
                      num_edges = self.num_edges + G.num_edges,
                      num_external_edges = self.num_external_edges)
 
@@ -923,20 +894,21 @@ class Graph(object):
           True
 
           >>> Graph([Vertex([3, 2, 2, 0, 1]), Vertex([3, 1, 0])], \
-                    numbering={CyclicTuple((2,)):      0,  \
-                               CyclicTuple((0, 1)):    1,  \
-                               CyclicTuple((3, 1)):    2,  \
-                               CyclicTuple((0, 3, 2)): 3}) \
+                    numbering=[(0, CyclicTuple((2,))),  \
+                               (1, CyclicTuple((0, 1))),  \
+                               (2, CyclicTuple((3, 1))),  \
+                               (3, CyclicTuple((0, 3, 2))) ]) \
                                .is_oriented()
           True
           >>> Graph([Vertex([2, 3, 1]), Vertex([2, 1, 3, 0, 0])], \
-                       numbering={CyclicTuple((0,)):      0,  \
-                                  CyclicTuple((1, 3)):    2,  \
-                                  CyclicTuple((3, 0, 2)): 3,  \
-                                  CyclicTuple((2, 1)):    1}) \
+                       numbering=[(0, CyclicTuple((0,))),  \
+                                  (2, CyclicTuple((1, 3))),  \
+                                  (3, CyclicTuple((3, 0, 2))),  \
+                                  (1, CyclicTuple((2, 1))) ]) \
                                .is_oriented()
           True
         """
+        ## Try to find an orientation-reversing automorphism the hard way
         for a in self.automorphisms():
             if self.is_orientation_reversing(a):
                 return False
@@ -1090,8 +1062,7 @@ class Graph(object):
         """Return the numbering previously set on this instance via
         `.set_numbering()`.
         """
-        return self.numbering
-        
+        return self._numbering
     def numbering_set(self, tuples):
         """Set the `.numbering` attribute from a sequence of tuples
         `(n, bcy)`.  Each `n` is a non-negative integer, and each
@@ -1104,9 +1075,9 @@ class Graph(object):
           >>> bc = g0.boundary_components()  # three b.c.'s
           >>> g0.numbering_set(enumerate(bc))
           >>> g0.numbering_get()           \
-              == { CyclicTuple((0, 2)): 2, \
-                   CyclicTuple((1, 0)): 0, \
-                   CyclicTuple((2, 1)): 1  }
+              == { (2, CyclicTuple((0, 2))), \
+                   (0, CyclicTuple((1, 0))), \
+                   (1, CyclicTuple((2, 1))) ]
           True
 
         When two boundary components are represented by the same edge
@@ -1124,6 +1095,9 @@ class Graph(object):
         may be represented by the same boundary cycle.
 
         """
+        if tuples is None:
+            self._numbering = None
+            return
         numbering = {}
         for (n,bcy) in tuples:
             if bcy in numbering:
@@ -1132,7 +1106,7 @@ class Graph(object):
                 numbering[bcy] = frozenset((n, numbering[bcy]))
             else:
                 numbering[bcy] = n
-        self.numbering = numbering
+        self._numbering = numbering
         if __debug__:
             if self._boundary_components is not None:
                 assert set(self._boundary_components) \
@@ -1140,7 +1114,7 @@ class Graph(object):
                        "Graph.numbering_set:"\
                        " Not all boundary components were numbered"
                 indices = set()
-                for n in self.numbering.itervalues():
+                for n in self._numbering.itervalues():
                     if isinstance(n, frozenset):
                         indices = set.union(indices, n)
                     else: # `n` is integer
@@ -1149,7 +1123,8 @@ class Graph(object):
                        "Graph.numbering_set:"\
                        " Numbering indices `%s` are not a permutation"\
                        " of the range 0..%d (no. of boundary components)"\
-                       % (self.numbering.values(), len(self.numbering),)
+                       % (self._numbering.values(), len(self._numbering),)
+    numbering = property(numbering_get, numbering_set)
     
     def num_boundary_components(self):
         """Return the number of boundary components of this `Graph` object.
@@ -1237,17 +1212,17 @@ def MakeNumberedGraphs(graph):
       >>> g1 = Graph([Vertex([2,0,0]), Vertex([2,1,1])])
       >>> set(MakeNumberedGraphs(g1)) == set([         \
       Graph([Vertex([2, 0, 0]), Vertex([2, 1, 1])],    \
-            numbering={CyclicTuple((2, 1, 2, 0)): 0,   \
-                       CyclicTuple((0,)): 2,           \
-                       CyclicTuple((1,)): 1}),         \
+            numbering=[(0, CyclicTuple((2, 1, 2, 0))),   \
+                       (2, CyclicTuple((0,))),           \
+                       (1, CyclicTuple((1,))) ]),         \
       Graph([Vertex([2, 0, 0]), Vertex([2, 1, 1])],    \
-            numbering={CyclicTuple((2, 1, 2, 0)): 1,   \
-                       CyclicTuple((0,)): 0,           \
-                       CyclicTuple((1,)): 2}),         \
+            numbering=[(1, CyclicTuple((2, 1, 2, 0))),   \
+                       (0, CyclicTuple((0,))),           \
+                       (2, CyclicTuple((1,))) ]),         \
       Graph([Vertex([2, 0, 0]), Vertex([2, 1, 1])],    \
-             numbering={CyclicTuple((2, 1, 2, 0)): 2,  \
-                        CyclicTuple((0,)): 0,          \
-                        CyclicTuple((1,)): 1})        ])
+             numbering=[(2, CyclicTuple((2, 1, 2, 0))),  \
+                        (0, CyclicTuple((0,))),          \
+                        (1, CyclicTuple((1,))) ])        ])
       True
        
     Note that, when only one numbering out of many possible ones is
@@ -1258,9 +1233,9 @@ def MakeNumberedGraphs(graph):
       >>> g2 = Graph([Vertex([2,1,0]), Vertex([2,0,1])])
       >>> MakeNumberedGraphs(g2) ==                      \
           [Graph([Vertex([2, 1, 0]), Vertex([2, 0, 1])], \
-                  numbering={CyclicTuple((2, 0)): 1,     \
-                             CyclicTuple((0, 1)): 0,     \
-                             CyclicTuple((1, 2)): 2})]
+                  numbering=[(1, CyclicTuple((2, 0))),     \
+                             (0, CyclicTuple((0, 1))),     \
+                             (2, CyclicTuple((1, 2))) ])]
       True
 
     When the graph has only one boundary component, there is only one
@@ -1269,7 +1244,7 @@ def MakeNumberedGraphs(graph):
       >>> g3 = Graph([Vertex([1,0,1,0])])
       >>> MakeNumberedGraphs(g3)                               \
           == [Graph([Vertex([1, 0, 1, 0])],                    \
-                    numbering={CyclicTuple((1, 0, 1, 0)): 0})]
+                    numbering=[(0, CyclicTuple((1, 0, 1, 0))) ])]
       True
       
     """
@@ -1278,18 +1253,14 @@ def MakeNumberedGraphs(graph):
     n = len(bc) # == graph.num_boundary_components()
 
     for numbering in InplacePermutationIterator(range(n)):
-        # make a copy of `graph` with the given numbering
-        g = copy(graph)
+        # make a copy of `graph` and add the given numbering
+        g = graph.clone()
         g.numbering_set((numbering[x], bc[x]) for x in xrange(n))
 
         # only add `g` to list if it is *not* isomorphic to a graph
         # already in the list
         if g not in graphs:
             graphs.append(g)
-
-    # set the `._siblings` attribute on the given graph,
-    # pointing to the numbered decorated versions
-    graph._siblings = graphs
 
     return graphs
 
@@ -1302,40 +1273,40 @@ class ConnectedGraphsIterator(BufferingIterator):
 
       >>> set(ConnectedGraphsIterator([4])) == set([          \
           Graph([Vertex([1, 0, 1, 0])],                       \
-                 numbering={CyclicTuple((1, 0, 1, 0)): 0}),   \
+                 numbering=[(0, CyclicTuple((1, 0, 1, 0))) ]),   \
           Graph([Vertex([1, 1, 0, 0])],                       \
-                numbering={CyclicTuple((0,)): 0,              \
-                           CyclicTuple((1, 0)): 2,            \
-                           CyclicTuple((1,)): 1}),            \
+                numbering=[(0, CyclicTuple((0,))),              \
+                           (2, CyclicTuple((1, 0))),            \
+                           (1, CyclicTuple((1,))) ]),            \
           Graph([Vertex([1, 1, 0, 0])],                       \
-                numbering={CyclicTuple((0,)): 1,              \
-                           CyclicTuple((1, 0)): 0,            \
-                           CyclicTuple((1,)): 2}),            \
+                numbering=[(1, CyclicTuple((0,))),              \
+                           (0, CyclicTuple((1, 0))),            \
+                           (2, CyclicTuple((1,))) ]),            \
           Graph([Vertex([1, 1, 0, 0])],                       \
-                numbering={CyclicTuple((0,)): 2,              \
-                           CyclicTuple((1, 0)): 1,            \
-                           CyclicTuple((1,)): 0})            ])
+                numbering=[(2, CyclicTuple((0,))),              \
+                           (1, CyclicTuple((1, 0))),            \
+                           (0, CyclicTuple((1,))) ])            ])
       True
 
       >>> set(ConnectedGraphsIterator([3,3])) == set([           \
           Graph([Vertex([2, 0, 1]), Vertex([2, 0, 1])],          \
-                numbering={CyclicTuple((2, 0, 1, 2, 0, 1)): 0}), \
+                numbering=[(0, CyclicTuple((2, 0, 1, 2, 0, 1))) ]), \
           Graph([Vertex([2, 1, 0]), Vertex([2, 0, 1])],          \
-                numbering={CyclicTuple((2, 0)): 1,               \
-                           CyclicTuple((0, 1)): 0,               \
-                           CyclicTuple((1, 2)): 2}),             \
+                numbering=[(1, CyclicTuple((2, 0))),               \
+                           (0, CyclicTuple((0, 1))),               \
+                           (2, CyclicTuple((1, 2))) ]),             \
           Graph([Vertex([2, 1, 1]), Vertex([2, 0, 0])],          \
-                numbering={CyclicTuple((2, 0, 2, 1)): 0,         \
-                           CyclicTuple((0,)): 2,                 \
-                           CyclicTuple((1,)): 1}),               \
+                numbering=[(0, CyclicTuple((2, 0, 2, 1))),         \
+                           (2, CyclicTuple((0,))),                 \
+                           (1, CyclicTuple((1,))) ]),               \
           Graph([Vertex([2, 1, 1]), Vertex([2, 0, 0])],          \
-                numbering={CyclicTuple((2, 0, 2, 1)): 1,         \
-                           CyclicTuple((0,)): 0,                 \
-                           CyclicTuple((1,)): 2}),               \
+                numbering=[(1, CyclicTuple((2, 0, 2, 1))),         \
+                           (0, CyclicTuple((0,))),                 \
+                           (2, CyclicTuple((1,))) ]),               \
           Graph([Vertex([2, 1, 1]), Vertex([2, 0, 0])],          \
-                numbering={CyclicTuple((2, 0, 2, 1)): 2,         \
-                           CyclicTuple((0,)): 0,                 \
-                           CyclicTuple((1,)): 1})               ])
+                numbering=[(2, CyclicTuple((2, 0, 2, 1))),         \
+                           (0, CyclicTuple((0,))),                 \
+                           (1, CyclicTuple((1,))) ])               ])
       True
 
     Generation of all graphs with prescribed vertex valences `(v_1,
@@ -1362,7 +1333,7 @@ class ConnectedGraphsIterator(BufferingIterator):
         '_graphs',
         ]
 
-    def __init__(self, vertex_valences, vertex_factory=VertexCache()):
+    def __init__(self, vertex_valences, vertextype=VertexCache()):
         assert debug.is_sequence_of_integers(vertex_valences), \
                "ConnectedGraphsIterator: " \
                " argument `vertex_valences` must be a sequence of integers,"\
@@ -1372,7 +1343,7 @@ class ConnectedGraphsIterator(BufferingIterator):
                " sum of vertex valences must be divisible by 2"
 
         self._graphs = GivenValenceGraphsIterator(vertex_valences,
-                                                  vertex_factory=vertex_factory)
+                                                  vertextype=vertextype)
 
         # initialize superclass
         BufferingIterator.__init__(self)
@@ -1418,13 +1389,13 @@ class GivenValenceGraphsIterator(object):
 
     __slots__ = [
         'graphs',
-        'vertex_factory',
+        'vertextype',
         '_edge_seq_iterator',
         '_morphism_factory',
         '_vertex_valences',
         ]
 
-    def __init__(self, vertex_valences, vertex_factory=VertexCache()):
+    def __init__(self, vertex_valences, vertextype=VertexCache()):
         assert debug.is_sequence_of_integers(vertex_valences), \
                "GivenValenceGraphsIterator: " \
                " argument `vertex_valences` must be a sequence of integers,"\
@@ -1433,7 +1404,7 @@ class GivenValenceGraphsIterator(object):
                "GivenValenceGraphsIterator: " \
                " sum of vertex valences must be divisible by 2"
 
-        self.vertex_factory = vertex_factory
+        self.vertextype = vertextype
         self.graphs = []
         self._morphism_factory = None
         self._vertex_valences = vertex_valences
@@ -1455,12 +1426,11 @@ class GivenValenceGraphsIterator(object):
             base = 0
             for current_vertex_index in xrange(len(self._vertex_valences)):
                 VLEN = self._vertex_valences[current_vertex_index]
-                vertices.append(self.vertex_factory(edge_seq[base:base+VLEN]))
+                vertices.append(self.vertextype(edge_seq[base:base+VLEN]))
                 base += VLEN
 
             current = Graph(vertices,
-                            edge_seq=tuple(edge_seq),
-                            vertex_factory=self.vertex_factory,)
+                            vertextype=self.vertextype,)
             if not (current.is_canonical() and current.is_connected()):
                 continue
             
@@ -1533,7 +1503,7 @@ def AlgorithmB(n):
         r[j] = y
 
 
-def Tree(nodeseq=[], vertex_factory=Vertex):
+def Tree(nodeseq=[], vertextype=Vertex):
     """Construct a tree fatgraph from sequence of internal nodes.
 
     Items in `nodeseq` are sequences `(c[0], c[1], ..., c[n])` where
@@ -1584,7 +1554,7 @@ def Tree(nodeseq=[], vertex_factory=Vertex):
                 internal_edge_endpoints.append((next_vertex_index,
                                                 child))
                 next_internal_edge_label += 1
-        vertices.append(vertex_factory(edges))
+        vertices.append(vertextype(edges))
         next_vertex_index += 1
 
     return Graph(vertices,
@@ -1592,7 +1562,7 @@ def Tree(nodeseq=[], vertex_factory=Vertex):
                                 list(reversed(external_edge_endpoints)),
                  num_edges = next_internal_edge_label,
                  num_external_edges = -next_external_edge_label-1,
-                 vertex_factory=vertex_factory)
+                 vertextype=vertextype)
 
 
 class TreeIterator(BufferingIterator):
@@ -1629,40 +1599,40 @@ class MgnGraphsIterator(BufferingIterator):
 
       >>> set(MgnGraphsIterator(0,3))              == set([\
           Graph([Vertex([1, 2, 1]), Vertex([2, 0, 0])],    \
-                numbering={CyclicTuple((2, 0, 2, 1)): 0,   \
-                           CyclicTuple((0,)):         2,   \
-                           CyclicTuple((1,)):         1}), \
+                numbering=[(0, CyclicTuple((2, 0, 2, 1))),   \
+                           (2, CyclicTuple((0,))),   \
+                           (1, CyclicTuple((1,))) ]), \
           Graph([Vertex([1, 2, 1]), Vertex([2, 0, 0])],    \
-                numbering={CyclicTuple((2, 0, 2, 1)): 1,   \
-                           CyclicTuple((0,)):         0,   \
-                           CyclicTuple((1,)):         2}), \
+                numbering=[(1, CyclicTuple((2, 0, 2, 1))),   \
+                           (0, CyclicTuple((0,))),   \
+                           (2, CyclicTuple((1,))) ]), \
           Graph([Vertex([1, 2, 1]), Vertex([2, 0, 0])],    \
-                numbering={CyclicTuple((2, 0, 2, 1)): 2,   \
-                           CyclicTuple((0,)):         0,   \
-                           CyclicTuple((1,)):         1}), \
+                numbering=[(2, CyclicTuple((2, 0, 2, 1))),   \
+                           (0, CyclicTuple((0,))),   \
+                           (1, CyclicTuple((1,))) ]), \
           Graph([Vertex([1, 0, 2]), Vertex([2, 0, 1])],    \
-                numbering={CyclicTuple((1, 2)): 1,         \
-                           CyclicTuple((0, 1)): 2,         \
-                           CyclicTuple((2, 0)): 0}),       \
+                numbering=[(1, CyclicTuple((1, 2))),         \
+                           (2, CyclicTuple((0, 1))),         \
+                           (0, CyclicTuple((2, 0))) ]),       \
           Graph([Vertex([1, 1, 0, 0])],                    \
-                numbering={CyclicTuple((0,)):   0,         \
-                           CyclicTuple((0, 1)): 2,         \
-                           CyclicTuple((1,)):   1}),       \
+                numbering=[(0, CyclicTuple((0,))),         \
+                           (2, CyclicTuple((0, 1))),         \
+                           (1, CyclicTuple((1,))) ]),       \
           Graph([Vertex([1, 1, 0, 0])],                    \
-                numbering={CyclicTuple((0,)):   1,         \
-                           CyclicTuple((0, 1)): 0,         \
-                           CyclicTuple((1,)):   2}),       \
+                numbering=[(1, CyclicTuple((0,))),         \
+                           (0, CyclicTuple((0, 1))),         \
+                           (2, CyclicTuple((1,))) ]),       \
           Graph([Vertex([1, 1, 0, 0])],                    \
-                numbering={CyclicTuple((0,)):   2,         \
-                           CyclicTuple((0, 1)): 1,         \
-                           CyclicTuple((1,)):   0})       ])
+                numbering=[(2, CyclicTuple((0,))),         \
+                           (1, CyclicTuple((0, 1))),         \
+                           (0, CyclicTuple((1,))) ])       ])
       True
 
       >>> set(MgnGraphsIterator(1,1))                    == set([\
           Graph([Vertex([1, 0, 2]), Vertex([2, 1, 0])],          \
-                numbering={CyclicTuple((1, 0, 2, 1, 0, 2)): 0}), \
+                numbering=[(0, CyclicTuple((1, 0, 2, 1, 0, 2))) ]), \
           Graph([Vertex([1, 0, 1, 0])],                          \
-                numbering={CyclicTuple((0, 1, 0, 1)): 0})       ])
+                numbering=[(0, CyclicTuple((0, 1, 0, 1))) ])       ])
       True
 
     """
@@ -1671,12 +1641,12 @@ class MgnGraphsIterator(BufferingIterator):
         '_batch',
         '_current_edge',
         '_num_vertices',
-        '_vertex_factory',
+        '_vertextype',
         'g',
         'n',
         ]
 
-    def __init__(self, g, n, vertex_factory=VertexCache()):
+    def __init__(self, g, n, vertextype=VertexCache()):
         assert n > 0, \
                "MgnGraphsIterator: " \
                " number of boundary cycles `n` must be positive,"\
@@ -1695,7 +1665,7 @@ class MgnGraphsIterator(BufferingIterator):
         
         #: Factory method to build `Vertex` instances from the
         #  incoming edges list.
-        self._vertex_factory = vertex_factory
+        self._vertextype = vertextype
 
         #: Unique (up to isomorphism) graphs found so far
         graphs = []
