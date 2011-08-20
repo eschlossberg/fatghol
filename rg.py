@@ -24,7 +24,7 @@ from cache import (
     cache1,
     cache_iterator,
     cache_symmetric,
-    PermanentID,
+    Cacheable,
     )
 from combinatorics import (
     InplacePermutationIterator,
@@ -62,7 +62,7 @@ class VertexCache(object):
         return "rg.VertexCache"
 
 
-class Vertex(PermanentID, CyclicList):
+class Vertex(Cacheable, CyclicList):
     """A (representative of) a vertex of a ribbon graph.
 
     A vertex is represented by the cyclically ordered list of its
@@ -76,7 +76,7 @@ class Vertex(PermanentID, CyclicList):
     #      immutable.
 
     def __init__(self, seq=None):
-        PermanentID.__init__(self)
+        Cacheable.__init__(self)
         CyclicList.__init__(self, seq)
         
     def __cmp__(self, other):
@@ -164,7 +164,7 @@ class EqualIfIsomorphic(object):
 
 
 
-class Fatgraph(EqualIfIsomorphic, PermanentID):
+class Fatgraph(EqualIfIsomorphic, Cacheable):
     """A fully-decorated ribbon graph.
 
     Exports a (read-only) sequence interface, through which vertices
@@ -230,7 +230,7 @@ class Fatgraph(EqualIfIsomorphic, PermanentID):
 
         """
         # set this instance's _persistent_id
-        PermanentID.__init__(self)
+        Cacheable.__init__(self)
 
         # dispatch based on type of arguments passed
         if isinstance(g_or_vs, Fatgraph):
@@ -1138,7 +1138,6 @@ class Fatgraph(EqualIfIsomorphic, PermanentID):
         return orbits
 
 
-    @cache
     def genus(self):
         """Return the genus g of this `Fatgraph` object."""
         n = self.num_boundary_cycles()
@@ -1609,7 +1608,6 @@ class Fatgraph(EqualIfIsomorphic, PermanentID):
                 yield m
 
 
-    @cache1
     def num_boundary_cycles(self):
         """Return the number of boundary components of this `Fatgraph` object.
 
@@ -2224,9 +2222,9 @@ def MgnTrivalentGraphsRecursiveGenerator(g, n):
         unique = []
         for G in graphs(g,n):
             # XXX: should this check be done in graphs(g,n)?
-            if (G.genus(), G.num_boundary_cycles()) != (g,n):
-                continue
-            if G in unique:
+            if (G.genus(), G.num_boundary_cycles()) != (g,n) \
+                   or (G in unique):
+                G.release()
                 continue
             unique.append(G)
             yield G
@@ -2302,6 +2300,7 @@ class MgnGraphsIterator(BufferingIterator):
                         # put graph back into next batch for processing
                         next_batch.append(dg)
                     else:
+                        dg.release()
                         discarded += 1
         self._batch = next_batch
         self._num_vertices -= 1
