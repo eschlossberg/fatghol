@@ -1,8 +1,9 @@
-\RCSID $Id: prelim.tex,v 1.6 2006/05/18 08:07:29 rmurri Exp $
+\RCSID $Id: prelim.tex,v 1.7 2006/05/19 12:29:39 rmurri Exp $
 %auto-ignore
 
 
 \chapter{Preliminaries and Notation}
+\label{cha:prelim}
 
 When $\A$ is a category, we shall use Eilenberg's $\A(A, B)$ to denote
 the set of arrows from $A$ to $B$, in place of the more verbose $\Hom
@@ -131,49 +132,42 @@ trivial one: $\tau_{MN}: m\otimes n \mapsto n\otimes m$.
 \section{Signs and the graded contraction}
 \label{sec:signs}
 
-Recall that the symmetric monoidal category of graded modules has a
-non-trivial (yet involutive) braiding isomorphism
-\begin{equation*}
-\tau_{(12)} = \tau_{M_1M_2} : M_1
-\otimes M_2 \ni x_1\otimes x_2 \mapsto (-1)^{x_1x_2} x_2\otimes x_1
-\in M_2\otimes M_1,
-\end{equation*}
-for all objects $M_1$, $M_2$.  Any $\sigma\in\Perm{n}$ has a decomposition
-into a product of traspositions $(ij)$; since the category of graded
-modules is sysmmetric, we can define an isomorphism $\tau_\sigma: M_1 \otimes \cdots \otimes
-M_n \to M_{\sigma_1} \otimes \cdots \otimes M_{\sigma_n}$ as the composition of twists $\tau_{(ij)}$;
-$\tau_\sigma$ does not depend on the chosen factorization of $\sigma$ into
-traspositions.
+Any $\sigma\in\Perm{n}$ has a decomposition into a product of traspositions
+$(ij)$, so we can define an isomorphism $\tau_\sigma: M_1 \otimes \cdots \otimes M_n \to M_{\sigma_1}
+\otimes \cdots \otimes M_{\sigma_n}$ as the composition of twisting isomorphisms $\tau_{(ij)}$
+(see \eqref{eq:dgm-braiding}); since the category of graded modules is
+symmetric, $\tau_\sigma$ does not depend on the chosen factorization of $\sigma$
+into traspositions.
 
-Now, suppose $M_1 = \dots = M_n = M$, a fixed object: $x_1\otimes \dots \otimes
-x_n$ and $\tau_\sigma(x_1\otimes \dots \otimes x_n)$ differ only by the sign; therefore we
-define the Koszul sign $\epsilon(\sigma; x_1, \dots, x_n)$ so that the following
-holds:
+Now, suppose $M_1 = \dots = M_n = M$ (a fixed object), then $x_1\otimes
+\dots \otimes x_n$ and $\tau_\sigma(x_1\otimes \dots \otimes x_n)$ differ only by the sign;
+therefore we define the Koszul sign $\ksz(\sigma; x_1, \dots, x_n)$ so that
+the following holds:
 \begin{equation}
   \label{eq:ksz}
-  \epsilon(\sigma; x_1, \dots, x_n) x_1 \otimes \dots \otimes x_n =
+  \ksz(\sigma; x_1, \dots, x_n) x_1 \otimes \dots \otimes x_n =
   \tau_\sigma (x_1 \otimes \dots \otimes x_n), \qquad \sigma\in\Perm{n}.
 \end{equation}
-Also define the alternating Koszul sign $\chi(\sigma; x_1, \ldots, x_n)$ by:
+Also define the alternating Koszul sign $\aksz(\sigma; x_1, \ldots, x_n)$ by:
 \begin{equation}
   \label{eq:aksz}
-  \chi(\sigma; x_1, \dots, x_n) x_1 \otimes \dots \otimes x_n =
+  \aksz(\sigma; x_1, \dots, x_n) x_1 \otimes \dots \otimes x_n =
   (-1)^\sigma \varepsilon(\sigma; x_1, \ldots, x_n)
   \qquad \sigma\in\Perm{n}.
 \end{equation}
 We shall omit $x_1, \dots, x_n$ from the above when it will be clear
-from the context which elements $\epsilon$ or $\chi$ are being
-applied to.
+from the context which elements $\ksz$ or $\aksz$ are being applied
+to.
 
 \begin{definition}\label{dfn:graded-sym-map}
   A map $f: M^{\otimes n} \to N$ is graded symmetric iff
   \begin{equation*}
-    f(x_1, \dots, x_n) = \epsilon(\sigma) f(x_{\sigma_1}, \dots,
+    f(x_1, \dots, x_n) = \ksz(\sigma) f(x_{\sigma_1}, \dots,
     x_{\sigma_n}) \qquad \forall x_1, \dots, x_n \in M.
   \end{equation*}
   It is graded antisymmetric iff
   \begin{equation*}
-    f(x_1, \dots, x_n) = \chi(\sigma) f(x_{\sigma_1}, \dots,
+    f(x_1, \dots, x_n) = \aksz(\sigma) f(x_{\sigma_1}, \dots,
     x_{\sigma_n}) \qquad \forall x_1, \dots, x_n \in M.
   \end{equation*}
 \end{definition}
@@ -184,12 +178,12 @@ the contraction map
 c: {\textstyle \bigotimes_i} \Hom(M_i, N_i) \otimes
  {\textstyle \bigotimes_i} M_i \to  {\textstyle \bigotimes_i} N_i
 \end{equation*}
-is well-defined only up to a sign. In search of a remedy, we fix an
-ordering of the factors which gives ``unsigned'' contraction, and then
-define contraction of any permutation of the factors
-$\left\{\Hom(M_i,N_i), M_i\right\}_{i\in I}$ by first applying a twist
-$\tau_\sigma$ to get the fixed ``standard'' ordering, and then the usual
-``unsigned'' contraction. Formally:
+is well-defined only up to a sign. The ``signed'' contraction is
+defined as follows: fix an ordering of the factors which gives
+standard ``unsigned'' contraction, and then define contraction of any
+permutation of the factors $\left\{\Hom(M_i,N_i), M_i\right\}_{i\in I}$ by
+first applying a twist $\tau_\sigma$ to get the fixed ``standard'' ordering,
+and then the usual ``unsigned'' contraction. Formally:
 \begin{enumerate}
 \item let $c: \Hom(M,N) \otimes M \ni f\otimes x \mapsto f(x) \in N$;
 \item let $c: \bigotimes_i (\Hom(M_i, N_i) \otimes M_i) \ni (f_1\otimes x_1)
