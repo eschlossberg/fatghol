@@ -1,6 +1,6 @@
-% halpha: adds eprint field (www-admin@xxx.lanl.gov)
+% hunsrt: adds eprint field (www-admin@xxx.lanl.gov)
 % an extension of:
-% BibTeX standard bibliography style `alpha'
+% BibTeX standard bibliography style `unsrt'
 	% version 0.99a for BibTeX versions 0.99a or later, LaTeX version 2.09.
 	% Copyright (C) 1985, all rights reserved.
 	% Copying of this file is authorized only if either
@@ -36,7 +36,7 @@ ENTRY
     year
   }
   {}
-  { label extra.label sort.label }
+  { label }
 
 INTEGERS { output.state before.all mid.sentence after.sentence after.block }
 
@@ -87,9 +87,7 @@ FUNCTION {output.check}
 
 FUNCTION {output.bibitem}
 { newline$
-  "\bibitem[" write$
-  label write$
-  "]{" write$
+  "\bibitem{" write$
   cite$ write$
   "}" write$
   newline$
@@ -245,10 +243,9 @@ FUNCTION {format.title}
 FUNCTION {format.eprint}
 { eprint empty$
     { "" }
-    { " e-print \url{" eprint "}" * * }
+    { eprint }
   if$
 }
-
 
 FUNCTION {n.dashify}
 { 't :=
@@ -440,7 +437,6 @@ FUNCTION {empty.misc.check}
 { author empty$ title empty$ howpublished empty$
   month empty$ year empty$ note empty$
   and and and and and
-  key empty$ not and
     { "all relevant fields are empty in " cite$ * warning$ }
     'skip$
   if$
@@ -931,336 +927,33 @@ MACRO {tcs} {"Theoretical Computer Science"}
 
 READ
 
-FUNCTION {sortify}
-{ purify$
-  "l" change.case$
-}
+STRINGS { longest.label }
 
-INTEGERS { len }
-
-FUNCTION {chop.word}
-{ 's :=
-  'len :=
-  s #1 len substring$ =
-    { s len #1 + global.max$ substring$ }
-    's
-  if$
-}
-
-INTEGERS { et.al.char.used }
-
-FUNCTION {initialize.et.al.char.used}
-{ #0 'et.al.char.used :=
-}
-
-EXECUTE {initialize.et.al.char.used}
-
-FUNCTION {format.lab.names}
-{ 's :=
-  s num.names$ 'numnames :=
-  numnames #1 >
-    { numnames #4 >
-	{ #3 'namesleft := }
-	{ numnames 'namesleft := }
-      if$
-      #1 'nameptr :=
-      ""
-	{ namesleft #0 > }
-	{ nameptr numnames =
-	    { s nameptr "{ff }{vv }{ll}{ jj}" format.name$ "others" =
-		{ "{\etalchar{+}}" *
-		  #1 'et.al.char.used :=
-		}
-		{ s nameptr "{v{}}{l{}}" format.name$ * }
-	      if$
-	    }
-	    { s nameptr "{v{}}{l{}}" format.name$ * }
-	  if$
-	  nameptr #1 + 'nameptr :=
-	  namesleft #1 - 'namesleft :=
-	}
-      while$
-      numnames #4 >
-	{ "{\etalchar{+}}" *
-	  #1 'et.al.char.used :=
-	}
-	'skip$
-      if$
-    }
-    { s #1 "{v{}}{l{}}" format.name$
-      duplicate$ text.length$ #2 <
-	{ pop$ s #1 "{ll}" format.name$ #3 text.prefix$ }
-	'skip$
-      if$
-    }
-  if$
-}
-
-FUNCTION {author.key.label}
-{ author empty$
-    { key empty$
-	{ cite$ #1 #3 substring$ }
-	{ key #3 text.prefix$ }
-      if$
-    }
-    { author format.lab.names }
-  if$
-}
-
-FUNCTION {author.editor.key.label}
-{ author empty$
-    { editor empty$
-	{ key empty$
-	    { cite$ #1 #3 substring$ }
-	    { key #3 text.prefix$ }
-	  if$
-	}
-	{ editor format.lab.names }
-      if$
-    }
-    { author format.lab.names }
-  if$
-}
-
-FUNCTION {author.key.organization.label}
-{ author empty$
-    { key empty$
-	{ organization empty$
-	    { cite$ #1 #3 substring$ }
-	    { "The " #4 organization chop.word #3 text.prefix$ }
-	  if$
-	}
-	{ key #3 text.prefix$ }
-      if$
-    }
-    { author format.lab.names }
-  if$
-}
-
-FUNCTION {editor.key.organization.label}
-{ editor empty$
-    { key empty$
-	{ organization empty$
-	    { cite$ #1 #3 substring$ }
-	    { "The " #4 organization chop.word #3 text.prefix$ }
-	  if$
-	}
-	{ key #3 text.prefix$ }
-      if$
-    }
-    { editor format.lab.names }
-  if$
-}
-
-FUNCTION {calc.label}
-{ type$ "book" =
-  type$ "inbook" =
-  or
-    'author.editor.key.label
-    { type$ "proceedings" =
-	'editor.key.organization.label
-	{ type$ "manual" =
-	    'author.key.organization.label
-	    'author.key.label
-	  if$
-	}
-      if$
-    }
-  if$
-  duplicate$
-  year field.or.null purify$ #-1 #2 substring$
-  *
-  'label :=
-  year field.or.null purify$ #-1 #4 substring$
-  *
-  sortify 'sort.label :=
-}
-
-FUNCTION {sort.format.names}
-{ 's :=
-  #1 'nameptr :=
-  ""
-  s num.names$ 'numnames :=
-  numnames 'namesleft :=
-    { namesleft #0 > }
-    { nameptr #1 >
-	{ "   " * }
-	'skip$
-      if$
-      s nameptr "{vv{ } }{ll{ }}{  ff{ }}{  jj{ }}" format.name$ 't :=
-      nameptr numnames = t "others" = and
-	{ "et al" * }
-	{ t sortify * }
-      if$
-      nameptr #1 + 'nameptr :=
-      namesleft #1 - 'namesleft :=
-    }
-  while$
-}
-
-FUNCTION {sort.format.title}
-{ 't :=
-  "A " #2
-    "An " #3
-      "The " #4 t chop.word
-    chop.word
-  chop.word
-  sortify
-  #1 global.max$ substring$
-}
-
-FUNCTION {author.sort}
-{ author empty$
-    { key empty$
-	{ "to sort, need author or key in " cite$ * warning$
-	  ""
-	}
-	{ key sortify }
-      if$
-    }
-    { author sort.format.names }
-  if$
-}
-
-FUNCTION {author.editor.sort}
-{ author empty$
-    { editor empty$
-	{ key empty$
-	    { "to sort, need author, editor, or key in " cite$ * warning$
-	      ""
-	    }
-	    { key sortify }
-	  if$
-	}
-	{ editor sort.format.names }
-      if$
-    }
-    { author sort.format.names }
-  if$
-}
-
-FUNCTION {author.organization.sort}
-{ author empty$
-    { organization empty$
-	{ key empty$
-	    { "to sort, need author, organization, or key in " cite$ * warning$
-	      ""
-	    }
-	    { key sortify }
-	  if$
-	}
-	{ "The " #4 organization chop.word sortify }
-      if$
-    }
-    { author sort.format.names }
-  if$
-}
-
-FUNCTION {editor.organization.sort}
-{ editor empty$
-    { organization empty$
-	{ key empty$
-	    { "to sort, need editor, organization, or key in " cite$ * warning$
-	      ""
-	    }
-	    { key sortify }
-	  if$
-	}
-	{ "The " #4 organization chop.word sortify }
-      if$
-    }
-    { editor sort.format.names }
-  if$
-}
-
-FUNCTION {presort}
-{ calc.label
-  sort.label
-  "    "
-  *
-  type$ "book" =
-  type$ "inbook" =
-  or
-    'author.editor.sort
-    { type$ "proceedings" =
-	'editor.organization.sort
-	{ type$ "manual" =
-	    'author.organization.sort
-	    'author.sort
-	  if$
-	}
-      if$
-    }
-  if$
-  *
-  "    "
-  *
-  year field.or.null sortify
-  *
-  "    "
-  *
-  title field.or.null
-  sort.format.title
-  *
-  #1 entry.max$ substring$
-  'sort.key$ :=
-}
-
-ITERATE {presort}
-
-SORT
-
-STRINGS { longest.label last.sort.label next.extra }
-
-INTEGERS { longest.label.width last.extra.num }
+INTEGERS { number.label longest.label.width }
 
 FUNCTION {initialize.longest.label}
 { "" 'longest.label :=
-  #0 int.to.chr$ 'last.sort.label :=
-  "" 'next.extra :=
+  #1 'number.label :=
   #0 'longest.label.width :=
-  #0 'last.extra.num :=
 }
 
-FUNCTION {forward.pass}
-{ last.sort.label sort.label =
-    { last.extra.num #1 + 'last.extra.num :=
-      last.extra.num int.to.chr$ 'extra.label :=
-    }
-    { "a" chr.to.int$ 'last.extra.num :=
-      "" 'extra.label :=
-      sort.label 'last.sort.label :=
-    }
-  if$
-}
-
-FUNCTION {reverse.pass}
-{ next.extra "b" =
-    { "a" 'extra.label := }
-    'skip$
-  if$
-  label extra.label * 'label :=
+FUNCTION {longest.label.pass}
+{ number.label int.to.str$ 'label :=
+  number.label #1 + 'number.label :=
   label width$ longest.label.width >
     { label 'longest.label :=
       label width$ 'longest.label.width :=
     }
     'skip$
   if$
-  extra.label 'next.extra :=
 }
 
 EXECUTE {initialize.longest.label}
 
-ITERATE {forward.pass}
-
-REVERSE {reverse.pass}
+ITERATE {longest.label.pass}
 
 FUNCTION {begin.bib}
-{ et.al.char.used
-    { "\newcommand{\etalchar}[1]{$^{#1}$}" write$ newline$ }
-    'skip$
-  if$
-  preamble$ empty$
+{ preamble$ empty$
     'skip$
     { preamble$ write$ newline$ }
   if$
