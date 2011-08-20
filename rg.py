@@ -614,10 +614,10 @@ class Fatgraph(object):
           >>> g1 == g
           False
           
-        Arguments `side1` and `side2` (valid values are 0 or 1)
-        control which side the new edge is attached to, i.e., which
-        of the two inequivalent cyclic orders the new trivalent
-        vertices will be given::
+        Arguments `side1` and `side2` control which side the new edge
+        is attached to (valid values are 0 or 1), i.e., which of the
+        two inequivalent cyclic orders the new trivalent vertices will
+        be given::
         
           >>> g = Fatgraph([Vertex([0,1,2]), Vertex([0,2,1])])
           >>> g1 = g.connect(0, 0, 1, 0)
@@ -627,11 +627,10 @@ class Fatgraph(object):
 
         In more detail: let 0,1,2 be the indices of the edges attached
         to the new vertex in the middle of `edge1`, where 0,1 denote
-        the two halves of `edge1`.  If `side1` evaluates to boolean
-        `False`, then the new trivalent vertex will have the cyclic
-        order [0,1,2]; if `side1` evaluates to boolean `True`, then
-        0,1 are swapped and the new trivalent vertex gets the cyclic
-        order [1,0,2]::
+        the two halves of `edge1`.  If `side1` is `0`, then the new
+        trivalent vertex will have the cyclic order [0,1,2]; if
+        `side1` is `1`, then 0,1 are swapped and the new trivalent
+        vertex gets the cyclic order [1,0,2]::
 
           >>> g1 == Fatgraph([Vertex([0,1,2]), Vertex([4,2,5]), Vertex([0,4,3]), Vertex([1,5,3])])
           True
