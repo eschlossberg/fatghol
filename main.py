@@ -609,12 +609,26 @@ elif 'homology' == args[0]:
         sys.exit(1)
 
     # compute graph complex and its homology ranks
-    hs = do_homology(g, n)
+    hs = list(reversed(do_homology(g, n)))
 
     # print results
     if not options.silent:
-        for (i, h) in enumerate(reversed(hs)):
+        for (i, h) in enumerate(hs):
             outfile.write("h_%d(M_{%d,%d}) = %d\n" % (i, g, n, h))
+
+    # perform some self-consistency checks
+    if g>0:
+        # from Harer's SLN1337, Theorem 7.1
+        if hs[1] != 0:
+            logging.error("Harer's Theorem 7.1 requires h_1=0 when g>0")
+        # From Harer's SLN1337, Theorem 7.2
+        if g==1 or g==2:
+            if hs[2] != n:
+                logging.error("Harer's Theorem 7.2 requires h_2=%d when g=1 or g=2" % n)
+        elif g>2:
+            if hs[2] != n+1:
+                logging.error("Harer's Theorem 7.2 requires h_2=%d when g>2" % n)
+            
 
 else:
     sys.stderr.write("Unknown action `%s`, aborting.\n" % args[0])

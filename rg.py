@@ -400,6 +400,7 @@ class Fatgraph(EqualIfIsomorphic):
         elif hasattr(self, 'vertices'):
             return "Fatgraph(%s)" % repr(self.vertices)
         else:
+            # avoid PyDB crashing when stepping into `Fatgraph.__init__` code
             return "Fatgraph(<Initializing...>)"
 
     
@@ -1607,6 +1608,20 @@ class Fatgraph(EqualIfIsomorphic):
                 yield m
 
 
+    def num_automorphisms(self):
+        """Return the cardinality of the automorphism group of this
+        `Fatgraph` object.
+
+        Examples::
+
+          >>> Fatgraph([Vertex([0,1,2]), Vertex([0,2,1])]).num_automorphisms()
+          6
+          >>> Fatgraph([Vertex([0,1,1]), Vertex([0,2,2])]).num_automorphisms()
+          2
+        """
+        return len(list(self.automorphisms()))
+    
+        
     def num_boundary_cycles(self):
         """Return the number of boundary components of this `Fatgraph` object.
 

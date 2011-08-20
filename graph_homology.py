@@ -13,8 +13,14 @@ import logging
 
 ## application-local imports
 
+from combinatorics import (
+    bernoulli,
+    factorial,
+    sign_exp,
+    )
 from homology import *
 from rg import MgnNumberedGraphsIterator, NumberedFatgraph
+from rational import Rational
 from valences import vertex_valences_for_given_g_and_n
 
 
@@ -51,6 +57,7 @@ def FatgraphComplex(g, n):
             continue
         generators[grade].append(graph, key=graph.underlying)
 
+
     # build chain complex
     C = ChainComplex(top_dimension)
     for i in xrange(top_dimension):
@@ -59,15 +66,29 @@ def FatgraphComplex(g, n):
                 graph_homology_differential)
         logging.debug("  Initialized grade %d chain module (with dimension %d)",
                      i, len(generators[i]))
+
+    # compute orbifold Euler characteristics
+    if g==0:
+        chi_hz = factorial(n-3) * sign_exp(n-3)
+    elif g==1:
+        chi_hz = Rational(sign_exp(n), 12) * factorial(n-1)
+    else: # g > 1
+        chi_hz = bernoulli(2*g) * factorial(2*g+n-3) / (factorial(2*g-2) * 2*g) * sign_exp(n)
+    chi_hz2 = bernoulli(g+1)*factorial(g+n-2)*sign_exp(n) / (factorial(g-1)*(g+1))
+    logging.info("  Expecting orbifold Euler characteristics (1): %s", chi_hz)
+    logging.info("  Expecting orbifold Euler characteristics (2): %s", chi_hz2)
+    chi = Rational(0)
+    for grade in xrange(len(generators)):
+        s = sign_exp(grade+1)
+        for g in generators[grade]:
+            chi += Rational(s, g.num_automorphisms())
+    C.orbifold_euler_characteristics = chi
+    logging.info("  Computed orbifold Euler characteristics: %s" % chi)
+    if chi != chi_hz:
+        logging.error("Expected and computed orbifold Euler characteristics do not match!")
     return C
 
 
-def sign_exp(m):
-    if (m % 2) == 0:
-        return +1
-    else:
-        return -1
-    
 def graph_homology_differential(graph):
     """The graph homology differential (the same for every grade).
 
