@@ -10,7 +10,6 @@
 %\usepackage[nomsgs]{refcheck}
 \usepackage[reqno]{amsmath}
 \usepackage{color}
-\newcommand{\FIXME}[1]{{\color{red}\footnote{\sffamily #1}}}
 \usepackage[T1]{fontenc}
 \usepackage{mdwlist}
 %  \renewenvironment{description}{%
@@ -65,6 +64,18 @@
 \usepackage{xytree}
 \setlength{\treegap}{24pt}  
 \setlength{\treeheight}{18pt}
+
+%% package FIXME
+\makeatletter%
+\newcounter{fixme@note}\stepcounter{fixme@note}%
+\newcommand{\FIXME}[1]{%
+    \colorbox{yellow}{\footnotemark[\value{fixme@note}]}%
+    \footnotetext[\value{fixme@note}]%
+      {\sffamily \colorbox{yellow}{FIXME:} #1}%
+    \stepcounter{fixme@note}%
+}%
+\makeatother%
+%%
 
 
 %%%
