@@ -33,70 +33,6 @@ def vertex_valences_for_given_g_and_n(g,n):
         L = 2*g + n + K - 2
     return result
 
-
-class CyclicHash(object):
-    """Compute hash values for a cyclic sequence.
-
-    The hash is computed using the matrix trace invariance formula:
-
-      tr(M_1 M_2 ... M_n) = tr(M_2 ... M_n M_1)
-
-    """
-    __slots__ = (
-        'M',
-        'mod',
-        'samples',
-        )
-    def __init__(self, modulus=251, samples=None):
-        from random import randint
-        self.mod = modulus
-        if samples is None:
-            samples = modulus
-        self.M = []
-        for i in xrange(modulus):
-            self.M.append((randint(0,modulus-1),
-                           randint(0,modulus-1),
-                           randint(0,modulus-1),
-                           randint(0,modulus-1)))
-
-    def __call__(self, seq, start, end):
-        # tr(M_1 * M_2 * ... * M_n) is ciclically invariant
-        factors = [ self.M[seq[i]] for i in xrange(start,end) ]
-        product = reduce(self.__matrix_product, factors)
-        return (product[0] + product[3])
-
-    @staticmethod
-    def __matrix_product(M1, M2):
-        return ((M1[0]*M2[0]+M1[1]*M2[2]) % self.mod,
-                (M1[0]*M2[1]+M1[1]*M2[3]) % self.mod,
-                (M1[2]*M2[0]+M1[3]*M2[2]) % self.mod,
-                (M1[2]*M2[1]+M1[3]*M2[3]) % self.mod)
-
-        
-class VertexCache(object):
-    """A `Vertex` factory with caching."""
-    
-    __slots__ = (
-        'cache',
-        'hash',
-        'max_edge_color',
-        )
-
-    def __init__(self, max_edge_color):
-        self.max_edge_color = max_edge_color
-        self.cache = {}
-        self.hash = CyclicHash(samples=max_edge_color)
-
-    def __call__(self, edge_seq, start=0, end=None):
-        """Return a `Vertex` instance."""
-        if end is None:
-            end = len(edge_seq)
-        h = self.hash(edge_seq, start, end)
-        # create object, if not already cached
-        if not self.cache.has_key(h):
-            cache[h] = Vertex(edge_seq, start, end)
-        return cache[h]
-
     
 class Vertex(CyclicList):
     """A (representative of) a vertex of a ribbon graph.
@@ -189,9 +125,10 @@ class Graph(object):
         '_genus',
         '_valence_spectrum',
         '_vertex_valences',
+        'endpoints',
         'vertices',
         )
-    def __init__(self, vertex_valences, edge_seq, vertex_factory):
+    def __init__(self, vertex_valences, edge_seq, vertex_factory=Vertex):
         assert is_sequence_of_integers(vertex_valences), \
                "Graph.__init__: parameter `vertex_valences` must be sequence of integers, "\
                "but got '%s' instead" % vertex_valences
@@ -210,20 +147,26 @@ class Graph(object):
         assert is_sequence_of_integers(edge_seq), \
                "Graph.__init__: parameter `edge_seq` must be sequence of integers, "\
                "but got '%s' instead" % edge_seq
-        assert max(edge_seq) == self._num_edges - 1, \
-               "Graph.__init__: invalid parameter `edge_seq`:"\
-               "Sequence of edges %s doesn't match number of edges %d" \
-               % (edge_seq, self._num_edges)
+
         # Break up `edge_seq` into smaller sequences corresponding to vertices.
         self.vertices = []
+        # `self.endpoints` is the adjacency list of this graph.  For
+        # each edge, store a pair `(v1, v2)` where `v1` and `v2` are
+        # indices of endpoints.
+        self.endpoints = [ [] for dummy in xrange(self._num_edges) ]
         base = 0
         for current_vertex_index in xrange(len(vertex_valences)):
             VLEN = vertex_valences[current_vertex_index]
             # FIXME: this results in `edge_seq` being copied into smaller
             # subsequences; can we avoid this by defining a list-like object
             # "vertex" as a "view" on a portion of an existing list?
-            self.vertices.append(Vertex(edge_seq, base, base+VLEN))
+            self.vertices.append(vertex_factory(edge_seq, base, base+VLEN))
             base += VLEN
+
+            # build adjacency list as we go along
+            for edge in self.vertices[current_vertex_index]:
+                self.endpoints[edge].append(current_vertex_index)
+
 
     def __getitem__(self, index):
         return self.vertices[index]
@@ -248,7 +191,7 @@ class Graph(object):
         """
         # build enpoints vector for the final check that a constructed map
         # is an automorphism
-        ev = [ self.endpoints(l) for l in self.edges() ]
+        ev = self.endpoints[:]
         ev.sort()
 
         # gather valences and repetition pattern at
@@ -261,7 +204,7 @@ class Graph(object):
 
         # pre-allocate list of right size; all elements must be empty
         # lists, that we fill with `.append()` later on
-        candidates = [ [] ] * self.num_vertices()
+        candidates = [ [] for dummy in xrange(self.num_vertices()) ]
         
         # FIXME: if vertex `i` can be mapped into vertex `j`, with some
         # rotation delta, then vertex `j` can be mapped into vertex `i`
@@ -313,30 +256,9 @@ class Graph(object):
             yield ([ elt[0] for elt in a ],
                    [ elt[1] for elt in a ])
 
-    def classify(self):
-        """Return the pair (g,n) for this `Graph` object."""
-        return (self.genus(), self.num_boundary_components())
-
     def edges(self):
         """Iterate over edge colorings."""
         return xrange(0, self.num_edges())
-    
-    def endpoints(self, n):
-        """Return the endpoints of edge `n`.
-    
-        The endpoints are returned as a pair (v1,v2) where `v1` and `v2`
-        are indices of endpoint vertices in this `Graph` object.
-        """
-        result = []
-        for vi in xrange(len(self.vertices)):
-            c = self.vertices[vi].count(n)
-            if 2 == c:
-                return (vi,vi)
-            elif 1 == c:
-                result.append(vi)
-        if 0 == len(result):
-            raise KeyError, "Edge %d not found in graph '%s'" % (n, repr(self))
-        return result
     
     def genus(self):
         """Return the genus g of this `Graph` object."""
@@ -360,6 +282,43 @@ class Graph(object):
                 return True
         return False
 
+    def is_connected(self):
+        """Return `True` if graph is connected.
+
+        Count all vertices that we can reach from the 0th vertex,
+        using a breadth-first algorithm; the graph is connected iff
+        this count equals the number of vertices.
+
+        See:
+          http://brpreiss.com/books/opus4/html/page554.html#SECTION0017320000000000000000
+          http://brpreiss.com/books/opus4/html/page561.html#SECTION0017341000000000000000
+          
+        Examples::
+          >>> Graph([4, 4], [3, 3, 0, 0, 2, 2, 1, 1]).is_connected()
+          False
+          >>> Graph([4, 4], [3, 1, 2, 0, 3, 0, 2, 1]).is_connected()
+          True
+        """
+        endpoints = self.endpoints
+        visited_edges = set()
+        visited_vertices = set()
+        vertices_to_visit = [0]
+        for vi in vertices_to_visit:
+            # enqueue neighboring vertices that are not connected by
+            # an already-visited edge
+            for l in self.vertices[vi]:
+                if l not in visited_edges:
+                    # add other endpoint of this edge to the to-visit list
+                    if endpoints[l][0] == vi:
+                        other = endpoints[l][1]
+                    else:
+                        other = endpoints[l][0]
+                    if other not in visited_vertices:
+                        vertices_to_visit.append(other)
+                    visited_edges.add(l)
+                visited_vertices.add(vi)
+        return (len(visited_vertices) == len(self.vertices))
+            
     def is_orientation_reversing(self, automorphism):
         """Return `True` if `automorphism` reverses orientation of this `Graph` instance."""
         def sign_of_rotation(l,r=1):
@@ -461,25 +420,27 @@ class Graph(object):
         
         L = self.num_edges()
         # for efficiency, gather all endpoints now
-        ends = [ self.endpoints(l) for l in xrange(L) ]
+        ends = self.endpoints
+        for edge,endpoint in enumerate(ends):
+            assert 2 == len(endpoint), \
+                   "%s.num_boundary_components(): " \
+                   "self.endpoints[%d] = %s" \
+                   % (self, edge, endpoint)
 
         # pass1: build a "copy" of `graph`, replacing each edge coloring
         # with a pair `(other, index)` pointing to the other endpoint of
         # that same edge: the element at position `index` in vertex
         # `other`.
         pass1 = []
-        def other(pair, one):
-            """Return the member of `pair` not equal to `one`."""
-            if pair[0] == one:
-                return pair[1]
-            else:
-                return pair[0]
         for (vertex_index, vertex) in enumerate(self.vertices):
             replacement = []
             for (current_index, edge) in enumerate(vertex):
                 (v1, v2) = ends[edge]
                 if v1 != v2:
-                    other_end = other(ends[edge], vertex_index)
+                    if ends[edge][0] == vertex_index:
+                        other_end = ends[edge][1]
+                    else:
+                        other_end = ends[edge][0]
                     other_index = self.vertices[other_end].index(edge)
                 else:
                     other_end = v1 # == v2, that is *this* vertex
@@ -645,33 +606,39 @@ class MorphismIteratorFactory(object):
         return (vertex_to_vertex_mappings, vertex_to_vertex_mapping_domain)
 
 
-def all_graphs(vertex_valences):
+def all_connected_graphs(vertex_valences):
     """Return all graphs having vertices of the given valences.
 
     Examples::
-      >>> all_graphs([4])
+      >>> all_connected_graphs([4])
       [Graph([4], [[1, 0, 1, 0]]),
        Graph([4], [[1, 1, 0, 0]])]
-      >>> all_graphs([3,3])
+      >>> all_connected_graphs([3,3])
       [Graph([3, 3], [[2, 0, 1], [2, 0, 1]]),
        Graph([3, 3], [[2, 1, 0], [2, 0, 1]]),
        Graph([3, 3], [[2, 1, 1], [2, 0, 0]])]
     """
     assert is_sequence_of_integers(vertex_valences), \
-           "all_graphs: parameter `vertex_valences` must be a sequence of integers, "\
+           "all_connected_graphs: parameter `vertex_valences` must be a sequence of integers, "\
            "but got %s" % vertex_valences
+    assert 0 == sum(vertex_valences) % 2, \
+           "all_connected_graphs: sum of vertex valences must be divisible by 2"
 
     total_edges = sum(vertex_valences) / 2
+    vertex_factory=Vertex
 
-    # we need the first graph in list to pre-compute some structural constants
-    graph_iterator = all_canonical_decorated_graphs(vertex_valences)
-    graphs = [ graph_iterator.next() ]
+    graphs = []
+    for edge_seq in all_edge_seq(total_edges):
+        current = Graph(vertex_valences, edge_seq, vertex_factory)
+        if not (current.is_canonical() and current.is_connected()):
+            continue
+        
+        # the valence spectrum is the same for all graphs in the list,
+        # so only compute it once
+        if len(graphs) == 0:
+            morphisms = MorphismIteratorFactory(current.valence_spectrum())
 
-    # the valence spectrum is the same for all graphs in the list
-    morphisms = MorphismIteratorFactory(graphs[0].valence_spectrum())
-
-    # now walk down the list and remove isomorphs
-    for current in graph_iterator:
+        # now walk down the list and remove isomorphs
         current_is_isomorphic_to_already_found = False
         for candidate in graphs:
             for isomorphism in morphisms(candidate, current):
@@ -760,17 +727,6 @@ def all_edge_seq(n):
         yield s
 
 
-def all_canonical_decorated_graphs(vertex_valences, vertex_factory=None):
-    """Iterate over all canonical decorated graphs with given vertex valences."""
-    total_edges = sum(vertex_valences) / 2
-    if vertex_factory is None:
-        vertex_factory = VertexCache(total_edges)
-    for edge_seq in all_edge_seq(total_edges):
-        g = Graph(vertex_valences, edge_seq, vertex_factory)
-        if g.is_canonical():
-            yield g
-
-
 class Mapping(dict):
     """An incrementally constructible mapping.
 
@@ -789,7 +745,7 @@ class Mapping(dict):
         already established one.
 
         Examples::
-          >>> m=Mapping(3)
+          >>> m=Mapping()
           >>> m.extend([0, 1], [0, 1])
           True
           >>> m.extend([1, 2], [0, 2])
