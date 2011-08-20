@@ -325,7 +325,6 @@ class Permutation(dict):
         computes the sign by counting the number of interchanges
         required to change the given permutation into the identity
         one.
-
         """
         # copy Permutation values into a linear list
         p = self.values()
