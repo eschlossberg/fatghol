@@ -6,7 +6,7 @@ __docformat__ = 'reStructuredText'
 
 
 from utils import *
-from cyclic import CyclicList,repetition_pattern
+from cyclic import CyclicList
 
 from itertools import *
 import operator
@@ -41,6 +41,7 @@ class Vertex(CyclicList):
     (decorated) edges.  The edge colorings may be accessed through a
     (read-only) sequence interface.
     """
+    __slots__ = ('_repetition_pattern',)
     def __init__(self, edge_seq, start=0, end=None):
         """Create `Vertex` instance by excerpting the slice `[start:end]` in `edge_seq`.
         """
@@ -50,7 +51,6 @@ class Vertex(CyclicList):
 
         # the following values will be computed when they are first requested
         self._repetition_pattern = None
-##     __slots__ = ('_repetition_pattern',)
 ##     def __new__(cls, edge_seq, start=0, end=None):
 ##         """Create `Vertex` instance by excerpting the slice `[start:end]` in `edge_seq`.
 ##         """
@@ -105,7 +105,7 @@ class Vertex(CyclicList):
         results.
         """
         if self._repetition_pattern is None:
-            self._repetition_pattern = repetition_pattern(self) 
+            self._repetition_pattern = CyclicList.repetition_pattern(self) 
         return self._repetition_pattern
 
 
@@ -178,7 +178,7 @@ class Graph(object):
         # gather valences and repetition pattern at
         # start for speedup
         valence = [ len(vertex) for vertex in self.vertices ]
-        rp = [ repetition_pattern(vertex) for vertex in self.vertices ]
+        rp = [ vertex.repetition_pattern() for vertex in self.vertices ]
 
         ## pass 1: for each vertex, list all destinations it could be
         ## mapped to, in the form (dest. vertex, rotation).
