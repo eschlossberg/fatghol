@@ -44,7 +44,7 @@ class VectorSpace(object):
     def __repr__(self):
         return "VectorSpace(%s)" % self.base
     def __str__(self):
-        return "Vector space with base %s" % self.base
+        return "<Vector space with base %s>" % self.base
     
     def coordinates(self, element):
         """Return the coordinate vector of `element`.
