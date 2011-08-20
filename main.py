@@ -16,7 +16,7 @@ import sys
 from utils import positive_int
 
 
-def graph_to_xypic(graph):
+def graph_to_xypic(graph, g=None, n=None, orientable=None, name=None):
     r"""Print XY-Pic code snippet to render graph `graph`.
 
     Examples::
@@ -49,14 +49,37 @@ def graph_to_xypic(graph):
       "v3";"v3"**\crv{"v3l3"&"v3l4"},%
       \endxy
     """
+    # provide default values for arguments
+    if g is None:
+        g = graph.genus()
+    if n is None:
+        n = graph.num_boundary_components()
+    if orientable is None:
+        orientable = graph.is_oriented()
+
+    # header
+    if name is not None:
+        result = r"\subsection*{%s}" % name
+    else:
+        result = ""
+    if graph.numbering is not None:
+        result += r"{\raggedright " + '\n'
+        for (bcy, nr) in graph.numbering.iteritems():
+            result += r"(%s):{\bf %s}\\ " % (
+                str.join(",", [str(edge) for edge in bcy]),
+                nr
+                ) + '\n'
+    else: 
+        result += r"{\raggedright " +'\n'
+    
     def vertex_label(v):
-        return '['+("".join(map(str,v)))+']'
+        return '[' + str.join("", map(str, v)) + ']'
     label = map(vertex_label, graph)
-    K = len(graph) # number of vertices
-    result = r'\xy 0;<2cm,0cm>:%'+'\n'
+    K = graph.num_vertices
+    result += r'\xy 0;<2cm,0cm>:%'+'\n'
     # put graph vertices on a regular polygon
     if K < 3:
-        result += '(1,1)="v1",%\n(-1,1)="v2",%\n'
+        result += '(2,0)="v1",%\n(0,0)="v2",%\n'
     else:
         result += r'{\xypolygon%d"v"{~={0}~>{}}},%% mark vertices' \
                   % (max(K,3)) \
@@ -65,30 +88,35 @@ def graph_to_xypic(graph):
     def rotation_angle(K,k):
         return 90+(k-1)*360/K
     for k in range(1,K+1):
-        # "vK",{\xypolygonL"vKl"{~{1.20,0):~={...}~>{}}},%
-        result += r'"v%d",{\xypolygon%d"v%dl"{~:{(1.20,0):q}~={%d}~>{}}},%%' \
+        # "vK",{\xypolygonL"vKl"{~{(1.20,0):}~={...}~>{}}},%
+        result += r'"v%d",{\xypolygon%d"v%dl"{~:{(1.20,0):}~={%d}~>{}}},' \
                   % (k, 2*len(graph[k-1])-2, k, rotation_angle(K,k)) \
-                  + '\n'
+                  + '%\n'
     for k in range(1,K+1):
         # "vK"*\txt{[...]},%
-        result += r'"v%d"*\txt{%s},%%' \
+        result += r'"v%d"*\txt{%s},' \
                   % (k, label[k-1]) \
-                  + '\n'
-    for l in range(1,num_edges(graph)+1):
-        (v1,v2) = endpoints(l,graph)
+                  + '%\n'
+    for l in xrange(graph.num_edges):
+        (v1,v2) = graph.endpoints(l)
         if v1 != v2:
-            result += r'"v%d";"v%d"**\crv{"v%dl%d"&"v%dl%d"},%%' \
-                      % (v1+1, v2+1, v1+1, 1+graph[v1].index(l),
-                         v2+1, 1+graph[v2].index(l)) \
-                      + '\n'
+            result += r'"v%d";"v%d"**\crv{"v%dl%d"&"v%dl%d"}?(.33)*\txt{\sl %d},' \
+                      % (v1+1, v2+1, v1+1, 1+graph.vertices[v1].index(l),
+                         v2+1, 1+graph[v2].index(l), l) \
+                      + '%\n'
         else:
-            h = graph[v1].index(l)
-            result += r'"v%d";"v%d"**\crv{"v%dl%d"&"v%dl%d"},%%' \
-                      % (v1+1, v2+1, v1+1, h+1, v2+1, 1+graph[v1].index(l,h+1)) \
-                      + '\n'
-    (g,n) = graph.classify()
-    result += r'0*\txt{g=%d,n=%d}' % (g,n) + '\n'
+            h = graph.vertices[v1].index(l)
+            result += r'"v%d";"v%d"**\crv{"v%dl%d"&"v%dl%d"},' \
+                      % (v1+1, v2+1, v1+1, h+1, v2+1, 1+graph.vertices[v1].index(l,h+1)) \
+                      + '%\n'
+    result += r'0,(-0.50,+1.00)*\txt{g=%d,n=%d},' % (g,n) + '%\n'
+    if orientable is False:
+        # 0,(-1.20,+1.20);(+1.20,-1.20)**[red][|(10)]@{-},%
+        result += r"0,(0,+1.20);(+2.40,-1.20)**[red][|(10)]@{-}," + '%\n'
+        result += r"0,(0,-1.20);(+2.40,+1.20)**[red][|(10)]@{-}," + '%\n'
     result += r'\endxy'
+
+    result += r"}" + '\n' # close the "\raggedright{ ..."
     return result
 
 
@@ -100,13 +128,13 @@ parser = OptionParser(usage="""Usage: %prog [options] action [arg ...]
 
     Actions:
 
-      vertices G N
+      valences G N
         Print the vertex valences occurring in M_{g,n} graphs
 
       graphs G N
         Print the graphs occurring in M_{g,n}
 
-      graphs-with-valence V1,V2,...
+      vertices V1,V2,...
         Print the graphs having only vertices of the specified valences.
 
       homology G N
@@ -148,7 +176,7 @@ if 'test' == args[0]:
     doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE)
 
 # vertices -- show vertices for given g,n
-elif 'vertices' == args[0]:
+elif 'valences' == args[0]:
     del args[0]
     if len(args) < 2:
         parser.print_help()
@@ -206,12 +234,18 @@ elif "graphs" == args[0]:
         if options.latex:
             outfile.write(r"""
     \documentclass[a4paper,twocolumn]{article}
-    \usepackage[curve,poly,xdvi]{xy}
+    \usepackage[color,curve,line,poly,xdvi]{xy}
     \begin{document}
-    """)
-        for graph in graphs:
+    \section*{Fatgraphs labeling cells of $M_{%d,%d}$}
+    """ % (g,n))
+        for (num, graph) in enumerate(graphs):
             if options.latex:
-                outfile.write(graph_to_xypic(graph)+'\n')
+                outfile.write(graph_to_xypic(graph,
+                                             graph.genus(),
+                                             graph.num_boundary_components(),
+                                             graph.is_oriented(),
+                                             name=r"\#%d" % num,
+                                             )+'\n')
             else:
                 outfile.write("%s\n" % ((graph,
                                          graph.genus(),
@@ -226,8 +260,8 @@ elif "graphs" == args[0]:
             outfile.write("\n")
 
 
-# graphs-with-valence -- list graphs for given vertex valences
-elif 'graphs-with-valence' == args[0]:
+# vertices -- list graphs for given vertex valences
+elif 'vertices' == args[0]:
     # parse command line
     del args[0]
     if len(args) == 0:
@@ -258,10 +292,16 @@ elif 'graphs-with-valence' == args[0]:
     \documentclass[a4paper,twocolumn]{article}
     \usepackage[curve,poly,xdvi]{xy}
     \begin{document}
-    """)
+    \section*{Fatgraphs labeling cells of $M_{%d,%d}$}
+    """ % (g,n))
         for graph in graphs:
             if options.latex:
-                outfile.write(graph_to_xypic(graph)+'\n')
+                outfile.write(graph_to_xypic(graph,
+                                             graph.genus(),
+                                             graph.num_boundary_components(),
+                                             graph.is_oriented(),
+                                             name=r"\#%d" % num,
+                                             )+'\n')
             else:
                 outfile.write("%s\n" % ((graph,
                                          graph.genus(),
@@ -307,7 +347,7 @@ elif 'homology' == args[0]:
     # print results
     if not options.silent:
         for (i, h) in enumerate(hs):
-            outfile.write("h_%d(M_{%d,%d}) = %d\n" % (i, g, n, h))
+            outfile.write("h_%d(R_{%d,%d}) = %d\n" % (i, g, n, h))
 
 else:
     sys.stderr.write("Unknown action `%s`, aborting.\n" % args[0])
