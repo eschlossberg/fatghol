@@ -47,8 +47,8 @@ $\otimes := - \otimes_K -$.  In this section, we mainly follow
           j_r := \sum_{r=1}^{k_s} j_{sr}
           %%
           \ar@{<->}  "1,1";"3,1" _{\txt{signed \\ reordering}} 
-          \ar "1,1";"1,2" ^{\gamma_{n; k_1, \ldots, k_n} \otimes \id}
-          \ar "3,1";"3,2" ^{\id \otimes \bigotimes_{s=1}^n \gamma_{k_s; j_{s1}, \ldots,
+          \ar "1,1";"1,2" ^{\gamma_{n; k_1, \ldots, k_n} \otimes \idmap}
+          \ar "3,1";"3,2" ^{\idmap \otimes \bigotimes_{s=1}^n \gamma_{k_s; j_{s1}, \ldots,
               j_{sk_s}}} 
           \ar "1,2";"2,2" ^{\gamma_{k; j_{11}, \ldots, j_{nk_n}}}
           \ar "3,2";"2,2" _{\gamma_{n; j_1, \ldots, j_n}}
@@ -65,7 +65,7 @@ $\otimes := - \otimes_K -$.  In this section, we mainly follow
           & {\Oo}(n)
           \\
           {\Oo}(n) \otimes {\Oo}(1)\tp{n}
-          \ar "1,1";"3,1" _{\id \otimes \eta\tp{n}}
+          \ar "1,1";"3,1" _{\idmap \otimes \eta\tp{n}}
           \ar "1,1";"2,2" 
           \ar "3,1";"2,2" _{\gamma_{n; 1, \ldots, 1}}
           }
@@ -76,7 +76,7 @@ $\otimes := - \otimes_K -$.  In this section, we mainly follow
           & {\Oo}(n)
           \\
           {\Oo}(1) \otimes {\Oo}(n)
-          \ar "1,1";"3,1" _{\eta \otimes \id}
+          \ar "1,1";"3,1" _{\eta \otimes \idmap}
           \ar "1,1";"2,2" 
           \ar "3,1";"2,2" _{\gamma_{1; n}}
           }}
@@ -115,7 +115,7 @@ $\otimes := - \otimes_K -$.  In this section, we mainly follow
           {\Oo}(k)
           \ar "1,1";"1,2" ^(.70){\gamma_{n; k_1, \ldots, k_n}}
           \ar "2,1";"2,2" _(.70){\gamma_{n; k_1, \ldots, k_n}}
-          \ar "1,1";"2,1" _{\id \oplus (\tau_1 \otimes \cdots \otimes \tau_n)}
+          \ar "1,1";"2,1" _{\idmap \oplus (\tau_1 \otimes \cdots \otimes \tau_n)}
           \ar "1,2";"2,2" ^{\tau_1 \oplus \cdots \oplus \tau_n}
           }}
       \label{eq:o-perm2}
@@ -131,7 +131,7 @@ $K$-dg-module $M$, which is defined by:
 \begin{equation*}
   \EndOp[M](n) := \Hom( M\tp{n}, M).
 \end{equation*}
-The unit is given by the identity map $\id_M \in \Hom(M,M) =
+The unit is given by the identity map $\idmap_M \in \Hom(M,M) =
 \EndOp[M](1)$; the $\Perm{n}$-action is the (signed) permutation of
 tensor product factors, and, finally, the maps $\gamma_{n; k_1, \ldots, k_n}$
 are given by 
@@ -143,7 +143,7 @@ are given by
       \Hom(M\tp{n}, M) \otimes \Hom(M\tp{k}, M\tp{n})
       \\
       \Hom(M\tp{k}, M)
-      \ar "1,1";"2,1" ^{\id \otimes (\text{$n$-fold tensor product of
+      \ar "1,1";"2,1" ^{\idmap \otimes (\text{$n$-fold tensor product of
           maps})}
       \ar "2,1";"3,1" ^{\circ}
       }}
@@ -253,10 +253,10 @@ express by requiring the following diagrams to commute:
       {\Oo}(n) \otimes X\tp{n} 
       %%
       \ar@{<->} "1,1";"3,1"  _{\txt{signed \\ reordering}}
-      \ar "1,1";"1,2" ^(.65){\gamma \otimes \id}
+      \ar "1,1";"1,2" ^(.65){\gamma \otimes \idmap}
       \ar "1,2";"2,2" ^{\phi_k}
       \ar "3,2";"2,2" _{\phi_n}
-      \ar "3,1";"3,2" _(.75){\id \otimes \phi\tp{k}}
+      \ar "3,1";"3,2" _(.75){\idmap \otimes \phi\tp{k}}
       }\endxyc}
   \\
   {\xyc\xymatrix@C=36pt{%
@@ -268,8 +268,8 @@ express by requiring the following diagrams to commute:
       & 
       X
       %%
-      \ar "1,1";"1,2" ^{\id \otimes \varepsilon(\sigma)}
-      \ar "1,1";"2,1" _{\sigma \otimes \id\tp{n}}
+      \ar "1,1";"1,2" ^{\idmap \otimes \varepsilon(\sigma)}
+      \ar "1,1";"2,1" _{\sigma \otimes \idmap\tp{n}}
       \ar "1,2";"2,2" ^{\phi_n}
       \ar "2,1";"2,2" _{\phi_n}
       }\endxyc}
@@ -281,9 +281,9 @@ express by requiring the following diagrams to commute:
       &
       X
       %%
-      \ar "1,1";"1,2" ^(.35){\eta \otimes \id}
+      \ar "1,1";"1,2" ^(.35){\eta \otimes \idmap}
       \ar "1,2";"1,3" ^(.60){\phi_1}
-      \ar@/_1pc/ "1,1";"1,3" _{\id_X}
+      \ar@/_1pc/ "1,1";"1,3" _{\idmap_X}
       }\endxyc}
 \end{gather}
 
@@ -549,10 +549,10 @@ Fix an operad ${\Oo}$ and an ${\Oo}$-algebra $X$, and an $K$-module $M$.
       {\Oo}(n) \otimes X\tp{n-1} \otimes M & X
       %%
       \ar@{<->} "1,1";"2,1"  _{\txt{signed \\ reordering}}
-      \ar "1,1";"1,2" ^(.65){\gamma \otimes \id_X\tp{k-1} \otimes \id_M}
+      \ar "1,1";"1,2" ^(.65){\gamma \otimes \idmap_X\tp{k-1} \otimes \idmap_M}
       \ar "1,2";"3,2" ^{\psi_k}
       \ar "3,1";"3,2" _{\psi_n}
-      \ar "2,1";"3,1" _(.75){\id \otimes \phi\tp{k-1} \otimes \psi_{k_n-1}}
+      \ar "2,1";"3,1" _(.75){\idmap \otimes \phi\tp{k-1} \otimes \psi_{k_n-1}}
       }\endxyc}
   \\
   {\xyc\xymatrix@C=48pt{%
@@ -564,8 +564,8 @@ Fix an operad ${\Oo}$ and an ${\Oo}$-algebra $X$, and an $K$-module $M$.
       & 
       X
       %%
-      \ar "1,1";"1,2" ^{\id_{\Oo} \otimes \varepsilon(\sigma) \otimes \id_M}
-      \ar "1,1";"2,1" _{\sigma \otimes \id_X\tp{n-1} \otimes \id_M}
+      \ar "1,1";"1,2" ^{\idmap_{\Oo} \otimes \varepsilon(\sigma) \otimes \idmap_M}
+      \ar "1,1";"2,1" _{\sigma \otimes \idmap_X\tp{n-1} \otimes \idmap_M}
       \ar "1,2";"2,2" ^{\psi_n}
       \ar "2,1";"2,2" _{\psi_n}
       }\endxyc}
@@ -577,9 +577,9 @@ Fix an operad ${\Oo}$ and an ${\Oo}$-algebra $X$, and an $K$-module $M$.
       &
       M
       %%
-      \ar "1,1";"1,2" ^(.35){\eta \otimes \id_M}
+      \ar "1,1";"1,2" ^(.35){\eta \otimes \idmap_M}
       \ar "1,2";"1,3" ^(.60){\psi_1}
-      \ar@/_1pc/ "1,1";"1,3" _{\id_M}
+      \ar@/_1pc/ "1,1";"1,3" _{\idmap_M}
       }\endxyc}
 \end{gather}
 \end{definition}

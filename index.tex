@@ -19,8 +19,13 @@
 
 
 %%% specialized utilities
+\usepackage{clrscode}%
+  \newcommand{\nil}{\const{nil}}%
 \usepackage{my/fixme}    % provide \FIXME
 \usepackage{my/fancyvrb} % use `"' for short verbatims
+\usepackage{float}%
+  \floatstyle{ruled}%
+  \newfloat{Algorithm}{htb}{lsa}[chapter]%
 \usepackage{my/listings} % typeset Python code
 
 
@@ -38,7 +43,7 @@
 
 
 %%% document
-\includeonly{title,graphcomplex,algorithm,python,auxcode}
+\includeonly{title,graphcomplex,algorithm,rheinfall,python,auxcode}
 \begin{document}
 \VerbatimFootnotes% from `fancyvrb`
 
@@ -58,6 +63,7 @@
 \include{prelim}
 \include{graphcomplex}
 \include{algorithm}
+\include{rheinfall}
 \include{gc}
 \include{fd}
 \include{ainfty}
@@ -78,7 +84,7 @@
 %%
 %% Bibliografia
 %%
-\bibliography{math,tech}
+\bibliography{math,linalg,tech}
 \bibliographystyle{halpha}
 
 

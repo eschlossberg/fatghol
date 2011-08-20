@@ -1,0 +1,617 @@
+
+\chapter[Parallel Gaussian Elimination]
+  {A novel algorithm for exact parallel Gaussian Elimination 
+    of large sparse matrices}
+\label{chap:rheinfall}
+
+The algorithm presented in Chapter~\ref{chap:algorithm} reduces
+computation of the Betti number of moduli spaces $\M_{g,n}$ to
+reckoning the rank (over $\setQ$) of some large sparse matrix with
+integer entries.  An effective method for computing this rank is given
+by Gaussian Elimination.
+
+The serial algorithm for Gaussian Elimination is well-known; it
+consists of a certain number of iterations of the following two steps: a
+\emph{pivoting} step followed by an \emph{elimination} step.  Starting
+with the upper left entry, a non-zero element (pivot) is searched for;
+once a pivot has been found, a permutation is applied so that the
+pivot rests in the upper left corner of the ``uneliminated'' matrix.
+In the elimination phase, all the elements in the leftmost column and
+below the pivot are set to zero by summing to each row a suitable
+multiple of the pivot row.  Then the procedure is recursively applied
+to the portion of the matrix excluding the topmost row and the
+leftmost column.
+
+Several parallel Gaussian Elimination algorithms have been proposed;
+however, while the elimination step is readily parallelized, the
+pivoting step is not, for it essentially involves collective
+(blocking) communication among all involved processors.  Therefore,
+some authors have proposed variants of the algorithm that perform
+pivoting in some restricted form or no pivoting at all \cite{Tiskin99,
+  DBLP:journals/corr/abs-0912-2047}, others have applied graph
+partitioning algorithms to reorder the entries of the matrix so to
+avoid pivoting during Gaussian Elimination \cite{grigoridemmelli07}.
+A problem with these approaches is that they impose some restriction
+on the class of matrices to which the algorithm applies: depending on
+the algorithm variant, matrices need to be symmetric positive
+definite, or diagonally dominant, or non-singular.  
+
+When exact computations are wanted (e.g., over finite fields or
+integer arithmetic), some of the above Gaussian Elimination algorithms
+fail to be effective: during elimination, entries which are in pivot
+position may become zero.  Gaussian Elimination algorithms with exact
+computations has been analysed in \cite{Dumas02computingthe}; the
+authors however concluded that there was ---to date--- no practical
+parallel algorithm for computing the rank of sparse matrices.
+
+Let us say that a matrix is in ``block echelon form'' iff each row
+starts with a number of null entries that is \emph{not less} than the
+number of null entries of the row directly above.
+The algorithm presented here is based on the observation that any
+sparse matrix can be put in a ``block echelon form'' with minimal
+computational effort.  One can then run elimination on each block of
+rows of the same length independently (i.e., in parallel); a
+communication step is needed to re-order the rows after elimination. 
+The procedure ends when all blocks have been reduced to a single row,
+i.e., the matrix has been put in row echelon form.
+
+As can be seen from this cursory description, our algorithm
+distributes the matrix data and the elimination work to an arbitrary
+number $P$ of processors; it can thus fully exploit the power of
+present-day massively parallel
+machines.  No collective communication takes place; however it is
+assumed that the communication fabric is able to route a message of
+arbitrary size\footnote{Actually, the maximum size of a message is a
+  linear function of the length of a matrix row.} from any processor
+to any other.  Numerical stability of the algorithm presented here is
+equivalent to the numerical stability of serial Gaussian Elimination
+with pivoting restricted to a column.
+
+This algorithm has been developed and used to compute the rank of the
+homology matrices arising from fatgraph complexes; however, it is of
+(potentially) much wider application.  Indeed, we present two variants
+of the algorithm, one for computing the rank of a matrix and one for
+solving a linear system by $LU$ factorization; consequently, we take a
+row-oriented approach.
+
+Section~\ref{sec:algo} describes the algorithm in detail and proves
+its correctness.  A concrete implementation using
+OpenMP and MPI is presented in Section~\ref{sec:impl};
+section~\ref{sec:results} compares the running time of this code with
+analogous algorithms from the freely-available linear algebra package
+LinBox.\FIXME{Add reference!}
+
+
+\section{Description of the Algorithm}
+\label{sec:algo}
+
+The Gaussian Elimination algorithm presented here comprises the
+parallel execution of the same code by several stateful ``Processing
+Units'' (PU), which perform the actual computation, and a
+``master'' process that feeds initial data to the Processing Units,
+and collects the results at the end of processing.  The master is not
+involved in other phases of the computation, and remains inactive
+while the PUs are running.
+
+We shall first discuss the Gaussian Elimination algorithm for reducing
+a matrix to (strict) row echelon form; practical applications as
+computing matrix rank or computing the $LU$ decomposition will follow 
+by simple modifications.
+\begin{Algorithm}
+  \caption{Reduce a matrix to strict row echelon form by Gaussian
+    Elimination. \emph{Top:} Algorithm run by processing unit $P[c]$.
+    \emph{Bottom:} Sketch of the ``master'' procedure.  Input to the
+    algorithm is an $n \times m$ matrix $A$, represented as a list of
+    rows $r_i$. Row and column indices are $0$-based.}
+  \label{alg:echelon}
+  \begin{codebox}
+    \Procname{$\proc{ProcessingUnit}(c)$: [where $c$ is a column index]}
+    \li $u \gets \const{nil}$ \RComment PU initialization
+    \li $\id{output} \gets 0$
+    \li $\id{state} \gets \const{running}$
+    \li \While \id{state} is \const{running}          \label{li:lu:main}
+    \RComment Main loop
+    \li \Do wait for a message to arrive
+    \li   \If received message \const{Row} with payload $r$
+    \li   \Then
+    \li     \If $u$ is \nil
+    \li     \Then 
+              $u \gets r$
+    \li     \Else \label{li:pu:elimination}
+              $r' \gets \proc{eliminate}(r,u)$
+    \li       \If $r'$ is a null row 
+    \li       \Then
+                discard it and continue from line~\ref{li:lu:main}
+              \End % \If $r_i$ null
+    \li       $c' \gets$ first nonzero col.~of $r'$
+    \li       send $r'$ to $P[c']$
+            \End
+    \li   \ElseIf received message \const{End}
+    \li   \Then 
+            wait for all sent messages to arrive
+    \li     $\id{output} \gets u$                     \label{li:pu:result}
+    \li     send \const{End} to $P[c+1]$
+    \li     $\id{state} \gets \const{done}$
+          \End% \If received ...
+        \End% \While
+    \li \Return \id{output}
+    \end{codebox}
+    \begin{codebox}
+    \Procname{$\proc{Master}(A)$: [where $A$ is an $n\times m$ matrix]}
+    \li start a PU $P[c]$ for each column $c$ of $A$  \label{li:master:start}
+    \li \For i=0 \To n-1                              \label{li:master:read1}
+    \li \Do
+    \li   \If $r_i$ is a null row 
+    \li   \Then
+            skip it and continue with next $i$
+          \End % \If $r_i$ null
+    \li   $c \gets$ first nonzero column of $r_i$
+    \li   send $r_i$ to $P[c]$                        \label{li:master:read2}
+        \End % \For ...
+    \li send \const{End} message to $P[0]$            \label{li:master:core1}
+    \li wait until $P[m-1]$ receives the \const{End} message
+                                                      \label{li:master:core2}
+    \li \id{result} $\gets$ collect \id{output} results from all PUs
+                                                      \label{li:master:result}
+    \li \Return \id{result}                           \label{li:master:end}
+  \end{codebox}
+\end{Algorithm}
+
+Let $A = (a_{ij} | i = 0, \ldots, n-1; j = 0, \ldots, m-1)$ be a $n
+\times m$ matrix with entries in a ``sufficiently good'' ring
+$\mathbb{k}$ (a field, or a unique factorization domain or a principal
+ideal domain).  Let $r_i := (a_{ij})_{j = 0, \ldots, m-1}$ be the
+$i$-th row vector of $A$; we shall use the array notation $r_i[j]$ to
+mean the element at column $j$ in row $r_i$, i.e., $r_i[j] = a_{ij}$.
+Define $s_i := \min \{j | a_{ij} \not= 0 \}$ to be the column index of
+the first non-zero entry in row $r_i$; for a null row $r_i$ define
+$s_i := m$.
+\begin{definition}
+  The matrix $A$ is in \emph{block echelon form} iff $s_i
+  \geq s_{i-1}$ for all $i = 1, \ldots, n-1$.
+
+  $A$ is in \emph{(strict) row echelon form} iff $s_i$ is a
+  \emph{strictly increasing} monotone function of $i$.
+\end{definition}
+By a permutation of the rows, every matrix can be put in block
+echelon form.  
+
+We shall show that the code in Algorithm~\ref{alg:echelon} can be used
+to transform any given matrix into strict row echelon form.
+
+For reducing the $n\times m$ matrix $A$ to strict row echelon form,
+$m$ ``Processing Units'' (PU for short) $P[0], \ldots, P[m-1]$ will
+be started.  Each PU runs the code in procedure \proc{ProcessingUnit}
+(cf.~Algorithm~\ref{alg:echelon}) independently; upon reaching the
+\const{done} state, it returns its \id{output} to a ``master''
+collector process, that assembles the global result.  The ``master''
+process runs the \proc{Master} procedure in
+Algorithm~\ref{alg:echelon}, and the PUs run the \proc{ProcessingUnit}
+one.
+
+Each Processing Unit maintains some internal state variables:
+\begin{description}
+\item[\id{state}] a toggle indicating whether the processing unit is
+  actively running or has terminated execution; the two possible states
+  are represented by the constants \const{running} and \const{done};
+\item[$u$] holds either the special value \const{nil} (indicating it has
+  not been initialized yet) or a matrix row;
+\item[\id{output}] the contribution of this PU to the global result:
+  its actual form varies with the specifics of what is being computed
+  by the algorithm.  For reducing a matrix to row echelon form,
+  \id{output} is a matrix row; when computing matrix rank, it is an
+  integer value (0 or 1), telling whether there is a non-null row of
+  length $m-c$; finally, \id{output} is a pair $(l, u)$ of matrix rows
+  when computing the $LU$ decomposition.
+\end{description}
+There is one PU for each column of the matrix to be processed;
+therefore, each PU also holds an implicit reference to the column it
+is bound to, whose index will be available as the constant $c$.
+Columns are numbered from 0 to $m-1$; Processing Unit $c$ shall handle
+only rows of length $m - c$.  Processing Unit $P[c]$ is the PU
+handling rows starting at column $c$.
+
+A Processing Unit may send a message to every other PU; messages can
+be of two sorts: \const{Row} messages and \const{End} messages.  The
+payload of a \const{Row} message is a (portion of a) matrix row $r$, extending from
+column $c$ to $m-1$; \const{End} messages carry no payload and just
+signal the PU to finalize computations and stop execution.  We make
+the assumption that messages sent from one PU to another arrive in the
+same order they were sent.  In addition, we assume that it is possible
+for a PU to wait until all the messages it has sent have been
+delivered.  Both conditions are satisfied by MPI-compliant message
+passing systems.
+
+The \proc{eliminate} function at line~\ref{li:pu:elimination} in
+Algorithm~\ref{alg:echelon} returns a sum of suitable multiples of $r$
+and $u$ so that the resulting row has a null entry in all columns $j
+\leq c$; this requires slightly different definitions, depending on
+the coefficient ring of $A$.  For Gaussian Elimination over a field,
+\proc{eliminate} returns $r - (r[c] / u[c]) u$; elimination over the
+integer ring involves finding $\alpha, \beta \in \setZ$ such that $\alpha
+r[c] = \beta u[c]$ and then setting $r' \gets \alpha r - \beta u$.
+Note that $u[c] \not= 0$ by construction.
+
+The ``master process'' is responsible for starting the $m$ independent
+Processing Units $P[0]$, \ldots, $P[m-1]$, feeding the matrix data to
+the processing units at the beginning of the computation (discarding
+null rows), and sending the initial \const{End} message to PU $P[0]$.
+When the \const{End} token reaches the last Processing Unit, the
+computation is done and the master collects the results.
+
+Lines~\ref{li:master:read1}--\ref{li:master:read2} in \proc{Master}
+are responsible for putting the input matrix $A$ into block
+echelon form. Indeed, the incoming message queue of $P[c]$ is formed
+by matrix rows starting at column $c$; therefore, if we immediately
+freeze the execution and output the message queues of $P[0]$, then
+$P[1]$, etc., we get a matrix $A'$ which has the same rows as $A$
+(albeit in a different order, and excluding null rows) and is in block echelon form.
+
+Note that Lines~\ref{li:master:read1}--\ref{li:master:read2} can also be
+effected in a different way: for instance, the Processing Units could
+be created with the corresponding matrix rows already waiting in the
+message queue.  
+
+\begin{theorem}
+  Algorithm~\ref{alg:echelon} reduces any given input matrix $A$ to
+  strict row echelon form in finite time.
+\end{theorem}
+\begin{proof}
+  The proof is by induction on $n$, the number of rows in the matrix
+  $A$.  We can safely assume that $A$ has no null rows.
+
+  If $n=1$, then $A$ is already in strict row echelon form; no
+  Processing Unit will do any elimination, and the execution time is
+  the traversal time of the \const{End} message from $P[0]$ to
+  $P[m-1]$.
+
+  Now assume $n > 1$; there is no loss in generality to assume that
+  $A$ has at least one row that starts at column $0$.  Up to a
+  permutation of the rows, we can assume that $A$ is in block
+  echelon form, and that rows $r_0$, \ldots, $r_k$ start at column
+  $0$. Processing Unit $P[0]$ will do elimination on $r_0$, \ldots,
+  $r_k$, and \emph{then} receive the \const{End} signal (because
+  messages arrive in the exact order they were sent) within time
+  $\tau_0$.  When $P[0]$ transitions to the \const{done} state, it will
+  have retained one row (say, $r_0$) into the $t$ register, and sent
+  rows $r'_1$, \ldots, $r'_k$ (i.e., $r_1$, \ldots, $r_k$ modified by
+  elimination) to other PUs. By induction, the matrix $A'$ formed by
+  $r'_1$, \ldots, $r'_k$ and rows $r_{k+1}$, \ldots, $r_n$ of $A$ will
+  be put in strict row echelon form $(r''_1, \ldots, r''_n)$ by
+  Algorithm~\ref{alg:echelon} in finite time $\tau_1$.  Since no
+  $r''_i$ can start at column 0, $(t, r''_1, \ldots, r''_n)$ is in
+  strict row echelon form, and the total running time is $\tau_0 +
+  \tau_1 < \oo$.
+\end{proof}
+
+\subsection{Complexity Analysis}
+\label{sec:complexity}
+
+The presented algorithm operates closely like the serial Gaussian
+Elimination, its strength being chiefly that each processing unit can
+independently perform elimination on a subset of the rows, and that
+communication can be completely overlapped with computation (to the
+extent allowed by practical implementations).
+
+The processing units are (logically) totally independent processes,
+reacting to each other's messages; it is thus quite difficult to
+reason about their collective performance.  For the purpose of
+algorithm analysis, we shall make the simplifying  assumption that:
+\begin{itemize}
+\item each PU receives a batch $Q$ of messages and processes all of
+  them in a loop;
+\item all communication happens simultaneously for all processors
+  after the processing of the received rows $Q$.
+\end{itemize}
+This is akin to using a \emph{Bulk-Synchronous Processing}\FIXME{Add
+  reference!} model, and actually not very far from the way the
+algorithm has been practically implemented (see
+Section~\ref{sec:impl}). 
+
+When processing starts, Processing Unit $P[j]$ receives a batch
+$Q_j$ of rows, consisting of all the rows in $A$ that start at
+column $j$.  Let $c_j$ be the number of rows in batch $Q_j$:
+Processing Unit $P[j]$ performs $c_j - 1$ eliminations, each of
+which can take up to $O(m)$ operations (but on the average this will
+be $O(\xi)$, where $\xi$ is the average number of nonzero entries per
+row).  Thus, the first processing step entails $W = \max(c_j-1) \cdot
+O(m) = O(c_j\cdot m)$ per PU (but only $O(c_j \cdot \xi)$ on
+average). 
+
+Now each PU will ship the $c_j - 1$ eliminated rows to other
+PUs; each PU will receive a batch $Q_j'$ of new rows.  However,
+which PU will receive which row depends strictly on how the nonzero
+entries are arranged in matrix $A$: the first nonzero entry in $r' =
+\proc{eliminate}(r,u)$ depends on $r$ and $u$.  This makes a detailed
+estimate on the number of operations impossible after the first
+program step. 
+
+In the worst-case estimate, we have $\max c_j = n$ in the first step,
+and $\max c_j^{(k)} = n - k$ at step $k$, therefore the slowest PU is
+performing $W = O(nm)$ operations in every step.  The worst-case
+performance is actually attained on the $n \times (n+1)$ matrix
+$\Lambda$ defined by
+\begin{equation*}
+  \lambda_{ij} =
+  \begin{cases}
+    1  \qquad \text{if $j=0$ or $i = j-1$,}
+    \\
+    0  \qquad \text{otherwise.}
+  \end{cases}
+\end{equation*}
+
+Experimental evidence suggests, however, that the algorithm is instead
+quite fast on a large number of real-world matrices.  The author
+conjectures that a better estimate of the total running time is $O(m
+\cdot \xi \cdot \max c_j)$, where $c_j$ is the number of nonzero
+entries in column $j$, but have not been able to prove it
+to-date.\FIXME{This is a rather bold statement; I don't even know
+  where to start to prove this assertion.  At least, we should check
+  this conjecture against experimental data, when we have a
+  significant collection of performance measurements.}
+
+
+\subsection{Variant: computation of matrix rank}
+\label{sec:rank}
+
+The Gaussian Elimination algorithm can be easily adapted to compute
+the rank of a general (unsymmetric) sparse matrix: one just needs to
+count the number of rows of the strict row echelon form.
+
+Function \proc{ProcessingUnit} in Algorithm~\ref{alg:echelon}
+is modified to return an integer number: the result shall be $1$ if at
+least one row has been assigned to this PU ($u \not= \nil$) and $0$
+otherwise.
+
+Procedure \proc{Master} performs a sum-reduce when collecting results:
+replace line~\ref{li:master:result} with $\id{result} \gets$
+sum-reduce of \id{output} from $P[c]$, $c=1, \ldots, m$.
+
+
+\subsection{Variant: $LU$ decomposition}
+\label{sec:lu}
+
+More extensive modifications are required for computing the $LU$
+decomposition: the $U$ matrix is just the row echelon form of $A$, but
+we need to build the matrix $L$ as we perform elimination on the rows.
+
+For the rest of this section we assume that $A$ has coefficients in a
+field.
+
+Given an input matrix $A$, our $LU$ decomposition algorithm will
+output a pair $(U, L\inv)$, where $U$ is the strict row echelon form
+of $A$, and $L\inv$ is a lower triangular matrix with unitary
+diagonal.  These data can be used to solve a linear system $Ax = b$ by
+setting $b' = L\inv b$, and then solving $Ux = b'$ by
+back-substitution.  Not every $A$ admits an $LU$
+decomposition\cite{okunev+johnson:2005}: if any null rows arises
+during Gaussian Elimination, the $LU$ decomposition algorithm fails.
+\begin{Algorithm}
+  \caption{Compute the $LU$ decomposition of a matrix by Gaussian
+    Elimination. \emph{Top:} Algorithm run by processing unit $P[c]$.
+    \emph{Bottom:} Sketch of the ``master'' procedure.  Input to the
+    algorithm is an $n \times n$ matrix $A$, represented as a list of
+    rows $r_i$. Row and column indices are $0$-based.}
+  \label{alg:lu}
+  \begin{codebox}
+    \Procname{$\proc{ProcessingUnit}(c)$: [where $c$ is a column index]}
+    \li $u \gets \const{nil}$ \RComment PU initialization
+    \li $\id{output} \gets 0$
+    \li $\id{state} \gets \const{running}$
+    \li \While \id{state} is \const{running} 
+    \RComment Main loop
+    \li \Do wait for a message to arrive              \label{li:lupu:main}
+    \li   \If received \const{Row} with payload $(r,l)$
+    \li   \Then
+    \li     \If $u$ is \nil
+    \li     \Then 
+              $u \gets r$ 
+    \li       $v \gets l$
+    \li     \Else                                     \label{li:lupu:elimination}
+              $\alpha \gets r[c] / u[c]$
+    \li       $r' \gets r - \alpha u$
+    \li       \If $r'$ is a null row 
+    \li       \Then
+                discard it and continue from line~\ref{li:lupu:main}
+              \End % \If $r_i$ null
+    \li       $c' \gets$ first nonzero col.~of $r'$
+    \li       $l[h(u)] \gets -\alpha$
+    \li       send $(r', l)$ to $P[c']$
+            \End
+    \li   \ElseIf received message \const{End}
+    \li   \Then 
+            wait for all sent messages to arrive
+    \li     $\id{output} \gets (u, v)$                \label{li:lupu:result}
+    \li     send \const{End} to $P[c+1]$
+    \li     $\id{state} \gets \const{done}$
+          \End% \If received ...
+        \End% \While
+    \li \Return \id{output}
+    \end{codebox}
+    \begin{codebox}
+    \Procname{$\proc{Master}(A)$: [where $A$ is an $n\times m$ matrix]}
+    \li start a PU $P[c]$ for each column $c$ of $A$  \label{li:lumaster:start}
+    \li \For i=0 \To n-1                              \label{li:lumaster:read1}
+    \li \Do
+    \li   \If $r_i$ is a null row 
+    \li   \Then
+            skip it and continue with next $i$
+          \End % \If $r_i$ null
+    \li   $c \gets$ first nonzero column of $r_i$
+    \li   $l_i \gets (0, \ldots, 1, \ldots, 0)$
+              \RComment{At $i$-th place}
+    \li   send $(r_i, l_i)$ to $P[c]$                    \label{li:lumaster:read2}
+        \End % \For i=0 ...
+    \li send \const{End} message to $P[0]$            \label{li:lumaster:core1}
+    \li wait until $P[m-1]$ receives the \const{End} message
+                                                      \label{li:lumaster:core2}
+    \li $(U, L\inv) \gets$ assemble \id{output} rows from all PUs
+                                                      \label{li:lumaster:result}
+    \li \Return \id{result}                           \label{li:lumaster:end}
+  \end{codebox}
+\end{Algorithm}
+
+The modified algorithms works by exchanging pairs of rows $(r,l)$
+among PUs.  The $l$ rows start out as rows of the identity matrix;
+each time an elimination step is performed on $r$, the corresponding
+operation is ``recorded'' in the paired $l$, so that it can later be
+``replayed'' on the data vector $b$.
+
+In order to correctly construct and assemble back matrices $U$ and
+$L\inv$, we need to keep track of which row index a certain row has in
+the original matrix $A$.  The original row index of $u$ is represented
+in the listing of Algorithm~\ref{alg:lu} as a function $h(u)$; in a
+practical implementation this would rather be a field into whatever
+structure is used to represent a matrix row. It is understood that
+the \proc{Master} procedure will collect pairs of rows $(u,l)$
+from PUs and then construct $U$ and $L\inv$ by placing each $u$ into
+$U$ at row index $c$ if $u$ came from $P[c]$,  and each $l$ into
+$L\inv$ at row index $h(l)$.
+
+
+\section{Implementation}
+\label{sec:impl}
+
+A C++ program has been written that implements matrix rank computation with
+the variant of Algorithm~\ref{alg:echelon} previously described.  The
+code is available for download and reuse from
+\url{http://code.google.com/p/rheinfall}\FIXME{Not yet.}
+
+Input to the program is a matrix, represented as an array of sparse
+rows (\verb"std::vector<Row*>"); a sparse row is implemented as a C++
+class wrapping an array of pairs formed by a column index and the
+corresponding entry value
+(\verb"std::vector<std::pair<coord_t,val_t>>").  An alternate dense
+storage, implemented as a C++ class wrapping an array of values
+(\verb"std::vector<val_t>"), is provided: PUs will automatically
+switch from sparse to dense storage (on a row-by-row basis) if the
+fill-in of a row exceeds a certain configurable threshold.  Both the
+sparse and the dense row classes are derived from a common superclass
+\verb"Row".
+
+How to select the pivot row $u$ among the block of rows initially
+assigned to a PU $P[c]$ has not been so far specified (it does not
+affect correctness).  The actual implementation augments the outlined
+procedure \textsc{ProcessingUnit}$[c]$ with the following rules:
+\begin{enumerate}
+\item Initially, the row with fewer entries is chosen as pivot
+  row $u$.
+\item At the arrival of each message \textsc{Row} with payload $r$,
+  the contents of $u$ and $r$ are exchanged if $r$ has fewer
+  entries than $u$.
+\end{enumerate}
+In a sparse row representation, only nonzero entries contribute to the
+running time of the elimination step (line 10 in
+\textsc{ProcessingUnit}$[c]$), so we compare the number of nonzero
+entries in the above two rules; since each entry in a dense row
+representation requires a mathematical operation during the
+elimination phase , any entry in a dense row should be counted when
+comparing the size of dense rows.  Experimental measurements show that
+the above policy can result in a performance increment up to 30\%
+w.r.t. the naïve implementation.
+
+A convenience function can read a file in LinBox' SMS format\FIXME{Add
+reference? Seems not to be published anywhere except on J.-G. Dumas'
+matrix collection web page.} and dispatch rows directly to the
+responsible PU.
+
+Inter-node communication make use of MPI; the Boost.MPI\FIXME{Add
+  reference!} library was used, which provides a convenient wrapper
+over low-level MPI calls, at the expense of possible performance
+penalties when sending aggregate data types over homogeneous clusters'
+interconnect.  Boost.MPI requires composite messages (i.e., those not
+corresponding to a primitive MPI type) to be instances of C++ classes
+providing a serialization interface; to send a message, an object is
+first marshalled onto a buffer, which is then sent via MPI and de-serialized
+at the receiving end into a C++ object.  
+
+Let $S$ be the number of MPI processes (ranks) available to the
+program; each MPI rank starts $m/S$ PUs.  Since PUs naturally
+correspond to columns, they are distributed to the various MPI
+processes in a cyclic-wrapped fashion,\footnote{MPI process $s$ (with
+  $0 \leq s < S$) hosts PUs $P[s + kS]$, $k=0,1,\ldots$.} in order to
+balance the memory requirements\footnote{Processing Unit $P[c]$
+  handles rows of length $m-c$.} and work load.  Since there is only a
+limited degree of parallelism available on a single computing node,
+Processing Units are not implemented as continuously-running threads;
+rather, the \verb"ProcessingUnit" class provides a \verb"step()"
+method, which does a single pass of the loop in procedure
+\proc{ProcessingUnit}.  The main loop of the program calls each PU's
+\verb"step()" in turn, until all PUs have performed one round of
+elimination. 
+
+On multi-processor nodes, OpenMP\FIXME{Add reference.} is used for
+intra-node parallelism: if a process has access to $p$ concurrent
+threads, then $p$ PUs can be stepped in parallel.  In addition, PUs
+residing on the same MPI rank can exploit the shared-memory model of
+OpenMP: passing a pointer is all that is needed to move a row from one
+PU to another, providing virtually ``zero latency'' and ``infinite bandwidth'' communication.
+
+Because of the way MPI messaging works, messages cannot be addressed
+to a specific PU: a dedicated section in the program (executed
+serially) receives messages, inspects their content to find the
+starting column, and then directs the message to the appropriate PU.
+Each Processing Unit is thus equipped with a message ``inbox'', i.e.,
+a \verb"std::list<Row*>"; when a message arrives, it is appended to
+the list; when a PU starts its \verb"step()" procedure, it will
+perform elimination on all rows in the inbox and immediately send the
+modified rows to other PUs for processing.
+
+
+\section{Experimental results}
+\label{sec:results}
+
+\subsection{Sequential performance}
+\label{sec:performance}
+
+In order to compare the performance of the ``Rheinfall'' algorithm
+described here to the freely-available implementation of Gaussian
+Elimination in the LinBox library, we computed the rank of all the
+(integer-valued) matrices available in the online collection ``SIMC''
+\cite{simc}.  It should be noted that the computations run strictly on
+a single CPU core (non parallel computation whatsoever).
+
+...
+
+Experimental results show significant speed improvements over the
+Gaussian Elimination algorithms available in LinBox; the speed-up,
+however, greatly depends on the matrix under consideration, ranging
+from a small percent difference to an improvement of two orders of
+magnitude.  Further research is needed to highlight the precise
+conditions on a matrix $A$ to be the ``optimal target'' for the
+algorithm described here.
+
+Since there are no other available implementations of a parallel
+algorithm for computing integer matrix rank, it is not possible to
+compare the parallel ``Rheinfall'' performance to other software.
+
+\subsection{Parallel scalability}
+\label{sec:scalability}
+
+Scalability measurements have been done by running the ``Rheinfall''
+MPI/C++ implementation on the single matrix \textsc{M06-D10} across,
+respectively, 8, 16, 32, 64, 128, 256 and 512 processes.  Each
+computing node allowed 8 processes to run concurrently; nodes are
+connected by means of a quad-bandwidth InfiniBand link.  Matrix
+\textsc{M06-D10} is the only one in the SIMC collection to require a
+reasonably long computing time with ``Rheinfall''.
+
+...
+
+Results show almost perfect scalability with the increasing number of
+MPI processes.
+
+On the performance side, however, it should be noted that every MPI
+run, however large the number of allocated CPU cores, cannot match the
+speed of a single-node run, when all executing threads are located on
+the same machine (and can thus communicate at ``zero latency'' and
+``infinite bandwidth'').  Therefore, use of the distributed-memory
+version of ``Rheinfall'' is only convenient when a matrix cannot be
+processed on a single node, due to its size, and rather
+\emph{requires} a distributed-memory approach.
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "index"
+%%% End: 

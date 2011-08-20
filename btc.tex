@@ -42,9 +42,9 @@ category equipped with a ``tensor product'' bifunctor $\otimes: \A \times \A \to
       A\otimes\bigl((B\otimes C)\otimes D\bigr)
       \ar "1,1";"1,2"^{a}
       \ar "1,2";"1,3"^{a}
-      \ar "1,1";"2,1"_{a \otimes \id}
+      \ar "1,1";"2,1"_{a \otimes \idmap}
       \ar "2,1";"2,3"_{a}
-      \ar "2,3";"1,3"_{\id \otimes a}
+      \ar "2,3";"1,3"_{\idmap \otimes a}
       }
   \end{equation*}
 \item has a unit $I \in \A$ again up to a natural isomorphism, that is,
@@ -64,8 +64,8 @@ category equipped with a ``tensor product'' bifunctor $\otimes: \A \times \A \to
       A \otimes B
       &
       \ar "1,1";"1,3"^{a}
-      \ar "1,1";"2,2"_{r \otimes \id}
-      \ar "1,3";"2,2"^{\id \otimes l}
+      \ar "1,1";"2,2"_{r \otimes \idmap}
+      \ar "1,3";"2,2"^{\idmap \otimes l}
       }
   \end{equation*}
 \end{enumerate}
@@ -84,7 +84,7 @@ category equipped with a ``tensor product'' bifunctor $\otimes: \A \times \A \to
       &
       \ar "1,1";"1,3"^{a}
       \ar "1,1";"2,2"_{r_{A\otimes B}}
-      \ar "1,3";"2,2"^{\id \otimes r_B}
+      \ar "1,3";"2,2"^{\idmap \otimes r_B}
       }      
     \qquad
     \xymatrix{%
@@ -97,7 +97,7 @@ category equipped with a ``tensor product'' bifunctor $\otimes: \A \times \A \to
       A\otimes B
       &
       \ar "1,1";"1,3"^{a}
-      \ar "1,1";"2,2"_{l_A \otimes \id}
+      \ar "1,1";"2,2"_{l_A \otimes \idmap}
       \ar "1,3";"2,2"^{l_{A\otimes B}}
       }
   \end{equation*}
@@ -145,9 +145,9 @@ such that the following diagrams commute:
     FA \otimes F(B\otimes C)
     &
     F(A\otimes B\otimes C)
-    \ar "1,1";"1,2" ^{\digamma_2 \otimes \id}
+    \ar "1,1";"1,2" ^{\digamma_2 \otimes \idmap}
     \ar "2,1";"2,2" _{\digamma_2}
-    \ar "1,1";"2,1" _{\id \otimes \digamma_2}
+    \ar "1,1";"2,1" _{\idmap \otimes \digamma_2}
     \ar "1,2";"2,2" ^{\digamma_2}
     }
   \quad
@@ -161,7 +161,7 @@ such that the following diagrams commute:
     F(I\otimes A)
     \ar "1,1";"1,2" ^{l_\B}
     \ar "2,1";"2,2" _{\digamma_2}
-    \ar "1,1";"2,1" _{\digamma_0 \otimes \id}
+    \ar "1,1";"2,1" _{\digamma_0 \otimes \idmap}
     \ar "2,2";"1,2" _{F(l_\A)}
     }
   \quad
@@ -175,7 +175,7 @@ such that the following diagrams commute:
     F(A\otimes I)
     \ar "1,1";"1,2" ^{r_\B}
     \ar "2,1";"2,2" _{\digamma_2}
-    \ar "1,1";"2,1" _{\id \otimes \digamma_0}
+    \ar "1,1";"2,1" _{\idmap \otimes \digamma_0}
     \ar "2,2";"1,2" _{F(r_\A)}
     }
 \end{equation*}
@@ -185,11 +185,11 @@ Given a monoidal functor $F$, one can define natural transformations
 \begin{equation*}
   \digamma_n : FA_1 \otimes \cdots \otimes FA_n \to F(A_1 \otimes \cdots \otimes A_n)
 \end{equation*}
-by an inductive process: $\digamma_0$ is given, $\digamma_1 := \id$, $\digamma_2$ is
+by an inductive process: $\digamma_0$ is given, $\digamma_1 := \idmap$, $\digamma_2$ is
 given, and $\digamma_{n+1}$ is the composite
 \begin{equation*}
     FA_1 \otimes \cdots \otimes FA_{n+1}
-    \xrightarrow{\digamma_n \otimes \id}
+    \xrightarrow{\digamma_n \otimes \idmap}
     F(A_1 \otimes \cdots \otimes A_n) \otimes FA_{n+1} 
     \stackrel{\digamma_2}\longrightarrow
     F(A_1 \otimes \cdots A_n \otimes A_{n+1}).
@@ -229,7 +229,7 @@ This theorem has two important consequences:
   we can replace any diagram of monoidal categories and monoidal
   functors by an equivalent diagram of strict categories and strict
   functors, and 
-\item any diagram built using only the structure maps $\id$, $a$, $l$,
+\item any diagram built using only the structure maps $\idmap$, $a$, $l$,
   $r$, of any monoidal category is commutative.
 \end{inparaenum}
 
@@ -433,16 +433,16 @@ first and simplest instance of graphical calculus (see
       &
       C\otimes(B\otimes A)
       \ar"1,1";"1,2" ^{a} 
-      \ar"1,2";"1,3" ^{\id\otimes\tau}
+      \ar"1,2";"1,3" ^{\idmap\otimes\tau}
       \ar"1,3";"1,4" ^{a\inv}
-      \ar"1,1";"2,1" _{\tau\otimes\id}
-      \ar"1,4";"2,4" ^{\tau\otimes\id}
+      \ar"1,1";"2,1" _{\tau\otimes\idmap}
+      \ar"1,4";"2,4" ^{\tau\otimes\idmap}
       \ar"2,1";"3,1" _{a}
       \ar"2,4";"3,4" ^{a}
-      \ar"3,1";"4,1" _{\id\otimes\tau}
-      \ar"3,4";"4,4" ^{\id\otimes\tau}
+      \ar"3,1";"4,1" _{\idmap\otimes\tau}
+      \ar"3,4";"4,4" ^{\idmap\otimes\tau}
       \ar"4,1";"4,2" _{a\inv}
-      \ar"4,2";"4,3" _{\tau\otimes\id}
+      \ar"4,2";"4,3" _{\tau\otimes\idmap}
       \ar"4,3";"4,4" _{a}
       }
   \end{equation*}
@@ -463,14 +463,14 @@ is a braiding on $\A\rev$.
 
 \begin{proposition}[{\cite[Example 2.5]{joyal-street;btc}}]
   \label{thm:rev}
-  The assignment $F := \Id$, $\digamma_2 := \tau$, $\digamma_0 := \id$ defines a a
+  The assignment $F := \Id$, $\digamma_2 := \tau$, $\digamma_0 := \idmap$ defines a a
   braided monoidal isomorphism between $\A$ and $\A\rev$.
 \end{proposition}
 
 If $\tau_{AB}$ is a braiding on $\A$, then $\tau'_{AB} := (\tau_{AB})^{-1}$
 is again a braiding on $\A$.
 \begin{definition}
-  If $\tau_{AB} \circ \tau_{BA} = \id_{AB}$ then the braiding is called a
+  If $\tau_{AB} \circ \tau_{BA} = \idmap_{AB}$ then the braiding is called a
   \emph{symmetry}.   
 \end{definition}
 
@@ -518,7 +518,7 @@ Let $\A$ be a monoidal category, and $A,B \in \A$.
       A
       &
       \ar "1,1";"1,3" ^{A\otimes\coev}
-      \ar "1,1";"2,2" _{\id_A}
+      \ar "1,1";"2,2" _{\idmap_A}
       \ar "1,3";"2,2" ^{\ev\otimes A}
       }
     \qquad
@@ -532,7 +532,7 @@ Let $\A$ be a monoidal category, and $A,B \in \A$.
       B
       &
       \ar "1,1";"1,3" ^{\coev\otimes B}
-      \ar "1,1";"2,2" _{\id_B}
+      \ar "1,1";"2,2" _{\idmap_B}
       \ar "1,3";"2,2" ^{B\otimes\ev}
       }
   \end{equation*}
@@ -632,7 +632,7 @@ Let $\A$ be a monoidal category. From \cite{joyal-street;btc} we quote
 the following.
 \begin{definition}[\cite{joyal-street;btc}]
   A balancing on a monoidal braided category $\A$ is a natural family of
-  isomorphisms $\theta_A:A\to A$ such that $\theta_I = \id_I$ and 
+  isomorphisms $\theta_A:A\to A$ such that $\theta_I = \idmap_I$ and 
   \begin{equation*}
     \xymatrix{%
       A\otimes B
@@ -666,7 +666,7 @@ natural equivalence between these two functors.\FIXME{Questo {\`e} l'unico
 Now it is immediate to prove the following.
 \begin{proposition}
   Any symmetric monoidal category is balanced with the trivial
-  balancing $\theta_A := \id_A$.
+  balancing $\theta_A := \idmap_A$.
 \end{proposition}
 
 \begin{definition}[\cite{shum;tortile-categories}]

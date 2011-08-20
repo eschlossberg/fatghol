@@ -403,7 +403,7 @@ A cyclic algebra structure will be introduced on the vector space
 $\Hermitian[N]$ of $N\times N$ Hermitian matrices, so that we can apply the
 general results of Chapter~\ref{cha:fd} on Feynman diagrams.
 
-Let $V$ be an $N$-dimensional Hilbert space. The space $\End(V)$
+Let $V$ be an $N$-dimensional Hilbert space. The space $\Ends(V)$
 has a natural Hermitian inner product
 \begin{equation*} 
   \inner{X}{Y}\joinrel:=\tr(X^*Y),
@@ -411,7 +411,7 @@ has a natural Hermitian inner product
 which induces the standard Euclidean inner product $\inner{X}{Y} =
 \tr(XY)$ on the real subspace
 \begin{equation*}
-  \Hermitian[N]\joinrel:=\{X\in \End(V) | X^*=X\}
+  \Hermitian[N]\joinrel:=\{X\in \Ends(V) | X^*=X\}
 \end{equation*}
 of Hermitian operators.  
 
@@ -429,7 +429,7 @@ Now, define cyclic tensors
   \tr(X_1X_2\cdots X_k) \in \setC;
 \end{equation*}
 These $T_k$, together with the inner product $\inner[\Lambda]{-}{-}$, define
-a cyclic algebra structure on $\Hermitian[N] \otimes \setC \cong \End(V)$, that is
+a cyclic algebra structure on $\Hermitian[N] \otimes \setC \cong \Ends(V)$, that is
 called the ``Kontsevich model''.  A graphical calculus $Z$ for the
 Kontsevich model is defined on the ribbon category $\RG$ of ribbon
 graphs.
@@ -462,7 +462,7 @@ graphs.
   \end{equation*}
   for some $\Lambda_i$ positive real numbers. Any choice of a like basis
   induces an identification of $V$ with $\setC^N$, and, consequently,
-  of $\End(V)$ with the space $\setC^{N\times N}$ of $N \times N$ complex
+  of $\Ends(V)$ with the space $\setC^{N\times N}$ of $N \times N$ complex
   matrices. Let $\{E_{ij}\}$ be the canonical basis for $\setC^{N\times N}$:
   \begin{equation*}
     (E_{ij})_{kl}=\delta_{ik}\delta_{jl}. 

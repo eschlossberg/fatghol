@@ -6,7 +6,7 @@
 
 It is convenient to have an arrows-only description of a category: in
 this picture, an object $A \in \A$ is identified with the identity map
-$\id_A \in \A(A, A)$.
+$\idmap_A \in \A(A, A)$.
 
 According to \cite{lawvere;1965}, a category $\A$ can be described by
 the following data:
@@ -49,7 +49,7 @@ arrows.
     x = A \circ y \Rightarrow x = y]$. \label{item:AO2} 
   \end{enumerate}
 \end{definition}
-Accordingly, we write $A$ for the identity morphism $\id_A$.
+Accordingly, we write $A$ for the identity morphism $\idmap_A$.
 
 It is easy to deduce this characterization from the usual axioms of
 category theory, but one can also assume it as a starting point for a
@@ -60,7 +60,7 @@ In this framework, a functor $F: \A \to \category{B}$ is just a map $F:
 \Hom\A \to \Hom\B$ such that
 \begin{inparaenum}
 \item $F(x \circ y) = F(x) \circ F(y)$, and
-\item for any object $A \in \A$, $F(\id_A) = \id_{F(A)}$.
+\item for any object $A \in \A$, $F(\idmap_A) = \idmap_{F(A)}$.
 \end{inparaenum}
 
 \begin{example}\label{xmp:braid-by-arrows}
