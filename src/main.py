@@ -4,7 +4,7 @@
 __docformat__ = 'reStructuredText'
 
 
-from rg import all_graphs,vertex_valences_for_given_g_and_n,classify
+from rg import all_graphs,vertex_valences_for_given_g_and_n,Graph
 
 
 def graph_to_xypic(graph):
@@ -77,7 +77,7 @@ def graph_to_xypic(graph):
             result += r'"v%d";"v%d"**\crv{"v%dl%d"&"v%dl%d"},%%' \
                       % (v1+1, v2+1, v1+1, h+1, v2+1, 1+graph[v1].index(l,h+1)) \
                       + '\n'
-    (g,n) = classify(graph)
+    (g,n) = graph.classify()
     result += r'0*\txt{g=%d,n=%d}' % (g,n) + '\n'
     result += r'\endxy'
     return result
