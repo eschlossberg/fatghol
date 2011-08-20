@@ -7,13 +7,14 @@ __docformat__ = 'reStructuredText'
 
 ## logging subsystem
 
+import itertools
 import logging
 
 
 ## application-local imports
 
 from homology import *
-from rg import MgnNumberedGraphsIterator, Fatgraph, Vertex
+from rg import MgnNumberedGraphsIterator, NumberedFatgraph
 from valences import vertex_valences_for_given_g_and_n
 
 
@@ -40,7 +41,7 @@ def FatgraphComplex(g, n):
     logging.info("Maximum number of edges: %d", top_dimension)
 
     #: list of primitive graphs, graded by number of edges
-    generators = [ [] for dummy in xrange(top_dimension) ]
+    generators = [ NumberedFatgraphsList() for dummy in xrange(top_dimension) ]
 
     # gather graphs
     _grade = None
@@ -48,7 +49,7 @@ def FatgraphComplex(g, n):
         grade = graph.num_edges - 1
         if not graph.is_oriented():
             continue
-        generators[grade].append(graph)
+        generators[grade].append(graph, key=graph.underlying)
 
         # since `MgnGraphsIterator` returns graphs in blocks with
         # equal number of edges, we can use that for logging purposes
@@ -128,6 +129,88 @@ class FatgraphComplexSlice(VectorSpace):
 
         # call method from superclass
         return VectorSpace.coordinates(self, combo)
+
+
+
+class NumberedFatgraphsList(object):
+    """A specialized `list` clone, with O(N^(1/2))-time comparisons.
+    """
+
+    def __init__(self):
+        self.__keys = []
+        self.__lens = []
+        self.__lists = []
+
+    def __iter__(self):
+        return itertools.chain(* self.__lists)
+
+    def __contains__(self, value):
+        try:
+            self.index(value)
+            return True
+        except ValueError:
+            return False
+
+    def __delitem__(self, i):
+        for n, l in enumerate(self.__lists):
+            L = self.__lens[n]
+            if i < L:
+                del l[i]
+                self.__lens[n] -= 1
+            else:
+                i -= L
+        raise IndexError, "list index out of range"
+
+    def __getitem__(self, i):
+        for l, L in itertools.izip(self.__lists, self.__lens):
+            if i < L:
+                return l[i]
+            else:
+                i -= L
+        raise IndexError, "list index out of range"
+
+    def __len__(self):
+        return sum(self.__lens)
+
+    def __setitem__(self, i, item):
+        for l, L in itertools.izip(self.__lists, self.__lens):
+            if i < L:
+                l[i] = item
+            else:
+                i -= L
+        raise IndexError, "list index out of range"
+
+    def append(self, item, key):
+        try:
+            i = self.__keys.index(key)
+            self.__lists[i].append(item)
+            self.__lens[i] += 1
+        except ValueError:
+            self.__keys.append(key)
+            self.__lists.append([item])
+            self.__lens.append(1)
+
+    def expand(self, lst, key):
+        try:
+            i = self.__keys.index(key)
+            self.__lists[i].expand(lst)
+            self.__lens[i] += len(lst)
+        except ValueError:
+            self.__keys.append(key)
+            self.__lists.append(lst)
+            self.__lens.append(len(lst))
+
+    def index(self, value):
+        # XXX: this is the only non-generic code here
+        assert isinstance(value, NumberedFatgraph), \
+               "NumberedFatgraphList.index: "\
+               " looking up non-NumberedFatgraph instance `%s`" \
+               % value
+        key = value.underlying
+
+        # how many items are in lists preceding the one containing key?
+        i = self.__keys.index(key)
+        return self.__lists[i].index(value) + sum(self.__lens[0:i])
         
 
 
