@@ -146,7 +146,14 @@ class Permutation(dict):
         
         """
         return Permutation(dict((dst,src) for (src,dst) in self.iteritems()))
-    
+
+    def is_identity(self):
+        """Return `True` if permutation leaves all items fixed."""
+        for (src, dst) in self.iteritems():
+            if src != dst:
+                return False
+        return True
+        
     def rearrange(self, seq):
         """Return a new list containing the items in `seq`, rearranged
         according to this permutation.
@@ -271,7 +278,7 @@ class Permutation(dict):
           True
         """
         for src,dst in itertools.izip(srcs,dsts):
-            if self.has_key(src) and self[src] != dst:
+            if (src in self) and (self[src] != dst):
                 return False
             else:
                 self[src] = dst
@@ -284,7 +291,7 @@ class Permutation(dict):
         established one.
         """
         for src,dst in mappings.iteritems():
-            if self.has_key(src) and self[src] != dst:
+            if (src in self) and (self[src] != dst):
                 return False
             else:
                 self[src] = dst
