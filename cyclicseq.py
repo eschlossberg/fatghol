@@ -111,11 +111,11 @@ def CyclicSequence(base, factory=None):
                 return reduce(operator.xor, [hash(x) for x in self])
         
         def __eq__(self, other):
-            """Return `True` if `self` is linearly equal to `other`
+            """Return `True` if `self` is sequentially equal to `other`
             with all indices shifted by a fixed amount."""
             if len(other) != len(self):
                 return False
-            elif None == self._shift_for_linear_eq(other):
+            elif None == self._shift_for_sequential_eq(other):
                 return False
             else:
                 return True
@@ -128,7 +128,7 @@ def CyclicSequence(base, factory=None):
 
         @staticmethod
         def _eq_shifted(first, second, shift):
-            """Return `True` if `first` is linearly equal to `second`
+            """Return `True` if `first` is sequentially equal to `second`
             when shifting all indices by the fixed `shift` amount.
             """
             l=len(first)
@@ -140,16 +140,16 @@ def CyclicSequence(base, factory=None):
                     i += 1
             return True
 
-        def _shift_for_linear_eq(self, other, start=0):
+        def _shift_for_sequential_eq(self, other, start=0):
             """Return minimum shift index `b >= start` such that
-            `self[b:b+len]==other` as linear sequences.
+            `self[b:b+len]==other` as sequential sequences.
 
             Examples::
               >>> a=CyclicList([1,2,3])
               >>> b=CyclicList([2,3,1])
-              >>> a._shift_for_linear_eq(b)
+              >>> a._shift_for_sequential_eq(b)
               1
-              >>> a._shift_for_linear_eq(b,2) is None
+              >>> a._shift_for_sequential_eq(b,2) is None
               True
             """
             l = len(self)
@@ -161,14 +161,14 @@ def CyclicSequence(base, factory=None):
                     shift += 1
             return None
 
-        def all_shifts_for_linear_eq(self, other):
+        def all_shifts_for_sequential_eq(self, other):
             """Iterate over all shift amounts such that `self` is
-            linearly equal to `other` when shifted by that amount.
+            sequentially equal to `other` when shifted by that amount.
             """
             start = 0
             l = len(self)
             while start < l:
-                shift = self._shift_for_linear_eq(other, start)
+                shift = self._shift_for_sequential_eq(other, start)
                 if shift is None:
                     break
                 else:
@@ -181,61 +181,6 @@ def CyclicSequence(base, factory=None):
             """Return instance of base type, with same contents of this object."""
             return base(self)
 
-        def repetition_pattern(self, cls=None):
-          """Return the repetition pattern of a cyclic sequence.
-
-          The repetition pattern of a cyclic sequence `c` is again a
-          *cyclic* sequence of integers: each number `n` in the
-          repetition list corresponds to `n` equal-valued items in
-          `c`.
-
-          The repetition pattern needs an "anchor point" to be meaningful:
-          sequences `[0,1,0]` and `[0,0,1]` are equal as cyclic
-          sequences and have the same repetition pattern `[2,1]`
-          (which is == `[1,2]`), but one needs to know if 2 is the
-          number of repetitions of `1`s or `0`s.
-
-          So, the returned value is actually a pair `(anchor, rep)`
-          where `rep` is the repetition pattern (a `CyclicList` instance)
-          of the linearized sequences starting at index `anchor`.
-          
-          Examples::
-            >>> CyclicList([1,2,3]).repetition_pattern()
-            (1, CyclicList([1, 1, 1]))
-            >>> CyclicList([4,4,4]).repetition_pattern()
-            (0, CyclicList([3]))
-            >>> CyclicList([4,4,4,1]).repetition_pattern()
-            (3, CyclicList([1, 3]))
-            >>> CyclicList([1,4,4,4,1]).repetition_pattern()
-            (1, CyclicList([3, 2]))
-            >>> CyclicList([4,4,4,3,3]).repetition_pattern()
-            (3, CyclicList([2, 3]))
-          """
-          if self._repetition_pattern is None:
-              if cls is None:
-                  cls = CyclicList
-              l=len(self)
-              # find the first transition
-              b=0
-              while (b < l) and (self[b] == self[b+1]):
-                  b += 1
-              # all items are equal
-              if b == l:
-                  return (0, cls([l]))
-              # else, start building pattern from here
-              result = cls()
-              b += 1
-              i=0
-              while i < l:
-                  j=0
-                  while (j < l) and (self[b+i+j] == self[b+i+j+1]):
-                      j += 1
-                  result.append(j+1)
-                  i += j+1
-              self._repetition_pattern = (b, result)
-              
-          return self._repetition_pattern
-      
         def rotate(self, n):
             """Rotate sequence leftwards by `n` positions, *in-place*.
 
