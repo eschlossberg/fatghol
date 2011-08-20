@@ -11,7 +11,6 @@ from decorator import decorator
 from time import time
 import weakref
 
-
 ## local imports
 
 from iterators import Iterator
@@ -49,6 +48,8 @@ class _IteratorRecorder(object):
 
     **WARNING:** This is not thread-safe!
     """
+
+    __slots__ = ['iterable', 'history']
     
     def __init__(self, iterable):
         self.iterable = iterable
@@ -74,6 +75,8 @@ class _IteratorReplayer(Iterator):
 
     **WARNING:** This is not thread-safe!
     """
+
+    __slots__ = ['done', 'master', 'pos']
     
     def __init__(self, master):
         self.master = master
@@ -96,19 +99,12 @@ class _IteratorReplayer(Iterator):
 class Cacheable(object):
     """Instances of this class provide an interface for use by caches
     based on a `dict` subclass.
-
-    When an object that has been cached goes out of scope, its
-    `.invalidate()` method should be called, and it will notify all
-    caches holding a reference to it to release the reference, so that
-    Python GC can do its job.
-
-    Conforming caches should implement a `release(key)` method, by
-    which they release any reference to object identified by `key`.
     """
+
+    __slots__ = ['__id', '_cache']
 
     def __init__(self):
         self.__id = _unique.next()
-        self.__cachers = []
 
     def cache_id(self):
         """Return a integer value which is unique and guaranteed not
@@ -119,23 +115,6 @@ class Cacheable(object):
         re-used during the lifetime of a program.)
         """
         return self.__id
-
-    def referenced(self, cache, key):
-        """Add `cache` to the set of stores that hold a reference to
-        this object.
-        """
-        self.__cachers.append((cache, key))
-
-    def release(self):
-        """Notify all caches that this object should be removed from
-        their store, so that Python's GC can collect it.
-        """
-        for (c, k) in self.__cachers:
-            try:
-                del c[k]
-            except KeyError:
-                pass
-
 
 
 def cache_id(o):
@@ -270,22 +249,23 @@ def ocache_symmetric(func, o1, o2):
 
 
 @decorator
-def ocache_iterator(func, obj, *args):
-    """Cache results of a method or function returning an iterator/generator.
+def ocache_iterator(func, o1, o2):
+    """Cache results of `isomorphism(g1,g2)` methods, which return an
+    iterator/generator.
 
     Iterator results cannot be cached like any other object, because
     they need to return the same set of values each time the
     generating function is invoked.
     """
     try:
-        rcache = obj._cache
+        rcache = o1._cache
     except AttributeError:
-        rcache = obj._cache = {}
-    key = (func.func_name, args)
+        rcache = o1._cache = {}
+    key = (func.func_name, o2.cache_id())
     try:
         return rcache[key].replay()
     except KeyError:
-        result = _IteratorRecorder(func(obj, *args))
+        result = _IteratorRecorder(func(o1, o2))
         rcache[key] = result
         return result.replay()
 
