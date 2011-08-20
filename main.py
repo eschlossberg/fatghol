@@ -631,61 +631,6 @@ reverses the associated cell orientation.
         outfile.write("\n")
 
 
-# vertices -- list graphs for given vertex valences
-elif 'vertices' == args[0]:
-    # parse command line
-    del args[0]
-    if len(args) == 0:
-        parser.print_help()
-        sys.exit(1)
-
-    try:
-        valences = [ positive_int(val) for val in args ]
-    except ValueError, msg:
-        sys.stderr.write("Invalid command line:"\
-                         " all vertex valences must be positive integers: %s\n" \
-                         % msg)
-        sys.exit(1)
-    if sum(valences) % 2 != 0:
-        sys.stderr.write("Invalid valence list '%s': " \
-                         "sum of vertex valences must be an even number. " \
-                         "Aborting.\n" \
-                         % (" ".join(str(val) for val in valences)))
-        sys.exit(1)
-
-    # compute graphs matching given vertex sequences
-    graphs = do_vertices(valences)
-
-    # output results
-    if not options.silent:
-        if options.latex:
-            outfile.write(r"""
-    \documentclass[a4paper,twocolumn]{article}
-    \usepackage[curve,poly,xdvi]{xy}
-    \begin{document}
-    \section*{Fatgraphs labeling cells of $M_{%d,%d}$}
-    """ % (g,n))
-        for graph in graphs:
-            if options.latex:
-                outfile.write(graph_to_xypic(graph,
-                                             graph.genus(),
-                                             graph.num_boundary_components(),
-                                             graph.is_oriented(),
-                                             name=r"\#%d" % num,
-                                             )+'\n')
-            else:
-                outfile.write("%s\n" % ((graph,
-                                         graph.genus(),
-                                         graph.num_boundary_components(),
-                                         graph.is_oriented(),
-                                         ),))
-        outfile.write("\n")
-        outfile.write("Found %d graphs.\n" % len(graphs))
-        outfile.write("\n")
-        if options.latex:
-            outfile.write(r"\end{document}")
-            outfile.write("\n")
-
 # homology -- compute homology ranks
 elif 'homology' == args[0]:
     # parse command line

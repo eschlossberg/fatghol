@@ -50,21 +50,6 @@ from utils import (
 
 ## main
 
-class VertexCache(object):
-    """A caching factory of `Vertex` objects.
-    """
-    def __init__(self):
-        self.cache = {}
-    def __call__(self, edge_seq):
-        key = tuple(edge_seq)
-        if key not in self.cache:
-            self.cache[key] = Vertex(key)
-        return self.cache[key]
-    def __str__(self):
-        # needed to form readable persistent iterators cache
-        return "rg.VertexCache"
-
-
 class Vertex(CyclicList):
     """A (representative of) a vertex of a ribbon graph.
 
@@ -178,7 +163,6 @@ class Fatgraph(EqualIfIsomorphic):
 
     __slots__ = [
         '__weakref__',
-        '_vertextype',
         'edge_numbering',
         'endpoints_i',
         'endpoints_v',
@@ -189,7 +173,7 @@ class Fatgraph(EqualIfIsomorphic):
         'vertices',
         ]
 
-    def __init__(self, g_or_vs, vertextype=Vertex, **kwargs):
+    def __init__(self, g_or_vs, **kwargs):
         """Construct a `Fatgraph` instance, taking list of vertices.
 
         Argument `g_or_vs` can be either:
@@ -229,7 +213,6 @@ class Fatgraph(EqualIfIsomorphic):
         # dispatch based on type of arguments passed
         if isinstance(g_or_vs, Fatgraph):
             # copy-constructor
-            self._vertextype = vertextype
             self.edge_numbering = g_or_vs.edge_numbering
             self.endpoints_i = g_or_vs.endpoints_i
             self.endpoints_v = g_or_vs.endpoints_v
@@ -245,10 +228,6 @@ class Fatgraph(EqualIfIsomorphic):
                    " sequence of `%s` instances;" \
                    " got `%s` instead, which has type `%s`." \
                    % (Vertex, g_or_vs, [type(x) for x in g_or_vs])
-
-            #: Factory method to make a `Vertex` instance from a linear
-            #  list of incident edge colorings.
-            self._vertextype = vertextype
 
             #: list of vertices
             self.vertices = g_or_vs
@@ -656,14 +635,14 @@ class Fatgraph(EqualIfIsomorphic):
         midpoint2_index = self.num_vertices + 1
 
         if side1:
-            midpoint1 = self._vertextype([other_half1, one_half1, connecting_edge])
+            midpoint1 = Vertex([other_half1, one_half1, connecting_edge])
         else:
-            midpoint1 = self._vertextype([one_half1, other_half1, connecting_edge])
+            midpoint1 = Vertex([one_half1, other_half1, connecting_edge])
 
         if side2:
-            midpoint2 = self._vertextype([other_half2, one_half2, connecting_edge])
+            midpoint2 = Vertex([other_half2, one_half2, connecting_edge])
         else:
-            midpoint2 = self._vertextype([one_half2, other_half2, connecting_edge])
+            midpoint2 = Vertex([one_half2, other_half2, connecting_edge])
 
         ## two new vertices are added: the mid-points of the connected edges.
         new_vertices = self.vertices + [midpoint1, midpoint2]
@@ -678,7 +657,7 @@ class Fatgraph(EqualIfIsomorphic):
         new_endpoints_i[one_half1] = [pos1a, side1]
         if edge1 != edge2:
             # replace `edge1` with new `other_half1` in the second endpoint
-            new_vertices[v1b] = self._vertextype(new_vertices[v1b][:pos1b]
+            new_vertices[v1b] = Vertex(new_vertices[v1b][:pos1b]
                                                  + [other_half1]
                                                  + new_vertices[v1b][pos1b+1:])
             new_endpoints_v.append([midpoint1_index, v1b])  # other_half1
@@ -702,7 +681,7 @@ class Fatgraph(EqualIfIsomorphic):
             new_endpoints_i[one_half2] = [opposite_side1, side2]
         # "other half" of second edge *always* ends at the previous
         # edge endpoint, so replace `edge2` in `v2b`.
-        new_vertices[v2b] = self._vertextype(new_vertices[v2b][:pos2b]
+        new_vertices[v2b] = Vertex(new_vertices[v2b][:pos2b]
                                              + [other_half2]
                                              + new_vertices[v2b][pos2b+1:])
         new_endpoints_v.append([midpoint2_index, v2b])  # other_half2
@@ -712,7 +691,6 @@ class Fatgraph(EqualIfIsomorphic):
         new_edge_numbering = self.edge_numbering + \
                              [other_half1, other_half2, connecting_edge]
         return Fatgraph(new_vertices,
-                     vertextype = self._vertextype,
                      endpoints = (new_endpoints_v, new_endpoints_i),
                      num_edges = self.num_edges + 3,
                      num_external_edges = self.num_external_edges,
@@ -787,7 +765,7 @@ class Fatgraph(EqualIfIsomorphic):
         # Similarly, vertices of `self` retain indices `[0..v]`, while
         # vertices of `other` follow.
         new_vertices = self.vertices \
-                       + [ self._vertextype(itranslate(renumber_other_edges, ov))
+                       + [ Vertex(itranslate(renumber_other_edges, ov))
                            for ov in other.vertices ]
         renumber_other_vertices = dict((x, x+self.num_vertices)
                                        for x in xrange(other.num_vertices))
@@ -825,14 +803,14 @@ class Fatgraph(EqualIfIsomorphic):
         midpoint2_index = midpoint1_index + 1
 
         if side1:
-            midpoint1 = self._vertextype([other_half1, one_half1, connecting_edge])
+            midpoint1 = Vertex([other_half1, one_half1, connecting_edge])
         else:
-            midpoint1 = self._vertextype([one_half1, other_half1, connecting_edge])
+            midpoint1 = Vertex([one_half1, other_half1, connecting_edge])
 
         if side2:
-            midpoint2 = self._vertextype([other_half2, one_half2, connecting_edge])
+            midpoint2 = Vertex([other_half2, one_half2, connecting_edge])
         else:
-            midpoint2 = self._vertextype([one_half2, other_half2, connecting_edge])
+            midpoint2 = Vertex([one_half2, other_half2, connecting_edge])
 
         ## two new vertices are added: the mid-points of the connected edges.
         new_vertices += [midpoint1, midpoint2]
@@ -846,7 +824,7 @@ class Fatgraph(EqualIfIsomorphic):
         new_endpoints_v[one_half1] = [v1a, midpoint1_index]
         new_endpoints_i[one_half1] = [pos1a, side1]
         # replace `edge1` with new `other_half1` in the second endpoint
-        new_vertices[v1b] = self._vertextype(new_vertices[v1b][:pos1b]
+        new_vertices[v1b] = Vertex(new_vertices[v1b][:pos1b]
                                              + [other_half1]
                                              + new_vertices[v1b][pos1b+1:])
         new_endpoints_v.append([midpoint1_index, v1b])  # other_half1
@@ -861,7 +839,7 @@ class Fatgraph(EqualIfIsomorphic):
         new_endpoints_i[one_half2] = [pos2a, side2]
         # "other half" of second edge *always* ends at the previous
         # edge endpoint, so replace `edge2` in `v2b`.
-        new_vertices[v2b] = self._vertextype(new_vertices[v2b][:pos2b]
+        new_vertices[v2b] = Vertex(new_vertices[v2b][:pos2b]
                                              + [other_half2]
                                              + new_vertices[v2b][pos2b+1:])
         new_endpoints_v.append([midpoint2_index, v2b])  # other_half2
@@ -870,7 +848,6 @@ class Fatgraph(EqualIfIsomorphic):
         # build new graph 
         new_edge_numbering +=  [other_half1, other_half2, connecting_edge]
         return Fatgraph(new_vertices,
-                     vertextype = self._vertextype,
                      endpoints = (new_endpoints_v, new_endpoints_i),
                      num_edges = self.num_edges + other.num_edges + 3,
                      num_external_edges = self.num_external_edges + other.num_external_edges,
@@ -943,7 +920,7 @@ class Fatgraph(EqualIfIsomorphic):
                               for i in xrange(edgeno, self.num_edges))
         # See `itranslate` in utils.py for how this prescription is
         # encoded in the `renumber_edges` mapping.
-        new_vertices = [ self._vertextype(itranslate(renumber_edges, v))
+        new_vertices = [ Vertex(itranslate(renumber_edges, v))
                          for v in self.vertices ]
 
         # Mate endpoints of contracted edge:
@@ -955,7 +932,7 @@ class Fatgraph(EqualIfIsomorphic):
         # 2. Join vertices by concatenating the list of incident
         #    edges;
         # 3. Set new `i1` vertex in place of old first endpoint:
-        new_vertices[v1] = self._vertextype(
+        new_vertices[v1] = Vertex(
             new_vertices[v1][pos1+1:] + new_vertices[v1][:pos1]
             +
             new_vertices[v2][pos2+1:] + new_vertices[v2][:pos2]
@@ -1029,7 +1006,6 @@ class Fatgraph(EqualIfIsomorphic):
             for x in xrange(self.num_edges - 1):
                 assert 0 <= new_edge_numbering[x] < self.num_edges - 1
             g = Fatgraph(new_vertices,
-                         vertextype = self._vertextype,
                          endpoints = (new_endpoints_v, new_endpoints_i),
                          num_edges = self.num_edges - 1,
                          num_external_edges = self.num_external_edges,
@@ -1043,7 +1019,6 @@ class Fatgraph(EqualIfIsomorphic):
 
         # build new graph 
         return Fatgraph(new_vertices,
-                     vertextype = self._vertextype,
                      endpoints = (new_endpoints_v, new_endpoints_i),
                      num_edges = self.num_edges - 1,
                      num_external_edges = self.num_external_edges,
@@ -1158,8 +1133,6 @@ class Fatgraph(EqualIfIsomorphic):
                " into %d-valent vertex `%s`" \
                % (G.num_external_edges, G,
                   len(self.vertices[v]), self.vertices[v])
-        vertextype = self._vertextype # micro-optimization
-
         # edges of `G` are renumbered depending on whether
         # they are internal of external edges:
         #   - internal edges in `G` have numbers ranging from 0 to
@@ -1180,12 +1153,12 @@ class Fatgraph(EqualIfIsomorphic):
         # `self`; vertices from `G` come last in the new graph
         new_vertices = (self.vertices[:v] 
                         + self.vertices[v+1:] 
-                        + [ vertextype(itranslate(renumber_g_edges, gv))
+                        + [ Vertex(itranslate(renumber_g_edges, gv))
                             for gv in G.vertices ])
 
-        return Fatgraph(new_vertices, vertextype=vertextype,
-                     num_edges = self.num_edges + G.num_edges,
-                     num_external_edges = self.num_external_edges)
+        return Fatgraph(new_vertices, 
+                        num_edges = self.num_edges + G.num_edges,
+                        num_external_edges = self.num_external_edges)
 
 
     def hangcircle(self, edge, side):
@@ -1242,10 +1215,10 @@ class Fatgraph(EqualIfIsomorphic):
         ## two new vertices are added: the mid-point of `edge`, and
         ## the vertex `T` lying on the circle.
         if side:
-            midpoint = self._vertextype([other_half, one_half, connecting_edge])
+            midpoint = Vertex([other_half, one_half, connecting_edge])
         else:
-            midpoint = self._vertextype([one_half, other_half, connecting_edge])
-        T = self._vertextype([circling_edge, circling_edge, connecting_edge])
+            midpoint = Vertex([one_half, other_half, connecting_edge])
+        T = Vertex([circling_edge, circling_edge, connecting_edge])
         new_vertices = self.vertices + [midpoint, T]
 
         ## new edge endpoints:
@@ -1258,7 +1231,7 @@ class Fatgraph(EqualIfIsomorphic):
         (pos1, pos2) = self.endpoints_i[edge]
         new_endpoints_v[one_half] = [v1, midpoint_index]
         new_endpoints_i[one_half] = [pos1, side]
-        new_vertices[v2] = self._vertextype(new_vertices[v2][:pos2]
+        new_vertices[v2] = Vertex(new_vertices[v2][:pos2]
                                              + [other_half]
                                              + new_vertices[v2][pos2+1:])
         new_endpoints_v.append([midpoint_index, v2])  # other_half1
@@ -1277,7 +1250,6 @@ class Fatgraph(EqualIfIsomorphic):
         new_edge_numbering = self.edge_numbering + \
                              [other_half, connecting_edge, circling_edge]
         return Fatgraph(new_vertices,
-                     vertextype = self._vertextype,
                      endpoints = (new_endpoints_v, new_endpoints_i),
                      num_edges = self.num_edges + 3,
                      num_external_edges = self.num_external_edges,
