@@ -234,22 +234,22 @@ meaning is only available in the Python Language Reference
 \cite{python:reference}; the ones used in the listings of
 \csref{chap:algorithm} are:
 \begin{itemize}
-\item[] \l"__eq__": Used for testing object equality; if $x$ implements
+\item[{\tt \_\_eq\_\_}] Used for testing object equality; if $x$ implements
   \l"__eq__", then \l{$x$ == $y$} actually runs \l"$x$.__eq__($y$)".
-\item[] \l"__getitem__": If $x$ has a method \l"__getitem__", then the
+\item[{\tt \_\_getitem\_\_}] If $x$ has a method \l"__getitem__", then the
   look-up expression \l{$x$[$k$]} is translated to the method call
   \l"$x$.__getitem__($k$)".
-\item[] \l"__init__": Instance initialization, see \csref{sec:classes}.
-%\item[\l"__len__": Returns the length (number of elements) in a
-%  container.
-\item[] \l"__ne__": The opposite of \l"__eq__" (which see); if $x$
+\item[{\tt \_\_init\_\_}] Instance initialization, see \csref{sec:classes}.
+\item[{\tt \_\_len\_\_}] Returns the length (number of elements) in a
+  container.
+\item[{\tt \_\_ne\_\_}] The opposite of \l"__eq__" (which see); if $x$
   implements \l"__ne__", then \l{$x$ != $y$} actually runs
   \l"$x$.__ne__($y$)"
-\item[] \l"__repr__": Machine-readable printable representation of an
+\item[{\tt \_\_repr\_\_}] Machine-readable printable representation of an
   object; returns a string, which should be a valid Python expression
   that yields a copy of the object when evaluated; called by
   \l"repr($x$)".
-\item[] \l"__str__": Human-readable printable representation of an
+\item[{\tt \_\_str\_\_}] Human-readable printable representation of an
   object; returns a string describing the instance; called by
   \l"str($x$)".
 \end{itemize}
@@ -309,9 +309,9 @@ containers: \emph{iteration} and \emph{look-up}.
 Iteration over a container is supported through the \l"for" loop
 syntax:
 \begin{lstlisting}
-  for item in container:
-    # do something with item
-    print(item)
+for item in container:
+  # do something with item
+  print(item)
 \end{lstlisting}
 The block of code following a \l{for ... in ...:} line will be
 executed once for each item stored in the container; at each
@@ -339,11 +339,11 @@ Sets are defined by enclosing the list of member objects in braces
 `\{' and `\}'; if an object is repeated several times in the list,
 it will be stored only once in the \l"set" container:
 \begin{lstlisting}
-  # define a set; duplicates will be removed
-  s1 = { 0, 1, "two", 1, 0 }
+# define a set; duplicates will be removed
+s1 = { 0, 1, "two", 1, 0 }
 
-  # same effect as the definition above
-  s2 = { 0, 1, "two" }
+# same effect as the definition above
+s2 = { 0, 1, "two" }
 \end{lstlisting}
 Python also allows defining sets with a syntax more similar to the
 common mathematical writing:
@@ -357,10 +357,10 @@ s = set(n*n for n in range(10))
 The general syntax of these expression (called ``set comprehensions''
 in Python parlance) is:
 \begin{lstlisting}
-  { $f$ for $x$ in $X$ if $p$ }
+{ $f$ for $x$ in $X$ if $p$ }
 \end{lstlisting}
 where:
-\begin{description}
+\begin{itemize}
 \item[$x$] is any valid variable name;
 \item[$X$] is any object that allows iteration (e.g., another
   set, a list, etc.);
@@ -368,7 +368,7 @@ where:
   that is only function of $x$;
 \item[$p$] is a Python expression that evaluates to a
   Boolean truth value (\l"True"/\l"False") and only depends on $x$.
-\end{description}
+\end{itemize}
 The above Python set comprehension translates to the current
 mathematics notation:
 \begin{equation*}
@@ -380,12 +380,12 @@ case it is assumed to be \l"True" for all $x \in X$.
 Sets do not allow look-up of elements, but allow iteration over the set
 contents in a \l"for" loop:
 \begin{lstlisting}
-  # define a set; duplicates will be removed
-  s = { 0, 1, "two", 1, 0 }
+# define a set; duplicates will be removed
+s = { 0, 1, "two", 1, 0 }
 
-  # iterate over the set contents
-  for item in s:
-    print(item)
+# iterate over the set contents
+for item in s:
+  print(item)
 \end{lstlisting}
 
 An \emph{immutable} variant \l"frozenset" is also provided;
@@ -405,11 +405,11 @@ of the list, so \l{l[-1]} is the last value in the list.  List
 literals are delimited by a matching pair \l{[} and \l{]}, and the
 items within must be separated by commas. For instance:
 \begin{lstlisting}
-  # assign a list to the variable "l"
-  l = [1, 2, "three", 4.0]
+# assign a list to the variable "l"
+l = [1, 2, "three", 4.0]
 
-  # print the 3rd element -- indices start at 0
-  print l[2]
+# print the 3rd element -- indices start at 0
+print l[2]
 \end{lstlisting}
 Lists can also be defined using a notation akin to the one used for
 defining sets --- it is called \emph{list comprehensions}:
@@ -425,20 +425,20 @@ Lists are mutable objects: one can alter the values stored, append new
 items or insert them in specified places, and delete portions of an
 existing list.
 \begin{lstlisting}
-  # alter a stored value, in-place
-  l[0] = "zero"
+# alter a stored value, in-place
+l[0] = "zero"
 
-  # append one item to a list
-  l.append(5)
+# append one item to a list
+l.append(5)
 
-  # append another list
-  l.extend(["six", 7])
+# append another list
+l.extend(["six", 7])
 
-  # insert a new value "1.5" between elements at position 1 and 2
-  l.insert(1, 1.5)
+# insert a new value "1.5" between elements at position 1 and 2
+l.insert(1, 1.5)
 
-  # delete the first 3 elements
-  del l[0:2]
+# delete the first 3 elements
+del l[0:2]
 \end{lstlisting}
 It is possible to extract (and delete) \emph{slices} of a list, that is,
 all items in a list associated with a range of consecutive indices.
@@ -447,16 +447,16 @@ denoted by the starting and ending index, separated by a colon
 character \l{:} and enclosed by square brackets: the slice spans the
 half-open interval $[\text{start index}, \text{end index})$.
 \begin{lstlisting}
-  # create a list
-  l1 = [0, 1, 2, 3, 4, 5, 6]
+# create a list
+l1 = [0, 1, 2, 3, 4, 5, 6]
 
-  # extract the first three elements
-  l2 = l1[0:3]
-  print l2
+# extract the first three elements
+l2 = l1[0:3]
+print l2
 
-  # now remove the slice "l2" from "l1"
-  del l1[0:3]
-  print l1
+# now remove the slice "l2" from "l1"
+del l1[0:3]
+print l1
 \end{lstlisting}
 
 
@@ -490,8 +490,8 @@ Python syntax for working with dictionaries is akin to the syntax used
 for manipulating lists, the only difference being that dictionaries
 are constructed by enclosing \l{key:value} pairs in braces:
 \begin{lstlisting}
-  # define a dictionary
-  f = { "zero":0, "one":1, "two":2, "three":3 }
+# define a dictionary
+f = { "zero":0, "one":1, "two":2, "three":3 }
 \end{lstlisting}
 A dictionary can also be defined using the comprehension syntax,
 akin to sets, but the defining expression must have the form
@@ -507,8 +507,8 @@ f = dict(n:(n*n) for n in range(10))
 Dictionaries support look-up using a syntax akin to the one used for
 lists, but the look-up key can be any valid Python object:
 \begin{lstlisting}
-  # lookup an element by key
-  print (f["one"])
+# lookup an element by key
+print (f["one"])
 \end{lstlisting}
 Looking up a key which is not in the dictionary domain raises an
 exception of type \l"KeyError".
@@ -516,7 +516,7 @@ exception of type \l"KeyError".
 Dictionaries are \emph{mutable} objects, new mappings can be added or
 old ones can be replaced:
 \begin{lstlisting}
-# add a new mapping "four" -> 4
+# add a new mapping: "four" $\mapsto$ 4
 f["four"] = 4
 
 # ...change it... 
@@ -530,13 +530,16 @@ Dictionary objects support iteration over keys, values, and over (key,
 value) pairs:
 \begin{lstlisting}
 # iterate over dictionary keys
-for k in f.iterkeys(): print("dictionary key:" ", k)
+for k in f.iterkeys(): 
+    print("dictionary key: ", k)
 
 # iterate over dictionary values
-for v in f.itervalues(): print("dictionary value: ", v)
+for v in f.itervalues(): 
+    print("dictionary value: ", v)
 
 # iterate over (key, value) pairs
-for (k, v) in f.iteritems(): print("key ", k, "has value", v)
+for (k, v) in f.iteritems(): 
+    print("key ", k, "has value", v)
 \end{lstlisting}
 Using the comprehension syntax and iteration, it is easy to invert a
 mapping:
@@ -546,7 +549,7 @@ g = { v:k for (k, v) in f.iteritems() }
 \end{lstlisting}
 
 
-\section{Exception handling: \l"try"/\l"except"/\l"finally" statements}
+\section[Exception handling]{Exception handling: \l"try"/\l"except"/\l"finally" statements}
 \label{sec:try-except-finally}
 
 Exceptions are a language runtime construct to abort current function
@@ -584,7 +587,7 @@ code in the \l"except" block will assign a default value to
 try:
     b = a[42]
 except KeyError:
-    # `a` has no value in the '42' position; 
+    # `a` has no value in the "42" position; 
     # assign a default value to `b`
     b = 0
 
@@ -606,7 +609,7 @@ The main use of \l"pass" is in combination with an
 try:
   print (a[42])
 except KeyError:
-  pass # ignore error if "a" has no item "42"
+  pass # ignore error if `a` has no item "42"
 \end{lstlisting}
 
 
