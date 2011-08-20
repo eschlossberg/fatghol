@@ -19,42 +19,7 @@ from persist import PersistedIterator
 
 ## main content
 
-class PersistentCount(Iterator):
-    """Like `itertools.count`, except reached count is saved
-    to disk and resumes where last session left.
-    """
-
-    def __init__(self, filename=None, firstval=0):
-        """Initialize counter.
-
-        Parameters:
-          `filename`
-            The filename to store the reched count in;
-            if not provided, then the class name is used.
-          `firstval`
-            The value count should start at, if no saved
-            value is found in the provided file.
-        """
-        if filename is None:
-            self.__filename = self.__class__.__name__ + '.txt'
-        try:
-            stored = open(self.__filename, 'r')
-            self.counted = int(stored.read(), 16)
-            stored.close()
-        except (IOError, ValueError):
-            self.counted = firstval - 1
-        self.__file = open(self.__filename, 'w')
-
-    def next(self):
-        self.counted += 1
-
-        self.__file.seek(0)
-        self.__file.write("0x%08x\n" % self.counted)
-        
-        return self.counted
-
-
-class TimeBasedUnique(Iterator):
+class _TimeBasedUnique(Iterator):
     """Return a new unique ID at each iteration step.
 
     The returned ID is the number of nanoseconds elapsed since the
@@ -72,8 +37,7 @@ class TimeBasedUnique(Iterator):
     def next(self):
         return int(time() * 1000000)
 
-
-_unique = TimeBasedUnique()
+_unique = _TimeBasedUnique()
 
 
 def persistent_id(o):
@@ -92,8 +56,9 @@ def persistent_id(o):
         return id
 
 
+__cache1 = {}
 @decorator
-def cache1(func, obj, fcache={}):
+def cache1(func, obj):
     """Cache result of a 1-ary object method.
 
     This decorator can cache results of calls `obj.method()` or
@@ -103,7 +68,7 @@ def cache1(func, obj, fcache={}):
     Unlike the `memoize` decorator, it can also work with objects that
     use a `__slots__` declaration.
     """
-    rcache = fcache.setdefault(func.func_name, {})
+    rcache = __cache1.setdefault(func.func_name, {})
     key = persistent_id(obj)
     if key in rcache:
         return rcache[key]
@@ -113,7 +78,7 @@ def cache1(func, obj, fcache={}):
         return result
 
 
-__cache = {}
+__cache2 = {}
 @decorator
 def cache(func, obj, *args):
     """Cache result of a generic object method.
@@ -124,7 +89,7 @@ def cache(func, obj, *args):
     Unlike the `memoize` decorator, it can also work with objects that
     use a `__slots__` declaration.
     """
-    rcache = __cache.setdefault(func.func_name, {})
+    rcache = __cache2.setdefault(func.func_name, {})
     oid = persistent_id(obj)
     key = (oid, args)
     if key in rcache:
@@ -135,8 +100,9 @@ def cache(func, obj, *args):
         return result
 
 
+__cache_symmetric = {}
 @decorator
-def cache_symmetric(func, o1, o2, fcache={}):
+def cache_symmetric(func, o1, o2):
     """Cache result of 2-ary symmetric method.
 
     This decorator can cache results of `obj1.method(obj2)` or
@@ -147,7 +113,7 @@ def cache_symmetric(func, o1, o2, fcache={}):
     Unlike the `memoize` decorator, it can also work with objects that
     use a `__slots__` declaration.
     """
-    rcache = fcache.setdefault(func.func_name, {})
+    rcache = __cache_symmetric.setdefault(func.func_name, {})
     key = frozenset([persistent_id(o1),
                      persistent_id(o2)])
     if key in rcache:
@@ -226,8 +192,6 @@ def cache_iterator(func, obj, *args):
         return result.replay()
 
 
-    
-            
 
 ## main: run tests
 
