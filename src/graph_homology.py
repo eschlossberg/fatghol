@@ -5,6 +5,13 @@
 __docformat__ = 'reStructuredText'
 
 
+## logging subsystem
+
+import logging
+
+
+## application-local imports
+
 from homology import *
 from rg import MgnGraphsIterator, Graph, Vertex
 from valences import vertex_valences_for_given_g_and_n
@@ -23,21 +30,32 @@ def FatgraphComplex(g, n):
     ## vertex; so, by Euler's formula `V - E + n = 2 - 2*g`, we get:
     ## `E = 2*g + n - 1`.
     min_edges = 2*g + n - 1
+    logging.info("Minimum number of edges: %d", min_edges)
+    
     ## Maximum number of edges is reached in graphs with all vertices
     ## tri-valent, so, combining Euler's formula with `3*V = 2*E`, we
     ## get: `E = 6*g + 3*n - 6`.  These are also graphs corresponding
     ## to top-dimensional cells.
     top_dimension = 6*g + 3*n - 6
+    logging.info("Maximum number of edges: %d", top_dimension)
 
     #: list of primitive graphs, graded by number of edges
     generators = [ [] for dummy in xrange(top_dimension) ]
 
     # gather graphs
+    _grade = None
     for graph in MgnGraphsIterator(g,n):
         if not graph.is_oriented():
             continue
         grade = graph.num_edges - 1
         generators[grade].append(graph)
+
+        # since `MgnGraphsIterator` returns graphs in blocks with
+        # equal number of edges, we can use that for logging purposes
+        # and provide a simple-minded progress report
+        if grade != _grade:
+            logging.info("Now generating %d-edge graphs ...", grade)
+            _grade = grade
         
     # build chain complex
     C = ChainComplex(top_dimension)

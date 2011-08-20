@@ -4,17 +4,33 @@
 __docformat__ = 'reStructuredText'
 
 
+## stdlib imports
+
+import sys
+
+
+## logging subsystem
+
+import logging
+
+logging.basicConfig(level=logging.DEBUG,
+                    format="[%(asctime)s] %(levelname)s: %(message)s",
+                    datefmt="%H:%M:%S")
+
+
+## fatgraphs 
+
 from graph_homology import FatgraphComplex
 from rg import (
     Graph,
     ConnectedGraphsIterator,
     MgnGraphsIterator,
     )
+from utils import positive_int
 from valences import vertex_valences_for_given_g_and_n
 
-import sys
-from utils import positive_int
 
+## utility functions
 
 def graph_to_xypic(graph, g=None, n=None, orientable=None):
     """Print XY-Pic code snippet to render graph `graph`."""
@@ -124,6 +140,10 @@ if 0 == len(args) or 'help' == args[0]:
     parser.print_help()
     sys.exit(1)
 
+# disable logging when '--silent'
+if options.silent:
+    logging.disable(logging.WARNING)
+
 # hack to allow 'N1,N2,...' or 'N1 N2 ...' syntaxes
 for (i, arg) in enumerate(args):
     if arg.find(","):
@@ -162,6 +182,8 @@ elif 'valences' == args[0]:
                          "should be non-negative integer.\n" \
                          % (args[1],))
         sys.exit(1)
+
+    logging.info("Computing vertex valences occurring in g=%d,n=%d fatgraphs ...", g, n)
     vvs = vertex_valences_for_given_g_and_n(g,n)
     for vv in vvs:
         outfile.write("%s\n" % str(vv))
@@ -191,8 +213,10 @@ elif "graphs" == args[0]:
                          % (args[1],))
         sys.exit(1)
 
-    # compute graph complex
+    logging.info("Computing fat graphs for g=%d, n=%d ...", g, n)
     graphs = FatgraphComplex(g,n)
+    logging.info("Found %d distinct orientable fat graphs.", len(graphs))
+    
     # FIXME: `D` must match the one used in `ChainComplex.compute_homology_rank()`
     D = [ [ graphs.module[i-1].coordinates(graphs.differential[i](b))
             for b in graphs.module[i].base ]
@@ -276,7 +300,7 @@ elif "graphs" == args[0]:
                                 x = min(x)
                             if isinstance(y, (set, frozenset)):
                                 y = min(y)
-                            return cmp(x,y)
+                            return cmp(x,y) 
                         for (bcy, nr) in sorted(graph.numbering.iteritems(), cmp=cmp_):
                             outfile.write(r"\textsl{%s} & (%s) \\ " % (
                                 fmt_(nr),
@@ -329,7 +353,9 @@ elif 'vertices' == args[0]:
         sys.exit(1)
 
     # compute graphs matching given vertex sequences
+    logging.info("Computing graphs with vertex valences %s ...", valences)
     graphs = list(ConnectedGraphsIterator(valences))
+    logging.info("Found %d distinct graphs.", len(graphs))
 
     # output results
     if not options.silent:
@@ -387,7 +413,10 @@ elif 'homology' == args[0]:
         sys.exit(1)
 
     # compute graph complex and its homology ranks
+    logging.info("Computing fat graphs complex for g=%d, n=%d ...", g, n)
     graph_complex = FatgraphComplex(g,n)
+
+    logging.info("Computing homology ranks ...")
     hs = graph_complex.compute_homology_ranks()
 
     # print results
@@ -398,3 +427,6 @@ elif 'homology' == args[0]:
 else:
     sys.stderr.write("Unknown action `%s`, aborting.\n" % args[0])
     sys.exit(1)
+
+
+logging.info("Done.")
