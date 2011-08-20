@@ -453,11 +453,13 @@ class Fatgraph(EqualIfIsomorphic):
             if __debug__:
                 if graph is not None:
                     for (v, i, j) in self:
-                        l = len(graph.vertices[v])-1
-                        assert (abs(i-j) == 1) or (set((i,j)) == set((0,l))), \
+                        l = len(graph.vertices[v])
+                        assert i < l
+                        assert j < l
+                        assert (j-i)%l == 1, \
                                "Fatgraph.BoundaryCycle():" \
-                               " Non-consecutive indices in triple `%s`" \
-                               % ((v,i,j),)
+                               " Non-consecutive indices in triple `%s` (corner at vertex `%s`)" \
+                               % ((v,i,j), graph.vertices[v])
 
         def contract(self, vi1, vi2, graph):
             """Return a new `BoundaryCycle` instance, image of the
@@ -520,7 +522,7 @@ class Fatgraph(EqualIfIsomorphic):
                            % (corner, count, new_bcy)
             return Fatgraph.BoundaryCycle(new_bcy, graph)
 
-        def transform(self, iso):
+        def transform(self, iso, graph):
             """Return a new `BoundaryCycle` instance, obtained by
             transforming each corner according to a graph isomorphism.
             """
@@ -538,7 +540,7 @@ class Fatgraph(EqualIfIsomorphic):
                 if i_ == 0 and j_ == l:
                     i_, j_ = j_, i_
                 triples.append((v_, i_, j_))
-            return Fatgraph.BoundaryCycle(triples)
+            return Fatgraph.BoundaryCycle(triples, graph)
                 
 
     @maybe(ocache0)
@@ -1206,6 +1208,23 @@ class Fatgraph(EqualIfIsomorphic):
         return orbits
 
 
+    def endpoints(self, edgeno):
+        """Return the endpoints of `edge`, as a pair of `(v, pos)`
+        where `v` is the endpoint vertex index, and `pos` is the
+        attachment index of `edge` into the `Vertex` object
+        `self.vertices[v]`.
+
+        The pair `((v1, pos1), (v2, pos2))` is ordered such that `v1 < v2`.
+        """
+        (v1, v2) = self.endpoints_v[edgeno]
+        (pos1, pos2) = self.endpoints_i[edgeno]
+        if v1 > v2:
+            # swap endpoints so that `v1 < v2`
+            v1, v2 = v2, v1
+            pos1, pos2 = pos2, pos1
+        return ((v1, pos1), (v2, pos2))
+
+
     def graft(self, G, v):
         """Return new `Fatgraph` formed by grafting graph `G` into vertex
         with index `v`.  The number of"external" edges in `G` must match the
@@ -1833,7 +1852,7 @@ def MakeNumberedGraphs(graph):
     for a in graph.automorphisms():
         k = Permutation()
         for src in xrange(n):
-            dst_cy = bc[src].transform(a)
+            dst_cy = bc[src].transform(a, graph)
             try:
                 dst = bc.index(dst_cy)
             except ValueError: # `dst_cy` not in `bc`
@@ -1853,7 +1872,7 @@ def MakeNumberedGraphs(graph):
             element of group `K` is contained in set `already`.
             """
             for k in K:
-                if k.rearrange(candidate) in already:
+                if k.rearranged(candidate) in already:
                     return False
             return True
         numberings = [ ]
@@ -2100,21 +2119,17 @@ class NumberedFatgraph(Fatgraph):
         if v1 > v2:
             # swap endpoints so that `v1 < v2`
             v1, v2 = v2, v1
-            pos1, pos2 = pos2, pos1
-        l1 = len(self.vertices[v1])
-        l2 = len(self.vertices[v2])
-        
+            pos1, pos2 = pos2, pos1        
         # transform corners according to contraction; see
         # `Fatgraph.contract()` for an explanation of how the
         # underlying graph is altered during contraction.
+        contracted = self.underlying.contract(edgeno)
         new_numbering = {}
         contracted = self.underlying.contract(edgeno)
         for (bcy, n) in self.numbering.iteritems():
             new_cy = bcy.contract((v1,pos1), (v2,pos2), contracted)
             new_numbering[Fatgraph.BoundaryCycle(new_cy)] = n
-
-        return NumberedFatgraph(contracted,
-                                numbering=new_numbering)
+        return NumberedFatgraph(contracted, numbering=new_numbering)
         
 
     #@maybe(ocache_iterator)
@@ -2127,7 +2142,7 @@ class NumberedFatgraph(Fatgraph):
         for (pv, rot, pe) in Fatgraph.isomorphisms(self.underlying, other.underlying):
             pe_does_not_preserve_bc = False
             for bc1 in self.underlying.boundary_cycles:
-                bc2 = bc1.transform((pv, rot, pe))
+                bc2 = bc1.transform((pv, rot, pe), other.underlying)
                 # there are cases (see examples in the
                 # `Fatgraph.__eq__` docstring, in which the
                 # above algorithm may find a valid
@@ -2293,6 +2308,7 @@ class MgnGraphsIterator(BufferingIterator):
         
         # initialize superclass with list of trivalent graphs
         BufferingIterator.__init__(self, trivalent)
+        logging.info("  Found %d distinct unique trivalent fatgraphs." % len(trivalent))
 
 
     def refill(self):

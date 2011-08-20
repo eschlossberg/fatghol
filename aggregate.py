@@ -71,8 +71,11 @@ class AggregateList(object):
                 return component.__getitem__(i)
         raise IndexError("AggregateList.__getitem__(): list assignment out of range")
 
-    def __iter__(self):
+    def iterblocks(self):
+        return iter(self.__components)
+    def itervalues(self):
         return itertools.chain(* self.__components)
+    __iter__ = itervalues
 
     def __len__(self):
         return sum(self.__lengths)

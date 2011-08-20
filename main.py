@@ -25,9 +25,9 @@ from combinatorics import (
     Rational,
     bernoulli,
     factorial,
-    sign_exp,
+    minus_one_exp,
     )
-from utils import positive_int
+from utils import concat, positive_int
 
 
 ## utility functions
@@ -137,11 +137,11 @@ def do_homology(g, n):
     chi = G.orbifold_euler_characteristics
     logging.info("Computed orbifold Euler characteristics: %s" % chi)
     if g==0:
-        chi_hz = factorial(n-3) * sign_exp(n-3)
+        chi_hz = factorial(n-3) * minus_one_exp(n-3)
     elif g==1:
-        chi_hz = Rational(sign_exp(n), 12) * factorial(n-1)
+        chi_hz = Rational(minus_one_exp(n), 12) * factorial(n-1)
     else: # g > 1
-        chi_hz = bernoulli(2*g) * factorial(2*g+n-3) / (factorial(2*g-2) * 2*g) * sign_exp(n)
+        chi_hz = bernoulli(2*g) * factorial(2*g+n-3) / (factorial(2*g-2) * 2*g) * minus_one_exp(n)
     logging.info("  Expected orbifold Euler characteristics (according to Harer): %s", chi_hz)
     if chi != chi_hz:
         logging.error("Expected and computed orbifold Euler characteristics do not match!"
@@ -153,18 +153,18 @@ def do_homology(g, n):
         """
         if g==0:
             # according to Bini-Gaiffi-Polito arXiv:math/9806048, p.3
-            return factorial(n-3)*sign_exp(n-3)
+            return factorial(n-3)*minus_one_exp(n-3)
         elif g==1:
             # according to Bini-Gaiffi-Polito, p. 15
             if n>4:
-                return factorial(n-1)*Rational(sign_exp(n-1),12)
+                return factorial(n-1)*Rational(minus_one_exp(n-1),12)
             else:
                 es = [1,1,0,0]
                 return es[n-1] # no n==0 computed in [BGP]
         elif g==2:
             # according to Bini-Gaiffi-Polito, p. 14
             if n>6:
-                return factorial(n+1)*Rational(sign_exp(n+1),240)
+                return factorial(n+1)*Rational(minus_one_exp(n+1),240)
             else:
                 es = [1,2,2,0,-4,0,-24]
                 return es[n]
@@ -190,7 +190,7 @@ def do_homology(g, n):
 
     e_ = 0
     for i in xrange(len(hs)):
-        e_ += sign_exp(i)*hs[i]
+        e_ += minus_one_exp(i)*hs[i]
     logging.info("Computed Euler characteristics: %s" % e_)
     logging.info("  Expected Euler characteristics: %s" % e(g,n))
     if e_ != e(g,n):
@@ -232,7 +232,7 @@ resource.setrlimit(resource.RLIMIT_CORE, (0,0))
 
 # parse command-line options
 from optparse import OptionParser
-parser = OptionParser(version="3.10",
+parser = OptionParser(version="4.0",
     usage="""Usage: %prog [options] action [arg ...]
 
 Actions:
@@ -440,8 +440,8 @@ elif 'selftest' == args[0]:
     for (g, n, ok) in [ (0,3, [1,0,0]),
                         (1,1, [1,0,0]),
                         (1,2, [1,0,0,0,0,0]),
+                        (2,1, [1,0,1,0,0,0,0,0,0]),
                         (0,4, [1,2,0,0,0,0]),
-                        (2,1, [1,0,1,0,0,0,0,0,0])
                         ]:
         sys.stdout.write("Computation of M_{%d,%d} homology: " % (g,n))
         # compute homology of M_{g,n}
@@ -525,7 +525,8 @@ elif "graphs" == args[0]:
         sys.exit(1)
 
     graphs, D = do_graphs(g,n)
-
+    #graphs = concat([ list(aggr.itervalues()) for aggr in G.module ])
+    
     # output results
     if options.latex:
         outfile.write(r"""
