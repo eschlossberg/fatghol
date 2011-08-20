@@ -167,6 +167,10 @@ number of punctures be $n$.
 \section{Ribbon graphs}
 \label{sec:ribbon-graphs}
 
+Ribbon graphs take their name from being usually depicted as graphs
+with thin bands as edges, instead of 1-dimensional lines.  For much
+the same reason, they have also been called ``fatgraphs''.
+
 \begin{definition}
   \label{dfn:ribbon-graphs}
   A ribbon graph is a finite CW-complex of pure dimension 1, together
@@ -177,26 +181,31 @@ number of punctures be $n$.
   A morphism of ribbon graphs $G$, $G'$ is a cellular map $f:G\to G'$
   such that, for each vertex $\gamma$ of $G'$, the preimage $f^{-1}(U)$ of
   a small neighbourhood of $\gamma$ is a small neighbourhood of a tree in
-  $G$ (i.e., it has no nontrivial homological cycles).
+  $G$ (i.e., it is a grpah with no nontrivial homological cycles).
 \end{definition}
-Call $\RG$ the category of ribbon graphs and their morphisms.
 
 If $G$ is a ribbon graph, denote $\Vertices{G}$, $\Edges{G}$ and
 $\Legs{G}$ the sets of vertices, (unoriented) edges and oriented edges
 (at times called ``legs'' or ``half-edges'').
 
-\paragraph{Morphisms arising from contraction of an edge}
+\subsubsection{Morphisms arising from contraction of an edge}
 \label{sec:contractions}
 Let $G$ be a ribbon graph, and $G'$ be the CW-complex obtained by
 contracting an edge $\alpha \in \Edges{G}$ to a point.  $G'$ inherits a
 ribbon graph structure from $G$: if $(\alpha < \alpha_1 < \ldots < \alpha_k < \alpha)$ and $(\alpha
 < \alpha'_1 < ... < \alpha'_h < \alpha)$ are the cyclic orders at endpoints of $\alpha$,
 then the vertex formed by collapsing $\alpha$ is endowed with the cyclic
-order $(\alpha_1 < \ldots < \alpha_k < \alpha'_1 < \ldots < \alpha'_h)$.  These contraction
-morphisms play a major role in manipulation of ribbon graphs.
-\begin{lemma}
+order $(\alpha_1 < \ldots < \alpha_k < \alpha'_1 < \ldots < \alpha'_h)$.  The contraction morphisms
+play a major role in manipulation of ribbon graphs.
+
+\begin{definition}\label{dfn:admissible-contraction}
+  If $\alpha$ connects \emph{two distinct} vertices, i.e., it is \emph{not
+    a loop}, then we say the contraction is \emph{admissible}.
+\end{definition}
+
+\begin{lemma}\label{lemma:contraction1}
   Any morphism of ribbon graphs is a composition of isomorphisms and
-  contractions of edges. 
+  \emph{admissible} contractions of edges. 
 \end{lemma}
 
 
@@ -267,6 +276,24 @@ boundary component $\beta$ with the set of edges it is made of, and a
 vertex $\gamma$ with the set of edges incident to it.
 
 \begin{definition}
+  A ribbon graph $G$ is \emph{numbered} when it is endowed with a
+  bijection $\{1,\ldots, n\} \to \Holes{G}$.
+
+  It is understood that morphisms of numbered ribbon graphs respect th
+  numbering of boundary components.
+\end{definition}
+
+
+\subsection{The genus of a ribbon graph}
+\label{sec:rg-genus}
+
+The correspondence between ribbon graphs and Riemann surfaces allows
+us to give the following.
+\begin{definition}\label{dfn:rg-genus}
+  The \emph{puncture number} of a graph $G$ is given by $n =
+  \card{\Holes{G}}$, and is equal to the puncture number of the
+  Riemann surface $S(G)$.
+
   If $S(G)$ has genus $g$ and $n$ punctures, then:
   \begin{equation*}
     \chi(G) = \chi(S(G)) = 2 - 2g - n = 2 - 2g - \card{\Holes{G}},
@@ -275,58 +302,93 @@ vertex $\gamma$ with the set of edges incident to it.
   given by the above relation.
 \end{definition}
 
+\begin{lemma}\label{lemma:contraction2}
+  If $G'$ is obtained from $G$ by an admissible contraction, then $G$
+  and $G'$ share the same genus and puncture number.
+\end{lemma}
+
+Denote $\RG$ the category of ribbon graphs and their morphisms.  By
+lemmas~\ref{lemma:contraction1} and~\ref{lemma:contraction2}, $\RG$
+decomposes into the disjoint union of categories $\RG{g,n}$ whose
+objects are ribbon graphs of genus $g$ with $n$ punctures:
+\begin{equation*}
+  \RG = \coprod_{g,n} \RG{g,n}
+\end{equation*}
+No morphism connects an object of $\RG{g,n}$ with an object of
+$\RG{g',n'}$.
+
 
 \subsection{Embedded ribbon graphs}
 \label{sec:embedded-rg}
 
-An embedding of a ribbon graph $G$ into a Riemann surface $S$ is a
-injective continuous map $\iota:G\to S$, that is, a homeomorphism of $G$ onto
-its image $\iota(G) \subseteq S$.
+Fix a reference Riemann surface $S$.
 
-\begin{remark}
-  When confusion is likely to arise, we shall speak of \emph{abstract}
-  ribbon graphs, to mean the topological and combinatorial objects
-  defined in \csref{dfn:ribbon-graphs}, as opposed to \emph{embedded}
-  ribbon graphs as in \csref{dfn:embedded-rg} below.
-\end{remark}
+An embedding of a ribbon graph $G$ is a injective continuous map $\iota:G\to
+S$, that is, a homeomorphism of $G$ onto $\iota(G) \subseteq S$.
+
+When confusion is likely to arise, we shall speak of \emph{abstract}
+ribbon graphs, to mean the topological and combinatorial objects
+defined in \csref{dfn:ribbon-graphs}, as opposed to \emph{embedded}
+ribbon graphs as in \csref{dfn:embedded-rg} below.
 
 \begin{definition}\label{dfn:embedded-rg}
-  An embedded ribbon graph is a pair $[G, \iota]$ composed of a ribbon
-  graph and an equivalence class of embeddings $\iota:G\to S$ modulo the
-  action of $\Diff_0(S)$ (the group of diffeomorphisms that are
-  homotopic to the identity mapping).
+  An embedded ribbon graph is an equivalence class $[G, \iota,
+  \{\psi_i\}_{i=1}^n]$, modulo the action of $\Diff_0(S)$, of triples
+  composed of a ribbon graph $G$, an embedding $\iota:G\to S$, and
+  homeomorphisms $\psi_i$ of each connected component $C_i$ of $S \setminus \iota(G)$
+  with a punctured disk $D_i^\times$ such that $\psi_i\mid_{\partial C_i} = \iota^{-1}$.
 
-  A morphism $[f]$ from $[G, \iota]$ to $[G', \iota']$ is given by the
-  following data:\FIXME{Alla lettera, questa definizione \`e sbagliata:
-    non importa quale sia l'omotopia tra $\iota$ e $\iota' \circ f$, basta che ce
-    ne sia una.  Ovvero, il morfismo esiste se ce n'\`e almeno una, e
-    tutte quelle che esistono sono equivalenti.}
+  A morphism $[f]$ from $[G, \iota, \psi_*]$ to $[G', \iota', \psi'_*]$ is given by
+  the following data:\FIXME{Alla lettera, questa definizione \`e
+    sbagliata: non importa quale sia l'omotopia tra $\iota$ e $\iota' \circ f$,
+    basta che ce ne sia una.  Ovvero, il morfismo esiste se ce n'\`e
+    almeno una, e tutte quelle che esistono sono equivalenti.}
   \begin{itemize}
-  \item an (abstract) ribbon graph morphism $f:G\to G'$;
-  \item a diffeomorphism $\phi:S\to S$, homotopic to the identity map
-    $\id_S$, such that: $\phi \circ \iota = \iota' \circ f$.
+  \item an abstract ribbon graph morphism $f:G\to G'$;
+  \item a homotopy $\eta:[0,1] \times S\to S$, such that $\eta(0,-) = \id_S$,
+    transforming $\iota$ into $\iota' \circ f$ and $\psi_i$ into $\psi'_i$.\FIXME{%
+      \`E meglio scrivere le condizioni esplicite $\eta(1, \iota(x)) = \iota' \circ f(x)$
+      e $\psi_i \circ \eta(1,y) = \psi'_i(y)$\ ?
+      }%
   \end{itemize}
 
-  Embedded ribbon graphs with their morphisms form a category
-  $\T\RG$. 
+  Embedded ribbon graphs with their morphisms form a category $\ERG$.
 \end{definition}
+In other words, an embedded ribbon graph is a ribbon graph $G$ endowed
+with a homeomorphism ${\tilde \iota}$ between $S(G)$ and the ambient
+surface $S$ (modulo the action of $\Diff^0(S)$).\FIXME{%
+  Meglio usare questa come definizione, e usare \ref{dfn:embedded-rg}
+  come caratterizzazione?  Questa richiede di fissare $S$ come
+  superficie topologica una volta per tutte, quindi conduce a una
+  costruzione dello spazio dei moduli come triple $(C,f,S)$ similmente
+  a quanto fa Harer?}%
+Since a morphism $f:G\to G'$ of abstract ribbon graphs extends trivially
+to a morphism ${\tilde f}:S(G)\to S(G')$, then a morphism of embedded
+ribbon graphs is determined by a homotopy connecting ${\tilde \iota}$ and
+${\tilde \iota' \circ f}$.
+
+\begin{lemma}
+  \label{lemma:erg-no-aut}
+  An embedded ribbon graph has no automorphisms other than the identity.
+\end{lemma}
+\begin{proof}
+  Suppose $[f] \in \Aut_\ERG[G, \iota, \psi_*]$, then $f:G\to G$ is an abstract
+  ribbon graph automorphism, so it induces a ${\tilde f}: S(G) \to S(G)$
+  which is a \emph{homeomorphism}.  By definition, there is a homotopy
+  connecting ${\tilde \iota}: S(G) \to S$ and ${\tilde \iota'} \circ {\tilde f}:
+  S(G)\to S$, so there is a homotopy connecting ${\tilde \iota'} \circ {\tilde f}
+  \circ {\tilde \iota}^{-1}$ and $\id_S$, therefore ${\tilde f}$ is a
+  homeomorphism homotopic to the identity.  Thus, $\iota$ and $\iota'$ belong
+  to the same class with respect to the action of $\Diff_0$, $[G, \iota,
+  \psi_*] = [G, \iota', \psi'_*]$ and $[f]$ is the identity morphism.
+\end{proof}
+
+The mapping class group $\Gamma_{g,n}$ acts functorially on $\ERG{g,n}$: $\phi
+\in \Gamma_{g,n}$ sends $[G, \iota, \psi_*]$ into $[G, \iota \circ \phi, \phi \circ \psi_*]$.
 
 There is an obvious forgetful functor from the category of embedded
 ribbon graphs to the category of abstract ribbon graphs, sending $[G,
 \iota] \mapsto G$ and $[f] \mapsto f$.
-
-\begin{lemma}\label{lemma:morphism-of-embedded-rg}
-  If $[f] \in \Hom([G,\iota], [G',\iota'])$ is an isomorphism in the category of
-  embedded ribbon graphs, then $f\in\Hom(G,G')$ is an isomorphism in the
-  category of abstract ribbon graphs.
-\end{lemma}
-\begin{proof}
-  By definition, there is a morphism $[f']: [G',\iota'] \to [G,\iota]$ and
-  diffeomorphisms $\phi$, $\phi'$ such that $\phi \circ \iota = \iota' \circ f$ and $\phi' \circ \iota' =
-  \iota \circ f'$.  Then $\phi' \circ \phi \circ \iota = \iota \circ f' \circ f$; since $\iota$ is a continuous
-  bijection with its image, so is $f' \circ f$, therefore $f$ is an
-  isomorphism of abstract ribbon graphs, and $f'$ its inverse.
-\end{proof}
 
 
 
@@ -335,12 +397,11 @@ ribbon graphs to the category of abstract ribbon graphs, sending $[G,
 
 We shall now construct (orbi)cell-complex analogues of the Teichm\"uller
 space and the moduli space of smooth curves, whose cells are indexed
-by ribbon graphs.  They will come equipped with an explicit homotopy
-equivalence to $\T_{g,n}$ and $\M_{g,n}$, so that they will form the
-basis for the introduction of the ``graph homology complex''.
+by ribbon graphs.  They will come equipped with a homotopy
+equivalence to $\T_{g,n}$ and $\M_{g,n}$.
 
 References to this construction are scattered in the literature, and
-there are many variants and quirks; see especially
+there are many variants and quirks; see
 \cite{harer;cohomology-of-moduli},
 \cite{harer;cohomological-dimension},
 \cite{kontsevich;intersection-theory;1992},
@@ -357,12 +418,12 @@ graph. This graph is not uniquely determined (see
 \begin{figure}[bt]
   %% Figura sphere3.fig
   \centering\includegraphics[width=\textwidth]{sfera3}
-  \caption{A thrice-punctured sphere and two inequivalent
-    deformation retracts.} 
+  \caption{A thrice-punctured sphere and two deformation retracts, not
+    isomorphic as graphs.}
   \label{fig:sphere-retracts}
 \end{figure}
-We look forward to refining this correspondence: let us introduce more
-structure on the graph.
+We can refine this correspondence by introducing more structure on the
+graph.
 \begin{definition}
   \label{dfn:metric-ribbon-graphs}
   A metrized ribbon graph $(G, \ell)$ is a ribbon graph $G$ equipped with
@@ -394,17 +455,18 @@ Define an atlas of $S(G)$:
     triangulation built from a graph $G$: graph edges are drawn as
     solid lines, and edges of $T_\alpha^{\pm}$ are drawn as dotted lines; (b)
     the neighborhood $V_\alpha$ of an edge $\alpha$; (c) the neighborhood $V_\beta$
-    of a hole $\beta$; (d) the neighborhood $V_\gamma$ of a vertex $\gamma$.}
+    of a boundary component $\beta$; (d) the neighborhood $V_\gamma$ of a
+    vertex $\gamma$.}
   \label{fig:atlas}
 \end{figure}
 
-Define charts on the open sets $V$ (see Figure~\ref{fig:charts}):
+Define charts on the open sets $V_*$ (see Figure~\ref{fig:charts}):
 \begin{itemize}
 \item for any edge $\alpha$, pick a homeomorphism $f_\alpha: V_\alpha \to \{ z \in \setC
   : 0 < \Re z < \ell_\alpha \}$;
-\item for any hole $\beta$, bounded by edges $\alpha_1$, $\alpha_2$ and $\alpha_3$,
-  pick a homeomorphism $f_\beta: V_\beta \to \{ \abs{z} < \rho \}$, where $\rho =
-  (\ell_{\alpha_1} + \ell_{\alpha_2} + \ell_{\alpha_3}) / 2\pi$.
+\item for any boundary component $\beta$, bounded by edges $\alpha_1$, $\alpha_2$
+  and $\alpha_3$, pick a homeomorphism $f_\beta: V_\beta \to \{ \abs{z} < \rho \}$, where
+  $\rho = (\ell_{\alpha_1} + \ell_{\alpha_2} + \ell_{\alpha_3}) / 2\pi$.
 \item for any vertex $\gamma$, pick a homeomorphism $f_\gamma: V_\gamma \to \setC$.
 \end{itemize}
 \begin{figure}[htbp]
@@ -423,8 +485,8 @@ satisfy the following:
   f_\alpha^{-1} = \exp (2\pi\I z / p_\beta)$ with $p_\beta := \sum_{\alpha \in \beta} \ell_\alpha$
   (\emph{perimeter} of the hole $\beta$);
 \item if $\alpha$ is incident to a vertex $\gamma$, then $f_\gamma \circ f_\alpha^{-1} =
-  c \cdot z^{2/(m+2)}$, up to a complex constant of modulus $1$, where
-  $m$ is the valence of the vertex $\gamma$.
+  c \cdot z^{2/(v+2)}$, up to a complex constant of modulus $1$, where
+  $v$ is the valence of the vertex $\gamma$.
 \end{itemize}
 
 In the end, we have come upon a complex analytic structure on $S(G)$,
@@ -440,8 +502,130 @@ surface $S(G)$ endowed with this complex analytic structure.
 
 \begin{remark}
   Note that the above procedure actually equips any metrized ribbon
-  graph $(G, \ell)$ with an embedding $\iota: G \to S(G, \ell)$.
+  graph $(G, \ell)$ with a structure of embeddded ribbon graph: take the
+  obvious $\iota:G \to S(G, \ell)$ as immersion of the graph, and maps $f_\beta$ as
+  the homeorphisms between $S \setminus \iota(G)$ and punctured disks.
 \end{remark}
+
+
+\subsection{Construction of $\Tcomb{g,n}$ and $\Mcomb{g,n}$}
+\label{sec:mgn-comb-construction}
+
+Let $G$ be a metrized ribbon graph of genus $g$ with $n$ numbered
+boundary components.  A topological cell $\Delta(G) \subseteq \M_{g,n}$ is spanned
+when varying the metric data $(\ell_\alpha)_{\alpha \in \Edges{G}}$; gluing these
+cells one recovers the whole $\M_{g,n}$.  A construction of
+$\Tcomb{g,n}$ can be found in \cite{penner:math.GT/0210326}, although
+the actual procedure mimicks
+\cite{kontsevich;intersection-theory;1992}.
+
+Call a set $X \subseteq \Edges{G}$ negligible whenever it is \emph{not} the
+support of a non-trivial homological cycle.  For an abstract ribbon
+graph $G$, define:
+\begin{equation*}
+  \label{eq:rg-cells-moduli}
+  \Delta(G) := \{ \ell: \Edges{G} \to \setR_{\geq0} | \text{the zero set of $\ell$ is negligible}\}.
+\end{equation*}
+It is a contravariant functor from the category of abstract ribbon
+graphs to the category of topological spaces: if $G'$ is obtained from
+$G$ by contracting the edge $\alpha$, then
+\begin{equation}\label{eq:embedding-cells}
+  \Delta(G') = \{ \ell \in \Delta(G) | \ell_\alpha = 0 \}.
+\end{equation}
+By composing with the forgetful functor $[G, \iota, \psi_*] \mapsto G$ from
+embedded ribbon graphs to abstract ribbon graphs, we define a
+contravariant functor on the category of embedded ribbon graphs:
+\begin{equation*}
+  \label{eq:rg-cells-teichmueller}
+  T\Delta[G, \iota, \psi_*] := \Delta(G).
+\end{equation*}
+
+\begin{definition}
+  The combinatorial Teichm\"uller space is the direct limit of the
+  functor $T\Delta$:\FIXME{%
+    In realt\`a, Penner costruisce questo spazio non come limite
+    diretto, ma incollando esplicitamente le celle.  C'\`e qualcosa di
+    nascosto che non funziona col limite diretto?  Per esempio si fa a
+    meno del lemma~\ref{lemma:erg-no-aut}.  }%
+  \begin{equation*}
+    \Tcomb{g,n} := \varinjlim T\Delta[G, \iota, \psi_*],
+  \end{equation*}
+  where $[G, \iota, \psi_*]$ ranges in the category $\ERG{g,n}$ of embedded
+  ribbon graphs of genus $g$ with $n$ numbered boundary components.
+\end{definition}
+$\Tcomb{g,n}$ is obtained by gluing topological cells $\Delta(G)$ alongside
+the boundary: if $[G', \iota', \psi'_*]$ is obtained from $[G, \iota, \psi_*]$ by
+contraction of an edge $\alpha$, then $\Delta(G')$ is identified with the face
+of $\Delta(G)$ where $\ell_\alpha = 0$ by \csref{eq:embedding-cells}.
+
+Elements of the topological space $\Tcomb{g,n}$ are (equivalence
+classes of) metrized embedded ribbon graphs $[G, \iota, \psi_*, \ell]$, where $\ell
+\in T\Delta[G, \iota, \psi_*]$; it is easy to check that any $[G, \iota, \psi_*, \ell] \in
+\Tcomb_{g,n}$ has a unique representative such that $\ell_\alpha > 0$ for all
+$\alpha \in \Edges{G}$.  Perimeter maps $p_\beta: \Tcomb_{g,n} \to \setR_{>0}$ are
+well-defined; write $p_j$ for the perimeter of the $j$-th hole.
+
+\begin{definition}
+  The combinatorial moduli space of curves is the direct limit of the
+  functor $\Delta$:
+  \begin{equation*}
+    \Mcomb{g,n} := \varinjlim \Delta(G),
+  \end{equation*}
+  where $G$ ranges in the category $\RG{g,n}$ of abstract ribbon
+  graphs of genus $g$ with $n$ numbered boundary components.
+\end{definition}
+
+The functorial action of $\Gamma_{g,n}$ on $\ERG_{g,n}$ induces an action
+on $\Tcomb{g,n}$.
+\begin{lemma}
+  \label{lemma:penner-kontsevich-bridge}
+  $\Mcomb{g,n}$ is the quotient space (in the orbifold sense) of
+  $\Tcomb{g,n}$ by the action of the mapping class group $\Gamma_{g,n}$.
+\end{lemma}
+\begin{proof}
+  If $G \in \RG{g,n}$ is any abstract ribbon graph, then map $\Delta(G)$ into
+  $\Tcomb{g,n} / \Gamma_{g,n}$ by the following: pick any representative
+  embedding ${\tilde G} = [G, \iota, \psi_*] \in \ERG{g,n}$ of $G$ and compose
+  the isomorphism $\Delta(G) \cong T\Delta(\tilde G)$ with the quotient
+  projection $T\Delta(\tilde G) \to \Tcomb{g,n}/\Gamma_{g,n}$.  The mapping
+  is well-defined: if $[G, \iota, \psi_*]$ and $[G, \iota', \psi'_*]$ are two
+  distinct embeddedings of $G$, then ${\tilde \iota}, {\tilde \iota'}: S(G) \to
+  S$ are homemorphisms, and, for any $\ell \in \Delta(G)$, $\iota' \circ \iota^{-1}$ is
+  differentiable with respect to the analytic structure $S(G, \ell)$.
+  Therefore, if $\phi := (\iota')^{-1} \circ \iota$, then $[G, \iota, \psi_*] = \phi \cdot [G, \iota',
+  \psi'_*]$.
+
+  By definition of direct limit, a map $\Phi$ is induced $\Mcomb{g,n} \to
+  \Tcomb{g,n} / \Gamma_{g,n}$.  It is surjective: every point in $\Tcomb /
+  \Gamma$ is a projection of a point $[G, \iota, \psi_*] \in \Tcomb$, therefore it
+  is in the image of $G \in \Mcomb$.  $\Phi$ is injective: if $G$ and $G'$
+  map to the same point in $\Tcomb / \Gamma$, then there is some $\phi \in \Gamma$
+  such that $[G, \iota, \psi_*] = \phi \cdot [G', \iota', \psi'_*] = [G', \phi \circ \iota, \psi'_* \circ
+  \phi]$; therefore, there is $\phi' \in \Diff^0$ such that $\phi' \circ \iota = \phi \circ \iota'$.
+  Thus $f = \iota' \circ \iota^{-1}: G' \to G$ is a isomorphism of ribbon
+  graphs.\FIXME{Questa ``dimostrazione'' non mi convince molto.}
+\end{proof}
+
+As in the final part of the proof of
+\csref{lemma:penner-kontsevich-bridge}, we can see that the image
+$M(G) \subseteq \Mcomb$ of a cell $\Delta(G)$ is the quotient of $\Delta(G)$ by $\Aut
+G$.  The orbicells $M(G)$ are glued alongside the boundary, according
+to the same procedure as in $\Tcomb$: if $G'$ is a contraction of $G$,
+then $M(G')$ is a face of $M(G)$). Therefore, $\Mcomb_{g,n}$ is a
+orbifold.
+
+\subsubsection{Kontsevich' compactification of $\Mcomb{g,n}$}
+\label{sec:comp-mcomb}
+The construction of $\Mcomb_{g,n}$ can be done with slightly changed
+rules: if we define a set $X \subseteq \Edges{G}$ to be negligible iff it does
+not contain \emph{all} edges bounding a hole, then we can define a
+contrafunctor $\overline{M}(G)$ and a topological space:
+\begin{equation*}
+  \label{eq:kontsevich-4}
+  \Mbarcomb_{g,n} := \varinjlim \overline{M}(G).
+\end{equation*}
+$\Mbarcomb_{g,n}$ turns out to be a compactification of the orbifold
+$\Mcomb_{g,n}$. 
 
 
 \subsection{From surfaces to graphs: the Jenkins-Strebel Theorem}
@@ -457,7 +641,7 @@ from smooth complex curves.
 \end{definition}
 The set of vectors in $T_zS$ on which $q$ takes real non-negative
 values forms a real line in $T_zS$: therefore, they make up a
-foliation $F = F_qS$ on $S \textbackslash{} \{\text{poles of $q$}\}$. The non-compact
+foliation $F = F_qS$ on $S \setminus \{\text{poles of $q$}\}$. The non-compact
 leaves of $F$ together with zeroes of $q$ form the ``critical locus''
 of $q$.  
 
@@ -467,133 +651,46 @@ either two distinct poles $x_i$ and $x_j$, or a pole $x_i$ and a zero
 $v_j$.
 
 Every quadratic differential $q$ induces a metric (away from the
-critical locus) by $ds^2 = \abs{q(z)} \cdot \abs{\ud z}$.
+critical locus) by $\ud s^2 = \abs{q(z)} \cdot \abs{\ud z}$.
 
 \begin{theorem}[Jenkins, Strebel; {\cite[Theorem 23.2 and
-    23.5]{strebel;quadratic-differentials;1983}}] For any complex
-  analytic curve $S$ with $n$ marked points $x_1, \ldots, x_n$, and any
-  assignment of real positive numbers $p_1, \ldots, p_n$, there exists one
-  and only one quadratic differential $q$ such that:
+    23.5]{strebel;quadratic-differentials;1983}}] 
+  \label{thm:JS1}
+  For any complex analytic curve $S$ with $n$ marked points $x_1, \ldots,
+  x_n$, and any assignment of real positive numbers $p_1, \ldots, p_n$,
+  there exists one and only one quadratic differential $q$ such that:
   \begin{itemize}
   \item the only poles of $q$ occur at the marked points $x_1, \ldots, x_n$
     with second residue $p_1, ..., p_n$, that is, in a local
     coordinate $z_i$ near $x_i$ we have:
     \begin{equation*}
-      q = p_i^2 (\d z_i / z_i) + \text{higher order terms};
+      \sqrt{q} = p_i (\d z_i / z_i) + \text{higher order terms};
     \end{equation*}
   \item the non-critical real trajectories of $F_q$ are simple closed
     circles around $x_i$.
   \end{itemize}
   Furthermore, $q$ has the following properties:
   \begin{itemize}
-  \item every closed leaf circling around $x_i$ has length $p_i$ in the flat
-    metric induced by $q$.
+  \item every nonsingular closed leaf circling around $x_i$ has length
+    $p_i$ in the flat metric induced by $q$.
   \item the critical locus of $q$ is a graph $G$ embedded in $S$;
-  \item the complement $S \textbackslash{} G$ of the critical locus is a collection
+  \item the complement $S \setminus G$ of the critical locus is a collection
     of disks $\{D_i | i=1,\ldots,n\}$, each one centered at a pole $x_i$, and
     the projective class of the collection of radii of disks $\{D_i\}$
     equals the projective class $[p_1, \ldots, p_n]$.
   \end{itemize}
 \end{theorem}
-The critical graph $G$ inherits a structure of ribbon graph with
-metric from the ambient surface $S$: the length of an edge $\alpha$ is the
-one measured in the metric induced by the quadratic differential.
+The critical graph $G$ inherits a structure of embedded ribbon graph
+with metric from the ambient surface $S$: the length of an edge $\alpha$ is
+the one measured in the metric induced by the quadratic differential.
 Furthermore, Jenkins-Strebel's theory states that $G$ has a vertex of
 valence $k+2$ where $q$ has a zero of order $k$, therefore, vertices
-of $G$ have valence $\geq3$.  Obviously, $G$ has a structure of
-\emph{embedded} ribbon graph.
+of $G$ have valence $\geq3$. 
 
 Since the markings $x_1, \ldots, x_n$ are \emph{ordered}, $G$ has an
 additional structure of \emph{numbered} graph, that is, it is endowed
 with a bijection $h: \Holes{G} \to \{1, \ldots, n\}$.
 
-
-\subsection{Construction of the combinatorial analogues of $\T_{g,n}$
-  and $\M_{g,n}$}
-\label{sec:mgn-comb-construction}
-
-Let $G$ be a metrized ribbon graph of genus $g$ with $n$ numbered
-boundary components.  A topological cell $\Delta(G) \subseteq \M_{g,n}$ is spanned
-when varying the metric data $(\ell_\alpha)_{\alpha \in \Edges{G}}$; gluing these
-cells one recovers the whole $\M_{g,n}$. We show here a quick
-construction of $\M_{g,n}$ and $\T_{g,n}$, following
-\cite{kontsevich;intersection-theory;1992} and
-\cite{penner:math.GT/0210326}
-
-Call a set $X \subseteq \Edges{G}$ negligible whenever it is \emph{not} the
-support of a non-trivial homological cycle.  Define
-\begin{equation*}
-  \label{eq:rg-cells-moduli}
-  M\Delta(G) := \{ \ell: \Edges{G} \to \setR_{>0} | \text{the zero set of $\ell$ is negligible}\}.
-\end{equation*}
-It is a contravariant functor from the category of (abstract) metrized
-numbered ribbon graphs to the category of topological spaces: if $G'$
-is obtained from $G$ by contracting the edge $\alpha$, then
-\begin{equation*}
-  M\Delta(G') = \{ \ell \in M\Delta(G) | \ell_\alpha = 0 \}.
-\end{equation*}
-
-By composing with the forgetful functor $[G, \iota] \mapsto G$ from embedded
-ribbon graphs to abstract ribbon graphs, we define a contravariant
-functor on the category of metrized numbered embedded ribbon graphs:
-\begin{equation*}
-  \label{eq:rg-cells-teichmueller}
-  T\Delta[G, \iota] := \{ \ell: \Edges{G} \to \setR_{>0} | \text{the zero set of $\ell$ is negligible}\}.
-\end{equation*}
-
-\begin{definition}
-  The combinatorial Teichm\"uller space is the direct limit of the
-  functor $T\Delta$:
-  \begin{equation*}
-    \Tcomb{g,n} := \varinjlim T\Delta(G),
-  \end{equation*}
-  where $[G, \iota]$ ranges in the category of metrized embedded ribbon
-  graphs of genus $g$ with $n$ numbered boundary components.
-
-  The combinatorial moduli space of smooth algebraic curves is the
-  direct limit of the functor $M\Delta$:
-  \begin{equation*}
-    \Mcomb_{g,n} := \varinjlim M\Delta(G),
-  \end{equation*}
-  where $G$ ranges in the category of metrized numbered ribbon graphs
-  or genus $g$ with $n$ numbered boundary components.
-\end{definition}
-
-\begin{remark}
-  $\Mcomb_{g,n}$ is obtained by gluing orbicells $M(G)$ (quotient of
-  a topological cell by $\Aut G$) alongside the boundary (if $G'$ is a
-  contraction of $G$, then $M(G')$ is a face of $M(G)$). Therefore,
-  $\Mcomb_{g,n}$ is a orbifold.
-\end{remark}
-
-\begin{lemma}
-  $\Gamma_{g,n}$ acts on $\Tcomb{g,n}$ and $\Mcomb{g,n} is the resulting
-  quotient space in the orbifold sense.
-\end{lemma}
-\begin{proof}
-  The mapping class group $\Gamma_{g,n}$ acts functorially on graphs
-  embedded in a surface of genus $g$ with $n$ punctures: if $g \in
-  \Gamma_{g,n}$ then $g \cdot [G, \iota] := [G, g\circ\iota]$ and $g \cdot [f]$ is the morphism
-  defined by the ribbon graph morphism $f$ and the class of
-  diffeomorphisms $g \circ \phi$.
-  ...TO BE CONTINUED...
-\end{proof}
-
-It is easy to check that any $[G, \ell] \in \Mcomb_{g,n}$ has a unique
-representative such that $\ell_\alpha > 0$ for all $\alpha \in \Edges{G}$.
-The perimeter maps $p_\beta: \Mcomb_{g,n} \to \setR_{>0}$ are well-defined;
-write $p_j$ for the perimeter of the $j$-th hole.
-
-The construction of $\Mcomb_{g,n}$ can be done with slightly changed
-rules: if we define a set $X \subseteq \Edges{G}$ to be negligible iff it does
-not contain \emph{all} edges bounding a hole, then we can define a
-contrafunctor $\overline{M}(G)$ and a topological space:
-\begin{equation*}
-  \label{eq:kontsevich-4}
-  \Mbarcomb_{g,n} := \varinjlim \overline{M}(G).
-\end{equation*}
-$\Mbarcomb_{g,n}$ turns out to be a compactification of the orbifold
-$\Mcomb_{g,n}$. 
 
 \begin{theorem}[Harer, Mumford, Thurston;
   \cite{harer;cohomological-dimension,
