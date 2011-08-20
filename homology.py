@@ -46,14 +46,14 @@ class VectorSpace(object):
         self.base = base
         self.dimension = len(base)
 
-    def __iter__(self):
-        """Iterate over basis vectors."""
-        return iter(self.base)
+##     def __iter__(self):
+##         """Iterate over basis vectors."""
+##         return iter(self.base)
         
-    def __repr__(self):
-        return "VectorSpace(%s)" % self.base
-    def __str__(self):
-        return "<Vector space with base %s>" % self.base
+##     def __repr__(self):
+##         return "VectorSpace(%s)" % self.base
+##     def __str__(self):
+##         return "<Vector space with base %s>" % self.base
     
     def coordinates(self, combo):
         """Return the (sparse) coordinate vector of `combo`.
@@ -107,7 +107,7 @@ class ChainComplex(object):
       [1, 0]
     """
     
-    def __init__(self, length, modules=None, differentials=None):
+    def __init__(self, length):
         """Create a chain complex of specified length."""
         assert length > 0, \
                    "ChainComplex.__init__:"\
@@ -115,32 +115,18 @@ class ChainComplex(object):
                    " but got `%s`." % length
         #: Total length of the complex.
         self.length = length
+        self.module = length * [ VectorSpace() ]
+        def null_differential(vector):
+          return [ ] # null linear combination
         #: Boundary operators; `differentials[i]` sends elements in
         #  `C[i]` to elements in `C[i+1]`.
-        self.differential = [None]
-        if differentials:
-            assert len(differentials) == length-1, \
-                   "ChainComplex.__init__:" \
-                   " supplied `differentials` argument does not match" \
-                   " supplied `length` argument."
-            self.differential.extend(differentials)
-        else:
-            self.differential.extend([None] * length)
-        #: The vector spaces supporting the differential complex.
-        if modules:
-            assert len(modules) == length, \
-                   "ChainComplex.__init__:" \
-                   " supplied `modules` argument does not match" \
-                   " supplied `length` argument."
-            self.module = modules
-        else:
-            self.module = [None] * length
+        self.differential = length * [ null_differential ]
 
-    def __repr__(self):
-        return "ChainComplex(%d, modules=%s, differentials=%s)" \
-               % (self.length, self.module, self.differential)
-    def __str__(self):
-        return repr(self)
+##     def __repr__(self):
+##         return "ChainComplex(%d, modules=%s, differentials=%s)" \
+##                % (self.length, self.module, self.differential)
+##     def __str__(self):
+##         return repr(self)
 
     ## list-like interface: support C[i] and len(C) syntax
     def __len__(self):
