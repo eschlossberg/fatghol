@@ -113,6 +113,9 @@ parser = OptionParser(usage="""Usage: %prog [options] action [arg ...]
       homology G N
         Print homology ranks of M_{g,n}
 
+      shell
+        Start an interactive PyDB shell.
+      
       test
         Run internal code tests and report results.
         
@@ -129,7 +132,7 @@ parser.add_option("-L", "--latex",
 parser.add_option("-o", "--output", dest="outfile", default=None,
                   help="Output file for all actions.")
 parser.add_option("-O", "--feature", dest="features", default=None,
-                  help="Enable optional speedub or tracing features.")
+                  help="Enable optional speedup or tracing features.")
 (options, args) = parser.parse_args()
 
 # print usage message if no args given
@@ -191,8 +194,29 @@ if options.outfile is None:
 else:
     outfile = open(options.outfile, 'w')
 
+# shell -- start interactive debugging shell
+if 'shell' == args[0]:
+    try:
+        import pydb
+    except ImportError:
+        logging.warning("Could not import 'pydb' module - Aborting.")
+        sys.exit(1)
+        
+    print ("""Starting interactive session (with PyDB %s).
+    
+    Any Python expression may be evaluated at the prompt.
+    All sumbols from modules `rg`, `homology`, `graph_homology`
+    have already been imported into the main namespace.
+    
+    """ % pydb.version)
+    pydb.debugger([
+        "from homology import *",
+        "from graph_homology import *",
+        "from rg import *",
+        ])
+        
 # test -- run doctests
-if 'test' == args[0]:
+elif 'test' == args[0]:
     import doctest
     doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE)
 
