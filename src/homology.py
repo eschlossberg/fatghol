@@ -212,6 +212,10 @@ class ChainComplex(object):
         for n in xrange(len(D)):
             A = D[n]            # micro-optimization (saves a few lookups)
             columns = len(A)    #: number of columns
+            if 0 == columns:
+                # corresponding module has no generators (dim 0)
+                ranks.append(0)
+                continue
             rows = len(A[0])    #: number of rows
             i = 0  #: row index
             j = 0  #: column index
