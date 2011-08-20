@@ -244,6 +244,7 @@ class Fatgraph(EqualIfIsomorphic):
             self.edge_numbering = g_or_vs.edge_numbering
             self.endpoints_i = g_or_vs.endpoints_i
             self.endpoints_v = g_or_vs.endpoints_v
+            self.genus = g_or_vs.genus
             self.num_boundary_cycles = g_or_vs.num_boundary_cycles
             self.num_edges = g_or_vs.num_edges
             self.num_external_edges = g_or_vs.num_external_edges

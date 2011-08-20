@@ -8,7 +8,7 @@ __docformat__ = 'reStructuredText'
 
 import sys
 # require Python 2.5
-if sys.version_info < (2,5,0,'final',0):
+if sys.version < '2.5.0':
     sys.stderr.write("Program %s requires Python at least version 2.5,"
                      " but this Python interpreter is version %s. Aborting."
                      % (sys.argv[0], sys.version.split()[0]))
@@ -231,7 +231,7 @@ resource.setrlimit(resource.RLIMIT_CORE, (0,0))
 
 # parse command-line options
 from optparse import OptionParser
-parser = OptionParser(version="3.8",
+parser = OptionParser(version="3.9",
     usage="""Usage: %prog [options] action [arg ...]
 
 Actions:
