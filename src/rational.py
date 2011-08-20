@@ -165,10 +165,11 @@ class Rational(object):
         # protect against self-modification
         result_num = first.numerator
         result_den = first.denominator
-        second_num = second.numerator
-        second_den = second.denominator
             
         try:
+            second_num = second.numerator
+            second_den = second.denominator
+            
             # trap division by zero
             if (second_num == 0):
                 raise ZeroDivisionError
@@ -346,7 +347,9 @@ class Rational(object):
 
 
     def __str__(self):
-        if self.denominator == 1:
+        if self.numerator == 0:
+            return '0'
+        elif self.denominator == 1:
             return str(self.numerator)
         else:
             return "%s/%s" % (self.numerator, self.denominator)
