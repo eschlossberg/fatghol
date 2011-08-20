@@ -93,6 +93,60 @@ def graph_to_xypic(graph, g=None, n=None, orientable=None):
     return result
 
 
+## actions
+
+def do_graphs(g,n):
+    """Compute Fatgraphs occurring in `M_{g,n}`.
+
+    Return a pair `(graphs, D)`, where `graphs` is the list of
+    `(g,n)`-graphs, and `D` is a list, the `k`-th element of which is
+    the list of differentials of graphs with `k` edges.
+    """
+    logging.info("Computing fat graphs for g=%d, n=%d ...", g, n)
+    graphs = FatgraphComplex(g,n)
+    logging.info("Found %d distinct orientable fat graphs.", len(graphs))
+    
+    # FIXME: `D` must match the one used in `ChainComplex.compute_homology_rank()`
+    D = [ [ graphs.module[i-1].coordinates(graphs.differential[i](b))
+            for b in graphs.module[i].base ]
+          for i in xrange(1, graphs.length)
+          ]
+
+    return (graphs, D)
+
+    
+def do_homology(g, n):
+    """Compute homology ranks of the graph complex of `M_{g,n}`.
+
+    Return array of homology ranks.
+    """
+    logging.info("Computing fat graphs complex for g=%d, n=%d ...", g, n)
+    graph_complex = FatgraphComplex(g,n)
+
+    logging.info("Computing homology ranks ...")
+    hs = graph_complex.compute_homology_ranks()
+
+    return hs
+
+
+def do_valences(g,n):
+    """Compute vertex valences occurring in g,n Fatgraphs.
+
+    Return list of valences.
+    """
+    logging.info("Computing vertex valences occurring in g=%d,n=%d fatgraphs ...", g, n)
+    return vertex_valences_for_given_g_and_n(g,n)
+
+
+def do_vertices(valences):
+    """Return all graphs with vertices of prescribed valences."""
+    logging.info("Computing graphs with vertex valences %s ...", valences)
+    graphs = list(ConnectedGraphsIterator(valences))
+    logging.info("Found %d distinct graphs.", len(graphs))
+    return graphs
+
+
+
 ## main
 
 # parse command-line options
@@ -116,8 +170,8 @@ parser = OptionParser(usage="""Usage: %prog [options] action [arg ...]
       shell
         Start an interactive PyDB shell.
       
-      test
-        Run internal code tests and report results.
+      selftest
+        Run internal code tests and report failures.
         
     """)
 parser.add_option("-l", "--logfile",
@@ -133,6 +187,9 @@ parser.add_option("-o", "--output", dest="outfile", default=None,
                   help="Output file for all actions.")
 parser.add_option("-O", "--feature", dest="features", default=None,
                   help="Enable optional speedup or tracing features.")
+parser.add_option("-q", "--quiet",
+                  action="store_true", dest="quiet", default=False,
+                  help="Do not print any informational or progress messages.")
 (options, args) = parser.parse_args()
 
 # print usage message if no args given
@@ -145,9 +202,9 @@ if options.logfile is None:
     log_output = sys.stderr
 else:
     log_output = file(options.logfile, 'a')
-    
-if options.silent:
-    log_level = logging.WARNING
+
+if options.silent or options.quiet:
+    log_level = logging.ERROR
 else:
     log_level = logging.DEBUG
 
@@ -215,10 +272,44 @@ if 'shell' == args[0]:
         "from rg import *",
         ])
         
-# test -- run doctests
-elif 'test' == args[0]:
+# selftest -- run doctests and acceptance tests on simple cases
+elif 'selftest' == args[0]:
     import doctest
-    doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE)
+    # FIXME: run doctests on *all* modules...
+    logging.debug("Running Python doctest on '%s' module..." % __name__)
+    (failed, tested) = doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE)
+    if failed>0:
+        logging.error("  module '%s' FAILED %d tests of %d." % (__name__, failed, tested))
+        print("Module '%s' FAILED %d tests of %d." % (__name__, failed, tested))
+    else:
+        if tested>0:
+            logging.info("  module '%s' passed all doctests." % __name__)
+            print("Module '%s' passed all doctests." % __name__)
+        else:
+            logging.warning("  module '%s' had no doctests." % __name__)
+    
+    # second, try known cases and inspect results
+    for (g, n, ok) in [ (0,3, [0,0,1]),
+                        (1,1, [0,0,1]),
+                        (1,2, [0,0,0,0,0,1]),
+                        (0,4, [0,0,0,0,2,1])
+                        ]:
+        logging.debug("Now computing homology of M_{%d,%d} ..." % (g,n))
+        # temporarily turn off logging to avoid cluttering the output
+        logging.getLogger().setLevel(logging.ERROR)
+        # compute homology of M_{g,n}
+        hs = do_homology(g,n)
+        # restore normal logging level
+        logging.getLogger().setLevel(log_level)
+        # check result
+        if hs == ok:
+            print("Computation of M_{%d,%d} homology: OK" % (g,n))
+        else:
+            logging.error("Computation of M_{%d,%d} homology: FAILED, got %s expected %s"
+                          % (g,n,hs,ok))
+            print("Computation of M_{%d,%d} homology: FAILED, got %s expected %s"
+                  % (g,n,hs,ok))
+        
 
 # vertices -- show vertices for given g,n
 elif 'valences' == args[0]:
@@ -244,9 +335,10 @@ elif 'valences' == args[0]:
         sys.exit(1)
 
     logging.info("Computing vertex valences occurring in g=%d,n=%d fatgraphs ...", g, n)
-    vvs = vertex_valences_for_given_g_and_n(g,n)
-    for vv in vvs:
-        outfile.write("%s\n" % str(vv))
+    vvs = do_valences(g,n)
+    if not options.silent:
+        for vv in vvs:
+            outfile.write("%s\n" % str(vv))
 
 # graphs -- list graphs from given g,n
 elif "graphs" == args[0]:
@@ -273,15 +365,7 @@ elif "graphs" == args[0]:
                          % (args[1],))
         sys.exit(1)
 
-    logging.info("Computing fat graphs for g=%d, n=%d ...", g, n)
-    graphs = FatgraphComplex(g,n)
-    logging.info("Found %d distinct orientable fat graphs.", len(graphs))
-    
-    # FIXME: `D` must match the one used in `ChainComplex.compute_homology_rank()`
-    D = [ [ graphs.module[i-1].coordinates(graphs.differential[i](b))
-            for b in graphs.module[i].base ]
-          for i in xrange(1, graphs.length)
-          ]
+    graphs, D = do_graphs(g,n)
 
     # output results
     if not options.silent:
@@ -413,9 +497,7 @@ elif 'vertices' == args[0]:
         sys.exit(1)
 
     # compute graphs matching given vertex sequences
-    logging.info("Computing graphs with vertex valences %s ...", valences)
-    graphs = list(ConnectedGraphsIterator(valences))
-    logging.info("Found %d distinct graphs.", len(graphs))
+    graphs = do_vertices(valences)
 
     # output results
     if not options.silent:
@@ -473,11 +555,7 @@ elif 'homology' == args[0]:
         sys.exit(1)
 
     # compute graph complex and its homology ranks
-    logging.info("Computing fat graphs complex for g=%d, n=%d ...", g, n)
-    graph_complex = FatgraphComplex(g,n)
-
-    logging.info("Computing homology ranks ...")
-    hs = graph_complex.compute_homology_ranks()
+    hs = do_homology(g, n)
 
     # print results
     if not options.silent:
