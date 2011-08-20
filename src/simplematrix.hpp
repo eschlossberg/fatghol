@@ -51,6 +51,9 @@ public:
   /** Return rank of this matrix. */
   unsigned long rank(void);
 
+  size_t const num_rows;
+  size_t const num_columns;
+
 private:
   typedef LinBox::PID_integer _CoefficientRingType;
   _CoefficientRingType ZZ;
@@ -62,7 +65,7 @@ private:
 
 inline
 SimpleMatrix::SimpleMatrix(size_t const m, size_t const n):
-  ZZ(), m(ZZ, m, n)
+  num_rows(m), num_columns(n), ZZ(), m(ZZ, m, n)
 {
   // nothing to do
 }
