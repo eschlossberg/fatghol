@@ -74,6 +74,38 @@ def enumerate_set_product(p):
     if len(p) == 0:
         yield []
     else:
+        L = len(p)
+        M = [ len(s)-1 for s in p ]
+        m = [0] * L
+        i = 0
+        while i < L:
+            # return element corresponding to current multi-index
+            yield [ s[m[i]] for (i,s) in enumerate(p) ]
+            # advance multi-index
+            i = 0
+            while (i < L):
+                if m[i] == M[i]:
+                    m[i] = 0
+                    i += 1
+                else:
+                    m[i] += 1
+                    break
+
+
+def recursively_enumerate_set_product(p):
+    """Iterate over all elements in the cartesian products of elements of items in `p`.
+
+    Examples::
+      >>> list(recursively_enumerate_set_product([[1],[1]]))
+      [[1, 1]]
+      >>> list(recursively_enumerate_set_product([[1,2],[1]]))
+      [[1, 1], [2, 1]]
+      >>> list(recursively_enumerate_set_product([[1,2],[1,2]]))
+      [[1, 1], [2, 1], [1, 2], [2, 2]]
+    """
+    if len(p) == 0:
+        yield []
+    else:
         for i in p[-1]:
             for js in enumerate_set_product(p[:-1]):
                 yield js+[i]
