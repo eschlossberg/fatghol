@@ -70,16 +70,19 @@ def enumerate_set_product(p):
       [[1]]
       >>> list(enumerate_set_product([[1],[1]]))
       [[1, 1]]
+      >>> list(enumerate_set_product([[1,2],[]]))
+      [[]]
       >>> list(enumerate_set_product([[1,2],[1]]))
       [[1, 1], [2, 1]]
       >>> list(enumerate_set_product([[1,2],[1,2]]))
       [[1, 1], [2, 1], [1, 2], [2, 2]]
     """
-    if len(p) == 0:
+    L = len(p)
+    M = [ len(s)-1 for s in p ]
+    if (0 == L) or (-1 in M):
+        # there are no factors, or one of them has no elements
         yield []
     else:
-        L = len(p)
-        M = [ len(s)-1 for s in p ]
         m = [0] * L
         i = 0
         while i < L:
