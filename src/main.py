@@ -298,7 +298,7 @@ elif 'selftest' == args[0]:
                 print("Module '%s' FAILED %d tests of %d." % (module, failed, tested))
             else:
                 if tested>0:
-                    logging.debug("  module '%s' passed all doctests." % module)
+                    logging.debug("  OK - module '%s' passed all doctests." % module)
                     print("Module '%s' passed all doctests." % module)
                 else:
                     logging.warning("  module '%s' had no doctests." % module)
