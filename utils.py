@@ -93,14 +93,6 @@ def is_sequence_of_integers(seq):
     return is_sequence_of_type(types.IntType, seq)
 
 
-def other(pair, one):
-    """Return the member of `pair` not equal to `one`."""
-    if pair[0] == one:
-        return pair[1]
-    else:
-        return pair[0]
-
-
 def partitions(N,K):
     """Return the list of partitions of a set with `N` elements into at most `K` parts.
     """
