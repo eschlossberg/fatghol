@@ -231,7 +231,7 @@ resource.setrlimit(resource.RLIMIT_CORE, (0,0))
 
 # parse command-line options
 from optparse import OptionParser
-parser = OptionParser(version="3.6",
+parser = OptionParser(version="3.6.1",
     usage="""Usage: %prog [options] action [arg ...]
 
 Actions:
@@ -458,14 +458,14 @@ elif 'selftest' == args[0]:
     # third, count graphs produced in known good cases
     for (g, n, ok) in [ (0,5, 290),
                         ]:
-        sys.stdout.write("Computation of M_{%d,%d} graphs: " % (g,n))
+        sys.stdout.write("Number of M_{%d,%d} graphs: " % (g,n))
         # compute number of graphs in M_{g,n}
         qty = len(list(MgnGraphsIterator(g,n)))
         # check result
         if qty == ok:
             print("OK")
         else:
-            logging.error("Computation of M_{%d,%d} graphs: FAILED, got %s expected %s"
+            logging.error("Number of M_{%d,%d} graphs: FAILED, got %s expected %s"
                           % (g,n,qty,ok))
             print("FAILED, got %s expected %s" % (g,n,qty,ok))
         
