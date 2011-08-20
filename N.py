@@ -69,16 +69,16 @@ def N3(g,n):
             return 4
     if (g,n) == (1,1):
         return 1
-    result = l_max(g,n-1) * N3(g,n-1)  # hang a circle to an existing edge
-    result += choose2(l_max(g-1,n-1)) * N3(g,n-1)   # bridging edge separates boundary cycles
-    result += choose2(l_max(g-1,n+1)) * N3(g-1,n+1) # bridging edge does not separate; 1 connected component
+    result = 2 * l_max(g,n-1) * N3(g,n-1)  # hang a circle to an existing edge
+    result += 4 * choose2(l_max(g-1,n-1)) * N3(g,n-1)   # bridging edge separates boundary cycles
+    result += 4 * choose2(l_max(g-1,n+1)) * N3(g-1,n+1) # bridging edge does not separate; 1 connected component
     for gg in add_up_to(g, min=0): # bridging edge does not separate; 2 connected components
         for nn in add_up_to(n+1, min=1):
             (g1, g2) = gg
             (n1, n2) = nn
             if (g1, n1) == (g,n) or (g2,n2) == (g,n):
                 continue
-            result += l_max(g1,n1) * l_max(g2,n2) * N3(g1,n1) * N3(g2,n2) 
+            result += 4 * l_max(g1,n1) * l_max(g2,n2) * N3(g1,n1) * N3(g2,n2) 
     return result
 
 def print_table(g_max, n_max, func=N3):
