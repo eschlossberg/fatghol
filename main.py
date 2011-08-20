@@ -231,7 +231,7 @@ resource.setrlimit(resource.RLIMIT_CORE, (0,0))
 
 # parse command-line options
 from optparse import OptionParser
-parser = OptionParser(version="3.5",
+parser = OptionParser(version="3.6",
     usage="""Usage: %prog [options] action [arg ...]
 
 Actions:
@@ -438,11 +438,11 @@ elif 'selftest' == args[0]:
             file.close()
 
     # second, try known cases and inspect results
-    for (g, n, ok) in [ (0,3, [0,0,1]),
-                        (1,1, [0,0,1]),
-                        (1,2, [0,0,0,0,0,1]),
-                        (0,4, [0,0,0,0,2,1]),
-                        (2,1, [0,0,0,0,0,0,1,0,1])
+    for (g, n, ok) in [ (0,3, [1,0,0]),
+                        (1,1, [1,0,0]),
+                        (1,2, [1,0,0,0,0,0]),
+                        (0,4, [1,2,0,0,0,0]),
+                        (2,1, [1,0,1,0,0,0,0,0,0])
                         ]:
         sys.stdout.write("Computation of M_{%d,%d} homology: " % (g,n))
         # compute homology of M_{g,n}
