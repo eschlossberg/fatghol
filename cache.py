@@ -73,7 +73,7 @@ def persistent_id(o):
 
 @decorator
 def cache1(func, obj, fcache={}):
-    """Cache result of 1-ary object method.
+    """Cache result of a 1-ary object method.
 
     This decorator can cache results of calls `obj.method()` or
     `func(obj)`; it will yield possibly incorrect results in any other
@@ -92,9 +92,30 @@ def cache1(func, obj, fcache={}):
         return result
 
 
+__cache = {}
+@decorator
+def cache(func, obj, *args):
+    """Cache result of a generic object method.
+
+    This decorator can cache results of calls `obj.method(*args)` or
+    `func(obj, *args)`.
+
+    Unlike the `memoize` decorator, it can also work with objects that
+    use a `__slots__` declaration.
+    """
+    rcache = __cache.setdefault(func.func_name, {})
+    oid = persistent_id(obj)
+    key = (oid, args)
+    if key in rcache:
+        return rcache[key]
+    else:
+        result = func(obj, *args)
+        rcache[key] = result
+        return result
+
 
 @decorator
-def cache2(func, o1, o2, fcache={}):
+def cache_symmetric(func, o1, o2, fcache={}):
     """Cache result of 2-ary symmetric method.
 
     This decorator can cache results of `obj1.method(obj2)` or

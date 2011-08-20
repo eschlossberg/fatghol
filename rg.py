@@ -20,7 +20,8 @@ import types
 
 from cache import (
     cache1,
-    cache2,
+    cache,
+    cache_symmetric,
     )
 from combinatorics import (
     InplacePermutationIterator,
@@ -374,7 +375,7 @@ class Fatgraph(object):
         
         return True
 
-    @cache2
+    @cache_symmetric
     def __eq__(self, other):
         """Return `True` if Fatgraphs `self` and `other` are isomorphic.
 
@@ -458,7 +459,7 @@ class Fatgraph(object):
         """
         return self.isomorphisms(self)
 
-    @cache1
+    @cache
     def boundary_components(self):
         """Return the number of boundary components of this `Fatgraph` object.
 
@@ -596,6 +597,7 @@ class Fatgraph(object):
         return image_edge_numbering.sign()
         
 
+    @cache
     def contract(self, edgeno):
         """Return new `Fatgraph` obtained by contracting the specified edge.
 
@@ -782,7 +784,7 @@ class Fatgraph(object):
                      )
             
 
-    @cache1
+    @cache
     def genus(self):
         """Return the genus g of this `Fatgraph` object."""
         n = self.num_boundary_components()
@@ -1148,7 +1150,7 @@ class Fatgraph(object):
             # list of morphisms is empty, graphs are not equal.
             return 0
 
-    @cache1
+    @cache
     def valence_spectrum(self):
         """Return a dictionary mapping valences into vertex indices.
 
@@ -1289,7 +1291,7 @@ class NumberedFatgraph(Fatgraph):
         self.underlying = underlying # XXX: = self (?)
         self.numbering = numbering
 
-    @cache2
+    @cache_symmetric
     def __eq__(self, other):
         """Return `True` if NumberedFatgraphs `self` and `other` are isomorphic.
 
@@ -1405,6 +1407,7 @@ class NumberedFatgraph(Fatgraph):
         return repr(self)
 
 
+    @cache
     def contract(self, edgeno):
         """Return new `NumberedFatgraph` obtained by contracting the specified edge."""
         # check that we are not contracting a loop or an external edge
