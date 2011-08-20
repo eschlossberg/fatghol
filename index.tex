@@ -56,6 +56,8 @@
         }%
   \lstnewenvironment{code}{}{}%
   \lstnewenvironment{codexmp}{\lstset{numbers=none,xleftmargin=1em}}{}%
+  \newcommand{\n}[1]{\begingroup\def\x{\csname label\endcsname{l:#1}}\x\endgroup}
+  \newcommand{\nr}[1]{\begingroup\def\x{\csname ref\endcsname{l:#1}}\x\endgroup}
 
 \usepackage[debug]{csref}
   \newcsref{theorem}{Theorem~\ref{#1}}%
