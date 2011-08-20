@@ -19,8 +19,8 @@ import types
 ## application-local imports
 
 from cache import (
-    cache1,
     cache,
+    cache_iterator,
     cache_symmetric,
     )
 from combinatorics import (
@@ -429,7 +429,7 @@ class Fatgraph(object):
         return self.vertices[index]
 
     def __hash__(self):
-        return self._id
+        return self._persistent_id
 
     def __iter__(self):
         """Return iterator over vertices."""
@@ -946,6 +946,7 @@ class Fatgraph(object):
         # no orientation reversing automorphism found
         return True
 
+    @cache_iterator
     def isomorphisms(self, other):
         """Iterate over isomorphisms from `self` to `other`.
 
@@ -1426,6 +1427,7 @@ class NumberedFatgraph(Fatgraph):
         return NumberedFatgraph(self.underlying.contract(edgeno), numbering)
         
 
+    @cache_iterator
     def isomorphisms(self, other):
         """Iterate over isomorphisms from `self` to `other`.
 
