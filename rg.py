@@ -7,12 +7,20 @@ __docformat__ = 'reStructuredText'
 
 import debug
 
-from combinatorics import InplacePermutationIterator,SetProductIterator
+from combinatorics import (
+    InplacePermutationIterator,
+    SetProductIterator,
+    Permutation
+    )
 from cyclicseq import CyclicList
-from utils import concat,deep_cmp,itranslate
+from utils import (
+    concat,
+    deep_cmp,
+    itranslate
+    )
 
 from copy import copy
-from itertools import *
+from itertools import chain,count,izip
 import operator
 
 
@@ -41,11 +49,18 @@ class Vertex(CyclicList):
     #      pure Python would be less efficient;
     #   2) we could not implement `rotate()` and friends: tuples are
     #      immutable.
+
+    def __repr__(self):
+        return "Vertex(%s)" % CyclicList.__repr__(self)
+    def __str__(self):
+        return repr(self)
+    
     def is_canonical_representative(self):
         """Return `True` if this `Vertex` object is maximal among
         representatives of the same cyclic sequence.
         
         Examples::
+        
           >>> Vertex([3,2,1]).is_canonical_representative()
           True
           >>> Vertex([2,1,3]).is_canonical_representative()
@@ -76,9 +91,9 @@ class Vertex(CyclicList):
         
         Examples::
           >>> Vertex([3,2,1]).make_canonical()
-          [3, 2, 1]
+          Vertex([3, 2, 1])
           >>> Vertex([2,1,3]).make_canonical()
-          [3, 2, 1]
+          Vertex([3, 2, 1])
         """
         L = len(self)
         r = 0
@@ -267,8 +282,7 @@ class Graph(object):
         return iter(self.vertices)
 
     def __repr__(self):
-        return "Graph(%s, %s)" \
-               % (repr(self._vertex_valences), repr(self.vertices))
+        return "Graph(%s)" % (repr(self.vertices))
     
     def __str__(self):
         return str(self.vertices)
@@ -294,76 +308,10 @@ class Graph(object):
     def automorphisms(self):
         """Enumerate automorphisms of this `Graph` object.
 
-        An automorhism is represented as a pair of ordered lists `(dests,
-        rots)`: the i-th vertex of `graph` is to be mapped to the vertex
-        `dests[i]`, and rotated by `rots[i]`.
+        See `MorphismIteratorFactory` for details of how a `Graph`
+        isomorphism is represented.
         """
-        # build enpoints vector for the final check that a constructed map
-        # is an automorphism
-        ev = list(self.endpoints)
-        ev.sort()
-
-        # gather valences and repetition pattern at
-        # start for speedup
-        valence = [ len(vertex) for vertex in self.vertices ]
-        rp = [ vertex.repetition_pattern() for vertex in self.vertices ]
-
-        ## pass 1: for each vertex, list all destinations it could be
-        ## mapped to, in the form (dest. vertex, rotation).
-
-        # pre-allocate list of right size; all elements must be empty
-        # lists, that we fill with `.append()` later on
-        candidates = [ [] for dummy in xrange(self.num_vertices()) ]
-        
-        # FIXME: if vertex `i` can be mapped into vertex `j`, with some
-        # rotation delta, then vertex `j` can be mapped into vertex `i`
-        # with rotation `-delta`, so rearrange this to only do
-        # computations for `i>j` and use the values already available in
-        # the other case...
-        num_vertices = self.num_vertices()
-        for i in xrange(num_vertices):
-            for j in xrange(num_vertices):
-                # if valences don't match, skip to next vertex in list
-                if valence[i] != valence[j]:
-                    continue
-                # if repetition patterns don't match, skip to next vertex in list
-                if not (rp[i] == rp[j]): 
-                   continue
-                # append `(destination vertex, rotation shift)` to
-                # candidate destinations list
-                for delta in self.vertices[i].all_shifts_for_linear_eq(self.vertices[j]):
-                    candidates[i].append((j,delta))
-
-        ## pass 2: for each vertex, pick a destination and return the resulting
-        ##         automorphism. (FIXME: do we need to check that the adjacency 
-        ##         matrix stays the same?)
-        for a in SetProductIterator(candidates):
-            # check that map does not map two distinct vertices to the same one
-            already_assigned = []
-            a_is_no_real_map = False
-            for dest in a:
-                v = dest[0]
-                if v in already_assigned:
-                    a_is_no_real_map = True
-                    break
-                else:
-                    already_assigned.append(v)
-            if a_is_no_real_map:
-                # try with next map `a`
-                continue
-            # check that the endpoints vector stays the same
-            vertex_permutation = [ elt[0] for elt in a ]
-            new_ev = [
-                (vertex_permutation[e[0]], vertex_permutation[e[1]])
-                for e in ev
-                ]
-            new_ev.sort()
-            if 0 != deep_cmp(ev, new_ev):
-                # this is no automorphism, skip to next one
-                continue
-            # return automorphism in (vertex_perm_list, rot_list) form
-            yield ([ elt[0] for elt in a ],
-                   [ elt[1] for elt in a ])
+        return MorphismIteratorFactory(self.valence_spectrum())(self, self)
 
     def contract(self, edgeno):
         """Return new `Graph` obtained by contracting the specified edge.
@@ -372,19 +320,21 @@ class Graph(object):
         vertices are ordered lexicographically, longest ones first.
         
         Examples::
+
           >>> Graph([Vertex([2,2,0]), Vertex([0,1,1])]).contract(0)
-          Graph([4], [[1, 1, 0, 0]])
+          Graph([Vertex([1, 1, 0, 0])])
           >>> Graph([Vertex([2,1,0]), Vertex([2,0,1])]).contract(1)
-          Graph([4], [[1, 1, 0, 0]])
+          Graph([Vertex([1, 0, 0, 1])])
 
         The M_{1,1} trivalent graph yield the same result no matter
         what edge is contracted::
+
           >>> Graph([Vertex([2,1,0]), Vertex([2,1,0])]).contract(0)
-          Graph([4], [[1, 0, 1, 0]])
+          Graph([Vertex([1, 0, 1, 0])])
           >>> Graph([Vertex([2,1,0]), Vertex([2,1,0])]).contract(1)
-          Graph([4], [[1, 0, 1, 0]])
+          Graph([Vertex([1, 0, 1, 0])])
           >>> Graph([Vertex([2,1,0]), Vertex([2,1,0])]).contract(2)
-          Graph([4], [[1, 0, 1, 0]])
+          Graph([Vertex([1, 0, 1, 0])])
         """
         # check that we are not contracting a loop
         assert self.endpoints[edgeno][0] != self.endpoints[edgeno][1], \
@@ -457,14 +407,23 @@ class Graph(object):
         result as soon as one orientation-reversing one is found.
 
         Examples::
-          >>> Graph([Vertex([1,0,1,0])]).is_orientable()
+
+          >>> Graph([Vertex([1,0,1,0])]).is_oriented()
           True
 
+          >>> Graph([Vertex([2, 0, 1]), Vertex([2, 0, 1])]).is_oriented()
+          True
+          
+          >>> Graph([Vertex([2, 1, 0]), Vertex([2, 0, 1])]).is_oriented()
+          True
+          
+          >>> Graph([Vertex([2, 1, 1]), Vertex([2, 0, 0])]).is_oriented()
+          True
         """
         for a in self.automorphisms():
             if self.is_orientation_reversing(a):
                 return False
-        # no orientation reverersing automorphism found
+        # no orientation reversing automorphism found
         return True
 
     def is_connected(self):
@@ -509,59 +468,26 @@ class Graph(object):
         """
         return self.endpoints[edge][0] == self.endpoints[edge][1]
         
+
     def is_orientation_reversing(self, automorphism):
-        """Return `True` if `automorphism` reverses orientation of this `Graph` instance."""
-        def sign_of_rotation(l,r=1):
-            """Return sign of a rotation of `l` elements, applied `r` times."""
-            # evaluating a conditional is faster than computing (-1)**...
-            if 0 == ((l-1)*r) % 2:
-                return 1
-            else:
-                return -1
-        def sign_of_permutation(p):
-            """Return sign of permutation `p`.
-
-            A permutation is represented as a linear list: `p` maps `i` to
-            `p[i]`.  Items of `p` are required to be valid indices in `p`,
-            that is, `p[i] =< max(p)` for all `i`.
-
-            This is an adaptation of the `perm_sign` code by John Burkardt
-            (see it among the collection at
-            http://orion.math.iastate.edu/burkardt/f_src/subset/subset.f90
-            or http://www.scs.fsu.edu/~burkardt/math2071/perm_sign.m ); it
-            computes the sign by counting the number of interchanges
-            required to change the given permutation into the identity
-            one.
-
-            Examples::
-              >>> sign_of_permutation([1,2,3])
-              1
-              >>> sign_of_permutation([1,3,2])
-              -1
-              >>> sign_of_permutation([3,1,2])
-              1
-              >>> sign_of_permutation([1])
-              1
-              >>> sign_of_permutation([])
-              1
-            """
-            n = len(p)
-            s = +1
-            # get elements back in their home positions
-            for j in xrange(n):
-                q = p[j]
-                if q !=j :
-                    p[j],p[q] = p[q],q # interchange p[j] and p[p[j]]
-                    s = -s             # and account for the interchange
-            # note that q is now in its home position
-            # whether or not an interchange was required
-            return s
-        return (-1 == reduce(operator.mul,
-                             [ sign_of_rotation(l,r)
-                               for l,r in
-                               izip([ len(v) for v in self.vertices],
-                                    automorphism[1]) ],
-                             sign_of_permutation(automorphism[0])))
+        """Return `True` if `automorphism` reverses orientation of
+        this `Graph` instance."""
+        pv = automorphism[0]
+        result = pv.sign()
+        for (e0, e1) in [ (pv[e[0]], pv[e[1]])
+                          for e in self.endpoints ]:
+            if e0 > e1:
+               result = -result
+##         def is_increasing(a,b):
+##             if a <= b:
+##                 return +1
+##             else:
+##                 return -1
+##         for x in xrange(self.num_edges()):
+##             result *= is_increasing(* self.endpoints[x]) \
+##                       * is_increasing(pv[self.endpoints[x][0]],
+##                                       pv[self.endpoints[x][1]])
+        return (-1 == result)
 
     def is_canonical(self):
         """Return `True` if this `Graph` object is canonical.
@@ -572,13 +498,13 @@ class Graph(object):
         2) Vertices are sorted in lexicographic order.
 
         Examples::
-          >>> Graph([3,3],[2,1,0,2,1,0]).is_canonical()
+          >>> Graph([Vertex([2,1,0]), Vertex([2,1,0])]).is_canonical()
           True             
-          >>> Graph([3,3],[2,1,0,2,0,1]).is_canonical()
+          >>> Graph([Vertex([2,1,0]), Vertex([2,0,1])]).is_canonical()
           True             
-          >>> Graph([3,3],[2,0,1,2,1,0]).is_canonical()
+          >>> Graph([Vertex([2,0,1]), Vertex([2,1,0])]).is_canonical()
           False
-          >>> Graph([3,3],[0,1,2,2,1,0]).is_canonical()
+          >>> Graph([Vertex([0,1,2]), Vertex([2,1,0])]).is_canonical()
           False 
         """
         previous_vertex = None
@@ -597,9 +523,9 @@ class Graph(object):
         edges.
 
         Examples::
-          >>> Graph([3,3], [2,1,0,2,1,0]).num_boundary_components()
+          >>> Graph([Vertex([2,1,0]), Vertex([2,1,0])]).num_boundary_components()
           1
-          >>> Graph([3,3], [2,1,0,2,0,1]).num_boundary_components()
+          >>> Graph([Vertex([2,1,0]), Vertex([2,0,1])]).num_boundary_components()
           3
         """
         # try to return the cached value
@@ -695,7 +621,20 @@ class Graph(object):
         return self._num_vertices
 
     def valence_spectrum(self):
-        """Return a dictionary mapping valences into vertex indices."""
+        """Return a dictionary mapping valences into vertex indices.
+
+        Examples::
+
+           >>> Graph([Vertex([1,1,0,0])]).valence_spectrum()
+           {4: [0]}
+
+           >>> Graph([Vertex([1,1,0]), Vertex([2,2,0])]).valence_spectrum()
+           {3: [0, 1]}
+
+           >>> Graph([Vertex([3, 1, 0, 1]), \
+                      Vertex([4, 4, 0]), Vertex([3, 2, 2])]).valence_spectrum()
+           {3: [1, 2], 4: [0]}
+        """
         # compute spectrum on first invocation
         if self._valence_spectrum is None:
             self._valence_spectrum = {}
@@ -709,83 +648,126 @@ class Graph(object):
         
 
 class MorphismIteratorFactory(object):
+    """Make iterators over isomorphisms of graphs with a given valence
+    spectrum.
+
+    An isomorphism is represented by a tuple `(pv, rot, pe)` where:
+
+      - `pv` is a permutation of ther vertices: the `i`-th vertex
+        of `g1` is sent to the `pv[i]`-th vertex of `g2`, rotated
+        by `rot[i]` places leftwards;
+
+      - `pe` is a permutation of the edge colors: edge `i` in `g1`
+        is mapped to edge `pe[i]` in `g2`.
+
+    Examples::
+
+      >>> g = Graph([Vertex([2, 1, 1]), Vertex([2, 0, 0])])
+      >>> morphisms=MorphismIteratorFactory(g.valence_spectrum())
+      >>> for f in morphisms(g, Graph([Vertex([2, 2, 0]), Vertex([1, 1, 0])])):
+      ...   print f
+      ({0: 1, 1: 0}, (1, 1), {0: 2, 1: 1, 2: 0})
+      ({0: 0, 1: 1}, (1, 1), {0: 1, 1: 2, 2: 0})
+
+
+      >>> for f in morphisms(g, g):
+      ...   print f
+      ({0: 1, 1: 0}, (0, 0), {0: 1, 1: 0, 2: 2})
+      ({0: 0, 1: 1}, (0, 0), {0: 0, 1: 1, 2: 2})
+      
+"""
+
     __slots__ = (
-        '_allowable_permutations',
-        '_permutation_domain',
+        '_candidate_pvs',
         )
+
     def __init__(self, valence_spectrum):
-        (self._allowable_permutations, self._permutation_domain) \
-                                   = MorphismIteratorFactory.allowable_vertex_permutations(valence_spectrum)
-
-    def __call__(self, g1, g2):
-        """Return iterator over all candidate mappings from `g1` to `g2`.
-
-        Items of the iteration are lists (of length
-        `g1.num_vertices()`), composed of tuples `(i1,b1,i2,b2,s)`,
-        meaning that vertex at index `i1` in `g1` should be mapped to
-        vertex at index `i2` in `g2` with shift `s` and bases `b1` and
-        `b2` (that is, `g1.vertices[i1][b1+s:b1+s+len]` should be
-        mapped linearly on `g2.vertices[i2][b2:b2+len]`).
+        """Constructor, taking graph valence spectrum.
         """
-        rps1 = [ v.repetition_pattern() for v in g1.vertices ]
-        rps2 = [ v.repetition_pattern() for v in g2.vertices ]
-        for vertex_index_map in self._allowable_permutations:
-            dests = [ [] ] * len(g1.vertices)
-            for i1,i2 in izip(self._permutation_domain, vertex_index_map):
-                (b1, rp1) = rps1[i1]
-                (b2, rp2) = rps2[i2]
-                # rp1 is a kind of "derivative" of v1; we gather the 
-                # displacement for v1 by summing elements of rp1 up to
-                # -but not including- `rp_shift`.
-                dests[i1] = dests[i1] + [ (i1,b1,i2,b2,sum(rp1[:s])) for s
-                                          in rp1.all_shifts_for_linear_eq(rp2) ]
-            for perm in SetProductIterator(dests):
-                effective = Mapping()
-                effective_is_ok = True
-                for (i1,b1,i2,b2,shift) in perm:
-                    v1 = g1.vertices[i1]
-                    v2 = g2.vertices[i2]
-                    if not effective.extend(v1[b1+shift:b1+shift+len(v1)],v2[b2:b2+len(v2)]):
-                        # cannot extend, proceed to next `perm`
-                        effective_is_ok = False
-                        break
-                if effective_is_ok and (len(effective) > 0):
-                    # then `perm` really defines a graph morphism between `g1` and `g2`
-                    yield perm
+        ## Compute all permutations of vertices that preserve valence.
+        ## (A permutation `p` preserves vertex valence if vertices `v`
+        ## and `p[v]` have the same valence.)
 
-    @staticmethod
-    def allowable_vertex_permutations(valence_spectrum):
-        """Return all permutations of vertices that preserve valence.
-        (A permutation `p` preserves vertex valence if vertices `v`
-        and `p[v]` have the same valence.)
-
-        The passed parameter `valence_spectrum` is a dictionary,
-        mapping vertex valence to the list of (indices of) vertices
-        having that valence.
-
-        Returns a pair `(list_of_mappings, domain)`.
-
-        Examples::
-          >>> MorphismIteratorFactory.allowable_vertex_permutations({ 3:[0,1] })
-          ([[1, 0], [0, 1]],
-           [0, 1])
-          >>> MorphismIteratorFactory.allowable_vertex_permutations({ 3:[0], 5:[1] })
-          ([[0, 1]],
-           [0, 1])
-        """
         # save valences as we have no guarantees that keys() method
-        # will report them always in the same order
+        # will always return them in the same order
         valences = valence_spectrum.keys()
-        vertex_to_vertex_mapping_domain = concat([ valence_spectrum[v] for v in valences ])
+
+        # it's easier to compute vertex-preserving permutations
+        # starting from the order vertices are given in the valence
+        # spectrum; will rearrange them later.
+        domain = Permutation(concat([ valence_spectrum[v] for v in valences ]))
         permutations_of_vertices_of_same_valence = [
-            [ p[:] for p in InplacePermutationIterator(valence_spectrum[v]) ]
+            [ copy(p) for p in InplacePermutationIterator(valence_spectrum[v]) ]
             for v in valences
             ]
-        vertex_to_vertex_mappings = [
-            concat(ps)
-            for ps in SetProductIterator(permutations_of_vertices_of_same_valence)
+
+        #: Permutations of the vertex order that preserve valence.
+        self._candidate_pvs = [
+            domain.rearrange(concat(ps))
+            for ps
+            in SetProductIterator(permutations_of_vertices_of_same_valence)
             ]
-        return (vertex_to_vertex_mappings, vertex_to_vertex_mapping_domain)
+
+    def __call__(self, g1, g2):
+        """Return iterator over all isomorphisms from `g1` to `g2`."""
+        # use "repetition patterns" to avoid mapping loop-free
+        # vertices into vertices with loops, and viceversa.
+        # FIXME: as loop-free vertices are much more common than
+        # looped ones, this might turn out to be slower than just
+        # checking all possible rotations.  Maybe just check
+        # the number of loops instead of building the full repetition pattern?
+        rps1 = [ v.repetition_pattern() for v in g1.vertices ]
+        rps2 = [ v.repetition_pattern() for v in g2.vertices ]
+        for vertex_index_map in self._candidate_pvs:
+            pvrots = [ [] for x in xrange(len(g1.vertices)) ]
+            for (j, (b1, rp1), (b2, rp2)) \
+                    in izip(count(),
+                            rps1,
+                            (rps2[i] for i in vertex_index_map)):
+                # Items in pvrots are lists (of length
+                # `g1.num_vertices()`), composed of tuples
+                # `(i1,b1+s,i2,b2,s)`, meaning that vertex at index
+                # `i1` in `g1` should be mapped to vertex at index
+                # `i2` in `g2` with shift `s` and bases `b1` and `b2`
+                # (that is, `g1.vertices[i1][b1+s:b1+s+len]` should be
+                # mapped linearly onto `g2.vertices[i2][b2:b2+len]`).
+                # `rp1` is a kind of "derivative" of `v1`; we gather the
+                # displacement `b1+s` for `v1` by summing elements of
+                # rp1 up to -but not including- `rp_shift`.
+                pvrots[j].extend([ (j,b1+sum(rp1[:s]),vertex_index_map[j],b2)
+                                   for s
+                                   in rp1.all_shifts_for_linear_eq(rp2) ])
+            for pvrot in SetProductIterator(pvrots):
+                pe = Permutation()
+                pe_is_ok = True  # optimistic default
+                for (i1,b1,i2,b2) in pvrot:
+                    v1 = g1.vertices[i1]
+                    v2 = g2.vertices[i2]
+                    if not pe.extend(v1[b1:b1+len(v1)],
+                                     v2[b2:b2+len(v2)]):
+                        # cannot extend, proceed to next `pvrot`
+                        pe_is_ok = False
+                        break
+                if pe_is_ok and (len(pe) > 0):
+                    pv = Permutation(t[2] for t in pvrot)
+                    # Check that the combined action of `pv` and `pe`
+                    # preserves the adjacency relation.  Note:
+                    #   - we make list comprehensions of both adjacency lists
+                    #     to avoid inverting `pe`: that is, we compare the
+                    #     the adjacency lists in the order they have in `g1`,
+                    #     but with the vertex numbering from `g2`;
+                    #   - elements of the adjacency lists are made into
+                    #     `set`s for unordered comparison;
+                    #   - *copy* the objects to pass through `pv.translate`,
+                    #     as `pv.translate` does in-place modify of its argument.
+                    if 0 != cmp([ set(g2.endpoints[pe[x]])
+                                  for x in xrange(g2.num_edges()) ],
+                                [ set(pv.translate(copy(g1.endpoints[x])))
+                                  for x in xrange(g1.num_edges()) ]):
+                        # continue with next `pvrot`
+                        continue
+                    rots = tuple(t[1]-t[3] for t in pvrot)
+                    yield (pv, rots, pe)
 
 
 class ConnectedGraphsIterator(object):
@@ -795,13 +777,13 @@ class ConnectedGraphsIterator(object):
     Examples::
 
       >>> list(ConnectedGraphsIterator([4]))
-      [Graph([4], [[1, 0, 1, 0]]),
-       Graph([4], [[1, 1, 0, 0]])]
+      [Graph([Vertex([1, 0, 1, 0])]),
+       Graph([Vertex([1, 1, 0, 0])])]
 
       >>> list(ConnectedGraphsIterator([3,3]))
-      [Graph([3, 3], [[2, 0, 1], [2, 0, 1]]),
-       Graph([3, 3], [[2, 1, 0], [2, 0, 1]]),
-       Graph([3, 3], [[2, 1, 1], [2, 0, 0]])]
+      [Graph([Vertex([2, 0, 1]), Vertex([2, 0, 1])]),
+       Graph([Vertex([2, 1, 0]), Vertex([2, 0, 1])]),
+       Graph([Vertex([2, 1, 1]), Vertex([2, 0, 0])])]
     
 
     Generation of all graphs with prescribed vertex valences `(v_1,
@@ -891,51 +873,6 @@ class ConnectedGraphsIterator(object):
         # no more graphs to generate
         raise StopIteration
 
-
-class Mapping(dict):
-    """An incrementally constructible mapping.
-
-    Provides methods to incrementally construct the map by extending
-    an existing map with new source->destination pairs; the extension
-    will fail if any new source->destination assignment contrasts with
-    what is already there.
-    """
-    __slots__ = []
-    def apply(self, src):
-        return self[src]
-    def extend(self, srcs, dsts):
-        """Return `True` if the mapping can be extended by mapping
-        elements of `srcs` to corresponding elements of `dsts`.
-        Return `False` if any of the new mappings conflicts with an
-        already established one.
-
-        Examples::
-          >>> m=Mapping()
-          >>> m.extend([0, 1], [0, 1])
-          True
-          >>> m.extend([1, 2], [0, 2])
-          False
-          >>> m.extend([2], [2])
-          True
-        """
-        for src,dst in izip(srcs,dsts):
-            if self.has_key(src) and self[src] != dst:
-                return False
-            else:
-                self[src] = dst
-        return True
-    def extend_with_hash(self, mappings):
-        """Return `True` if the mapping can be extended by mapping each
-        key of `mappings` to the corresponding value.  Return `False`
-        if any of the new mappings conflicts with an already
-        established one.
-        """
-        for src,dst in mappings.iteritems():
-            if self.has_key(src) and self[src] != dst:
-                return False
-            else:
-                self[src] = dst
-        return True
 
 
 ## main: run tests
