@@ -2,7 +2,7 @@
 %%
 %% csref.sty -- 2001-11-28  Riccardo Murri
 %%
-%% $Id: csref.sty,v 1.7 2006/05/13 00:32:41 rmurri Exp $
+%% $Id: csref.sty,v 1.8 2006/05/13 16:32:24 rmurri Exp $
 %%
 \def\filename{csref}
 \def\fileversion{0.4}
@@ -157,12 +157,12 @@
 %
 %
 \newcsref{default}{\csr@ref{#1}}%
-\providecommand\refsectionname{Section}%
-\ifx\sectionname\@empty% hack for AMS document classes
-  \newcsref{document}{\refsectionname~\csr@ref{#1}}%
+\providecommand\sectionrefname{Section}%
+\@ifundefined{sectionname}% hack for AMS document classes
 \else%
-  \newcsref{document}{\sectionname~\csr@ref{#1}}%
+  \def\sectionrefname{\sectionrefname}%
 \fi%
+\newcsref{document}{\sectionrefname~\csr@ref{#1}}%
 %%
 %% If the environment named in the first argument is defined, then
 %% act just like a |\newcsref|; if it is undefined, then this macro is
