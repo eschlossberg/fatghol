@@ -38,11 +38,12 @@
 
 \usepackage[final]{listings}%
   \def\codefont{\ttfamily}%
-  \let\l=\codefont%
+  \newcommand\q[1]{{\codefont #1}}%
+  \newcommand\qq[1]{`\q{#1}'}%
   \lstloadlanguages{Python}%
   \lstset{language=Python,%
           %fancyvrb,%
-          escapechar=|,% "|" is almost unsed in Python
+          escapechar=|,% "|" is almost unused in Python
           basicstyle=\codefont,%
           commentstyle=\normalfont\small,%
           texcl,mathescape=true,%
@@ -74,10 +75,13 @@
 \makeatletter%
 \newcounter{fixme@note}\stepcounter{fixme@note}%
 \newcommand{\FIXME}[1]{%
-    \colorbox{yellow}{\footnotemark[\value{fixme@note}]}%
+  \begingroup%
+    \def\thefootnote{\fnsymbol{footnote}}%
+    \colorbox{red}{\footnotemark[\value{fixme@note}]}%
     \footnotetext[\value{fixme@note}]%
-      {\sffamily \colorbox{yellow}{FIXME:} #1}%
-    \stepcounter{fixme@note}%
+    {\sffamily \colorbox{red}{FIXME:} #1}%
+  \endgroup%
+  \stepcounter{fixme@note}%
 }%
 \makeatother%
 
@@ -208,7 +212,7 @@
 
 
 %%% hyperref
-\usepackage{hyperref}
+%\usepackage{hyperref}
 
 
 %%% document
