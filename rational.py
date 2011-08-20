@@ -111,11 +111,13 @@ class Rational(object):
             # that the denominator is always positive.
             if (self.numerator < 0 and other.numerator >= 0): # -ve < +ve
                 return -1
-            if (self.numerator >= 0 and other.numerator < 0): # +ve or zero is not < -ve or zero
+            if (self.numerator > 0 and other.numerator < 0): # +ve or zero is not < -ve or zero
                 return +1
 
             # Avoid overflow
             gcd1 = gcd(self.numerator, other.numerator)
+            if gcd1 == 0:
+                gcd1 = 1
             gcd2 = gcd(other.denominator, self.denominator)
             return cmp((self.numerator/gcd1) * (other.denominator/gcd2),
                        (self.denominator/gcd2) * (other.numerator/gcd1))
@@ -138,6 +140,10 @@ class Rational(object):
             else:
                 return cmp(-other, (-self.numerator/self.denominator))
 
+
+    def __coerce__(self, other):
+        return (self, Rational(other))
+    
 
     def __div__(self, other):
         new = Rational(self.numerator, self.denominator, _normalize=False)
@@ -166,7 +172,7 @@ class Rational(object):
             other_num = other.numerator
             other_den = other.denominator
 
-            g = gcd(den, other_den)
+            g = gcd(self.denominator, other_den)
             self.denominator /= g
             self.numerator = self.numerator * (other_den / g) \
                              + other_num * self.denominator
