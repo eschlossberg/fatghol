@@ -12,7 +12,7 @@ from cache import (
     fcache,
     )
 import operator
-from rational import Rational
+from fractions import Fraction
 
 
 def bernoulli(n):
@@ -25,13 +25,13 @@ def bernoulli(n):
     Computation uses a recursive formula which is unsuitable for
     anything but small values of `n`.
 
-    The returned object is a `rational.Rational`, even in the case of
+    The returned object is a `fractions.Fraction`, even in the case of
     integer Bernoulli numbers::
     
       >>> bernoulli(0)
-      Rational(1, 1)
+      Fraction(1, 1)
       >>> bernoulli(1)
-      Rational(-1, 2)
+      Fraction(-1, 2)
 
     Examples::
 
@@ -59,13 +59,13 @@ def bernoulli(n):
     assert n >=0
     # B(0) = 1
     if n == 0:
-        return Rational(1)
+        return Fraction(1)
     # B(n) = 0 for all odd n other than 1.
     if (n % 2) != 0 and n>1:
         return 0
     # compute B(n) by the recursive formula:
     #   \sum_{k=0,...,m} \choose{m+1}{k} B(k) = 0
-    return Rational(-1, n+1) * reduce(operator.add,
+    return Fraction(-1, n+1) * reduce(operator.add,
                                       (choose(n+1,k)*bernoulli(k) for k in range(n)))
 
 
@@ -74,12 +74,12 @@ def bernoulli(n):
 def choose(n,k):
     """Return `\choose{n}{k}`.
 
-    The returned object is a `rational.Rational`::
+    The returned object is a `fractions.Fraction`::
 
       >>> choose(2,0)
-      Rational(1, 1)
+      Fraction(1, 1)
       >>> choose(2,1)
-      Rational(2, 1)
+      Fraction(2, 1)
 
     Examples::
     
@@ -90,7 +90,7 @@ def choose(n,k):
       1 3 3 1
       1 4 6 4 1
     """
-    return Rational(factorial(n), factorial(k) * factorial(n-k))
+    return Fraction(factorial(n), factorial(k) * factorial(n-k))
     
 
 
