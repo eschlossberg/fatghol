@@ -175,9 +175,9 @@ parser.add_option("-o", "--output", dest="outfile", default=None,
                   help="Output file for all actions.")
 parser.add_option("-O", "--feature", dest="features", default=None,
                   help="Enable optional speedup or tracing features.")
-parser.add_option("-q", "--quiet",
-                  action="store_true", dest="quiet", default=False,
-                  help="Do not print any informational or progress messages.")
+parser.add_option("-v", "--verbose",
+                  action="store_false", dest="quiet", default=True,
+                  help="Print informational and status messages as the computation goes on.")
 (options, args) = parser.parse_args()
 
 # print usage message if no args given
@@ -564,8 +564,8 @@ elif 'homology' == args[0]:
 
     # print results
     if not options.silent:
-        for (i, h) in enumerate(hs):
-            outfile.write("h_%d(R_{%d,%d}) = %d\n" % (i, g, n, h))
+        for (i, h) in enumerate(reversed(hs)):
+            outfile.write("h_%d(M_{%d,%d}) = %d\n" % (i, g, n, h))
 
 else:
     sys.stderr.write("Unknown action `%s`, aborting.\n" % args[0])
