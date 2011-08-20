@@ -16,11 +16,9 @@
      '("ginttriv" ["argument"] 1)
      '("gint" ["argument"] 1)
      '("biggint" ["argument"] 1)
-     '("Tcomb" ["argument"] 0)
+     '("Hermitian" ["argument"] 0)
      '("Strebel" ["argument"] 0)
      '("SG" ["argument"] 0)
-     '("ERG" ["argument"] 0)
-     '("RG" ["argument"] 0)
      '("RTG" ["argument"] 0)
      '("RTE" ["argument"] 0)
      '("RTD" ["argument"] 0)
@@ -36,6 +34,7 @@
      '("freemc" 1)
      '("textsuperscript" 1)
      '("textsubscript" 1)
+     '("FIXME" 1)
      "theoremname"
      "ksz"
      "aksz"
@@ -44,6 +43,8 @@
      "rev"
      "catN"
      "Ao"
+     "RG"
+     "ERG"
      "Conf"
      "Lb"
      "Hn"
@@ -51,6 +52,12 @@
      "ad"
      "comb"
      "T"
+     "Tcomb"
+     "M"
+     "Mbar"
+     "Mcomb"
+     "Mbarcomb"
+     "R"
      "rel"
      "xyc")
     (TeX-run-style-hooks
@@ -70,12 +77,15 @@
      "paralist"
      "newitem"
      "newenum"
+     "csref"
+     "debug"
      "url"
      "hyperref"
      "graphicx"
      "final"
-     "csref"
-     "debug"
+     "mdwlist"
+     "color"
+     "prelim2e"
      "latex2e"
      "amsbook10"
      "amsbook"

@@ -284,15 +284,15 @@ but actually, as Kontsevich proved, one can draw a much stronger
 conclusion. 
 
 \begin{theorem}[Kontsevich' Main Identity]
-  Let $\RG[g,n]$ be the set of isomorphism classes of numbered
+  Let $\RG_{g,n}$ be the set of isomorphism classes of numbered
   ribbon graphs with genus $g$ and $n$ boundary components. If
-  $\alpha$ is an edge of a graph $\Gamma \in \RG[g,n]$, let $\alpha^+$
+  $\alpha$ is an edge of a graph $\Gamma \in \RG_{g,n}$, let $\alpha^+$
   and $\alpha^-$ be the \emph{numbers} assigned to the two holes on
   the sides of $\alpha$. For real positive indeterminates $\lambda_1$,
   \ldots, $\lambda_N$, the following relation holds:
   \begin{multline*}\label{eq:KMI}
     \sum_\nu \langle \tau_{\nu_1} \cdots \tau_{\nu_n} \rangle \prod_{j=1}^n \frac {(2\nu_j - 1)!!}
-    {\lambda_j^{2\nu_j + 1}} = \sum_{\Gamma \in \RG[g,n]} \frac
+    {\lambda_j^{2\nu_j + 1}} = \sum_{\Gamma \in \RG_{g,n}} \frac
     {2^{-\card{\Vertices{\Gamma}}}} {\card{\Aut \Gamma}} \prod_{\alpha \in \Edges{\Gamma}}
     \frac {2} {\lambda_{\alpha^+} + \lambda_{\alpha^-}}, 
     \\ \sum \nu = 3g - 3 + n.
@@ -358,7 +358,7 @@ conclusion.
   so that we can finally compute:
   \begin{equation}
     \label{eq:7}
-    U = \sum_{\Gamma \in \RG[g,n]} \frac {1} {\card{\Aut \Gamma}} \prod_{\alpha \in
+    U = \sum_{\Gamma \in \RG_{g,n}} \frac {1} {\card{\Aut \Gamma}} \prod_{\alpha \in
       \Edges{\Gamma}} \frac{1} {\lambda_{\alpha^+} +
       \lambda_{\alpha^-}}.
   \end{equation}

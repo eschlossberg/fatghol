@@ -2,13 +2,19 @@
 %%%
 \documentclass[a4paper,reqno,openany,draft]{amsbook}
 
+%% Debugging code
+\usepackage{prelim2e}
+%\usepackage[nomsgs]{refcheck}
+\usepackage{color}
+\newcommand{\FIXME}[1]{{\color{red}\footnote{\sffamily #1}}}
 
-\usepackage[debug]{csref}
 \usepackage{mdwlist}
 %\usepackage{mdwtab}
 \usepackage[final]{graphicx}
 \usepackage{hyperref}
 \usepackage{url}
+
+\usepackage[debug]{csref}
 
 \usepackage[newitem,newenum]{paralist}
 \setdefaultenum{\slshape 1)}{\slshape a)}{\slshape i)}{A.}
@@ -23,12 +29,6 @@
 \usepackage{xytree}
 \setlength{\treegap}{24pt}  
 \setlength{\treeheight}{18pt}
-
-
-%%%
-%%% DEBUG!
-%%%
-\usepackage{debug} % debugging code
 
 
 %%%
@@ -90,8 +90,8 @@
 \newcommand{\RTD}[1][]{\operad{D}_{#1}} % operad of RT diagrams
 \newcommand{\RTE}[1][]{\operad{D}'_{#1}}% operad of embedded RT graphs
 \newcommand{\RTG}[1][]{\operad{G}_{#1}} % operad of RT graphs
-\newcommand{\RG}[1][]{\operad{R}_{#1}}  % operad of cyclic (Ribbon) graphs
-\newcommand{\ERG}[1][]{\operad{\widetilde R}_{#1}} % operad of embedded Ribbon graphs
+\newcommand{\RG}{\operad{R}}            % operad of cyclic (Ribbon) graphs
+\newcommand{\ERG}{\operad{\widetilde R}}% operad of embedded Ribbon graphs
 \newcommand{\SG}[1][]{\operad{S}_{#1}}  % operad of symmetric graphs
 
 \newcommand{\Strebel}[1][]{\mathcal{S}_{#1}}
