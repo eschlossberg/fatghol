@@ -96,7 +96,7 @@ def enumerate_set_product(p):
                     break
 
 
- is_sequence_of_type(t, seq):
+def is_sequence_of_type(t, seq):
     """Return `True` if all items of sequence `s` are of type `t`.
 
     Examples::
@@ -158,6 +158,18 @@ def permutations(l, n=None):
         else:
             for s1 in permutations(l-1,n-1):
                 yield [s0] + tr_inplace(s1, [s0], [n])
+
+
+def positive_int(arg):
+    """Convert a string or number to a positive integer, if possible.
+    Behaves just like the built-in `int` (which see), and additionally
+    raises `ValueError` if the converted integer is less-then or equal
+    to 0.
+    """
+    result = int(arg)
+    if result <= 0:
+        raise ValueError("non-positive integer literal: %d" % result)
+    return result
 
 
 def _tr(elt, t1, t2):
