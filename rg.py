@@ -16,18 +16,19 @@ def vertex_valences_for_given_g_and_n(g,n):
     """
     Examples::
       >>> vertex_valences_for_given_g_and_n(0,3)
-      [[4], [3, 3]]
+      set([(3, 3), (4,)])
     """
     # with 1 vertex only, there are this many edges:
     L = 2*g + n - 1
     K = 1
-    result = []
+    result = set()
     while True:
         ps = partitions(2*L, K)
         if len(ps) == 0:
             break
         for p in ps:
-            result.append(p)
+            p.sort()
+            result.add(tuple(p))
         K += 1
         L = 2*g + n + K - 2
     return result
@@ -49,7 +50,17 @@ class Vertex(CyclicList):
 
         # the following values will be computed when they are first requested
         self._repetition_pattern = None
-        
+##     __slots__ = ('_repetition_pattern',)
+##     def __new__(cls, edge_seq, start=0, end=None):
+##         """Create `Vertex` instance by excerpting the slice `[start:end]` in `edge_seq`.
+##         """
+##         if end is None:
+##             end = len(edge_seq)
+##         return CyclicArray.__new__(cls, edge_seq[start:end])
+##     def __init__(self, *args, **kwargs):
+##         # the following values will be computed when they are first requested
+##         self._repetition_pattern = None
+       
     def __iter__(self):
         """Return iterator over edges."""
         return list.__iter__(self)
@@ -95,11 +106,11 @@ class Vertex(CyclicList):
         results.
         """
         if self._repetition_pattern is None:
-            self._repetition_pattern = repetition_pattern(self)
+            self._repetition_pattern = repetition_pattern(self) 
         return self._repetition_pattern
 
 
-class Graph:
+class Graph(object):
     """A fully-decorated ribbon graph.
 
     Exports a (read-only) sequence interface, through which vertices
@@ -119,6 +130,7 @@ class Graph:
         # these values will be computed on-demand
         self._num_boundary_components = None
         self._genus = None
+        self._valence_spectrum = None
         
         assert is_sequence_of_integers(edge_seq), \
                "Graph.__init__: parameter `edge_seq` must be sequence of integers, "\
@@ -145,6 +157,8 @@ class Graph:
         """Return iterator over vertices."""
         return iter(self.vertices)
 
+    def __repr__(self):
+        return repr(self.vertices)
     def __str__(self):
         return str(self.vertices)
             
@@ -157,13 +171,13 @@ class Graph:
         2) Vertices are sorted in lexicographic order.
 
         Examples::
-          >>> Graph([3,3],[[3,2,1],[3,2,1]]).is_canonical()
+          >>> Graph([3,3],[3,2,1,3,2,1]).is_canonical()
           True
-          >>> Graph([3,3],[[3,2,1],[3,1,2]]).is_canonical()
+          >>> Graph([3,3],[3,2,1,3,1,2]).is_canonical()
           True
-          >>> Graph([3,3],[[3,1,2],[3,2,1]]).is_canonical()
+          >>> Graph([3,3],[3,1,2,3,2,1]).is_canonical()
           False
-          >>> Graph([3,3],[[1,2,3],[3,2,1]]).is_canonical()
+          >>> Graph([3,3],[1,2,3,3,2,1]).is_canonical()
           False 
         """
         previous_vertex = None
@@ -205,9 +219,9 @@ class Graph:
         edges.
 
         Examples::
-          >>> Graph([3,3], [[3,2,1],[3,2,1]]).num_boundary_components()
+          >>> Graph([3,3], [3,2,1,3,2,1]).num_boundary_components()
           1
-          >>> Graph([3,3], [[3,2,1],[3,1,2]]).num_boundary_components()
+          >>> Graph([3,3], [3,2,1,3,1,2]).num_boundary_components()
           3
         """
         # try to return the cached value
@@ -218,7 +232,7 @@ class Graph:
         
         L = self.num_edges() + 1
         # for efficiency, gather all endpoints now
-        ends = [ endpoints(l) for l in xrange(1,L) ]
+        ends = [ self.endpoints(l) for l in xrange(1,L) ]
 
         # pass1: build a "copy" of `graph`, replacing each edge coloring
         # with a pair `(other, index)` pointing to the other endpoint of
@@ -234,9 +248,9 @@ class Graph:
         for (vertex_index, vertex) in enumerate(self.vertices):
             replacement = []
             for (current_index, edge) in enumerate(vertex):
-                (v1, v2) = ends[edge]
+                (v1, v2) = ends[edge-1]
                 if v1 != v2:
-                    other_end = other(ends[edge], vertex_index)
+                    other_end = other(ends[edge-1], vertex_index)
                     other_index = self.vertices[other_end].index(edge)
                 else:
                     other_end = v1 # == v2, that is *this* vertex
@@ -309,6 +323,20 @@ class Graph:
         """Return the pair (g,n) for this `Graph` object."""
         return (self.genus(), self.num_boundary_components())
 
+    def valence_spectrum(self):
+        """Return a dictionary mapping valences into vertex indices."""
+        # compute spectrum on first invocation
+        if self._valence_spectrum is None:
+            self._valence_spectrum = {}
+            for (index, vertex) in enumerate(self.vertices):
+                l = len(vertex)
+                if self._valence_spectrum.has_key(l):
+                    self._valence_spectrum[l].append(index)
+                else:
+                    self._valence_spectrum[l] = [index]
+        return self._valence_spectrum
+        
+        
 
 def all_graphs(vertex_valences):
     """Return all graphs having vertices of the given valences.
@@ -330,16 +358,50 @@ def all_graphs(vertex_valences):
 
     ## pass 1: gather all canonical graphs built from edge sequences
     graphs = list(all_canonical_decorated_graphs(vertex_valences, total_edges))
+    if len(graphs) == 0:
+        return []
 
     ## pass 2: filter out sequences representing isomorphic graphs
+
+    def vertex_permutations(valence_spectrum):
+        """Return all permutations of vertices that preserve valence.
+        (A permutation `p` preserves vertex valence if vertices `v`
+        and `p[v]` have the same valence.)
+
+        The passed parameter `valence_spectrum` is a dictionary,
+        mapping vertex valence to the list of (indices of) vertices
+        having that valence.
+
+        Returns a pair `(list_of_mappings, domain)`.
+
+        Examples::
+          >>> vertex_permutation({ 3:[0,1] })
+          ([[1, 0], [0, 1]],
+           [0, 1])
+          >>> vertex_permutation({ 3:[0], 5:[1] })
+          ([[0, 1]],
+           [0, 1])
+        """
+        # save valences as we have no guarantees that keys() method
+        # will report them always in the same order
+        valences = valence_spectrum.keys()
+        vertex_to_vertex_mapping_domain = concat([ valence_spectrum[v] for v in valences ])
+        permutations_of_vertices_of_same_valence = [
+            [ p[:] for p in InplacePermutationIterator(valence_spectrum[v]) ]
+            for v in valences
+            ]
+        vertex_to_vertex_mappings = [
+            concat(ps)
+            for ps in enumerate_set_product(permutations_of_vertices_of_same_valence)
+            ]
+        return (vertex_to_vertex_mappings, vertex_to_vertex_mapping_domain)
+    # the valence spectrum is the same for all graphs in the list
+    vertex_to_vertex_mappings, vertex_to_vertex_mapping_domain = \
+                               vertex_permutations(graphs[0].valence_spectrum())
+    
     pos = 0
     while pos < len(graphs):
         current = graphs[pos]
-        # slight optimization: since `current` is constant in the loop below,
-        # pre-compute as much as we can...
-        #current_cy = current.vertices
-        #current_b_rp = [repetition_pattern(v_cy) for v_cy in current_cy]
-
         pos2 = pos+1
         while pos2 < len(graphs):
             candidate = graphs[pos2]
@@ -347,28 +409,28 @@ def all_graphs(vertex_valences):
             if candidate == current:
                 candidate_is_isomorhic_to_current = True
             else:
-                perm = Map(total_edges)
-                # FIXME: could save some processing time by caching
-                # the cyclic list of vertices) for any `candidate`, at
-                # the expense of memory usage...
-                for v1,v2 in izip(current.vertices, candidate.vertices):
-                    (b1, rp1) = v1.repetition_pattern()
-                    (b2, rp2) = v2.repetition_pattern()
-                    rp_shift = rp1.shift_for_list_eq(rp2)
-                    if rp_shift is None:
-                        # cannot map vertices, quit looping on vertices
-                        break
-                    # rp1 is a kind of "derivative" of v1; we gather the
-                    # displacement for v1 by summing elements of rp1 up to
-                    # -but not including- `rp_shift`.
-                    shift = sum(rp1[:rp_shift])
-                    if not perm.extend(v1[b1+shift:b1+shift+len(v1)],v2[b2:b2+len(v2)]):
-                        # continue with next candidate
-                        perm = None
-                        break
-                if perm and perm.completed():
-                    # the two graphs are isomorphic
-                    candidate_is_isomorhic_to_current = True
+                for vertex_index_map in vertex_to_vertex_mappings:
+                    perm = Map(total_edges)
+                    for i1,i2 in izip(vertex_to_vertex_mapping_domain, vertex_index_map):
+                        v1 = current.vertices[i1]
+                        (b1, rp1) = v1.repetition_pattern()
+                        v2 = candidate.vertices[i2]
+                        (b2, rp2) = v2.repetition_pattern()
+                        rp_shift = rp1.shift_for_list_eq(rp2)
+                        if rp_shift is None:
+                            # cannot map vertices, quit looping on vertices
+                            break
+                        # rp1 is a kind of "derivative" of v1; we gather the 
+                        #  displacement for v1 by summing elements of rp1 up to
+                        # -but not including- `rp_shift`.
+                        shift = sum(rp1[:rp_shift])
+                        if not perm.extend(v1[b1+shift:b1+shift+len(v1)],v2[b2:b2+len(v2)]):
+                            # continue with next candidate
+                            perm = None
+                            break
+                    if perm and perm.completed():
+                        # the two graphs are isomorphic
+                        candidate_is_isomorhic_to_current = True
             if candidate_is_isomorhic_to_current:
                 # delete candidate; do *not* advance `pos2`, as the
                 # list would be shifted up because of the deletion in
@@ -381,11 +443,22 @@ def all_graphs(vertex_valences):
     return graphs
 
 
-class PermutationEnumerator:
+class InplacePermutationIterator:
     """Iterate over all permutations of a given sequence.
+
+    The given sequence `seq` is altered as new permutations are
+    requested through the `next()` method.
 
     The code is a port of the C++ STL one, as described in:
       http://marknelson.us/2002/03/01/next-permutation
+
+    Examples::
+      >>> [ x[:] for x in InplacePermutationIterator([0]) ]
+      [[0]]
+      >>> [ x[:] for x in InplacePermutationIterator([0,1]) ]
+      [[1, 0], [0, 1]]
+      >>> [ x[:] for x in InplacePermutationIterator([0,1,2])]
+      [[0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0], [0, 1, 2]]
     """
     def __init__(self, seq, start=0, end=None):
         self.seq = seq
@@ -393,7 +466,7 @@ class PermutationEnumerator:
         if end is None:
             end = len(self.seq)
         self.end = end
-        if (start == end) or (start == end-1):
+        if (start == end):
             self.enumeration_finished = True
         else:
             self.enumeration_finished = False
@@ -403,86 +476,27 @@ class PermutationEnumerator:
         """Return next permutation of initially given `sequence`."""
         if self.enumeration_finished:
             raise StopIteration
-        def swap(seq, pos1, pos2):
-            """Swap items at positions `pos1` and `pos2` in `seq`."""
-            seq[pos1],seq[pos2] = seq[pos2],seq[pos1]
-        def reverse(seq, from_pos, to_pos):
-            """Reverse the specified subsequence of `seq` *in-place*."""
-            if to_pos == from_pos+1:
-                seq[from_pos],seq[to_pos] = seq[to_pos],seq[from_pos]
-            else:
-                for i in xrange(0, (to_pos - from_pos) / 2):
-                    seq[from_pos+i],seq[to_pos-i] = seq[to_pos-i],seq[from_pos+i]
         i = self.end - 1
         while True:
+            if (i == self.start):
+                self.seq.reverse()
+                self.enumeration_finished = True
+                return self.seq
             j = i
             i -= 1
             if self.seq[i] < self.seq[j]:
                 k = self.end-1
                 while self.seq[i] >= self.seq[k]:
                     k -= 1
-                swap(self.seq, i, k)
-                reverse(self.seq, j, self.end-1)
+                # swap seq[i] and seq[k]
+                self.seq[i],self.seq[k] = self.seq[k],self.seq[i]
+                # reverse slice seq[j:] *in-place*
+                if self.end-2 == j:
+                    self.seq[j],self.seq[-1] = self.seq[-1],self.seq[j]
+                else:
+                    for l in xrange(0, (self.end - 1 - j) / 2):
+                        self.seq[j+l],self.seq[-1-l] = self.seq[-1-l],self.seq[j+l]
                 return self.seq
-            if (i == self.start):
-                self.seq.reverse()
-                self.enumeration_finished = True
-                return self.seq
-
-
-class WpPermutationEnumerator:
-    """Iterate over all permutations of a given sequence.
-
-    The code is a port of the one described in Wikipedia at:
-      http://en.wikipedia.org/wiki/Permutation#Algorithm_to_generate_permutations
-
-    Examples::
-      >>> p = PermutationEnumerator2([1,2,3])
-      >>> p.next()
-      [1, 2, 3]
-      >>> p.next()
-      [2, 1, 3]
-      >>> p.next()
-      [1, 3, 2]
-      >>> p.next()
-      [2, 3, 1]
-      >>> p.next()
-      [3, 2, 1]
-      >>> p.next()
-      [3, 1, 2]
-    """
-    def __init__(self, seq, initial=0):
-        self.seq = seq
-        self.rank = initial
-        # pre-compute factorial
-        self.factorial = [1]
-        for j in xrange(0, len(seq)):
-            self.factorial.append((j+1)*self.factorial[-1])
-    def __iter__(self):
-        return self
-    def next(self):
-        """Return next permutation of initially given `sequence`."""
-        if self.rank >= self.factorial[-1]:
-            raise StopIteration
-        def swap(seq, pos1, pos2):
-            """Swap items at positions `pos1` and `pos2` in `seq`."""
-            seq[pos1],seq[pos2] = seq[pos2],seq[pos1]
-        for j in xrange(1, len(self.seq)):
-            swap(self.seq, j, j - ((self.rank / self.factorial[j]) % (j+1)))
-        self.rank += 1
-        return self.seq
-
-
-def all_edge_seq2(n):
-    """Iterate over lists representing edges of a ribbon graph.
-
-    Each returned list has length `2*n` and comprises the symbols `{1,...,n}`,
-    each of which is repeated exactly twice.
-    """
-    ps = WpPermutationEnumerator(range(1,2*n+1))
-    for s in ps:
-        tr_inplace(s, range(n+1,2*n+1), range(1,n+1))
-        yield s
 
 
 def all_edge_seq(n):
@@ -494,14 +508,14 @@ def all_edge_seq(n):
     edges=[]
     for l in xrange(1,n+1):
         edges += [l,l]
-    ps = PermutationEnumerator(edges)
+    ps = InplacePermutationIterator(edges)
     for s in ps:
         yield s
 
 
 def all_canonical_decorated_graphs(vertex_valences, total_edges):
     """Iterate over all canonical decorated graphs with `total_edges` edges."""
-    for edge_seq in all_edge_seq2(total_edges):
+    for edge_seq in all_edge_seq(total_edges):
         g = Graph(vertex_valences, edge_seq)
         if g.is_canonical():
             yield g
@@ -612,7 +626,7 @@ def is_orientation_reversing(graph, automorphism):
         k = p.index(l)
         # remove highest-numbered element for recursion
         q = p[:]
-        del q[k]
+        del q[k] 
         # recursively compute
         if 0 == ((l+k) % 2):
             s = -1
