@@ -518,6 +518,17 @@ class InplacePermutationIterator(object):
     The code is a port of the C++ STL one, explained in:
       http://marknelson.us/2002/03/01/next-permutation
 
+    The number of permutations of a list of length `n` equals `n!`::
+
+      >>> for n in range(6):
+      ...   print len(list(InplacePermutationIterator(range(n+1))))
+      1
+      2
+      6
+      24
+      120
+      720
+
     Examples::
       >>> [ x[:] for x in InplacePermutationIterator([0]) ]
       [[0]]
@@ -542,27 +553,25 @@ class InplacePermutationIterator(object):
         """Return next permutation of initially given `sequence`."""
         if self.enumeration_finished:
             raise StopIteration
-        i = self.end - 1
+        seq = self.seq # micro-optimization
+        end = self.end # micro-optimization
+        i = end-1
         while True:
             if (i == self.start):
-                self.seq.reverse()
+                seq.reverse()
                 self.enumeration_finished = True
-                return self.seq
+                return seq
             j = i
             i -= 1
-            if self.seq[i] < self.seq[j]:
-                k = self.end-1
-                while self.seq[i] >= self.seq[k]:
+            if seq[i] < seq[j]:
+                k = end-1
+                while seq[i] >= seq[k]:
                     k -= 1
                 # swap seq[i] and seq[k]
-                self.seq[i],self.seq[k] = self.seq[k],self.seq[i]
+                seq[i],seq[k] = seq[k],seq[i]
                 # reverse slice seq[j:] *in-place*
-                if self.end-2 == j:
-                    self.seq[j],self.seq[-1] = self.seq[-1],self.seq[j]
-                else:
-                    for l in xrange(0, (self.end - 1 - j) / 2):
-                        self.seq[j+l],self.seq[-1-l] = self.seq[-1-l],self.seq[j+l]
-                return self.seq
+                seq[j:] = reversed(seq[j:])
+                return seq
 
 
 class FixedLengthPartitionIterator(object):
