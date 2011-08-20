@@ -1,4 +1,4 @@
-\RCSID $Id: rt.tex,v 1.2 2003/06/23 17:38:08 murri Exp $
+\RCSID $Id: rt.tex,v 1.3 2006/05/13 16:34:34 rmurri Exp $
 %auto-ignore
 
 
@@ -76,7 +76,6 @@ A \emph{closed diagram} is a diagram of type $(0,0)$. Adding (or
 removing) a connected component of type $(0,0)$ to a given diagram
 does not change its type.
 \begin{figure}[bhp]
-%% Figura 1
 \begin{equation*}
   {\xy
     ,(0,-1.5);(0.6,-0.4)*+[F]{\ }**\crv{(0,-1.3)&(0.4,-0.9)%
@@ -125,7 +124,6 @@ Critical points of an RT-diagram $\Gamma$ are:
 If $v$ is a vertex of $\Gamma$, then let $\Leg(v)$ be the set of edges of
 $\Gamma$ incident to $v$. Every set $\Leg(v)$ is divided into two
 disjoint totally ordered subsets $\In(v)$ and $\Out(v)$:
-%% Figura 2
 \begin{equation*}
   {%
     \overbrace{\underbrace{\xy%
@@ -164,7 +162,6 @@ by $\sgn(u)$.
   stack to fit into $L$'' (see \csref{fig:graph-composition}).
 \end{definition}
 \begin{figure}[tbp]
-%% Figura 3
   \begin{equation*}
     \includegraphics{fig-001}
   \end{equation*}
@@ -172,7 +169,6 @@ by $\sgn(u)$.
   \label{fig:graph-composition}
 \end{figure}
 \begin{figure}[tbp]
-%% Figura 4
   \begin{equation*}
     \includegraphics{fig-002}
   \end{equation*}
@@ -283,11 +279,10 @@ output legs can be stacked to form a new RT-graph (see
 \begin{lemma}[{\cite[lemmas 5.2 and 5.3]{reshetikhin-turaev;ribbon-graphs}}]
 \label{thm:generators}
 The set $\Hom\RTE$ of RT-graphs is generated thorugh $\circ$ and $\otimes$ from
-the following elementary pieces ---an orientation must be
-added to each strand!---, modulo the Reidmeister-Reshetikhin-Turaev
-relations of \csref{fig:rrt}.
+the following elementary pieces, modulo the
+Reidmeister-Reshetikhin-Turaev relations of \csref{fig:rrt} (an
+orientation must be added to each strand!):
 \begin{center}
-%% Figura 5
   {%
     \begin{tabular}{cccccc}
       $\xy*!LC\xybox{(0,0);(0,1)**\dir{-}}\endxy$
@@ -337,15 +332,14 @@ Note that, for any such sequence $S$, the set $\RTE(S,S)$ contains the
 directed braids group $B_n \ltimes \setZ_2^n$, so any braid is an
 isomorphism in $\RTE$.
 
-The category $\RTE$ has duals: for each object $S$, let $\rdl{S}$ be the
-sequence obtained from $S$ by flipping it and reversing all the signs
----for instance, if $S = (+--)$ then $\rdl{S} = (++-)$---; let $\ev_S:
-S\otimes\rdl{S} \to I$ be the only graph which connects corresponding signs
-in $S$ and $\rdl{S}$ and has only local maxima of the height function
-as critical points (see \csref{fig:ev}), finally, let $\coev_S : I \to
-\rdl{S} \otimes S$ be the graph obtained by flipping $\ev_S$ both
-horizontally and vertically. (See \textsl{(a)} and \textsl{(b)} in
-\csref{fig:struct}.)
+The category $\RTE$ has duals: for each object $S$, let $\rdl{S}$ be
+the sequence obtained from $S$ by flipping it and reversing all the
+signs ---for instance, if $S = (+--)$ then $\rdl{S} = (++-)$---; let
+$\ev_S: S\otimes\rdl{S} \to I$ be the only graph which connects corresponding
+signs in $S$ and $\rdl{S}$ and has only local maxima of the height
+function as critical points (see \textsl{(b)} in \csref{fig:struct}),
+finally, let $\coev_S : I \to \rdl{S} \otimes S$ be the graph obtained by
+flipping $\ev_S$ (see \textsl{(a)} in \csref{fig:struct}).
 
 The category $\RTE$ is balanced by the family of isomorphisms $\theta_S: S
 \to S$ defined by requiring that $\theta_{S\otimes T} := \theta_S \otimes \theta_T$ and
@@ -508,14 +502,13 @@ $\Tgt{}_{\A}(\Gamma)$ are objects of $\freemsc{\A}$.  Obviously, $\circ$ and
 $\otimes$ are bilinear with respect to the vector space structure on the
 $\Hom$-sets of $\RTD[\A]$. Any $\A$-colored RT-diagram can be seen as
 the planar projection of an $\A$-colored RT-graph and the following
-analogue of lemmas \ref{thm:generators} and \ref{thm:moves} hold.
+analogue of lemma \ref{thm:generators} hold.
 \begin{proposition}
 \label{thm:rt1}
 The set $\Hom\RTD[\A]$ of $\A$-colored RT-diagrams is generated thorugh
 $\circ$ and $\otimes$ from the following elementary pieces (an orientation
 must be added to each strand!):
 \begin{center}
-  %% Figura 7
   {%
     \begin{tabular}{cccccc}
       $\xy*!LC\xybox{(0,0)*+{A};(0,1)*+{A}**\dir{-}}\endxy$
@@ -564,7 +557,6 @@ taking $\category{B}=\A$ we find the following.
   $\RTD[\A]$ by
 \begin{center}
   \everyxy={/r24pt/:}
-  %% Figura 8
   {%
     \begin{tabular}{ccc}
       $\xy*!LC\xybox{%

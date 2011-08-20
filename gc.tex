@@ -1,4 +1,4 @@
-\RCSID $Id: gc.tex,v 1.4 2006/05/12 11:00:59 rmurri Exp $
+\RCSID $Id: gc.tex,v 1.5 2006/05/13 16:34:34 rmurri Exp $
 %auto-ignore
 
 
@@ -136,19 +136,16 @@ form (see \csref{cha:arrows}).
   whose set of morphisms is the quotient of $\Hom\RTD[\A]$ by the
   Reidmeister-Reshetikhin-Turaev relations of \csref{fig:gc-rrt}.
 \end{definition}
-%% Figura 1
 \begin{figure}[p]
   \centering\includegraphics{fig-001}
   \caption{Composition product of diagrams.}
   \label{fig:gc-graph-composition}
 \end{figure}
-%% Figura 2
 \begin{figure}[p]
   \centering\includegraphics{fig-002}
   \caption{Tensor product of diagrams.}
   \label{fig:gc-graph-otimes}
 \end{figure}
-%% Figura 3
 \begin{figure}[p]
   \centering\includegraphics{fig-003}
   \caption{Reidmeister-Reshetikhin-Turaev moves for
@@ -173,7 +170,6 @@ the following (see also \csref{thm:rt2} in \csref{cha:rt}).
   $\RTD[\A]$ by
 \begin{center}
   \everyxy={/r24pt/:}
-  %% Figura 4
   {%
     \begin{tabular}{ccc}
       $\xy*!LC\xybox{%
@@ -219,8 +215,6 @@ The tensor functor $Z_\A$ is invariant by the
 Reidmeister-Reshetikhin-Turaev moves (RRT1)--(RRT8), so it induces a
 tortile braided functor $Z_\A: \RTE[\A] \to \A$.
 \end{theorem}%
-\nx{Z_\A}{Reshetikhin-Turaev graphical calculus functor on the
-  category $\A$}
 By definition of a symmetric category,
 \begin{equation*}
   \tau_{AB} = \tau_{BA}\inv,
@@ -343,11 +337,6 @@ the particular realization chosen.
   The linear spans $\RG(p,q)$ of ribbon graphs of type $(p,q)$ define the
   $\Hom$-spaces of the category $\RG$ of ribbon graphs.
 \end{definition}%
-\nx{$\Gamma$}{Generic ribbon graph}%
-\nx{$\In(\Gamma)$}{Input legs of graph $\Gamma$}%
-\nx{$\Out(\Gamma)$}{Output legs of graph $\Gamma$}%
-\nx{$\RG$}{Category of ribbon graphs}%
-\nx{$\RG(p,q)$}{Linear span of ribbon graphs of type $(p,q)$}%
 
 Ribbon graphs arose in connection with a certain cellular
 decomposition of the moduli space of smooth complex curves (see
@@ -365,8 +354,6 @@ of $S(\Gamma)$. By abuse of language, we shall call these $1$-cycles
 
 Denote $\Vertices{\Gamma}$, $\Edges{\Gamma}$ and $\Holes{\Gamma}$ the
 sets of vertices, edges and holes of a graph $\Gamma$.%
-\nx{$\Vertices{\Gamma}$, $\Edges{\Gamma}$, $\Holes{\Gamma}$}{Sets of vertices,
-  edges, and boundary components of the ribbon graph $\Gamma$}%
 
 The number $n$ of boundary components and the genus $g$ of the ribbon
 graph $\Gamma$ are defined to be those of the surface $S(\Gamma)$.
@@ -468,7 +455,8 @@ any arbitrary tortile braided tensor category $\category{C}$.
 
 By definition, in any autonomous symmetric tensor category $\A$ there
 are natural isomorphisms (see \csref{sec:duality})
-\begin{equation}\label{eq:passing-up-and-down}
+\begin{equation}
+  \label{eq:passing-up-and-down}
   \A(X\otimes Y, Z) \longleftrightarrow \A(X, Z\otimes\rdl{Y}),
   \qquad
   \A(X\otimes Y, Z) \longleftrightarrow \A(Y, \ldl{X}\otimes Z),
@@ -480,7 +468,6 @@ a morphism $f\colon X \otimes Y \to Z$ to the composition
   \xrightarrow{\id_{\ldl{Y}} \otimes f} \rdl{Y} \otimes Z.%
 \end{equation*}
 In graphical notation, this reads:
-%% Figura 12
 \begin{equation*}
   {\xy*!LC\xybox{%
       (0,1)*+[F]{\rdl{f}};%
@@ -508,7 +495,8 @@ into linear isomorphisms:
 \end{gather}
 for all $p,q,r \in \setZ$.
 
-\begin{definition}\label{dfn:cyclic-algebra}
+\begin{definition}
+  \label{dfn:cyclic-algebra}
   A cyclic algebra structure on $(V, b)$ is a sequence
   $\{T_r\}_{r\in\setN}$ of cyclically invariant linear maps $T_r \colon
   V\tp{r} \to \fk$,:
@@ -568,11 +556,10 @@ target is good.
   moves M1, M2. Since $V$ is self-dual, the graphical calculus
   $Z_{\btpc{V,b}}(\hat\Gamma_V)$ is independent of the orientation on the
   edges, i.e., it is invariant with respect to the move M1. Moreover
-  relations provided by \csref{thm:passing-up-and-down} give the
+  relations provided by \csref{eq:passing-up-and-down} give the
   invariance of $Z_{\btpc{V,b}}(\hat\Gamma_V)$ with respect to moves of
   type M2:
   \begin{equation*}
-    %% Figura 13
     {%
       \xymatrix{
         \begin{xy}
@@ -662,7 +649,7 @@ algebra structure.
 \end{theorem}
 \begin{proof}
   A functor $Z\colon\SG\to\btpc{V,b}$ endows $V$ with a symmetric algebra
-  structure, as in the proof of \csref{thm:gccyc}.
+  structure, as in the proof of \csref{thm:gc-cyc}.
   
   Conversely, assume we are given a cyclic algebra structure on $V$.
   Since the tensors $S_r$ are symmetric, they are, in particular,
@@ -704,7 +691,6 @@ the operator
 A realization of the graph $\Gamma$ as an RT-diagram is obtained by
 ``hanging it by the vertices'':
 \begin{equation*}
-  %% Figura 14
   {\xy*!LC\xybox{
       (-1,1)="a",(0,1)="b",(1,1)="c",(-0.4,-0.15)="buno",(-0.65,-0.2)="bdue",%
       (-1,-1)="d",(-.33,-1)="e",(1,-1)="f",%

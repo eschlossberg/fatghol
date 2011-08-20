@@ -1,4 +1,4 @@
-\RCSID $Id: kontsevich.tex,v 1.4 2006/05/12 11:00:59 rmurri Exp $
+\RCSID $Id: kontsevich.tex,v 1.5 2006/05/13 16:34:34 rmurri Exp $
 % auto-ignore
 
 
@@ -855,14 +855,14 @@ of ribbon graphs.
   Rewrite this identity as:
   \begin{align*}
     \gamma &=\sum_{i}\frac{1}{{\Lambda_i}}e_{ii}\otimes
-        e_{ii}+\sum_{i<j}\frac{2}{{\Lambda_i+\Lambda_j}}e_{ij}\otimes
-        e_{ij}+\sum_{i>j}\frac{2}{{\Lambda_i+\Lambda_j}}e_{ij}\otimes
-        e_{ij} 
-        \\
-      &=\sum_{i}\frac{1}{{\Lambda_i}}e_{ii}\otimes
-        e_{ii}+\sum_{i<j}\frac{2}{{\Lambda_i+\Lambda_j}}(e_{ij}\otimes
-        e_{ij}+e_{ji}\otimes
-        e_{ji}),
+    e_{ii}+\sum_{i<j}\frac{2}{{\Lambda_i+\Lambda_j}}e_{ij}\otimes
+    e_{ij}+\sum_{i>j}\frac{2}{{\Lambda_i+\Lambda_j}}e_{ij}\otimes
+    e_{ij} 
+    \\
+    &=\sum_{i}\frac{1}{{\Lambda_i}}e_{ii}\otimes
+    e_{ii}+\sum_{i<j}\frac{2}{{\Lambda_i+\Lambda_j}}(e_{ij}\otimes
+    e_{ij}+e_{ji}\otimes
+    e_{ji}),
   \end{align*}
   but, for $i<j$,
   \begin{align*}
@@ -878,11 +878,11 @@ of ribbon graphs.
   So,
   \begin{multline}\label{eq:casimir}
     \gamma = \sum_{i}\frac{1}{{\Lambda_i}}E_{ii}\otimes
-        E_{ii}+\sum_{i<j}\frac{2}{{\Lambda_i+\Lambda_j}}(E_{ij}\otimes E_{ji} + E_{ji}\otimes E_{ij})\\
-      = \sum_{i,j}\frac{2}{{\Lambda_i+\Lambda_j}}E_{ij}\otimes E_{ji}.
+    E_{ii}+\sum_{i<j}\frac{2}{{\Lambda_i+\Lambda_j}}(E_{ij}\otimes E_{ji} + E_{ji}\otimes E_{ij})\\
+    = \sum_{i,j}\frac{2}{{\Lambda_i+\Lambda_j}}E_{ij}\otimes E_{ji}.
   \end{multline}
 
-  According to  standard graphical calculus rules, evaluation
+  According to the rules of graphical calculus, evaluation
   $Z(\Gamma)$ is performed through the correspondence
   \begin{equation*}
     {\xy*!LC\xybox{\rgvertex7\loose1\loose2\missing3%
@@ -911,22 +911,19 @@ of ribbon graphs.
   number in $\{1, \dots, N\}$ on each side of every edge, and
   operators $T_k$ on each $k$-valent vertex. 
   
-  %% The map $T_k$ is the restriction of a map $T_k$ defined on
-  %% $M_N(\setC)$, namely, the trace of a $k$-fold product. We have
   Since
   \begin{equation}\label{eq:vertices}
     T_k(E_{i_1j_1}\otimes E_{i_2j_2}\otimes\cdots\otimes
     E_{i_{k}j_k})=\delta_{j_1i_2}\delta_{j_2i_3}\cdots
     \delta_{j_{k-1}i_k}\delta_{j_ki_1},
   \end{equation}
-  % Therefore,
   the only graphs that give non-zero contribution to the sum giving
   $Z(\Gamma)$ are the ones whose boundary components have the same index on
   all edges --- that is, we need only account for graphs equipped with
   a map $c\colon\Holes{\Gamma} \to \{1, \dots, N\}$.  An edge whose sides are
   indexed by $i,j$ brings in a factor $2/(\Lambda_i+\Lambda_j)$; combining this
   with \eqref{eq:vertices}, we can conclude the proof.
-%\end{proof}
+\end{proof}
 
 \begin{example}[The standard matrix model]
   Take $\Lambda = I$; formula \eqref{eq:KM} specializes to 
@@ -955,7 +952,7 @@ of ribbon graphs.
       X^3/3)^m}. 
   \end{equation*}
   
-  By \csref{thm:feynman}, the $m$-th summand in the right-hand side
+  By \csref{thm:FRT}, the $m$-th summand in the right-hand side
   can be expanded into a sum over (possibly non-connected) colored
   ribbon graphs with $m$ trivalent vertices. As $m$ ranges over
   non-negative integers, we get the exponential of the right-hand side

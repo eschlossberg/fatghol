@@ -1,6 +1,6 @@
 %%% index.tex -- Generico contenitore per matematica in lingua inglese.
 %%%
-%%% $Id: index.tex,v 1.4 2006/05/12 11:00:59 rmurri Exp $
+%%% $Id: index.tex,v 1.5 2006/05/13 16:34:34 rmurri Exp $
 %%%
 \documentclass[a4paper,reqno,openany,draft]{amsbook}
 
@@ -125,23 +125,17 @@
 %%
 \usepackage{hyperref}
 
-%%
-%% `nomencl' -- Indice delle notazioni
-%%
-
-\usepackage[refpage]{nomencl} % indice dei simboli
-\let\nx=\nomenclature
-\makeglossary % per l'indice dei simboli
-
-%%
-%% `csref' -- genera automaticamente il nome di un riferimento.
-%%
-\usepackage{csref}
 
 %%
 %% `graphicx' -- inclusione di grafica esterna
 %%
 \usepackage[final]{graphicx}
+
+
+%%
+%% `csref' -- genera automaticamente il nome di un riferimento.
+%%
+\usepackage[debug]{csref}
 
 
 %%%
@@ -161,11 +155,6 @@
 \include{arrows}
 \include{btc}
 \include{rt}
-
-%% 
-%% Indice dei simboli
-%%
-\printglossary
 
 
 %%
