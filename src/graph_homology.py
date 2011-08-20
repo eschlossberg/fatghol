@@ -83,16 +83,12 @@ class FatgraphComplexSlice(VectorSpace):
         """Constructor, taking generating graphs."""
         base = []
         self.base_aliases = {}
-        self.discard = set()
         for graph in graphs:
             if graph.is_oriented():
                 base.append(graph)
                 for edge_seq in graph.edge_seq_aliases:
                     self.base_aliases[edge_seq] = graph
-            else:
-                # note unorientable graphs: they will be discarded
-                self.discard.add(graph)
-                self.discard.update(graph.edge_seq_aliases)
+            # non-orientable graphs are silently discarded
         VectorSpace.__init__(self, base)
 
     def coordinates(self, combo):
@@ -100,17 +96,13 @@ class FatgraphComplexSlice(VectorSpace):
         coordinates = [0] * self.dimension
 
         # canonicalize graphs
-        for (i, monomial) in enumerate(combo):
+        for monomial in combo:
             graph = monomial[0]
-            if (graph in self.discard) or (graph.edge_seq in self.discard):
-                # discard this monomial and continue with next one
-                del combo[i]
-                continue
             if graph not in self.base:
                 canonical = None
                 if graph.edge_seq in self.base_aliases:
                     # replace graph with canonical
-                    canonical = self.aliases[graph.edge_seq]
+                    canonical = self.base_aliases[graph.edge_seq]
                 else:
                     # try to determine which graph in base `graph` is
                     # isomorphic to.
