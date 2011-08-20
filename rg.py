@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 #
-"""Classes and functions to deal with ribbon graphs.
+"""Classes and functions to deal with fatgraphs.
 """
 __docformat__ = 'reStructuredText'
 
@@ -57,6 +57,10 @@ class VertexCache(object):
         if key not in self.cache:
             self.cache[key] = Vertex(key)
         return self.cache[key]
+    
+    def __str__(self):
+        # needed to form readable persistent iterators cache
+        return "rg.VertexCache"
 
 
 class Vertex(CyclicList):
@@ -113,8 +117,9 @@ class Vertex(CyclicList):
         return repr(self)
     
     def is_canonical_representative(self):
-        """Return `True` if this `Vertex` object is maximal among
-        representatives of the same cyclic sequence.
+        """Return `True` if this `Vertex` object is maximal
+        (w.r.t. lexicographic order) among representatives of the same
+        cyclic sequence.
         
         Examples::
         
@@ -281,7 +286,7 @@ class Fatgraph(object):
                 #: `(v1, v2)` where `v1` and `v2` are (indices of)
                 #: endpoint vertices of an edge, and a corresponding pair
                 #: `(i1, i2)` where `i1` and `i2` are indices of the given
-                #: edge at vertices `v1` and `v2`.
+                #: edge in vertices `v1` and `v2`.
                 #: Each pair `(v, i)` represents a flag by the endpoint
                 #: vertex and the index of the edge in the vertex.  (The
                 #: vertex index alone is not enough for representing the
@@ -336,10 +341,12 @@ class Fatgraph(object):
 ##                    " invalid endpoints pair %s/%s for edge %d" \
 ##                    % (self, self.endpoints_v, self.endpoints_i,
 ##                       ep_v, ep_i, edge)
-            assert (edge in self.vertices[ep_v[0]])
-            assert (edge in self.vertices[ep_v[1]])
-##                    "Invalid endpoints %s for edge %d of graph `%s`" \
-##                    % (ep_v, edge, self)
+            assert (edge in self.vertices[ep_v[0]]), \
+                    "Invalid endpoints %s for edge %d of graph `%s`" \
+                    % (ep_v, edge, self)
+            assert (edge in self.vertices[ep_v[1]]), \
+                    "Invalid endpoints %s for edge %d of graph `%s`" \
+                    % (ep_v, edge, self)
         # check external edges endpoints
         for (edge, ep_v, ep_i) in izip(count(),
                                        self.endpoints_v[self.num_edges:],
@@ -582,8 +589,130 @@ class Fatgraph(object):
                                                  other.edge_numbering[pe[x]])
                                                 for x in xrange(self.num_edges)))
         return image_edge_numbering.sign()
-        
 
+
+    def connect(self, edge1, side1, edge2, side2):
+        """Return a new `Fatgraph`, formed by inserting trivalent
+        vertices in the middle of edges `edge1` and `edge2` and
+        connecting them with a new edge.
+
+          >>> g = Fatgraph([Vertex([0,1,2]), Vertex([0,2,1])])
+          >>> g1 = g.connect(0, 0, 1, 1)
+          >>> g1 is g
+          False
+          >>> g1 == g
+          False
+          
+        Arguments `side1` and `side2` (valid values are 0 or 1)
+        control which side the new edge is attached to, i.e., which
+        of the two inequivalent cyclic orders the new trivalent
+        vertices will be given.
+
+        In more detail: let 0,1,2 be the indices of the edges attached
+        to the new vertex in the middle of `edge1`, where 0,1 denote
+        the two halves of `edge1`.  If `side1` evaluates to boolean
+        `False`, then the new trivalent vertex will have the cyclic
+        order [0,1,2]; if `side1` evaluates to boolean `True`, then
+        0,1 are swapped and the new trivalent vertex gets the cyclic
+        order [1,0,2].
+
+        It is worth noting that this procedure involves 5 edges in
+        total, 3 of which need new indices.
+
+          >>> g.num_edges
+          3
+          >>> g1.num_edges
+          6
+          
+        This function is obviously symmetric: the pairs `edge1, side1`
+        and `edge2, side2` can be swapped and the result stays the
+        same::
+
+          >>> g2 = g.connect(1, 1, 0, 0)
+          >>> g1 == g2
+          True
+          
+        """
+        assert edge1 != edge2, \
+               "Fatgraph.connect: `edge1` and `edge2` must be different."
+        assert side1 in [0,1], \
+               "Fatgraph.connect: Invalid value for `side1`: '%s' - should be 0 or 1" % side1
+        assert side2 in [0,1], \
+               "Fatgraph.connect: Invalid value for `side2`: '%s' - should be 0 or 1" % side2
+        
+        opposite_side1 = 0 if side1 else 1
+        opposite_side2 = 0 if side2 else 1
+
+        ## assign edge indices
+        connecting_edge = self.num_edges
+        ## break `edge1` in two halves: if `v1a` and `v1b` are the
+        ## endpoints of `edge1`, then the "one_half" edge extends from
+        ## the `v1a` endpoint of `edge1` to the new vertex
+        ## `midpoint1`; the "other_half" edge extends from the
+        ## `midpoint1` new vertex to `v1b`.
+        one_half1 = edge1
+        other_half1 = self.num_edges + 1
+        ## break `edge2` in two halves; see above.
+        one_half2 = edge2
+        other_half2 = self.num_edges + 2
+
+        ## assign new vertex indices
+        midpoint1_index = self.num_vertices
+        midpoint2_index = self.num_vertices + 1
+
+        if side1:
+            midpoint1 = self._vertextype([other_half1, one_half1, connecting_edge])
+        else:
+            midpoint1 = self._vertextype([one_half1, other_half1, connecting_edge])
+
+        if side2:
+            midpoint2 = self._vertextype([other_half2, one_half2, connecting_edge])
+        else:
+            midpoint2 = self._vertextype([one_half2, other_half2, connecting_edge])
+
+        ## two new vertices are added: the mid-points of the connected edges.
+        new_vertices = self.vertices + [midpoint1, midpoint2]
+        ## the connecting edge has endpoints in the mid-points of
+        ## `edge1` and `edge2`, and is *always* in third position.
+        new_endpoints_v = self.endpoints_v + [(midpoint1_index, midpoint2_index)]
+        new_endpoints_i = self.endpoints_i + [(2,2)]
+        
+        # replace `edge1` with new `other_half1` in the second endpoint
+        (v1a, v1b) = self.endpoints_v[edge1]
+        (pos1a, pos1b) = self.endpoints_i[edge1]
+        new_vertices[v1b] = self._vertextype(new_vertices[v1b][:pos1b]
+                                             + [other_half1]
+                                             + new_vertices[v1b][pos1b+1:])
+
+        new_endpoints_v[one_half1] = (v1a, midpoint1_index)
+        new_endpoints_i[one_half1] = (pos1a, side1)
+        new_endpoints_v.append((midpoint1_index, v1b))  # other_half1
+        new_endpoints_i.append((opposite_side1, pos1b)) # other_half1
+
+        # replace `edge2` with new `other_half2` in the second endpoint
+        (v2a, v2b) = self.endpoints_v[edge2]
+        (pos2a, pos2b) = self.endpoints_i[edge2]
+        new_vertices[v2b] = self._vertextype(new_vertices[v2b][:pos2b]
+                                             + [other_half2]
+                                             + new_vertices[v2b][pos2b+1:])
+
+        new_endpoints_v[one_half2] = (v2a, midpoint2_index)
+        new_endpoints_i[one_half2] = (pos2a, side2)
+        new_endpoints_v.append((midpoint2_index, v2b))  # other_half2
+        new_endpoints_i.append((opposite_side2, pos2b)) # other_half2
+
+        # build new graph 
+        new_edge_numbering = self.edge_numbering + \
+                             [other_half1, other_half2, connecting_edge]
+        return Fatgraph(new_vertices,
+                     vertextype = self._vertextype,
+                     endpoints = (new_endpoints_v, new_endpoints_i),
+                     num_edges = self.num_edges + 3,
+                     num_external_edges = self.num_external_edges,
+                     orientation = new_edge_numbering,
+                     )
+    
+    
     @cache
     def contract(self, edgeno):
         """Return new `Fatgraph` obtained by contracting the specified edge.
@@ -641,11 +770,7 @@ class Fatgraph(object):
         ## into the lower-numbered one, and possibly reverse the
         ## orientation on the resulting graph.
         
-        # store endpoints and arrow on the edge-to-be-contracted; edge
-        # orientation goes from `v1` to `v2`
-        #
-        # FIXME: this piece of code must be kept in sync with
-        # `Fatgraph._cmp_orient`.
+        # store endpoints of the edge-to-be-contracted
         (v1, v2) = self.endpoints_v[edgeno]
         (pos1, pos2) = self.endpoints_i[edgeno]
         if v1 > v2:
