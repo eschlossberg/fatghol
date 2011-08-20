@@ -770,9 +770,8 @@ class Fatgraph(EqualIfIsomorphic):
         new_edges[other_half2] = Edge((midpoint2_index, opposite_side2), (v2b, pos2b))
 
         ## inherit orientation, and add the three new edges in the order they were created
-        # FIXME: this is not the identity in the last segment!!
         new_edge_numbering = self.edge_numbering + \
-                             [other_half1, other_half2, connecting_edge]
+                             [connecting_edge, other_half1, other_half2]
 
         # build new graph 
         return Fatgraph(new_vertices,
@@ -918,8 +917,7 @@ class Fatgraph(EqualIfIsomorphic):
         new_edges[other_half2] = Edge((midpoint2_index, opposite_side2), (v2b, pos2b))
 
         ## inherit orientation, and add the three new edges in the order they were created
-        # FIXME: this is not the identity in the last segment!!
-        new_edge_numbering +=  [other_half1, other_half2, connecting_edge]
+        new_edge_numbering +=  [connecting_edge, other_half1, other_half2]
 
         # build new graph 
         return Fatgraph(new_vertices,
@@ -930,7 +928,7 @@ class Fatgraph(EqualIfIsomorphic):
 
 
     @maybe(ocache_weakref)
-    def contract(self, edgeno):
+    def contract(self, edge):
         """Return new `Fatgraph` obtained by contracting the specified edge.
 
         Examples::
@@ -950,17 +948,17 @@ class Fatgraph(EqualIfIsomorphic):
           >>> Fatgraph([Vertex([2,1,0]), Vertex([2,1,0])]).contract(2)
           Fatgraph([Vertex([1, 0, 1, 0])])
         """
-        assert not self.is_loop(edgeno), \
+        assert not self.is_loop(edge), \
                "Fatgraph.contract: cannot contract a loop."
-        assert (edgeno >= 0) and (edgeno < self.num_edges), \
+        assert (edge >= 0) and (edge < self.num_edges), \
                "Fatgraph.contract: invalid edge number (%d):"\
                " must be in range 0..%d" \
-               % (edgeno, self.num_edges)
+               % (edge, self.num_edges)
 
         ## Plug the higher-numbered vertex into the lower-numbered one.
         
         # store endpoints of the edge-to-be-contracted
-        ((v1, pos1), (v2, pos2)) = self.edges[edgeno].endpoints
+        ((v1, pos1), (v2, pos2)) = self.edges[edge].endpoints
         assert v1 < v2
 
         # save highest-numbered index of vertices to be contracted
@@ -969,16 +967,18 @@ class Fatgraph(EqualIfIsomorphic):
 
         # Build new list of vertices, removing the contracted edge and
         # shifting all indices above:
-        #   - edges numbered 0..edgeno-1 are unchanged;
-        #   - edges numbered `edgeno+1`.. are renumbered, 
+        #   - edges numbered 0..edge-1 are unchanged;
+        #   - edges numbered `edge+1`.. are renumbered, 
         #     shifting the number down one position;
-        #   - edge `edgeno` is kept intact, will be removed by mating
+        #   - edge `edge` is kept intact, will be removed by mating
         #     operation (see below).
-        renumber_edges = dict((i,i-1)
-                              for i in xrange(edgeno+1, self.num_edges))
+        renumber_edges = dict((i,i)
+                              for i in xrange(0, edge+1))
+        renumber_edges.update(dict((i,i-1)
+                              for i in xrange(edge+1, self.num_edges)))
         # See `itranslate` in utils.py for how this prescription is
         # encoded in the `renumber_edges` mapping.
-        new_vertices = [ Vertex(itranslate(renumber_edges, V))
+        new_vertices = [ Vertex([ renumber_edges[e] for e in V ])
                          for V in self.vertices ]
 
         # Mate endpoints of contracted edge:
@@ -998,7 +998,7 @@ class Fatgraph(EqualIfIsomorphic):
         del new_vertices[v2]
 
         ## Orientation of the contracted graph.
-        cut = self.edge_numbering[edgeno]
+        cut = self.edge_numbering[edge]
         # edges with index below the contracted one are untouched
         renumber_edge_numbering = dict((x,x) for x in xrange(cut))
         # edges with index above the contracted one are shifted down
@@ -1007,7 +1007,7 @@ class Fatgraph(EqualIfIsomorphic):
                                       for x in xrange(cut, self.num_edges)))
         new_edge_numbering = [ renumber_edge_numbering[self.edge_numbering[x]]
                                for x in xrange(self.num_edges)
-                               if x != edgeno ]
+                               if x != edge ]
         
         # build new graph
         return Fatgraph(new_vertices,
