@@ -2255,20 +2255,16 @@ This section briefly lists those methods of the "Fatgraph" class that
 are needed for proper working of the class, but do not have any
 special interest by themselves.
 
+Mathod "assimilate" modifies a "Fatgraph" instance to be exactly equal
+to another given instance; after a call into "assimilate", attributes
+of both "Fatgraph"s will point to the same Python objects.  The only
+use of this call will be evident later on: we will need to create a
+"NumberedFatgraph" instance and make it a clone of an existing
+un-numbered "Fatgraph".
 \begin{lstlisting}
   def assimilate(self, other):
     """
     Copy-constructor: make `self` equal to `other`.
-
-    The modified `Fatgraph` instance *shares* all attributes
-    with the instance given as argument::
-
-      >>> g2.vertices is g1.vertices
-      True
-      >>> g2.edge_numbering is g1.edge_numbering
-      True
-      >>> g2.edges is g1.edges
-      True
     """
     self.boundary_cycles = other.boundary_cycles
     self.edges = other.edges
@@ -2285,60 +2281,65 @@ special interest by themselves.
         )
 
 \end{lstlisting}
+
+
+\paragraph{Orbits under automorphisms}
+The "edge_orbits" function computes orbits of the edges under the
+action of graph automorphism group, and a representative for each
+orbit.  It returns a Python dictionary, whose keys are the
+representatives, and whose values are the orbits.  Orbits are
+represented as Python "set" objects.
 \begin{lstlisting}
-  def edge_orbits(self):
-    """Compute orbits of the edges under the action of graph
-    automorphism group, and a representative for each orbit.
-    
-    Returns a dictionary, whose keys are the representatives, and
-    whose values are the orbits.  Orbits are represented as Python
-    `set` objects.
-
-    Examples::
-
-      >>> Fatgraph([Vertex([0,1,2]), Vertex([0,1,2])]).edge_orbits()
-      {0: set([0, 1, 2])}
-
-      >>> Fatgraph([Vertex([1, 0, 2]), Vertex([2, 1, 0])]).edge_orbits()
-      {0: set([0, 1, 2])}
-      
+  def edge_orbits(G):
     """
-    orbits = dict( (x, set([x])) for x in range(self.num_edges) )
-    for a in self.automorphisms():
-      for x in range(self.num_edges):
-        if x not in orbits:
-          continue
-        y = a.pe[x]
-        if y not in orbits:
-          continue
+    Compute orbits of the edges under the action of graph
+    automorphism group, and a representative for each orbit.
+    """
+\end{lstlisting}
+The orbit set is constructed progressively: we start with "orbits"
+holding a map of each edge $x$ into the singleton set $\{x\}$
+(line~\nr{orbits:1}). Then, for each automorphisms $a \in \Aut(G)$,
+the image $y = a(x)$ is computed (line~\nr{orbits:2}|); if $y$ is
+in the repsentative set, then the orbits of $x$ and $y$ are merged
+into one (line~\nr{orbits:3}), with the edge with lower numerical
+label being kept as representative.  The guard conditions at
+lines~\nr{orbits:4} and~\nr{orbits:5} are there just for efficiency:
+if an edge is not in the (current) representative set, or its image is
+not, then their orbits have already been computed and computation
+should proceed.
+\begin{lstlisting}
+    orbits = { x:set([x]) for x in range(G.num_edges) }  |\n{orbits:1}|
+    for a in G.automorphisms():                          
+      for x in range(G.num_edges):
+        if x not in orbits:                              |\n{orbits:4}|
+          continue # with next "x"
+        y = a.pe[x]                                      |\n{orbits:2}|
+        if y not in orbits:                              |\n{orbits:5}|
+          continue # with next "x"
         # "x" and "y" are in the same orbit, only keep the one
         # with lower abs. value, and remove the other.
         if y > x:
-          orbits[x].update(orbits[y])
+          orbits[x].update(orbits[y])                    |\n{orbits:3}|
           del orbits[y]
     return orbits
 
+\end{lstlisting}
+
+The "edge_pair_orbits" function works exactly like "edge_orbits",
+except the action of $\Aut(G)$ on the cartesian square $E(G) \times
+E(G)$ is computed instead.  Apart from little formal differences, the
+algorithm works exactly the same.
+\begin{lstlisting}
   def edge_pair_orbits(self):
-    """Compute orbits of pairs `(edge1, edge2)` under the action
+    """
+    Compute orbits of pairs `(edge1, edge2)` under the action
     of graph automorphism group, and a representative for each
     orbit.
-    
-    Returns a dictionary, whose keys are the representatives, and
-    whose values are the orbits.  Orbits are represented as Python
-    `set` objects.
-
-    Examples::
-
-      >>> Fatgraph([Vertex([0,1,2]), Vertex([0,1,2])]).edge_pair_orbits()
-      {(0, 1): set([(0, 1), (1, 2), (2, 0)]),
-       (0, 0): set([(0, 0), (1, 1), (2, 2)]),
-       (0, 2): set([(1, 0), (0, 2), (2, 1)])}
-      
     """
     edge_pairs = [ (x,y) 
              for x in range(self.num_edges)
              for y in range(self.num_edges) ]
-    orbits = dict( (p, set([p])) for p in edge_pairs )
+    orbits = { (p, set([p])) for p in edge_pairs }
     for a in self.automorphisms():
       for p in edge_pairs:
         if p not in orbits:
@@ -2346,20 +2347,11 @@ special interest by themselves.
         q = (a.pe[p[0]], a.pe[p[1]])
         if q not in orbits:
           continue
-        # "p" and "q" are in the same orbit, only keep the one
-        # with lower abs. value, and remove the other.
         if p < q:
           orbits[p].update(orbits[q])
           del orbits[q]
     return orbits
 
-\end{lstlisting}
-\begin{lstlisting}
-  def is_loop(self, edge):
-    """
-    Return `True` if `edge` is a loop (i.e., the two endpoint coincide).
-    """
-    return self.edges[edge].is_loop()
 \end{lstlisting}
 
 
