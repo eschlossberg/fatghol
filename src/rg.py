@@ -2289,12 +2289,9 @@ class MgnGraphsIterator(BufferingIterator):
         #: Fatgraphs to be contracted at next `.refill()` invocation
         self._batch = trivalent
 
-        #: Number of edges of graphs that will be returned by next
-        #  `.refill()` call.  Starts with `6*g + 3*n - 7`, which is the
-        #  highest-numbered edge in trivalent graphs.
-        self._current_edge = 6*g + 3*n - 7
-
-        self._num_vertices = 4*g + 2*n - 4
+        #: Graphs returned by next `.refill()` call will have this
+        #  number of vertices.
+        self._num_vertices = 4*g + 2*n - 5
         
         # initialize superclass with list of trivalent graphs
         BufferingIterator.__init__(self, trivalent)
@@ -2318,11 +2315,11 @@ class MgnGraphsIterator(BufferingIterator):
                         next_batch.append(dg)
                     else:
                         discarded += 1
+        logging.debug("  Found %d distinct unique fatgraphs with %d vertices, discarded %d duplicates.",
+                     len(self._batch), self._num_vertices, discarded)
+
         self._batch = next_batch
         self._num_vertices -= 1
-
-        logging.debug("  Found %d distinct unique fatgraphs with %d vertices, discarded %d duplicates.",
-                     len(next_batch), 1+self._num_vertices, discarded)
         return next_batch
 
 #MgnGraphsIterator = persist.PersistedIterator(_MgnGraphsIterator)
