@@ -8,7 +8,6 @@ from graph_homology import FatgraphComplex
 from rg import Graph,ConnectedGraphsIterator
 from valences import vertex_valences_for_given_g_and_n
 
-from itertools import ifilter
 import sys
 from utils import positive_int
 
@@ -117,19 +116,28 @@ parser.add_option("-o", "--output", dest="outfile", default=None,
                   help="Output file for `vertices` action.")
 (options, args) = parser.parse_args()
 
+# print usage message if no args given
+if 0 == len(args) or 'help' == args[0]:
+    parser.print_help()
+    sys.exit(1)
+
 # hack to allow 'N1,N2,...' or 'N1 N2 ...' syntaxes
 for (i, arg) in enumerate(args):
     if arg.find(","):
         args[i:i+1] = arg.split(",")
 
-if 0 == len(args) or 'help' == args[0]:
-    parser.print_help()
-    sys.exit(1)
+# open output file
+if options.outfile is None:
+    outfile = sys.stdout
+else:
+    outfile = open(options.outfile, 'w')
 
-elif 'test' == args[0]:
+# test -- run doctests
+if 'test' == args[0]:
     import doctest
     doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE)
 
+# vertices -- show vertices for given g,n
 elif 'vertices' == args[0]:
     del args[0]
     if len(args) < 2:
@@ -153,8 +161,9 @@ elif 'vertices' == args[0]:
         sys.exit(1)
     vvs = vertex_valences_for_given_g_and_n(g,n)
     for vv in vvs:
-        print vv
+        outfile.write("%s\n" % str(vv))
 
+# graphs -- list graphs for given vertex valences
 elif 'graphs' == args[0]:
     # parse command line
     del args[0]
@@ -176,11 +185,6 @@ elif 'graphs' == args[0]:
                          % (" ".join(str(val) for val in valences)))
         sys.exit(1)
 
-    # open output file
-    if options.outfile is None:
-        outfile = sys.stdout
-    else:
-        outfile = open(options.outfile, 'w')
     # compute graphs matching given vertex sequences
     graphs = []
     graphs += list(ConnectedGraphsIterator(valences))
@@ -209,6 +213,7 @@ elif 'graphs' == args[0]:
             outfile.write(r"\end{document}")
             outfile.write("\n")
 
+# homology -- compute homology ranks
 elif 'homology' == args[0]:
     # parse command line
     del args[0]
@@ -238,5 +243,6 @@ elif 'homology' == args[0]:
     hs = graph_complex.compute_homology_ranks()
 
     # print results
-    for (i, h) in enumerate(hs):
-        print "h_%d(M_{%d,%d}) = %d" % (i, g, n, h)
+    if not options.silent:
+        for (i, h) in enumerate(hs):
+            outfile.write("h_%d(M_{%d,%d}) = %d\n" % (i, g, n, h))

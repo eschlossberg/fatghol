@@ -12,14 +12,81 @@ import types
 
 
 
+class BufferingIterator(object):
+    """Iterate over items stored in an internal buffer; when all items
+    in the buffer have been handed out to caller, refill the buffer by
+    calling `self.refill()` and start over again.
+
+    This is intended as a base class for iterators that can generate
+    more than one value per invocation; still, by the iterator
+    protocol, they should return only one value to caller.  Subclasses
+    of `BufferingIterator` should only need to define the `refill()`
+    method, returning a list (or other iterable) with items that
+    should be inserted in the buffer.
+
+    The base class implementation just returns the items passed in the
+    `initial` constructor argument and then raise `StopIteration`::
+
+      >>> b = BufferingIterator([1,2,3])
+      >>> for x in b: print x
+      1
+      2
+      3
+
+      >>> list(BufferingIterator())
+      []
+      
+    """
+    
+    __slots__ = ('__buffer',)
+
+    def __init__(self, initial=None):
+        """Create a `BufferingIterator` instance and fill the internal
+        buffer with items from `initial` (if supplied).
+        """
+        if initial is None:
+            self.__buffer = []
+        else:
+            self.__buffer = list(initial)
+    
+    def __iter__(self):
+        return self
+
+    def next(self):
+        """Return next item from queue, refilling queue if empty."""
+        # try to refill buffer if empty
+        if 0 == len(self.__buffer):
+            self.__buffer.extend(self.refill())
+
+        # if still empty after refill, then iteration has ended
+        if 0 == len(self.__buffer):
+            raise StopIteration
+
+        return self.__buffer.pop(0)
+
+    def refill(self):
+        """Return new items to store in the buffer.
+
+        At end of iteration, `refill` may either raise
+        `StopIteration`, or just return an empty list.
+
+        Sub-classes should override this method: the default
+        implementation just signals `StopIteration`.
+        """
+        raise StopIteration
+
+
 def concat(seqs):
     """Return concatenation of all sequences in `seqs`.
 
     Examples::
+    
       >>> concat([[0]])
       [0]
+
       >>> concat([[0],[1]])
       [0, 1]
+
       >>> concat(['a','b'])
       'ab'
     """
@@ -74,79 +141,6 @@ class chunks(object):
             raise StopIteration
         return [ self.iterable.next()
                    for x in xrange(self.sizes[self.current_chunk]) ]
-
-
-def deep_cmp(s1,s2):
-    """Compare items in `s1` and `s2`, recursing into subsequences.
-
-    Examples::
-      >>> deep_cmp(1,1)
-      0
-      >>> deep_cmp([1],[1])
-      0
-      >>> deep_cmp([1,1],[1,1])
-      0
-      >>> deep_cmp([1,[1]],[1,[1]])
-      0
-      >>> deep_cmp([1,[1]],[1,[2]])
-      -1
-    """
-    if not (type(s1) == type(s2)):
-        raise TypeError, \
-            "Comparing arguments of different type: %s vs %s" \
-            % (repr(type(s1)), repr(type(s2)))
-    else:
-        try:
-            # assume s1,s2 are sequences and recursively apply this
-            # function to pairs of corresponding elements...
-            def _first_nonzero(x,y):
-                if 0 != x:
-                    return x
-                else:
-                    return y
-            return reduce(_first_nonzero, map(deep_cmp, s1, s2), 0)
-        except TypeError:
-            # ...if s1,s2 are not sequences, then do a builtin comparison
-            return cmp(s1,s2)
-
-
-def enumerate_set_product(p):
-    """Iterate over all elements in the cartesian products of elements of items in `p`.
-
-    Examples::
-      >>> list(enumerate_set_product([]))
-      [[]]
-      >>> list(enumerate_set_product([[1]]))
-      [[1]]
-      >>> list(enumerate_set_product([[1],[1]]))
-      [[1, 1]]
-      >>> list(enumerate_set_product([[1,2],[]]))
-      [[]]
-      >>> list(enumerate_set_product([[1,2],[1]]))
-      [[1, 1], [2, 1]]
-      >>> list(enumerate_set_product([[1,2],[1,2]]))
-      [[1, 1], [2, 1], [1, 2], [2, 2]]
-    """
-    L = len(p)
-    M = [ len(s)-1 for s in p ]
-    if (0 == L) or (-1 in M):
-        # there are no factors, or one of them has no elements
-        yield []
-    else:
-        m = [0] * L
-        i = 0
-        while i < L:
-            # return element corresponding to current multi-index
-            yield [ s[m[i]] for (i,s) in enumerate(p) ]
-            # advance multi-index
-            i = 0
-            while (i < L):
-                if m[i] == M[i]:
-                    m[i] = 0
-                    i += 1
-                else:
-                    m[i] += 1
-                    break
 
 
 def positive_int(arg):

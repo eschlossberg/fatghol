@@ -14,14 +14,13 @@ from combinatorics import (
     )
 from cyclicseq import CyclicList,CyclicTuple
 from utils import (
+    BufferingIterator,
     concat,
-    deep_cmp,
     itranslate
     )
 
 from copy import copy
 from itertools import chain,count,izip
-import operator
 
 
 class VertexCache(object):
@@ -806,7 +805,7 @@ class MorphismIteratorFactory(object):
 
       >>> list(morphisms(g1, g2))
       []
-"""
+    """
 
     __slots__ = (
         '_candidate_pvs',
@@ -918,43 +917,6 @@ class MorphismIteratorFactory(object):
                             continue # to next `pvrot`
                     rots = tuple(t[1]-t[3] for t in pvrot)
                     yield (pv, rots, pe)
-
-
-class BufferingIterator(object):
-    
-    __slots__ = ('__buffer',)
-
-    def __init__(self, initial=None):
-        if initial is None:
-            self.__buffer = []
-        else:
-            self.__buffer = list(initial)
-    
-    def __iter__(self):
-        return self
-
-    def next(self):
-        """Return next item from queue, refilling queue if empty."""
-        # try to refill buffer if empty
-        if 0 == len(self.__buffer):
-            self.__buffer.extend(self.refill())
-
-        # if still empty after refill, then iteration has ended
-        if 0 == len(self.__buffer):
-            raise StopIteration
-
-        return self.__buffer.pop(0)
-
-    def refill(self):
-        """Return a list of new items to store in the buffer.
-
-        At end of iteration, `refill` may either raise
-        `StopIteration`, or just return an empty list.
-
-        Sub-classes should override this method: the default
-        implementation just signals `StopIteration`.
-        """
-        raise StopIteration
 
         
 class ConnectedGraphsIterator(BufferingIterator):
