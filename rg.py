@@ -34,6 +34,70 @@ def vertex_valences_for_given_g_and_n(g,n):
     return result
 
 
+class CyclicHash(object):
+    """Compute hash values for a cyclic sequence.
+
+    The hash is computed using the matrix trace invariance formula:
+
+      tr(M_1 M_2 ... M_n) = tr(M_2 ... M_n M_1)
+
+    """
+    __slots__ = (
+        'M',
+        'mod',
+        'samples',
+        )
+    def __init__(self, modulus=251, samples=None):
+        from random import randint
+        self.mod = modulus
+        if samples is None:
+            samples = modulus
+        self.M = []
+        for i in xrange(modulus):
+            self.M.append((randint(0,modulus-1),
+                           randint(0,modulus-1),
+                           randint(0,modulus-1),
+                           randint(0,modulus-1)))
+
+    def __call__(self, seq, start, end):
+        # tr(M_1 * M_2 * ... * M_n) is ciclically invariant
+        factors = [ self.M[seq[i]] for i in xrange(start,end) ]
+        product = reduce(self.__matrix_product, factors)
+        return (product[0] + product[3])
+
+    @staticmethod
+    def __matrix_product(M1, M2):
+        return ((M1[0]*M2[0]+M1[1]*M2[2]) % self.mod,
+                (M1[0]*M2[1]+M1[1]*M2[3]) % self.mod,
+                (M1[2]*M2[0]+M1[3]*M2[2]) % self.mod,
+                (M1[2]*M2[1]+M1[3]*M2[3]) % self.mod)
+
+        
+class VertexCache(object):
+    """A `Vertex` factory with caching."""
+    
+    __slots__ = (
+        'cache',
+        'hash',
+        'max_edge_color',
+        )
+
+    def __init__(self, max_edge_color):
+        self.max_edge_color = max_edge_color
+        self.cache = {}
+        self.hash = CyclicHash(samples=max_edge_color)
+
+    def __call__(self, edge_seq, start=0, end=None):
+        """Return a `Vertex` instance."""
+        if end is None:
+            end = len(edge_seq)
+        h = self.hash(edge_seq, start, end)
+        # create object, if not already cached
+        if not self.cache.has_key(h):
+            cache[h] = Vertex(edge_seq, start, end)
+        return cache[h]
+
+    
 class Vertex(CyclicList):
     """A (representative of) a vertex of a ribbon graph.
 
@@ -41,7 +105,9 @@ class Vertex(CyclicList):
     (decorated) edges.  The edge colorings may be accessed through a
     (read-only) sequence interface.
     """
+
     __slots__ = ('_repetition_pattern',)
+
     def __init__(self, edge_seq, start=0, end=None):
         """Create `Vertex` instance by excerpting the slice `[start:end]` in `edge_seq`.
         """
@@ -60,7 +126,8 @@ class Vertex(CyclicList):
 ##     def __init__(self, *args, **kwargs):
 ##         # the following values will be computed when they are first requested
 ##         self._repetition_pattern = None
-       
+
+        
     def __iter__(self):
         """Return iterator over edges."""
         return list.__iter__(self)
@@ -124,7 +191,7 @@ class Graph(object):
         '_vertex_valences',
         'vertices',
         )
-    def __init__(self, vertex_valences, edge_seq):
+    def __init__(self, vertex_valences, edge_seq, vertex_factory):
         assert is_sequence_of_integers(vertex_valences), \
                "Graph.__init__: parameter `vertex_valences` must be sequence of integers, "\
                "but got '%s' instead" % vertex_valences
@@ -194,7 +261,7 @@ class Graph(object):
 
         # pre-allocate list of right size; all elements must be empty
         # lists, that we fill with `.append()` later on
-        candidates = [ [] ] * len(graph)
+        candidates = [ [] ] * self.num_vertices()
         
         # FIXME: if vertex `i` can be mapped into vertex `j`, with some
         # rotation delta, then vertex `j` can be mapped into vertex `i`
@@ -212,7 +279,7 @@ class Graph(object):
                     continue
                 # append `(destination vertex, rotation shift)` to
                 # candidate destinations list
-                for delta in rp[i].all_shifts_for_linear_eq(rp[j]):
+                for delta in self.vertices[i].all_shifts_for_linear_eq(self.vertices[j]):
                     candidates[i].append((j,delta))
 
         ## pass 2: for each vertex, pick a destination and return the resulting
@@ -289,7 +356,7 @@ class Graph(object):
         result as soon as one orientation-reversing one is found.
         """
         for a in self.automorphisms():
-            if is_orientation_reversing(a):
+            if self.is_orientation_reversing(a):
                 return True
         return False
 
@@ -457,7 +524,7 @@ class Graph(object):
             if pos >= len(pass2):
                 break
             # walk whole chain of edges
-            i = pos
+            i = pos 
             while pass2[i][1] == False:
                 pass2[i][1] = True
                 i = pass2[i][0]
@@ -597,7 +664,7 @@ def all_graphs(vertex_valences):
     total_edges = sum(vertex_valences) / 2
 
     # we need the first graph in list to pre-compute some structural constants
-    graph_iterator = all_canonical_decorated_graphs(vertex_valences, total_edges)
+    graph_iterator = all_canonical_decorated_graphs(vertex_valences)
     graphs = [ graph_iterator.next() ]
 
     # the valence spectrum is the same for all graphs in the list
@@ -693,10 +760,13 @@ def all_edge_seq(n):
         yield s
 
 
-def all_canonical_decorated_graphs(vertex_valences, total_edges):
-    """Iterate over all canonical decorated graphs with `total_edges` edges."""
+def all_canonical_decorated_graphs(vertex_valences, vertex_factory=None):
+    """Iterate over all canonical decorated graphs with given vertex valences."""
+    total_edges = sum(vertex_valences) / 2
+    if vertex_factory is None:
+        vertex_factory = VertexCache(total_edges)
     for edge_seq in all_edge_seq(total_edges):
-        g = Graph(vertex_valences, edge_seq)
+        g = Graph(vertex_valences, edge_seq, vertex_factory)
         if g.is_canonical():
             yield g
 
@@ -709,6 +779,7 @@ class Mapping(dict):
     will fail if any new source->destination assignment contrasts with
     what is already there.
     """
+    __slots__ = []
     def apply(self, src):
         return self[src]
     def extend(self, srcs, dsts):
