@@ -28,6 +28,7 @@ from cache import (
     Cacheable,
     cache_id
     )
+from collections import defaultdict
 from combinatorics import (
     InplacePermutationIterator,
     SetProductIterator,
@@ -1364,13 +1365,10 @@ class Fatgraph(EqualIfIsomorphic):
                           Vertex([4, 4, 0]), Vertex([3, 2, 2])]).valence_spectrum()
                {3: [1, 2], 4: [0]}
             """
-            result = {}
+            result = defaultdict(list)
             for (index, vertex) in enumerate(self.vertices):
                 l = len(vertex)
-                if l in result:
-                    result[l].append(index)
-                else:
-                    result[l] = [index]
+                result[l].append(index)
             # consistency checks
             assert set(result.keys()) == set(self.vertex_valences()), \
                    "Fatgraph.valence_spectrum:" \
@@ -1418,7 +1416,7 @@ class Fatgraph(EqualIfIsomorphic):
             else:
                 return False
                 
-        def admissible_vertex_mappings(v, g, ixs):
+        def compatible_vertex_mappings(v, g, ixs):
             """Iterate over all (indices of) vertices in `g`, which
             `v` *could* be mapped to (that is, the destination vertex
             matches `v` in valence and number of loops.
@@ -1463,14 +1461,13 @@ class Fatgraph(EqualIfIsomorphic):
                     # this pair has already been added
                     return (pv, rots, pe)
 
-            pv[i1] = i2
-            rots[i1] = r
-
             # rotating `v1` leftwards is equivalent to rotating `v2` rightwards...
             v2 = v2[r:r+len(v2)]
             if not pe.extend(v1, v2):
                 raise CannotExtendMap
 
+            pv[i1] = i2
+            rots[i1] = r
             return (pv, rots, pe)
 
         def neighbors(pv, pe, G1, v1, G2, v2):
@@ -1515,29 +1512,29 @@ class Fatgraph(EqualIfIsomorphic):
             if len(vs1[val]) != len(vs2[val]):
                 return # StopIteration
 
-        (val, vs) = starting_vertices(G1)
-        src0 = vs[0]
-        V1 = G1.vertices[src0]
-        for dst0 in admissible_vertex_mappings(V1, G2, vs2[val]):
-            for rot0 in xrange(val):
+        (valence, indexes) = starting_vertices(G2)
+        src = vs1[valence][0]
+        v1 = G1.vertices[src]
+        for dst in compatible_vertex_mappings(v1, G2, indexes):
+            for rot in xrange(valence):
                 try:
                     # pass 0: init new (pv, rots, pe) triple
                     pv = Permutation()
                     rots = [ None for x in xrange(G1.num_vertices) ]
                     pe = Permutation()
 
-                    # pass 1: map `V1` to `v2` and build map
+                    # pass 1: map `v1` to `v2` and build map
                     # of neighboring vertices for next pass
-                    pv[src0] = dst0
-                    rots[src0] = rot0
-                    if not pe.extend(V1, G2.vertices[dst0][rot0:rot0+val]):
-                        continue # to next `rot0`
+                    if not pe.extend(v1, G2.vertices[dst][rot:rot+valence]):
+                        continue # to next `rot`
+                    pv[src] = dst
+                    rots[src] = rot
                     if __debug__:
-                        for x in V1:
-                            assert x in pe, "Edge `%d` of vertex `%s` (in graph `%s`) not mapped to any edge of graph `%s` (at line 1740, `pe=%s`)" % (x, V1, G1, G2, pe)
+                        for x in v1:
+                            assert x in pe, "Edge `%d` of vertex `%s` (in graph `%s`) not mapped to any edge of graph `%s` (at line 1740, `pe=%s`)" % (x, v1, G1, G2, pe)
 
                     # pass 2: extend map to neighboring vertices
-                    nexts = neighbors(pv, pe, G1, src0, G2, dst0)
+                    nexts = neighbors(pv, pe, G1, src, G2, dst)
                     while len(pv) < G1.num_vertices:
                         neighborhood = []
                         for (i1, i2, r) in nexts:
@@ -1550,7 +1547,7 @@ class Fatgraph(EqualIfIsomorphic):
 
                 # extension failed in the above block, continue with next candidate
                 except CannotExtendMap:
-                    continue # to next `rot0`
+                    continue # to next `rot`
 
                 # finally
                 yield Isomorphism(G1, G2, pv, rots, pe)
