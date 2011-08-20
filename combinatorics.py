@@ -8,6 +8,11 @@ __docformat__ = 'reStructuredText'
 import itertools
 
 
+from cache import (
+    cache1,
+    )
+
+
 class OrderedSetPartitionsIterator(object):
     """Iterate over all (ordered) partitions of a set with prescribed block sizes.
 
@@ -426,6 +431,14 @@ class Permutation(dict):
         return True
 
 
+@cache1
+def _factorial(n):
+    if n < 2:
+        return 1
+    else:
+        return n*_factorial(n-1)
+    
+
 class PermutationList(object):
     """Simulate a (read-only) list of all permutations of a prescribed order.
 
@@ -444,33 +457,32 @@ class PermutationList(object):
       [2, 1, 0]
 
       >>> for n in range(6):
-      ...   print len(PermutationList(n+1))
+      ...   print len(set(tuple(x) for x in PermutationList(n+1)))
       1
       2
       6
       24
       120
       720
-    """
+      """
     def __init__(self, order):
         self.__order = order
-        # pre-compute factorial
-        self.factorial = [1]
-        for j in xrange(0, self.__order):
-            self.factorial.append((j+1)*self.factorial[-1])
-    def __getitem__(self, i):
-        """Return permutation at `i`-th place."""
-        if i >= self.factorial[-1]:
-            raise StopIteration
-        order = self.__order
-        perm = [ n for n in xrange(0, order) ]
-        for k in xrange(0, i+1):
-            for j in xrange(1, order):
-                jj = j - ((k / self.factorial[j]) % (j+1))
-                perm[j], perm[jj] = perm[jj], perm[j]
+    def __getitem__(self, r):
+        """Return permutation at `r`-th place."""
+        n = self.__order
+        if r < 0:
+            r %= n
+        if r >= _factorial(n):
+            raise IndexError
+        perm = [ x for x in xrange(0, n) ]
+        for i in xrange(0, n):
+            j = (r / _factorial(n-i-1)) % (n-i)
+            temp = perm[i+j]
+            perm[i+1 : i+j+1] = perm[i : i+j]
+            perm[i] = temp
         return perm
     def __len__(self):
-        return self.factorial[-1]
+        return _factorial(self.__order)
 
 
 class PermutationIterator(object):
@@ -479,23 +491,23 @@ class PermutationIterator(object):
     The code is a port of the one described in Wikipedia at:
       http://en.wikipedia.org/wiki/Permutation#Algorithm_to_generate_permutations
 
-    Examples::
+    The permutations are returned in no particular order::
       >>> p = PermutationIterator([1,2,3])
-      >>> p.next()
-      [1, 2, 3]
-      >>> p.next()
-      [2, 1, 3]
-      >>> p.next()
-      [2, 3, 1]
       >>> p.next()
       [3, 1, 2]
       >>> p.next()
+      [3, 2, 1]
+      >>> p.next()
+      [2, 3, 1]
+      >>> p.next()
+      [1, 3, 2]
+      >>> p.next()
       [2, 1, 3]
       >>> p.next()
-      [3, 2, 1]
+      [1, 2, 3]
 
       >>> for n in range(6):
-      ...   print len(list(PermutationIterator(range(n+1))))
+      ...   print len(set(tuple(x) for x in PermutationIterator(range(n+1))))
       1
       2
       6
@@ -506,23 +518,20 @@ class PermutationIterator(object):
     def __init__(self, seq, initial=0):
         self.seq = seq
         self.rank = initial
-        # pre-compute factorial
-        self.factorial = [1]
-        for j in xrange(0, len(seq)):
-            self.factorial.append((j+1)*self.factorial[-1])
+        self.order = len(seq)
     def __iter__(self):
         return self
     def next(self):
         """Return next permutation of initially given `sequence`."""
-        if self.rank >= self.factorial[-1]:
+        i = self.rank
+        if i >= _factorial(self.order):
             raise StopIteration
-        def swap(seq, pos1, pos2):
-            """Swap items at positions `pos1` and `pos2` in `seq`."""
-            seq[pos1],seq[pos2] = seq[pos2],seq[pos1]
-        for j in xrange(1, len(self.seq)):
-            swap(self.seq, j, j - ((self.rank / self.factorial[j]) % (j+1)))
+        seq = self.seq[:]
+        for j in xrange(2, self.order+1):
+            i /= j - 1
+            seq[j-1], seq[i % j] = seq[i % j], seq[j-1]
         self.rank += 1
-        return self.seq
+        return seq
 
 
 class InplacePermutationIterator(object):
