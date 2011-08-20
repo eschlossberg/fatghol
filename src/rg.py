@@ -193,8 +193,6 @@ class Graph(object):
 
         #: list of vertices 
         self.vertices = vertices
-##         pv = SortingPermutation(self.vertices)
-##         pv[None] = None # needed for graphs with external edges
         
         #: list of vertex valences 
         self._vertex_valences = tuple(sorted(kwargs.get('_vertex_valences',
@@ -465,16 +463,16 @@ class Graph(object):
         edges::
 
           >>> Graph([Vertex([2,1,0]),Vertex([2,0,1])]).boundary_components()
-          set([CyclicTuple((0, 1)), CyclicTuple((1, 2)), CyclicTuple((2, 0))])
+          [CyclicTuple((2, 0)), CyclicTuple((1, 2)), CyclicTuple((0, 1))]
 
         If both sides of an edge belong to the same boundary
         component, that edge appears twice in the list::
 
           >>> Graph([Vertex([2,1,1]),Vertex([2,0,0])]).boundary_components()
-          set([CyclicTuple((2, 0, 2, 1)), CyclicTuple((0,)), CyclicTuple((1,))])
+          [CyclicTuple((2, 0, 2, 1)), CyclicTuple((1,)), CyclicTuple((0,))]
           
           >>> Graph([Vertex([2,1,0]),Vertex([2,1,0])]).boundary_components()
-          set([CyclicTuple((2, 1, 0, 2, 1, 0))])
+          [CyclicTuple((2, 1, 0, 2, 1, 0))]
           
         """
         assert self.num_external_edges == 0, \
@@ -556,8 +554,24 @@ class Graph(object):
                     i = pass2[i][0]
                 pos += 1
 
+            # consistency check: each edge must occur two times
+            # (either twice in the same b.c., or in two distinct
+            # components)
+            if __debug__:
+                cnt = [0] * self.num_edges
+                for bc in result:
+                    for edge in bc:
+                        cnt[edge] += 1
+                for x in xrange(len(cnt)):
+                    assert cnt[x] == 2, \
+                           "Graph.boundary_components:"\
+                           " edge %d occurs %d times "\
+                           " in boundary components `%s`"\
+                           " of graph `%s`"\
+                           % (x, cnt[x], result, self)
+
             # save result for later reference
-            self._boundary_components = set(CyclicTuple(bc) for bc in result)
+            self._boundary_components = list(CyclicTuple(bc) for bc in result)
         
         # that's all, folks!
         return self._boundary_components
@@ -590,17 +604,17 @@ class Graph(object):
 
           >>> g1 = Graph([Vertex([2,1,1]), Vertex([2,0,0])])
           >>> g1.boundary_components() # compute b.c.'s
-          set([CyclicTuple((2, 0, 2, 1)), CyclicTuple((0,)), CyclicTuple((1,))])
+          [CyclicTuple((2, 0, 2, 1)), CyclicTuple((1,)), CyclicTuple((0,))]
           >>> g2 = g1.contract(2)
           >>> g2.boundary_components()
-          set([CyclicTuple((0,)), CyclicTuple((0, 1)), CyclicTuple((1,))])
+          [CyclicTuple((0, 1)), CyclicTuple((1,)), CyclicTuple((0,))]
 
           >>> g1 = Graph([Vertex([2,1,0]), Vertex([2,0,1])])
           >>> g1.boundary_components() # compute b.c.'s
-          set([CyclicTuple((0, 1)), CyclicTuple((1, 2)), CyclicTuple((2, 0))])
+          [CyclicTuple((2, 0)), CyclicTuple((1, 2)), CyclicTuple((0, 1))]
           >>> g2 = g1.contract(2)
           >>> g2.boundary_components()
-          set([CyclicTuple((0,)), CyclicTuple((0, 1)), CyclicTuple((1,))])
+          [CyclicTuple((0,)), CyclicTuple((1,)), CyclicTuple((0, 1))]
 
         In the above examples, notice that any reference to edge `2`
         has been removed from the boundary cycles after contraction.
@@ -678,21 +692,25 @@ class Graph(object):
             bc = None
             if self._boundary_components is not None:
                 if numbering is not None:
-                    bc = set(numbering.iterkeys())
+                    bc = list(numbering.iterkeys())
                 else:
-                    bc = set(CyclicTuple(itranslate(renumber_edges, c))
-                             for c in self._boundary_components)
+                    bc = list(CyclicTuple(itranslate(renumber_edges, c))
+                              for c in self._boundary_components)
 
             # build new graph 
             self._contractions[edgeno] = \
                                        Graph(new_vertices,
-                                             vertex_factory=self._vertex_factory,
+                                             vertex_factory =
+                                                 self._vertex_factory,
                                              endpoints = new_endpoints,
                                              num_edges = self.num_edges - 1,
-                                             num_external_edges = self.num_external_edges,
-                                             numbering = numbering,
-                                             _boundary_components = bc,
-                                             _parent = (self, edgeno))
+                                             num_external_edges =
+                                                 self.num_external_edges,
+                                             numbering = numbering)
+            # set origin
+            self._contractions[edgeno]._parent = (self, edgeno)
+            # pre-computed b.c. for speed-up
+            self._contractions[edgeno]._boundary_components = bc
             
         elif (self.numbering is not None) \
              and (self._contractions[edgeno].numbering is None):
@@ -700,6 +718,7 @@ class Graph(object):
             renumber_edges = dict((i+1,i)
                                   for i in xrange(edgeno, self.num_edges))
             renumber_edges[edgeno] = None  
+            self._contractions[edgeno]._parent = (self, edgeno)
             self._contractions[edgeno].numbering = \
                                                  dict((CyclicTuple(itranslate(renumber_edges, c)), n)
                                                       for (c,n) in self.numbering.iteritems())
@@ -710,6 +729,18 @@ class Graph(object):
                    " numbering keys after contraction differs"\
                    " from boundary components computed from"\
                    " non-numbered sibling graph"
+            if __debug__:
+                cnt = [0] * (self.num_edges - 1)
+                for bc in self._contractions[edgeno]._boundary_components:
+                    for edge in bc:
+                        cnt[edge] += 1
+                for x in xrange(len(cnt)):
+                    assert cnt[x] == 2, \
+                           "Graph.contract:"\
+                           " edge %d occurs %d times "\
+                           " in boundary components "\
+                           " of contracted graph `%s`"\
+                           % (x, cnt[x], self._contractions[edgeno])
                    
         return self._contractions[edgeno]
         
@@ -765,23 +796,7 @@ class Graph(object):
                         + [ vertextype(itranslate(renumber_g_edges, gv))
                             for gv in G.vertices ])
 
-##         # map each mated edge in `self` with the endpoint of the
-##         # corresponding external edge in `G`
-##         g_endpoint = dict( (l,G.endpoints[-n-1][0])
-##                            for (n,l) in enumerate(self.vertices[v]))
-        
-##         # `G.endpoints` lists external edges last
-##         new_endpoints = self.endpoints[:self.num_edges] \
-##                         + G.endpoints[:G.num_edges]
-##         for edge in self.vertices[v]:
-##             v1, v2 = self.endpoints[edge]
-##             if v == v1:
-##                 new_endpoints[edge] = (v2, g_endpoint[edge]+self.num_vertices-1)
-##             else: # v == v2
-##                 new_endpoints[edge] = (v1, g_endpoint[edge]+self.num_vertices-1)
-
         return Graph(new_vertices, vertex_factory=vertextype,
-                     #endpoints = new_endpoints,
                      num_edges = self.num_edges + G.num_edges,
                      num_external_edges = self.num_external_edges)
 
@@ -1149,19 +1164,20 @@ def MakeNumberedGraphs(graph):
     Examples::
 
       >>> g1 = Graph([Vertex([2,0,0]), Vertex([2,1,1])])
-      >>> MakeNumberedGraphs(g1)
-      [Graph([Vertex([2, 0, 0]), Vertex([2, 1, 1])],
-             numbering={CyclicTuple((2, 1, 2, 0)): 0,
-                        CyclicTuple((0,)): 2,
-                        CyclicTuple((1,)): 1}),
-       Graph([Vertex([2, 0, 0]), Vertex([2, 1, 1])],
-             numbering={CyclicTuple((2, 1, 2, 0)): 1,
-                        CyclicTuple((0,)): 0,
-                        CyclicTuple((1,)): 2}),
-       Graph([Vertex([2, 0, 0]), Vertex([2, 1, 1])],
-             numbering={CyclicTuple((2, 1, 2, 0)): 2,
-                        CyclicTuple((0,)): 0,
-                        CyclicTuple((1,)): 1})]
+      >>> set(MakeNumberedGraphs(g1)) == set([         \
+      Graph([Vertex([2, 0, 0]), Vertex([2, 1, 1])],    \
+            numbering={CyclicTuple((2, 1, 2, 0)): 0,   \
+                       CyclicTuple((0,)): 2,           \
+                       CyclicTuple((1,)): 1}),         \
+      Graph([Vertex([2, 0, 0]), Vertex([2, 1, 1])],    \
+            numbering={CyclicTuple((2, 1, 2, 0)): 1,   \
+                       CyclicTuple((0,)): 0,           \
+                       CyclicTuple((1,)): 2}),         \
+      Graph([Vertex([2, 0, 0]), Vertex([2, 1, 1])],    \
+             numbering={CyclicTuple((2, 1, 2, 0)): 2,  \
+                        CyclicTuple((0,)): 0,          \
+                        CyclicTuple((1,)): 1})        ])
+      True
        
     Note that, when only one numbering out of many possible ones is
     returned because of isomorphism, the returned numbering may not be
@@ -1169,24 +1185,26 @@ def MakeNumberedGraphs(graph):
     returned by `InplacePermutationIterator`)::
       
       >>> g2 = Graph([Vertex([2,1,0]), Vertex([2,0,1])])
-      >>> MakeNumberedGraphs(g2)
-      [Graph([Vertex([2, 1, 0]), Vertex([2, 0, 1])],
-              numbering={CyclicTuple((2, 0)): 1,
-                         CyclicTuple((0, 1)): 0,
-                         CyclicTuple((1, 2)): 2})]
+      >>> MakeNumberedGraphs(g2) ==                      \
+          [Graph([Vertex([2, 1, 0]), Vertex([2, 0, 1])], \
+                  numbering={CyclicTuple((2, 0)): 1,     \
+                             CyclicTuple((0, 1)): 0,     \
+                             CyclicTuple((1, 2)): 2})]
+      True
 
     When the graph has only one boundary component, there is only one
     possible numbering, which is actually returned::
     
       >>> g3 = Graph([Vertex([1,0,1,0])])
-      >>> MakeNumberedGraphs(g3)
-      [Graph([Vertex([1, 0, 1, 0])],
-              numbering={CyclicTuple((1, 0, 1, 0)): 0})]
+      >>> MakeNumberedGraphs(g3)                               \
+          == [Graph([Vertex([1, 0, 1, 0])],                    \
+                    numbering={CyclicTuple((1, 0, 1, 0)): 0})]
+      True
       
     """
     graphs = []
-    bc = list(bcy for bcy in graph.boundary_components())
-    n = graph.num_boundary_components()
+    bc = graph.boundary_components()
+    n = len(bc) # == graph.num_boundary_components()
 
     for numbering in InplacePermutationIterator(range(n)):
         # make a copy of `graph` with the given numbering
@@ -1211,40 +1229,43 @@ class ConnectedGraphsIterator(BufferingIterator):
     
     Examples::
 
-      >>> for g in ConnectedGraphsIterator([4]): print g
-      Graph([Vertex([1, 0, 1, 0])], numbering={CyclicTuple((1, 0, 1, 0)): 0})
-      Graph([Vertex([1, 1, 0, 0])],
-            numbering={CyclicTuple((0,)): 0,
-                       CyclicTuple((1, 0)): 2,
-                       CyclicTuple((1,)): 1})
-      Graph([Vertex([1, 1, 0, 0])],
-            numbering={CyclicTuple((0,)): 1,
-                       CyclicTuple((1, 0)): 0,
-                       CyclicTuple((1,)): 2})
-      Graph([Vertex([1, 1, 0, 0])],
-            numbering={CyclicTuple((0,)): 2,
-                       CyclicTuple((1, 0)): 1,
-                       CyclicTuple((1,)): 0})
+      >>> set(ConnectedGraphsIterator([4])) == set([          \
+          Graph([Vertex([1, 0, 1, 0])],                       \
+                 numbering={CyclicTuple((1, 0, 1, 0)): 0}),   \
+          Graph([Vertex([1, 1, 0, 0])],                       \
+                numbering={CyclicTuple((0,)): 0,              \
+                           CyclicTuple((1, 0)): 2,            \
+                           CyclicTuple((1,)): 1}),            \
+          Graph([Vertex([1, 1, 0, 0])],                       \
+                numbering={CyclicTuple((0,)): 1,              \
+                           CyclicTuple((1, 0)): 0,            \
+                           CyclicTuple((1,)): 2}),            \
+          Graph([Vertex([1, 1, 0, 0])],                       \
+                numbering={CyclicTuple((0,)): 2,              \
+                           CyclicTuple((1, 0)): 1,            \
+                           CyclicTuple((1,)): 0})            ])
+      True
 
-      >>> for g in ConnectedGraphsIterator([3,3]): print g
-      Graph([Vertex([2, 0, 1]), Vertex([2, 0, 1])],
-            numbering={CyclicTuple((2, 0, 1, 2, 0, 1)): 0})
-      Graph([Vertex([2, 1, 0]), Vertex([2, 0, 1])],
-            numbering={CyclicTuple((2, 0)): 1,
-                       CyclicTuple((0, 1)): 0,
-                       CyclicTuple((1, 2)): 2})
-      Graph([Vertex([2, 1, 1]), Vertex([2, 0, 0])],
-            numbering={CyclicTuple((2, 0, 2, 1)): 0,
-                       CyclicTuple((0,)): 2,
-                       CyclicTuple((1,)): 1})
-      Graph([Vertex([2, 1, 1]), Vertex([2, 0, 0])],
-            numbering={CyclicTuple((2, 0, 2, 1)): 1,
-                       CyclicTuple((0,)): 0,
-                       CyclicTuple((1,)): 2})
-      Graph([Vertex([2, 1, 1]), Vertex([2, 0, 0])],
-            numbering={CyclicTuple((2, 0, 2, 1)): 2,
-                       CyclicTuple((0,)): 0,
-                       CyclicTuple((1,)): 1})
+      >>> set(ConnectedGraphsIterator([3,3])) == set([           \
+          Graph([Vertex([2, 0, 1]), Vertex([2, 0, 1])],          \
+                numbering={CyclicTuple((2, 0, 1, 2, 0, 1)): 0}), \
+          Graph([Vertex([2, 1, 0]), Vertex([2, 0, 1])],          \
+                numbering={CyclicTuple((2, 0)): 1,               \
+                           CyclicTuple((0, 1)): 0,               \
+                           CyclicTuple((1, 2)): 2}),             \
+          Graph([Vertex([2, 1, 1]), Vertex([2, 0, 0])],          \
+                numbering={CyclicTuple((2, 0, 2, 1)): 0,         \
+                           CyclicTuple((0,)): 2,                 \
+                           CyclicTuple((1,)): 1}),               \
+          Graph([Vertex([2, 1, 1]), Vertex([2, 0, 0])],          \
+                numbering={CyclicTuple((2, 0, 2, 1)): 1,         \
+                           CyclicTuple((0,)): 0,                 \
+                           CyclicTuple((1,)): 2}),               \
+          Graph([Vertex([2, 1, 1]), Vertex([2, 0, 0])],          \
+                numbering={CyclicTuple((2, 0, 2, 1)): 2,         \
+                           CyclicTuple((0,)): 0,                 \
+                           CyclicTuple((1,)): 1})               ])
+      True
 
     Generation of all graphs with prescribed vertex valences `(v_1,
     v_2, ..., v_n)` goes this way:
@@ -1534,41 +1555,43 @@ class MgnGraphsIterator(BufferingIterator):
     
     Examples::
 
-      >>> for g in MgnGraphsIterator(0,3): print g
-      Graph([Vertex([1, 2, 1]), Vertex([2, 0, 0])],
-            numbering={CyclicTuple((2, 0, 2, 1)): 0, 
-                       CyclicTuple((0,)):         2, 
-                       CyclicTuple((1,)):         1})
-      Graph([Vertex([1, 2, 1]), Vertex([2, 0, 0])],
-            numbering={CyclicTuple((2, 0, 2, 1)): 1,
-                       CyclicTuple((0,)):         0,
-                       CyclicTuple((1,)):         2})
-      Graph([Vertex([1, 2, 1]), Vertex([2, 0, 0])],
-            numbering={CyclicTuple((2, 0, 2, 1)): 2,
-                       CyclicTuple((0,)):         0,
-                       CyclicTuple((1,)):         1})
-      Graph([Vertex([1, 0, 2]), Vertex([2, 0, 1])],
-            numbering={CyclicTuple((1, 2)): 1,
-                       CyclicTuple((0, 1)): 2,
-                       CyclicTuple((2, 0)): 0})
-      Graph([Vertex([1, 1, 0, 0])], 
-            numbering={CyclicTuple((0,)):   0,
-                       CyclicTuple((0, 1)): 2,
-                       CyclicTuple((1,)):   1})
-      Graph([Vertex([1, 1, 0, 0])], 
-            numbering={CyclicTuple((0,)):   1,
-                       CyclicTuple((0, 1)): 0,
-                       CyclicTuple((1,)):   2})
-      Graph([Vertex([1, 1, 0, 0])], 
-            numbering={CyclicTuple((0,)):   2,
-                       CyclicTuple((0, 1)): 1,
-                       CyclicTuple((1,)):   0})
+      >>> set(MgnGraphsIterator(0,3))              == set([\
+          Graph([Vertex([1, 2, 1]), Vertex([2, 0, 0])],    \
+                numbering={CyclicTuple((2, 0, 2, 1)): 0,   \
+                           CyclicTuple((0,)):         2,   \
+                           CyclicTuple((1,)):         1}), \
+          Graph([Vertex([1, 2, 1]), Vertex([2, 0, 0])],    \
+                numbering={CyclicTuple((2, 0, 2, 1)): 1,   \
+                           CyclicTuple((0,)):         0,   \
+                           CyclicTuple((1,)):         2}), \
+          Graph([Vertex([1, 2, 1]), Vertex([2, 0, 0])],    \
+                numbering={CyclicTuple((2, 0, 2, 1)): 2,   \
+                           CyclicTuple((0,)):         0,   \
+                           CyclicTuple((1,)):         1}), \
+          Graph([Vertex([1, 0, 2]), Vertex([2, 0, 1])],    \
+                numbering={CyclicTuple((1, 2)): 1,         \
+                           CyclicTuple((0, 1)): 2,         \
+                           CyclicTuple((2, 0)): 0}),       \
+          Graph([Vertex([1, 1, 0, 0])],                    \
+                numbering={CyclicTuple((0,)):   0,         \
+                           CyclicTuple((0, 1)): 2,         \
+                           CyclicTuple((1,)):   1}),       \
+          Graph([Vertex([1, 1, 0, 0])],                    \
+                numbering={CyclicTuple((0,)):   1,         \
+                           CyclicTuple((0, 1)): 0,         \
+                           CyclicTuple((1,)):   2}),       \
+          Graph([Vertex([1, 1, 0, 0])],                    \
+                numbering={CyclicTuple((0,)):   2,         \
+                           CyclicTuple((0, 1)): 1,         \
+                           CyclicTuple((1,)):   0})       ])
+      True
 
-      >>> for g in MgnGraphsIterator(1,1): print g
-      Graph([Vertex([1, 0, 2]), Vertex([2, 1, 0])],
-            numbering={CyclicTuple((1, 0, 2, 1, 0, 2)): 0})
-      Graph([Vertex([1, 0, 1, 0])],
-            numbering={CyclicTuple((0, 1, 0, 1)): 0})
+      >>> set(MgnGraphsIterator(1,1))                   == set([ \
+          Graph([Vertex([1, 0, 2]), Vertex([2, 1, 0])],          \
+                numbering={CyclicTuple((1, 0, 2, 1, 0, 2)): 0}), \
+          Graph([Vertex([1, 0, 1, 0])],                          \
+                numbering={CyclicTuple((0, 1, 0, 1)): 0})       ])
+      True
 
     """
 
