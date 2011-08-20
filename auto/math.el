@@ -1,6 +1,8 @@
 (TeX-add-style-hook "math"
  (lambda ()
     (LaTeX-add-bibitems
+     "hamilton-lazarev;math.QA/0608395"
+     "brown"
      "jenkins;annals"
      "QFS"
      "arbarello-cornalba"

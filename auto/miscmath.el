@@ -1,7 +1,6 @@
 (TeX-add-style-hook "miscmath"
  (lambda ()
     (TeX-add-symbols
-     '("Hermitian" ["argument"] 0)
      '("EndOp" ["argument"] 0)
      '("catVect" ["argument"] 0)
      '("avg" ["argument"] 1)
@@ -59,11 +58,7 @@
      "oo"
      "catSet"
      "catMod"
-     "catBraid"
-     "M"
-     "Mbar"
-     "Mcomb"
-     "Mbarcomb")
+     "catBraid")
     (TeX-run-style-hooks
      "eucal"
      "mathrsfs"

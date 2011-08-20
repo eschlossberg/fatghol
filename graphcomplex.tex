@@ -28,13 +28,20 @@ theorem of Jenkins and Strebel
 complex is the same complex that one gets by applying Kontsevich'
 construction in the associative case; however, the proof given here is
 specific to $\M_{g,n}$ and does not trivially extend to other cases.
+The route to it is a bit convoluted, as the direct approach to
+constructing a ribbon graph complex by defining face operators through
+contraction of edges does not yield a simplicial complex: after a few
+contractions, loops appear, which cannot be contracted any more.  This
+mirrors the structure of Harer's $U \setminus U_0$, as will be shown in
+\csref{sec:cell-structure}.
 
-A different construction of the graph complex, complete with full
-details, is given in \cite{conant-vogtmann;2003}, closely following
-Kontsevich' original work.  In contrast to the simpler method
-presented here, the techniques devised by Kontsevich are suitable to
-further generalization to any ``modular operad''
-\cite{getzler-kapranov}.
+In contrast to the simpler method presented here, the techniques
+devised by Kontsevich are suitable to further generalization to any
+``modular operad'' \cite{getzler-kapranov}.  A construction of the
+graph complex, complete with full details, is given in
+\cite{conant-vogtmann;2003}, closely following Kontsevich' original
+work, or in \cite{hamilton-lazarev;math.QA/0608395}, where a new proof
+is given.
 
 
 
@@ -113,13 +120,13 @@ $\M_{g,n}$ (see \cite[VII.7.7]{brown}):
   H^{\Gamma_{g,n}}_*(\T_{g,n}, \setQ) \cong H_*(\M_{g,n}, \setQ).
 \end{equation}
 
-\subsubsection{Alternate descriptions of $M_{g,n}$}
+\subsubsection{Alternate descriptions of $\M_{g,n}$}
 \label{sec:alternate-Mgn}
 One may instead consider equivalence classes of $n$-punctured surfaces
-$S$ (i.e., with $n$ points \emph{removed}) by bianalytic mappings, and
-repeat the same construction of the Teichm\"uller and the moduli space.
-By the Riemann extension theorem, the two approaches turn out to be
-the same.
+$S$ (i.e., with $n$ points \emph{removed}) by bianalytic mappings that
+do \emph{not} permute the punctures, and repeat the same construction
+of the Teichm\"uller and the moduli space.  By the Riemann extension
+theorem, the two approaches turn out to be the same.
 
 Conversely, one may want to keep the complex structure on the surface
 fixed, while actually moving the punctures; still, this \emph{is} a
@@ -171,21 +178,22 @@ number of punctures be $n$.
 \label{sec:ribbon-graphs}
 
 Ribbon graphs take their name from being usually depicted as graphs
-with thin bands as edges, instead of 1-dimensional lines.  For this
-same reason, they have also been called ``fatgraphs''.
+with thin bands as edges, instead of 1-dimensional lines; they have
+also been called ``fatgraphs'' in the literature.
 
 \begin{definition}
   \label{dfn:ribbon-graphs}
   A ribbon graph is a finite CW-complex of pure dimension 1, together
   with an assignment, for each vertex $\gamma$, of a cyclic ordering of the
-  edges incident at $\gamma$.  Unless otherwise specified, we assume that
-  all vertices of a ribbon graph have valence at least 3.
+  edges incident at $\gamma$.
 
   A morphism of ribbon graphs is a cellular map $f:G\to G'$ such that,
   for each vertex $\gamma$ of $G'$, the preimage $f^{-1}(W)$ of a small
   neighbourhood $W$ of $\gamma$ is a small neighbourhood of a tree in $G$
   (i.e., it is a graph with no nontrivial homological cycles).
 \end{definition}
+Unless otherwise specified, we assume that all vertices of a ribbon
+graph have valence at least 3.
 
 If $G$ is a ribbon graph, denote $\Vertices{G}$, $\Edges{G}$ and
 $\Legs{G}$ the sets of vertices, (unoriented) edges and oriented edges
@@ -194,12 +202,14 @@ $\Legs{G}$ the sets of vertices, (unoriented) edges and oriented edges
 \subsubsection{Morphisms arising from contraction of an edge}
 \label{sec:contractions}
 Let $G$ be a ribbon graph, and $G'$ be the CW-complex obtained by
-contracting an edge $\alpha \in \Edges{G}$ to a point.  $G'$ inherits a
-ribbon graph structure from $G$: if $(\alpha < \alpha_1 < \ldots < \alpha_k < \alpha)$ and $(\alpha
-< \alpha'_1 < ... < \alpha'_h < \alpha)$ are the cyclic orders at endpoints of $\alpha$,
-then the vertex formed by collapsing $\alpha$ is endowed with the cyclic
-order $(\alpha_1 < \ldots < \alpha_k < \alpha'_1 < \ldots < \alpha'_h)$.  The contraction morphisms
-play a major role in manipulation of ribbon graphs.
+contracting an edge $\alpha \in \Edges{G}$ to a point.  If $\alpha$ connects twop
+\emph{distinct} vertices, that is, $\alpha$ is not a loop, then $G'$
+inherits a ribbon graph structure from $G$: if $(\alpha < \alpha_1 < \ldots < \alpha_k <
+\alpha)$ and $(\alpha < \alpha'_1 < ... < \alpha'_h < \alpha)$ are the cyclic orders at
+endpoints of $\alpha$, then the vertex formed by collapsing $\alpha$ is endowed
+with the cyclic order $(\alpha_1 < \ldots < \alpha_k < \alpha'_1 < \ldots < \alpha'_h)$.  The
+contraction morphisms play a major role in manipulation of ribbon
+graphs.
 
 The following lemma is an immediate consequence of the definition.
 \begin{lemma}\label{lemma:contraction1}
@@ -208,12 +218,12 @@ The following lemma is an immediate consequence of the definition.
 \end{lemma}
 
 
-\subsection{A combinatorial description of ribbon graphs}
-\label{sec:rg-comb}
+\subsection{From ribbon graphs to Riemann surfaces, I}
+\label{sec:rg-to-surfaces}
 
-There is an equivalent characterization of a ribbon graph, capturing
-the combinatorial and computable aspect.  It will be used
-interchangeably with the topological one in the sequel.
+There is a functorial construction to build a topological surface
+$S(G)$ from a ribbon graph $G$; this is usually referred to as
+``thickening'' or ``fattening'' in the literature.
 
 \begin{lemma}
   A ribbon graph is uniquely determined by the following data: a
@@ -248,23 +258,46 @@ graph, it is sufficient to specify only two out of three maps.
 
 In the combinatorial description, $\Vertices{G}$ is the set $L_0$ of
 orbits of $\sigma_0$, $\Edges{G}$ is the set $L_1$ of orbits of $\sigma_1$, and
-$\Legs{G}$ is plainly the set $L$.  Denote $\Holes{G}$ the set $L_2$
-of orbits of $\sigma_2$; its geometrical significance will be cleared in
-the next section.
+$\Legs{G}$ is plainly the set $L$.  
 
+\begin{lemma}
+  \label{lemma:S-functor}
+  \begin{inparaenum}
+  \item There is a functor $S$ that associates to every ribbon graph
+    $G$ a punctured Riemann surface $S(G)$, and to every morphism $f:
+    G \to G'$ a continuous map $S(f): S(G) \to S(G')$.
+  \item The surface $S(G)$ is naturally endowed with a triangulation
+    indexed by (oriented) edges of $G$.
+  \end{inparaenum}
+\end{lemma}
+\begin{proof}
+  Let $G = (L; \sigma_0, \sigma_1, \sigma_2)$ be a ribbon graph.  Associate a 0-cell
+  with every $\sigma_0$-orbit in $L$, and a 1-cell with every $\sigma_1$-orbit;
+  attach a 1-cell $\alpha = \{\alpha^+, \alpha^-\}$ to the (possibly not distinct) 0-cells
+  corresponding to the $\sigma_0$-orbits of $\alpha^+$ and $\alpha^-$.  Now glue a
+  punctured 2-cell $B_\beta^\times$ along any $\sigma_2$-orbit $\beta$: if $\{l, \sigma_2(l), \ldots,
+  \sigma_2^k(l)\}$ is a $\sigma_2$-orbit (in the order it is swept by $\sigma_2$) and
+  $\sigma_2^{k+1}(l) = l$, then attach a punctured 2-disk so that its
+  oriented border is the 1-cycle formed by the graph edges
+  corresponding to $\sigma_2^i(l)$.
 
-\subsection{From ribbon graphs to Riemann surfaces}
-\label{sec:rg-to-surfaces}
+  To describe the triangulation of $S(G)$, assume at first that $G$
+  has no loops.  In the course of the construction of $S(G)$, a
+  punctured disk $B_\beta^\times$ has been glued to each $\sigma_2$-orbit $\beta$; for
+  each oriented edge $\alpha^\pm \in \beta$, let $T_\alpha^{(\beta)}$ be the curvilinear
+  triangle delimited by $\alpha^\pm$ and the radii joining endpoints of $\alpha^\pm$
+  with the center of $B_\beta$.  The collection $\{ T_{\alpha} \}$ is a
+  triangulation of $S(G)$.  When $G$ has a loop $\alpha$, there is a
+  $\sigma_2$-orbit $\beta$ such that $\beta$ is made of $\alpha$ alone, thus $B_\beta$ is
+  bounded by $\alpha$ only.  Split $\alpha$ at the midpoint to form two edges
+  $\alpha'$, $\alpha''$: then $B_\beta$ breaks up in the triangles $T_{\alpha'}$ and
+  $T_{\alpha''}$ and we can proceed as before.
 
-Let $G = (L; \sigma_0, \sigma_1, \sigma_2)$ be a ribbon graph.  When passing to the
-topological description, we associate a 0-cell with every $\sigma_0$-orbit
-in $L$, and a 1-cell with every $\sigma_1$-orbit.  Extend this procedure
-and glue a punctured 2-cell along any $\sigma_2$-orbit: if $\{l, \sigma_2(l), \ldots,
-\sigma_2^k(l)\}$ is a $\sigma_2$-orbit (in the order it is swept by $\sigma_2$) and
-$\sigma_2^{k+1}(l) = l$, then attach a punctured 2-disk so that its oriented
-border is the 1-cycle formed by the graph edges corresponding to
-$\sigma_2^i(l)$.
-
+  Finally, for every morphism $f: G \to G'$ build a continuous map
+  $S(f): S(G) \to S(G')$ by mapping $T_\alpha$ homeomorphically onto $T_{\alpha'}$
+  if $f$ maps $\alpha$ onto $\alpha'$, or contracting $T_\alpha^{(\beta)}$ to a radius of
+  $B_\beta$ if $f$ contracts $\alpha$ to a point.
+\end{proof}
 Thus we have constructed a punctured Riemann surface $S(G)$, such that
 $G$ is a deformation retract of $S(G)$.  Denote $\Holes{G}$ the set
 $L_2$ of orbits of $\sigma_2$; in the topological descpription, its
@@ -275,6 +308,10 @@ description, it will be convenient to identify a boundary component
 $\beta$ with the set of edges it is made of, and a vertex $\gamma$ with the set
 of edges incident to it.
 
+
+\subsection{Numbered ribbon graphs}
+\label{sec:numbered-rg}
+
 \begin{definition}
   A ribbon graph $G$ is \emph{numbered} when it is endowed with a
   bijection $\{1,\ldots, n\} \to \Holes{G}$.
@@ -282,8 +319,8 @@ of edges incident to it.
   It is understood that morphisms of numbered ribbon graphs respect the
   numbering of boundary components.
 \end{definition}
-From this point onwards, \emph{all ribbon graphs are assumed to be equipped
-with a numbering}.
+From this point onwards, \emph{all ribbon graphs are equipped with a
+  numbering}.
 
 Denote $\RG$ the category of numbered ribbon graphs and their morphisms.
 
@@ -302,6 +339,20 @@ us to give the following.
   so we can define, for any ribbon graph $G$, the \emph{genus} $g$, as
   given by the above relation.
 \end{definition}
+It is trivial to check the following.
+\begin{lemma}\label{lemma:contraction2}
+  If $G'$ is obtained from $G$ by an contraction of a non-loop edge,
+  then $G$ and $G'$ share the same genus and puncture number.
+\end{lemma}
+By lemmas~\ref{lemma:contraction1} and~\ref{lemma:contraction2}, $\RG$
+decomposes into the disjoint union of categories $\RG_{g,n}$ whose
+objects are ribbon graphs of genus $g$ with $n$ punctures:
+\begin{equation*}
+  \RG = \coprod_{g,n} \RG_{g,n}
+\end{equation*}
+No morphism connects an object of $\RG_{g,n}$ with an object of
+$\RG_{g',n'}$.
+
 Call a ribbon graph with one vertex only a \emph{clover}; the number $l$
 of edges of a clover of genus $g$ is readily computed by \eqref{eq:2}:
 \begin{equation}
@@ -323,28 +374,16 @@ we reckon:
   v = 4g + 4n - 4
 \end{equation}
 
-\begin{lemma}\label{lemma:contraction2}
-  If $G'$ is obtained from $G$ by an contraction of a non-loop edge,
-  then $G$ and $G'$ share the same genus and puncture number.
-\end{lemma}
-
-By lemmas~\ref{lemma:contraction1} and~\ref{lemma:contraction2}, $\RG$
-decomposes into the disjoint union of categories $\RG_{g,n}$ whose
-objects are ribbon graphs of genus $g$ with $n$ punctures:
-\begin{equation*}
-  \RG = \coprod_{g,n} \RG_{g,n}
-\end{equation*}
-No morphism connects an object of $\RG_{g,n}$ with an object of
-$\RG_{g',n'}$.
-
 
 \subsection{Embedded ribbon graphs}
 \label{sec:embedded-rg}
 
-Fix a reference Riemann surface $S$.
+Fix a reference Riemann surface $S = S_{g,n}$ of genus $g$ with $n$
+punctures.
 
 An embedding of a ribbon graph $G$ is a injective continuous map $\iota:G\to
-S$, that is, a homeomorphism of $G$ onto $\iota(G) \subseteq S$.
+S$, that is, a homeomorphism of $G$ onto $\iota(G) \subseteq S$, such that the
+orientation on $S$ induces the cyclic order at the vertices of $\iota(G)$.
 
 When confusion is likely to arise, we shall speak of \emph{abstract}
 ribbon graphs, to mean the topological and combinatorial objects
@@ -352,11 +391,16 @@ defined in \csref{dfn:ribbon-graphs}, as opposed to \emph{embedded}
 ribbon graphs as in \csref{dfn:embedded-rg} below.
 
 \begin{definition}\label{dfn:embedded-rg}
-  An embedded ribbon graph is an equivalence class $[G, \iota,
-  \{\psi_i\}_{i=1}^n]$, modulo the action of $\Diff_0(S)$, of triples
-  composed of a ribbon graph $G$, an embedding $\iota:G\to S$, and
-  homeomorphisms $\psi_i$ of each connected component $C_i$ of $S \setminus \iota(G)$
-  with a punctured disk $D_i^\times$ such that $\psi_i\mid_{\partial C_i} = \iota^{-1}$.
+  An embedded ribbon graph is an equivalence class, modulo the action
+  of $\Diff_0(S)$, of triples $[G, \iota, \{\psi_i\}_{i=1}^n]$ composed of a
+  ribbon graph $G$, an embedding $\iota:G\to S$, and, for each connected
+  component $C_i$ of $S \setminus \iota(G)$, a map $\psi_i: {\bar C_i} \to {\bar B}^\times$
+  such that
+  \begin{inparaenum}
+  \item $\psi_i$ is a homeomorphism of the interior of $C_i$ with the
+    punctured open unit disk $B^\times$;
+  \item $\psi_i$ restricts to $\iota^{-1}$ on the border $\partial C_i$.
+  \end{inparaenum}
 
   A morphism $[f]$ from $[G, \iota, \psi_*]$ to $[G', \iota', \psi'_*]$ is given by
   the following data:\FIXME{Alla lettera, questa definizione \`e
@@ -371,21 +415,21 @@ ribbon graphs as in \csref{dfn:embedded-rg} below.
       e $\psi_i \circ \eta(1,y) = \psi'_i(y)$\ ?
       }%
   \end{itemize}
-
-  Embedded ribbon graphs with their morphisms form a category $\ERG$.
 \end{definition}
 In other words, an embedded ribbon graph is a ribbon graph $G$ endowed
 with a homeomorphism ${\tilde \iota}$ between $S(G)$ and the ambient
 surface $S$ (modulo the action of $\Diff^0(S)$).\FIXME{%
   Meglio usare questa come definizione, e usare la definizione
-  \ref{dfn:embedded-rg} come caratterizzazione?  Questa richiede di
-  fissare $S$ come superficie topologica una volta per tutte, quindi
-  conduce a una costruzione dello spazio dei moduli come triple
-  $(C,f,S)$ similmente a quanto fa Harer?}%
-Since a morphism $f:G\to G'$ of abstract ribbon graphs extends trivially
-to a morphism ${\tilde f}:S(G)\to S(G')$, then a morphism of embedded
+  \ref{dfn:embedded-rg} come caratterizzazione?}%
+Since a morphism $f:G\to G'$ of abstract ribbon graphs induces
+to a morphism $S(f):S(G)\to S(G')$, then a morphism of embedded
 ribbon graphs is determined by a homotopy connecting ${\tilde \iota}$ and
 ${\tilde \iota' \circ f}$.
+
+Embedded ribbon graphs with their morphisms form a category $\ERG$.
+There is an obvious forgetful functor from the category of embedded
+ribbon graphs to the category of abstract ribbon graphs, sending $[G,
+\iota] \mapsto G$ and $[f] \mapsto f$.
 
 \begin{lemma}
   \label{lemma:erg-no-aut}
@@ -403,71 +447,29 @@ ${\tilde \iota' \circ f}$.
   \psi_*] = [G, \iota', \psi'_*]$ and $[f]$ is the identity morphism.
 \end{proof}
 
-The mapping class group $\Gamma_{g,n}$ acts functorially on $\ERG[g,n]$ by
+The mapping class group $\Gamma_{g,n}$ acts functorially on $\ERG_{g,n}$ by
 changing the embedding: $\phi \in \Gamma_{g,n}$ sends $[G, \iota, \psi_*]$ into $[G, \iota
 \circ \phi, \phi \circ \psi_*]$.
 
-There is an obvious forgetful functor from the category of embedded
-ribbon graphs to the category of abstract ribbon graphs, sending $[G,
-\iota] \mapsto G$ and $[f] \mapsto f$.
 
-
-
-\section{Combinatorial analogues of the moduli space of smooth curves}
-\label{sec:mgn-comb}
-
-We shall now construct (orbi)cell-complex analogues of the Teichm\"uller
-space and the moduli space of smooth curves, whose cells are indexed
-by ribbon graphs.  They will come equipped with a homotopy
-equivalence to $\T_{g,n}$ and $\M_{g,n}$.
-
-References to this construction are scattered in the literature, and
-there are many variants and quirks; see
-\cite{harer;cohomology-of-moduli},
-\cite{harer;cohomological-dimension},
-\cite{kontsevich;intersection-theory;1992},
-\cite{looijenga;cellular-decomposition},
-\cite{penner:math.GT/0210326}.
-
-
-\subsection{From graphs to surfaces: a complex structure on $S(G)$}
+\subsection{From graphs to surfaces, II: a complex analytic atlas on $S(G)$}
 \label{sec:atlas}
 
-If $S$ is an $n$-punctured Riemann surface, then $S$ retracts onto a
-graph, however, this graph is not uniquely determined (see
-\csref{fig:sphere-retracts}).
-\begin{figure}[bt]
-  %% Figura sphere3.fig
-  \centering\includegraphics[width=\textwidth]{sfera3}
-  \caption{A thrice-punctured sphere and two deformation retracts, not
-    isomorphic as graphs.}
-  \label{fig:sphere-retracts}
-\end{figure}
-We can refine this correspondence by introducing more structure on the
-graph.
-\begin{definition}
-  \label{dfn:metric-ribbon-graphs}
-  A metrized ribbon graph $(G, \ell)$ is a ribbon graph $G$ equipped with
-  a real positive number $\ell_\alpha$ for each edge $\alpha \in \Edges{G}$.
-\end{definition}
-
-We can give the topological Riemann surface $S(G)$ a complex
-structure by means of a triangulation and an analytic atlas.
-
-In the course of the construction of $S(G)$, two punctured disk have
-been glued on the sides of an edge $\alpha \in \Edges{G}$: call them $\alpha^+$
-and $\alpha^-$; they are not necessarily distinct.  Let $T_\alpha^+$ and $T_\alpha^-$
-be the triangles delimited by $\alpha$ and the radii joining endpoints of
-$\alpha$ with the puncture of $\alpha^\pm$. The collection $\{T_\alpha^\pm : \alpha \in
-\Edges{G}\}$ is a triangulation of $S(G)$.
+We can give the topological Riemann surface $S(G)$ a complex analytic
+structure by means of the triangulation in \ref{lemma:S-functor}(b)
+and an analytic atlas.
 
 Define an atlas of $S(G)$:
 \begin{itemize}
-\item for any edge $\alpha \in \Edges{G}$, put $V_\alpha := (T_\alpha^+ \cup T_\alpha^-)^\circ$;
+\item for any edge $\alpha \in \Edges{G}$, let $V_\alpha := (T_\alpha^+ \cup T_\alpha^-)^\circ$ be
+  the interior of the union of the two triangles having $\alpha$ as an
+  edge;
 \item for any boundary component $\beta \in \Holes{G}$, put $V_\beta := \bigl(
-  \bigcup_{\alpha} T_\alpha \bigr)^\circ$ for all $\alpha$ bounding $\beta$;
+  \bigcup_{\alpha} T_\alpha^{(\beta)} \bigr)^\circ$, the interior part of the union of triangles
+  bounded by all edges $\alpha$ bounding $\beta$;
 \item for any vertex $\gamma \in \Vertices{G}$, put $V_\gamma := \bigl( \bigcup_\alpha T_a^\pm
-  \bigr)^\circ$ for all $\alpha$ incident to $\gamma$.
+  \bigr)^\circ$, the interior part of the union of triangles bounded by
+  edges $\alpha$ incident to $\gamma$.
 \end{itemize}
 \begin{figure}[btp]
   %% Figura atlas.fig
@@ -481,7 +483,17 @@ Define an atlas of $S(G)$:
   \label{fig:atlas}
 \end{figure}
 
-Define charts on the open sets $V_*$ (see Figure~\ref{fig:charts}):
+\begin{definition}
+  \label{dfn:metric-ribbon-graphs}
+  A metric $\ell$ on a ribbon graph $G$ is an assignment of a real
+  positive number $\ell_\alpha$ for each edge $\alpha \in \Edges{G}$.
+
+  A metrized ribbon graph $(G, \ell)$ is a ribbon graph $G$ equipped with
+  a metric $\ell$.
+\end{definition}
+
+Given a metric $\ell$ on the graph $G$, define charts on the open sets
+$V_*$ (see Figure~\ref{fig:charts}):
 \begin{itemize}
 \item for any edge $\alpha$, pick a homeomorphism $f_\alpha: V_\alpha \to \{ z \in \setC
   : 0 < \Re z < \ell_\alpha \}$;
@@ -510,13 +522,12 @@ satisfy the following:
   $v$ is the valence of the vertex $\gamma$.
 \end{itemize}
 
-In the end, we have come upon a complex analytic structure on $S(G)$,
+In the end, we have built a complex analytic structure on $S(G)$,
 which depends on the perimeters $p_1, \ldots, p_n$ of boundary components
 $\beta_1, \ldots, \beta_n$. By varying these (real positive) parameters, one can
-vary the complex structure on $S(G)$; this will allow for a different
-construction of the moduli space $\M_{g,n}$.
+vary the complex structure on $S(G)$.
 
-The perimeters $p_1$, \ldots, $p_n$ depend on the matric data $\ell_\alpha$,
+The perimeters $p_1$, \ldots, $p_n$ depend on the metric data $\ell_\alpha$,
 therefore the complex analytic structure on $S(G)$ actually depends on
 the metrized graph $(G, \ell)$.  Let $S(G, \ell)$ denote the Riemann
 surface $S(G)$ endowed with this complex analytic structure.
@@ -524,35 +535,18 @@ surface $S(G)$ endowed with this complex analytic structure.
 \begin{remark}
   Note that the above procedure actually equips any metrized ribbon
   graph $(G, \ell)$ with a structure of embeddded ribbon graph: take the
-  obvious $\iota:G \to S(G, \ell)$ as immersion of the graph, and maps $f_\beta$ as
+  obvious $\iota:G \to S(G, \ell)$ as embedding of the graph, and maps $f_\beta$ as
   the homeorphisms between $S \setminus \iota(G)$ and punctured disks.
 \end{remark}
 
-
-\subsection{Morphisms of graphs and morphisms of surfaces}
-\label{sec:automorphisms}
 The following statement is an easy corollary of the construction of
-$S(G)$ from $G$.
+$S(G, \ell)$.
 \begin{lemma}
   \label{lemma:rg-morphism}
-  The correspondence $G \mapsto S(G)$ between a ribbon graph and its
-  associated Riemann surface is functorial: given a morphism $f: G \to
-  G'$, there exists a continuous mapping $S(f): S(G) \to S(G')$.
-
-  If $G$, $G'$ are metrized and $f$ is an isomorphism preserving edge
-  lengths, then $S(f)$ can be taken to be complex analytic.
+  If $G$, $G'$ are metrized ribbon graphs and $f$ is an isomorphism
+  preserving edge lengths, then $S(f)$ is a complex analytic mapping.
 \end{lemma}
 \begin{proof}
-  Break up $S(G)$ and $S(G')$ into triangles $T_\alpha$ and $T_{\alpha'}$
-  corresponding to the edges of $G$ and $G'$; construct a continuous
-  mapping by:
-  \begin{itemize}
-  \item mapping $T_\alpha$ homeomorphically to $T_{\alpha'}$ if $f$ maps $\alpha \in Edges{G}$
-    homeomorphically onto $\alpha'$,
-  \item collapsing $T_\alpha$ to a radius of $V_{\beta'}$ if $f$ collapses $\alpha$
-    to a point.
-  \end{itemize}
-
   When $f$ is an isomorphism that preserves the edge-lengths, it is
   clear that the homeomorphism $S(f)$ preserves the analytic atlas
   given in \csref{sec:atlas}, so $S(f)$ turns out to be a complex
@@ -560,143 +554,22 @@ $S(G)$ from $G$.
 \end{proof}
 
 
-\subsection{Construction of $\Tcomb_{g,n}$ and $\Mcomb_{g,n}$}
-\label{sec:mgn-comb-construction}
-
-Let $G$ be a metrized ribbon graph of genus $g$ with $n$ numbered
-boundary components.  A topological simplex $\Delta(G) \subseteq \M_{g,n}$ is spanned
-when varying the metric data $(\ell_\alpha)_{\alpha \in \Edges{G}}$; gluing these
-cells one recovers the whole $\M_{g,n}$.  A construction of
-$\Tcomb_{g,n}$ can be found in \cite{penner:math.GT/0210326}, although
-the procedure outlined here mimicks
-\cite{kontsevich;intersection-theory;1992}.
-
-Call a set $X \subseteq \Edges{G}$ negligible whenever it is \emph{not} the
-support of a non-trivial homological cycle.  For an abstract ribbon
-graph $G$, define a topological simplex $\Delta(G)$:
-\begin{equation*}
-  \label{eq:rg-cells-moduli}
-  \Delta(G) := \{ \ell: \Edges{G} \to \setR_{\geq0}, {\textstyle \sum}_{\alpha\in\Edges{G}} \ell_\alpha=1 
-  | \text{the zero set of $\ell$ is negligible} \}.
-\end{equation*}
-It is a contravariant functor from the category of abstract ribbon
-graphs to the category of topological spaces: if $G'$ is obtained from
-$G$ by contracting the edge $\alpha$, then
-\begin{equation}\label{eq:embedding-cells}
-  \Delta(G') = \{ \ell \in \Delta(G) | \ell_\alpha = 0 \}.
-\end{equation}
-By composing with the forgetful functor $[G, \iota, \psi_*] \mapsto G$ from
-embedded ribbon graphs to abstract ribbon graphs, we define a
-contravariant functor on the category of embedded ribbon graphs:
-\begin{equation*}
-  \label{eq:rg-cells-teichmueller}
-  T\Delta[G, \iota, \psi_*] := \Delta(G).
-\end{equation*}
-
-\begin{definition}
-  The combinatorial Teichm\"uller space is the direct limit of the
-  functor $T\Delta$:\FIXME{%
-    In realt\`a, Penner costruisce questo spazio non come limite
-    diretto, ma incollando esplicitamente le celle.  C'\`e qualcosa di
-    nascosto che non funziona col limite diretto?  Per esempio si fa a
-    meno del lemma~\ref{lemma:erg-no-aut}.  }%
-  \begin{equation*}
-    \Tcomb_{g,n} := \varinjlim T\Delta[G, \iota, \psi_*],
-  \end{equation*}
-  where $[G, \iota, \psi_*]$ ranges in the category $\ERG_{g,n}$ of embedded
-  ribbon graphs of genus $g$ with $n$ numbered boundary components.
-\end{definition}
-$\Tcomb_{g,n}$ is obtained by gluing topological simplices $\Delta(G)$ alongside
-the boundary: if $[G', \iota', \psi'_*]$ is obtained from $[G, \iota, \psi_*]$ by
-contraction of an edge $\alpha$, then $\Delta(G')$ is identified with the face
-of $\Delta(G)$ where $\ell_\alpha = 0$ by \csref{eq:embedding-cells}.
-
-Elements of the topological space $\Tcomb_{g,n}$ are (equivalence
-classes of) metrized embedded ribbon graphs $[G, \iota, \psi_*, \ell]$, where $\ell
-\in T\Delta[G, \iota, \psi_*]$; it is easy to check that any $[G, \iota, \psi_*, \ell] \in
-\Tcomb_{g,n}$ has a unique representative such that $\ell_\alpha > 0$ for all
-$\alpha \in \Edges{G}$.  Perimeter maps $p_\beta: \Tcomb_{g,n} \to \setR_{>0}$ are
-well-defined; write $p_j$ for the perimeter of the $j$-th hole.
-
-\begin{definition}
-  The combinatorial moduli space of curves is the direct limit of the
-  functor $\Delta$:
-  \begin{equation*}
-    \Mcomb_{g,n} := \varinjlim \Delta(G),
-  \end{equation*}
-  where $G$ ranges in the category $\RG_{g,n}$ of abstract ribbon
-  graphs of genus $g$ with $n$ numbered boundary components.
-\end{definition}
-
-The functorial action of $\Gamma_{g,n}$ on $\ERG_{g,n}$ induces an action
-on $\Tcomb_{g,n}$.
-\begin{lemma}
-  \label{lemma:penner-kontsevich-bridge}
-  $\Mcomb_{g,n}$ is the quotient space of $\Tcomb_{g,n}$ by the action
-  of the mapping class group $\Gamma_{g,n}$.%
-  \FIXME{%
-    Questo \`e l'unico lemma usato nel seguito di questo capitolo
-    (lemma~\ref{lemma:rg-iso1}), ed anche in maniera un po' obliqua:
-    pi\`u lo spirito che la lettera del teorema sono usati pi\`u avanti\ldots
-    Riformulare in qualche modo?  Scorciare questa sezione?  E come?}
-\end{lemma}
-\begin{proof}
-  If $G \in \RG_{g,n}$ is any abstract ribbon graph, then map $\Delta(G)$ into
-  $\Tcomb_{g,n} / \Gamma_{g,n}$ by the following: pick any representative
-  embedding ${\tilde G} = [G, \iota, \psi_*] \in \ERG_{g,n}$ of $G$ and compose
-  the isomorphism $\Delta(G) \cong T\Delta(\tilde G)$ with the quotient projection
-  $T\Delta(\tilde G) \to \Tcomb_{g,n}/\Gamma_{g,n}$.  The mapping is well-defined:
-  if $[G, \iota, \psi_*]$ and $[G, \iota', \psi'_*]$ are two distinct embeddedings
-  of $G$, then ${\tilde \iota}, {\tilde \iota'}: S(G) \to S$ are homemorphisms,
-  and, for any $\ell \in \Delta(G)$, ${\tilde \iota'} \circ {\tilde \iota}^{-1}$ is
-  differentiable with respect to the analytic structure $S(G, \ell)$.
-  Therefore, if $\phi := ({\tilde \iota}')^{-1} \circ {\tilde \iota}$, then $[G, \iota,
-  \psi_*] = \phi \cdot [G, \iota', \psi'_*]$.
-
-  By definition of direct limit, a map $\Phi$ is induced $\Mcomb_{g,n} \to
-  \Tcomb_{g,n} / \Gamma_{g,n}$.  It is surjective: every point in $\Tcomb /
-  \Gamma$ is a projection of a point $[G, \iota, \psi_*] \in \Tcomb$, therefore it
-  is in the image of $G \in \Mcomb$.  $\Phi$ is injective: if $G$ and $G'$
-  map to the same point in $\Tcomb / \Gamma$, then there is some $\phi \in \Gamma$
-  such that $[G, \iota, \psi_*] = \phi \cdot [G', \iota', \psi'_*] = [G', \phi \circ \iota, \psi'_* \circ
-  \phi]$; therefore, there is $\phi' \in \Diff^0$ such that $\phi' \circ \iota = \phi \circ \iota'$.
-  Thus $f = \iota' \circ \iota^{-1}: G' \to G$ is a isomorphism of ribbon
-  graphs.\FIXME{Hmmm... non mi convince molto.}
-\end{proof}
-
-As in the final part of the proof of
-\csref{lemma:penner-kontsevich-bridge}, we can see that the image
-$M(G) \subseteq \Mcomb$ of a simplex $\Delta(G)$ is the quotient of $\Delta(G)$ by $\Aut
-G$.  The orbi-simplices $M(G)$ are glued alongside the boundary,
-according to the same procedure as in $\Tcomb$: if $G'$ is a
-contraction of $G$, then $M(G')$ is a face of $M(G)$. Therefore,
-$\Mcomb_{g,n}$ is a orbifold.
-
-The cell $M(G)$ has real dimension $\card{\Edges{G}}$; therefore,
-simplices of maximal dimension are labeled by graphs with all vertices
-of valence $3$. The union of these cells is a dense subset of
-$\Mcomb_{g,n}$ with non-void interior.
-
-\subsubsection{Kontsevich' compactification of $\Mcomb_{g,n}$}
-\label{sec:mbarcomb}
-The construction of $\Mcomb_{g,n}$ can be done with slightly changed
-rules: if we define a set $X \subseteq \Edges{G}$ to be negligible iff it does
-not contain \emph{all} edges bounding a hole, then we can define a
-contrafunctor $\overline{M}(G)$ and a topological space:
-\begin{equation*}
-  \label{eq:kontsevich-4}
-  \Mbarcomb_{g,n} := \varinjlim \overline{M}(G).
-\end{equation*}
-$\Mbarcomb_{g,n}$ turns out to be a compactification of the orbifold
-$\Mcomb_{g,n}$. 
-
-
 \subsection{From surfaces to graphs: the Jenkins-Strebel Theorem}
 \label{sec:strebel}
-A theorem proved independently by J.~A. Jenkins \cite{jenkins;annals}
-and K.~Strebel \cite{strebel;quadratic-differentials;1983} provides
-the key tool for the inverse route: the construction of ribbon graphs
-from smooth complex curves.
+If $S$ is an $n$-punctured Riemann surface, then $S$ retracts onto a
+graph, however, this graph is not uniquely determined (see
+\csref{fig:sphere-retracts}).
+\begin{figure}[bt]
+  %% Figura sphere3.fig
+  \centering\includegraphics[width=\textwidth]{sfera3}
+  \caption{A thrice-punctured sphere and two deformation retracts, not
+    isomorphic as graphs.}
+  \label{fig:sphere-retracts}
+\end{figure}
+We can refine this correspondence: a theorem proved independently by
+J.~A. Jenkins \cite{jenkins;annals} and K.~Strebel
+\cite{strebel;quadratic-differentials;1983} provides the key tool: the
+construction of ribbon graphs from smooth complex curves.
 
 \begin{definition}
   A quadratic differential $q$ on a Riemann surface $S$ is a
@@ -751,16 +624,149 @@ valence $k+2$ where $q$ has a zero of order $k$, therefore, vertices
 of $G$ have valence $\geq3$. 
 
 Since the markings $x_1, \ldots, x_n$ are \emph{ordered}, $G$ has an
-additional structure of \emph{numbered} graph, that is, it is endowed
-with a bijection $\Holes{G} \to \{1, \ldots, n\}$.
+additional structure of \emph{numbered} graph.
 
 
-\subsection{Relation with $\M_{g,n}$ and $\T_{g,n}$}
-\label{sec:nocomb}
 
+\section{Combinatorial analogues of the moduli space of smooth curves}
+\label{sec:mgn-comb}
+
+We shall now construct (orbi)cell-complex analogues of the Teichm\"uller
+space and the moduli space of smooth curves, whose cells are indexed
+by ribbon graphs.  They will come equipped with a homotopy
+equivalence to $\T_{g,n}$ and $\M_{g,n}$.
+
+References to this construction are scattered in the literature, and
+there are many variants and quirks; see
+\cite{harer;cohomology-of-moduli
+  harer;cohomological-dimension,
+  kontsevich;intersection-theory;1992,
+  looijenga;cellular-decomposition,
+  penner:math.GT/0210326}.
+
+
+\subsection{Construction of $\Tcomb_{g,n}$ and $\Mcomb_{g,n}$}
+\label{sec:mgn-comb-construction}
+
+Let $G$ be a ribbon graph of genus $g$ with $n$ numbered boundary
+components.  A topological simplex is spanned when varying the metric
+data $(\ell_\alpha)_{\alpha \in \Edges{G}}$; gluing these cells one recovers the
+whole $\T_{g,n}$ (when using \emph{embedded} ribbon graphs) or
+$\M_{g,n}$ (when using \emph{abstract} ribbon graphs). $\M_{g,n}$.  
+A construction of $\Tcomb_{g,n}$ and $\Mcomb_{g,n}$can be found in
+\cite{penner:math.GT/0210326}, although the procedure outlined here
+extends the construction of $\Mcomb_{g,n}$ given in
+\cite{kontsevich;intersection-theory;1992}.
+
+Call a set $X \subseteq \Edges{G}$ negligible whenever it is \emph{not} the
+support of a non-trivial homological cycle.  For an abstract ribbon
+graph $G$, define a topological simplex $\Delta(G)$:
+\begin{equation*}
+  \label{eq:rg-cells-moduli}
+  \Delta(G) := \{ \ell: \Edges{G} \to \setR_{\geq0}, {\textstyle \sum}_{\alpha\in\Edges{G}} \ell_\alpha=1 
+  | \text{the zero set of $\ell$ is negligible} \}.
+\end{equation*}
+It is a contravariant functor from the category of abstract ribbon
+graphs to the category of topological spaces: if $G'$ is obtained from
+$G$ by contracting the edge $\alpha$, then
+\begin{equation}\label{eq:embedding-cells}
+  \Delta(G') = \{ \ell \in \Delta(G) | \ell_\alpha = 0 \}.
+\end{equation}
+By composing with the forgetful functor $[G, \iota, \psi_*] \mapsto G$ from
+embedded ribbon graphs to abstract ribbon graphs, we define a
+contravariant functor on the category of embedded ribbon graphs:
+\begin{equation*}
+  \label{eq:rg-cells-teichmueller}
+  T[G, \iota, \psi_*] := \Delta(G).
+\end{equation*}
+
+\begin{definition}
+  The combinatorial Teichm\"uller space is the direct limit of the
+  functor $T$:\FIXME{%
+    Penner costruisce questo spazio non come limite diretto, ma
+    incollando esplicitamente le celle.  C'\`e qualcosa di nascosto che
+    non funziona col limite diretto?  Mi sembra di no.}%
+  \begin{equation*}
+    \Tcomb_{g,n} := \varinjlim T[G, \iota, \psi_*],
+  \end{equation*}
+  where $[G, \iota, \psi_*]$ ranges in the category $\ERG_{g,n}$ of embedded
+  ribbon graphs of genus $g$ with $n$ numbered boundary components.
+\end{definition}
+$\Tcomb_{g,n}$ is obtained by gluing topological simplices $\Delta(G)$ alongside
+the boundary: if $[G', \iota', \psi'_*]$ is obtained from $[G, \iota, \psi_*]$ by
+contraction of an edge $\alpha$, then $\Delta(G')$ is identified with the face
+of $\Delta(G)$ where $\ell_\alpha = 0$ by \csref{eq:embedding-cells}.
+
+Elements of the topological space $\Tcomb_{g,n}$ are (equivalence
+classes of) metrized embedded ribbon graphs $[G, \iota, \psi_*, \ell]$, where $\ell
+\in T[G, \iota, \psi_*]$; it is easy to check that any $[G, \iota, \psi_*, \ell] \in
+\Tcomb_{g,n}$ has a unique representative such that $\ell_\alpha > 0$ for all
+$\alpha \in \Edges{G}$.  Perimeter maps $p_\beta: \Tcomb_{g,n} \to \setR_{>0}$ are
+well-defined; write $p_j$ for the perimeter of the $j$-th boundary
+component.
+
+\begin{definition}
+  The combinatorial moduli space of curves is the direct limit of the
+  functor $\Delta$:
+  \begin{equation*}
+    \Mcomb_{g,n} := \varinjlim \Delta(G),
+  \end{equation*}
+  where $G$ ranges in the category $\RG_{g,n}$ of abstract ribbon
+  graphs of genus $g$ with $n$ numbered boundary components.
+\end{definition}
+
+The functorial action of $\Gamma_{g,n}$ on $\ERG_{g,n}$ induces an action
+on $\Tcomb_{g,n}$, which permutes cells $T({\tilde G})$ by PL
+isomorphisms.
+\begin{lemma}
+  \label{lemma:penner-kontsevich-bridge}
+  $\Mcomb_{g,n}$ is the quotient space of $\Tcomb_{g,n}$ by the
+  cellular action of the mapping class group $\Gamma_{g,n}$.
+\end{lemma}
+\begin{proof}
+  If $G \in \RG_{g,n}$ is any abstract ribbon graph, then map $\Delta(G)$ into
+  $\Tcomb_{g,n} / \Gamma_{g,n}$ by the following: pick any representative
+  embedding ${\tilde G} = [G, \iota, \psi_*] \in \ERG_{g,n}$ of $G$ and compose
+  the isomorphism $\Delta(G) \cong T(\tilde G)$ with the quotient projection
+  $T(\tilde G) \to \Tcomb_{g,n}/\Gamma_{g,n}$.  The mapping is well-defined:
+  if $[G, \iota, \psi_*]$ and $[G, \iota', \psi'_*]$ are two distinct embeddedings
+  of $G$, then ${\tilde \iota}, {\tilde \iota'}: S(G) \to S$ are homemorphisms,
+  and, for any $\ell \in \Delta(G)$, ${\tilde \iota'} \circ {\tilde \iota}^{-1}$ is
+  differentiable with respect to the analytic structure $S(G, \ell)$.
+  Therefore, if $\phi := ({\tilde \iota}')^{-1} \circ {\tilde \iota}$, then $[G, \iota,
+  \psi_*] = \phi \cdot [G, \iota', \psi'_*]$.
+
+  By definition of direct limit, a map $\Phi$ is induced $\Mcomb_{g,n} \to
+  \Tcomb_{g,n} / \Gamma_{g,n}$.  It is surjective: every point in $\Tcomb /
+  \Gamma$ is a projection of a point $[G, \iota, \psi_*] \in \Tcomb$, therefore it
+  is in the image of $G \in \Mcomb$.  $\Phi$ is injective: if $G$ and $G'$
+  map to the same point in $\Tcomb / \Gamma$, then there is some $\phi \in \Gamma$
+  such that $[G, \iota, \psi_*] = \phi \cdot [G', \iota', \psi'_*] = [G', \phi \circ \iota, \psi'_* \circ
+  \phi]$; therefore, there is $\phi' \in \Diff^0$ such that $\phi' \circ \iota = \phi \circ \iota'$.
+  Thus $f = \iota' \circ \iota^{-1}: G' \to G$ is a isomorphism of ribbon
+  graphs.
+\end{proof}
+
+\subsubsection{Kontsevich' compactification of $\Mcomb_{g,n}$}
+\label{sec:mbarcomb}
+The construction of $\Mcomb_{g,n}$ can be done with slightly changed
+rules: if we define a set $X \subseteq \Edges{G}$ to be negligible iff it does
+not contain \emph{all} edges bounding a hole, then we can define a
+contrafunctor $\overline{M}(G)$ and a topological space:
+\begin{equation*}
+  \label{eq:kontsevich-4}
+  \Mbarcomb_{g,n} := \varinjlim \overline{M}(G).
+\end{equation*}
+$\Mbarcomb_{g,n}$ turns out to be a compactification of the orbifold
+$\Mcomb_{g,n}$, and a quotient of the Deligne-Mumford compactification
+$\Mbar_{g,n}$.
+
+\subsubsection{Homotopy equivalence with moduli spaces}
+\label{sec:homotopy-equiv}
 \begin{theorem}[Harer, Mumford, Thurston;
   \cite{harer;cohomological-dimension,
     looijenga;cellular-decomposition, penner:math.GT/0210326}] 
+  \label{thm:HMT}
   The Jenkins-Strebel construction defines morphisms
   \begin{equation*}
     \T_{g,n} \times \setR_{>0}^n \to \Tcomb_{g,n}, 
@@ -785,45 +791,63 @@ For any given $p^\circ = (p_1^\circ, \ldots, p_n^\circ) \in \setR_{>0}^n$, the f
 $\pi^{-1}(p^\circ)$ is isomorphic to $\M_{g,n}$ (resp.\ $\T_{g,n}$), thus,
 $\pi$ induces a triangulation of $\M_{g,n}$ (resp.\ $\T_{g,n}$).
 
+\subsubsection{Cell structure of $\Mcomb_{g,n}$}
+\label{sec:cell-structure}
+\begin{lemma}
+  \label{lemma:isotropy}
+  The isotropy group $\Gamma_{{\tilde G}}$ of the cell $T{\tilde G} \hookrightarrow
+  \Tcomb_{g,n}$ is (isomorphic to) the automorphism group $\Aut G$ of
+  the abstract ribbon graph $G$ underlying ${\tilde G}$.
+\end{lemma}
+\begin{proof}
+  If $a \in \Aut G$, then $S(a, \ell)$ is an automorphism of $S(G, \ell)$ for
+  any metric $\ell$.  If $\ell \in \Delta(G)$ varies continuously, then so does
+  $S(a, \ell)$.  Therefore, an element of $\Gamma_{{\tilde G}} \subseteq \Gamma_{g,n}$ is defined.
+
+  Conversely, let $\tau \in \Gamma_{g,n}$ fix the cell $T{\tilde G}$
+  \emph{setwise}.  If $q$ is the Jenkins-Strebel quadratic
+  differential inducing the complex analytic structure corresponding
+  to the metric $\ell \in T({\tilde G})$, then $\tau^*q$ defines a quadratic
+  differential corresponding to a point in $T{\tilde G}$, so it has
+  critical graph ${\tilde G}$.  Yet, since $q$ has critical graph
+  ${\tilde G}$, $\tau^*q$ has critical graph $\tau({\tilde G})$. Therefore,
+  $\tau$ restricts to a ribbon graph isomorphism, so a map $\Gamma_{{\tilde
+      G}} \to \Aut G$ is defined.
+\end{proof}
+Let $M(G)$ be the image in $\Mcomb_{g,n}$ of a simplex $T({\tilde G})$,
+where ${\tilde G}$ is an embedding of $G$.  By \ref{lemma:isotropy},
+the image $M(G)$ is the quotient of $\Delta(G)$ by $\Aut G$; therefore,
+$\Mcomb_{g,n}$ is a orbifold.\FIXME{%
+  Questo non basta per definire un'orbifold: occorre anche dimostrare
+  una relazione tra $\Aut G$ e $\Aut G'$, quando $G'$ \`e una faccia di
+  $G$.}
+The action of $\Gamma_{g,n}$ commutes with the face operators, so
+$M(G)$ is a face of $M(G')$ iff $G'$ is obtained from $G$ by
+contraction of a non-loop edge.
+
+The cells $T({\tilde G})$ (resp.~$M(G)$) have real dimension
+$\card{\Edges{G}}$; therefore, simplices of maximal dimension are
+labeled by graphs with all vertices of valence $3$ (see
+\eqref{eq:10}). The union of these cells is a dense subset of
+$\Tcomb_{g,n}$ (resp.~$\Mcomb_{g,n}$) with non-void interior.
 
 
-\section{Harer's equivariant spine for Teichm\"uller space}
-\label{sec:spine}
+
+\section{The ribbon graph complex}
+\label{sec:ribbon-graph-complex}
 
 Harer \cite{harer;cohomological-dimension}, introduced a simplicial
-spine for the Teichm\"uller space $\T_{g,n}$, which, when recast in
-terms of ribbon graphs, provides the needed link between the ribbon
-graph complex and cohomology of $\M_{g,n}$.
-
-Recall that a semi-simplicial complex $X$ is a graded set such that
-every $k$-simplex has $k+1$ faces, which are $k-1$-simplices; that is,
-the set $X_k$ of $k$-simplices is equipped with $k+1$ face maps
-$f_i:X_k \to X_{k-1}$.
-
-If $X$ is any semi-simplicial complex, denote by $|X|$ its geometric
-realization.  Denote by $X'$ the first barycentric subdivision of $X$,
-that is, $X'$ has a $k$-simplex $(\sigma_0 > \sigma_1 > \cdots > \sigma_k)$ for any chain
-of $k+1$ simplices in $X$ such that $\sigma_{i+1}$ is a face of $\sigma_i$.
-
-Given a notion of \emph{orientation} of a simplex, one can associate
-with any semi-simplicial complex $X$ the \emph{differential} complex
-of simplicial chains $C_*(X)$.  The space $C_k(X)$ of $k$-chains is
-the vector space generated over $\setQ$ by pairs $(\delta, \omega)$, where $\delta \in X_k$
-is a $k$-simplex and $\omega$ is an orientation of $\delta$, modulo the relation
-$(\delta, -\omega) = -(\delta, \omega)$.  Equip $C_k(X)$ with the differential $\partial = \sum
-(-1)^if_i$ (where the face maps $f_i$ have been extended by linearity
-to $C_k(X)$).  By definition, $H_*(X) := H_*(C_*(X))$.
+complex related to the Teichm\"uller space $\T_{g,n}$, which, when
+recast in terms of ribbon graphs, provides the needed link between the
+ribbon graph complex and (co)homology of $\M_{g,n}$.  The route to it
+is a bit convoluted, as the direct approach to constructing a ribbon
+graph complex by defining face operators through admissible
+contractions does not yield a simplicial complex: after a few
+contractions, loops appear, which cannot be contracted any more.
 
 
 \subsection{Arc-systems}
 \label{sec:arc-systems}
-
-Let $T_{g,n}$ be a topological compact oriented Riemann surface of
-fixed genus $g$ with $n$ marked points $x_1, \ldots, x_n$.  Regard points
-in the moduli space $\M_{g,n}$ as equivalence classes $(S,x,\varphi)$ of a
-complex analytic curve $S$ with a marking $x:\{1,\ldots,n\}\to S$ and a
-homeomorphism $\varphi:S\to T_{g,n}$ with the reference surface (see
-\csref{sec:alternate-Mgn}).
 
 \begin{definition}
   An arc-system $[u_1, \ldots, u_k]$ of rank $k$ is an isotopy class
@@ -860,12 +884,14 @@ There is a natural action of $\tau \in \Gamma_{g,n}$ on $U$ given by $\tau \cdot
 u_k] := [\tau \circ u_1, \ldots, \tau \circ u_k]$; it preserves $U_0$, so it restricts to
 an action on $U \setminus U_0$.
 
-Let $\Delta^{n-1}$ be the $(n-1)$-dimensional geometric simplex.
+If $X$ is any semi-simplicial complex, denote by $|X|$ its geometric
+realization.  Let $\Delta^n$ be the $n$-dimensional geometric
+simplex $\{ t_* \in \setR^{n+1} | t_0 + \cdots + t_n = 1 \}$.
 \begin{theorem}[Harer, {\cite[Theorem
     1.3]{harer;cohomological-dimension}}]
   \label{thm:H}
   There exists a $\Gamma_{g,n}$-equivariant homeomorphism $\Phi: \T_{g,n} \times
-  \Delta^{n-1} \to |U \setminus U_0|$.
+  \Delta^n \to |U \setminus U_0|$.
 \end{theorem}
 This is infact another application of \csref{thm:JS}.  We only sketch
 part of the proof here in order to highlight the features needed in the
@@ -904,425 +930,298 @@ proven to be a homeomorphism \cite{harer;cohomological-dimension,
 \end{remark}
 
 
-\subsection{The equivariant spine for $\T_{g,n}$}
-\label{sec:spine}
-
-Let $U'$, $U_0'$ be the first barycentric subdivisions of $U$
-and $U_0$, respectively.
-\begin{definition}
-  Let $Y'$ be the collection of simplices in $U'$ having no face in
-  $U_0'$; equivalently, $(\sigma_0 > \ldots > \sigma_k) \in Y'$ iff every vertex $\sigma_i$
-  of $(\sigma_\bullet)$ lies in $U' \setminus U_0'$.
-\end{definition}
-$Y'$ is a full subcomplex of $U'$, and the action of $\Gamma_{g,n}$ on $U'$
-preserves $Y'$.
-\begin{theorem}[Harer, {\cite[Theorem
-    2.1]{harer;cohomological-dimension}}]
-  \label{thm:spine}
-  The semi-simplicial complex $U'$ has an equivariant deformation
-  retraction on $Y'$.  This retraction provides a
-  $\Gamma_{g,n}$-equivariant homotopy equivalence between $U' \setminus U_0'$ and
-  $Y'$.
-\end{theorem}
-
-The complex $Y'$ is isomorphic to the first barycentric subdivision of
-a $4g - 5 + 2n$ dimensional complex $Y$, the dual complex to $U'$,
-constructed as follows:
-\begin{itemize}
-\item $Y$ has a 0-simplex for every maximal arc-system that fills up the
-  reference surface $T$; each such arc-system has $N = 6g - 7 + 3n$ arcs.
-\item $Y$ has a 1-simplex for every arc-system formed by $N-1$ arcs:
-  each such arc-system has two completions to a maximal arc-system.
-\item By recursively iterating this construction, we can construct the
-  higher-dimensional simplices in $Y$.\FIXME{%
-    Non \`e cos\`\i{} ovvio: bisogna mostrare che i completamenti di un
-    arc-system dato ad uno massimale si organizzano in un simplesso.
-    Harer usa un teorema di struttura per il complesso degli
-    arc-system. Ma forse l'intera descrizione di $Y$ pu\`o essere omessa
-    qui, perch\'e ci interessa solo il complesso dei grafi a nastro.}
-\end{itemize}
-Notice that, at a minimum, $2g - 2 +n$ curves are required to fill up
-$T$, so $Y$ is $4g - 5 + 2n$ dimensional.
-
-
-
-\section{The ribbon graph complex}
-\label{sec:ribbon-graph-complex}
-
-Finally, we can translate Harer's spine in terms of ribbon graphs and
-use it to construct a complex that computes the homology of
-$\M_{g,n}$.  The route to it is a bit convoluted, as the direct
-approach to constructing a ribbon graph complex by defining face
-operators through admissible contractions does not yield a simplicial
-complex: after a few contractions, loops appear, which cannot be
-contracted any more.  This mirrors the structure of $U \setminus U_0$, as will
-be shown in \ref{sec:contractions-and-topology}.
-
-
 \subsection{From arc-systems to ribbon graphs}
 \label{sec:arcs-to-rg}
 
+Given a graph $u$ drawn on a Riemann surface $S$, recall that the dual
+graph $G$ is a graph having a vertex for every connected component of
+$S \setminus u$, and an edge for every edge of $u$.  Corresponding edges of
+graphs in a duality pair meet at a single point, and we may assume
+that they cross transversely.
 \begin{lemma}
   \label{lemma:arcs-to-rg}
-  There's an equivariant 1-1 correspondence between arc-systems $u \in U
-  \setminus U_0$ and embedded ribbon graphs in ${\tilde G} \in \ERG[g,n]$,
-  enjoying the following properties:
-  \begin{enumerate}
-  \item ${\tilde G}$ is the dual graph to $u$ in the ambient surface
-    $T_{g,n}$.
-  \item If an order of the vertices of the simplex $\Delta(u)$ is given,
-    then an order of the edges of ${\tilde G}$ is induced.
-  \item To any point in $|U \setminus U_0|$, there corresponds a
-    metric structure on ${\tilde G}$, the barycentric coordinates
-    in simplexes of $|U \setminus U_0|$ directly translating to edge-lengths
-    of ${\tilde G}$.
-  \end{enumerate}
-  Therefore, there's an equivariant 1-1 correspondence between points
-  in $|U \setminus U_0|$ and \emph{metrized} embedded ribbon graphs.
+  There's an equivariant bijective correspondence between arc-systems
+  $u \in U \setminus U_0$ and embedded ribbon graphs ${\tilde G} \in \ERG[g,n]$,
+  the graph corresponding to an arc-system $u$ being the dual graph to
+  $u$ in the ambient surface.
 \end{lemma}
 \begin{proof}
-  Let $u = [u_1, \ldots, u_k]$ be an arc-system on $T_{g,n}$ uniquely
-  labeling a simplex $\Delta(u)$ in $U \setminus U_0$.  Any choice of barycentric
-  coordinates $b_0 + \cdots + b_k = 1$ in $\Delta(u)$ identifies a point in $|U
-  \setminus U_0|$.  By the proof of Harer's \csref{thm:H} this corresponds to
-  a complex structure on $T_{g,n}$ (a point in $\T_{g,n} \times \Delta^n$)
-  determined by a quadratic differential $q = q(u, b_*)$, such that
-  each arc $u_i$ is a regular curve in the vertical foliation $F^\perp$
-  associated to $q$.
+  Let $u = [u_1, \ldots, u_k] \in U \setminus U_0$ be an arc-system on the Riemann
+  surface $S_{g,n}$.  Any choice of barycentric coordinates $b_0 + \cdots +
+  b_k = 1$ in $\Delta(u)$ identifies a point in the associated geometric
+  symplex $|u| \subseteq |U \setminus U_0|$; by the proof of Harer's \csref{thm:H}
+  this corresponds to a complex analytic structure on $S_{g,n}$ (a
+  point in $\T_{g,n} \times \Delta^n$) determined by a quadratic differential $q
+  = q(u, b_*)$, such that each arc $u_i$ is a regular curve in the
+  vertical foliation $F^\perp$ associated to $q$.  Let ${\tilde G}$ be the
+  critical graph of $q$; it is endowed with a structure of
+  \emph{embedded} ribbon graph.  By construction, ${\tilde G}$ is the
+  dual graph of $u$.
 
-  Let ${\tilde G}$ be the critical graph of $q$.  By the statement and
-  the remarks following \csref{thm:JS1}, ${\tilde G}$ has the
-  structure of an \emph{embedded} ribbon graph.  By construction,
-  ${\tilde G}$ is the dual graph of $u$: let $\alpha_k$ be the only edge of
-  $G$ meeting the arc $u_k \in u$; we can put a metric on ${\tilde G}$
-  by setting the length of $\alpha_k$ to be $b_k$, the barycentric
-  coordinate on the side of $u_k$.  Therefore ${\tilde G}$ has the
-  structure of a \emph{metrized} embedded ribbon graph.
+  This correspondence is equivariant: if $\tau \in \Gamma_{g,n}$ then point
+  $b_*$ in $|\tau u|$ corresponds to analytic structure induced by the
+  differential $\tau^*q$, which has ${\tilde G}$ as critical graph.
 
-  By the 1-1 correspondence of arcs in $u$ and edges of ${\tilde G}$,
-  any order of the vertices of $\Delta(u)$ translates to an order of the
-  edges of ${\tilde G}$.
-
-  Finally, the correspondence is equivariant: if $\tau \in \Gamma_{g,n}$, then
-  $\tau u := [\tau \circ u_1, \ldots, \tau \circ u_k]$ is (homotopic to) the set of parallel
-  leaves of the vertical foliation of $q \circ \tau$, and which the critical
-  graph $\tau({\tilde G})$.
+  Conversely, let ${\tilde G}$ be a ribbon graph embedded in the
+  surface $S_{g,n} = S(G)$.  Break up $S_{g,n}$ into closed triangles
+  $\{ T_\alpha \}$ as in \csref{lemma:S-functor}(b).  Form the dual graph to
+  ${\tilde G}$: for each $\{ T_{\alpha^\pm}$, let $u_\alpha^\pm$ be the arc
+  connecting the midpoint of $\alpha \in \Edges{{\tilde G}}$ to the vertex of
+  $T_{\alpha^\pm}$ opposite to $\alpha$, and let $u_\alpha$ be the arc obtained by
+  joining $u_\alpha^\pm$ at their common endpoint.  Then $u = [u_{\alpha_1}, \ldots,
+  u_{\alpha_k}]$ is a filling arc-system: indeed, each connected component
+  of $S_{g,n} \setminus u$ is homeomorphic to one of the open sets $V_\gamma$ (with
+  $\gamma \in \Vertices{G}$), therefore it is a disk.
 \end{proof}
 
+Note that, if an order of the vertices of the simplex $|u|$ is given,
+then an order of the edges of ${\tilde G}$ is induced.
 
-In \csref{sec:arcs-to-rg}, a PL isomorphism was actually constructed
-between the geometric simplex $|\langle u_*\rangle|$ and $|{\tilde G}|$, the
-geometric simplex spanned by varying lengths of edges in
-$\Edges{\tilde G}$.  By \csref{lemma:approaching-face}, the face
-operators on the two set of simplices are compatible with this PL
-isomorphism, so we can glue isomorphisms $|\langle u_*\rangle| \to |G|$ to form a PL
-isomorphism $|U \setminus U_0| \to \Tcomb_{g,n}$.
+\begin{lemma}
+  \label{lemma:II}
+  \begin{inparaenum}
+  \item There is a canonical PL isomorphism between $|u|$ and
+    $T({\tilde G}) = \Delta(G)$.
+  \item The above correspondence is compatible with the face
+    operations: if $u' \in U \setminus U_0$ is a face of $u \in U\setminus U_0$, then
+    the dual graph ${\tilde G}'$ is obtained from ${\tilde G}$ by
+    contraction of a non-loop edge, and the PL isomorphism $|u|
+    \isoarrow T({\tilde G})$ restricts to $|u'| \isoarrow T({\tilde
+      G}')$ on the faces.
+  \end{inparaenum}
+\end{lemma}
+\begin{proof}
+  Recall that the cells that make up $\Tcomb_{g,n}$ are indexed by
+  embedded ribbon graphs, and let ${\tilde G} \in \ERG[g,n]$ be an
+  embedded ribbon graph. If no edge of ${\tilde G}$ is a loop, then
+  any contraction of an edge in ${\tilde G}$ produces an embedded
+  ribbon graph in $\ERG[g,n]$, which again corresponds to a simplex in
+  $U \setminus U_0$.  Therefore, embedded ribbon graphs with no loops identify
+  cells in $U$ with no face on $U_0$.
 
-Recall that the cells that make up $\Tcomb_{g,n}$ are indexed by
-embedded ribbon graphs, and let ${\tilde G} \in \ERG[g,n]$ be an embedded
-ribbon graph. If no edge of ${\tilde G}$ is a loop, then any contraction
-of an edge in ${\tilde G}$ produces an embedded ribbon graph in
-$\ERG[g,n]$, which again corresponds to a simplex in $U \setminus U_0$.
-Therefore, embedded ribbon graphs with no loops identify cells
-entirely contained in $U \setminus U_0$. 
+  Now let ${\tilde G}$ be an embedded ribbon graph having a loop $\lambda \in
+  \Edges{G}$, and let $u = \langle u_1, \ldots, u_k\rangle$ be the arc-system simplex
+  corresponding to ${\tilde G}$ according to \csref{lemma:arcs-to-rg}.
+  Contraction of $\lambda$ in ${\tilde G}$ is not admissible, as it would
+  change the genus and/or the puncture number of ${\tilde G}$;
+  correspondingly, if $u'$ be the face of $u$ obtained by omitting the
+  unique arc that intersects $\lambda$, then $u'$ does not fill up the
+  ambient surface.
 
-Now let ${\tilde G}$ be an embedded ribbon graph having a loop $\lambda \in
-\Edges{G}$, and let $u = \langle u_1, \ldots, u_k\rangle$ be the arc-system simplex
-corresponding to ${\tilde G}$ according to \csref{lemma:arcs-to-rg}.
-Contraction of $\lambda$ in ${\tilde G}$ is not admissible, as it would change
-the genus and/or the puncture number of ${\tilde G}$.  Correspondingly,
-if $u'$ be the face of $u$ obtained by omitting the unique arc
-that intersects $\lambda$, then $u'$ does not fill up the ambient surface.
+  Vice versa, suppose that $u' \in U_0$ is such that adding a single arc
+  $u_0$ to $u'$ determines a simplex belonging to $U \setminus U_0$.  Let
+  ${\tilde G}$ be the embedded ribbon graph, dual to $\langle u_0, u'\rangle$.
+  It's simple to see then:
+  \begin{enumerate}
+  \item The arc $u_0$ is entirely contained in a connected component
+    $B$ of $T \setminus |u'|$, and this $B$ is either a punctured disk or a
+    disk with a slit in the middle.  Indeed, let $B' := B \setminus |u_0|$;
+    since $\langle u_0, u'\rangle$ belongs to $U \setminus U_0$, then $B'$ is a
+    topological disk.  The border of $B'$ is union of the arcs $u_i$,
+    where each arc occurs at most two times, and, for those that occur
+    two times, the two copies have equal length in the metric of $T$.
+    The arc $u_0$ occurs two times on the border of $B'$, and we get
+    $B$ by isometrically gluing $B'$ along the two copies of $u_0$.
+  \item The arc $u_0$ connects the puncture or slit in $B$ with the
+    border of $B$.
+  \item The edge $\lambda$ of ${\tilde G}$ corresponding to $u_0$ is a loop.
+  \end{enumerate}
+\end{proof}
 
-Vice versa, suppose that $u' \in U_0$ is such that adding a single arc
-$u_0$ to $u'$ determines a simplex belonging to $U \setminus U_0$.  Let
-${\tilde G}$ be the embedded ribbon graph, dual to $\langle u_0, u'\rangle$.  It's
-simple to see then:
-\begin{enumerate}
-\item The arc $u_0$ is entirely contained in a connected component $B$
-  of $T \setminus |u'|$, and this $B$ is either a punctured disk or a disk
-  with a slit in the middle.  Indeed, let $B' := B \setminus |u_0|$; since
-  $\langle u_0, u'\rangle$ belongs to $U \setminus U_0$, then $B'$ is a topological disk.
-  The border of $B'$ is union of the arcs $u_i$, where each arc occurs
-  at most two times, and, for those that occur two times, the two
-  copies have equal length in the metric of $T$.  The arc $u_0$ occurs
-  two times on the border of $B'$, and we get $B$ by isometrically
-  gluing $B'$ along the two copies of $u_0$. 
-\item The arc $u_0$ connects the puncture or slit in $B$ with the
-  border of $B$.
-\item The edge $\lambda$ of ${\tilde G}$ corresponding to $u_0$ is a loop.
-\end{enumerate}
+By \csref{lemma:approaching-face}, the face operators on the two set
+of simplices are compatible with this PL isomorphism, so we can glue
+isomorphisms $|\langle u_*\rangle| \to |G|$ to form a PL isomorphism $|U \setminus U_0| \to
+\Tcomb_{g,n}$.
 
-The following sums up the content of this section.
 \begin{lemma}
   \label{lemma:erg-loop}
-  The equivariant 1-1 correspondence between embedded ribbon graphs
-  and arc-systems in $U \setminus U_0$ is compatible with the face operators,
-  that is, each admissible contraction ${\tilde G'}$ of an embedded
-  ribbon graph ${\tilde G}$ is mapped to a face $u'$ of the arc-system
-  $u$ corresponding to ${\tilde G}$.
-
   Embedded ribbon graphs with a loop correspond to arc-system simplices
   in $U$ with a face on $U_0$; every loop in a ribbon graph ${\tilde G}$
   corresponds to a face on $U_0$ in the dual arc-system.
 \end{lemma}
 
 
-\subsection{Complexes of sequences of ribbon graphs}
-\label{sec:sequences}
-
-Combining Lemmas~\ref{lemma:arcs-to-rg} and~\ref{lemma:erg-loop}, we
-can find an equivariant isomorphism of $Y'$ into the semi-simplicial
-complex $\ERG'$ whose simplices are sequences of admissible
-contractions of ribbon graphs.  A simplex of $\ERG'$ is a sequence
-$({\tilde G}_0 \overset{f_0}\to {\tilde G}_1 \overset{f_1}\to \cdots
-\overset{f_k}\to {\tilde G}_k)$ of contraction morphisms of (possibly
-several) non-loop edges.  The $i$-th face operator of a simplex in
-$\ERG'$ composes the contractions around the $i$-th graph in the
-sequence:
-\begin{multline}
-  \label{eq:5}
-  d_i({\tilde G}_0 \overset{f_0}\to \cdots \xrightarrow{f_{i-1}} {\tilde
-    G}_i \overset{f_i}\to \cdots \overset{f_k}\to {\tilde G}_k) \\
-  = ({\tilde G}_0 \overset{f_0}\to \cdots {\tilde
-    G}_{i-1} \xrightarrow{f_{i-1} \circ f_i} {\tilde G_{i+1}} 
-    \xrightarrow{f_{i+1}} \cdots \overset{f_k}\to {\tilde G}_k).
-\end{multline}
-The face operators $d_0$ and $d_k$ simply omit the first and the last
-morphism in the sequence.  Indeed, $\ERG'$ is a subcomplex of the
-nerve of the category $\ERG$.
-
-Since contraction morphisms do not alter the genus and boundary
-components of a ribbon graph, $\ERG'$ decomposes into a direct sum of
-complexes $\ERG'_{g,n}$.\FIXME{%
-  La notazione \`e confusa, perch\'e a volte ometto $g,n$ quando \`e chiaro
-  dal contesto, mentre qui si definisce $\ERG'$ senza indici come lo
-  spazio totale, che poi non viene mai usato\ldots}
-
-Similarly, we can construct a semi-simplicial complex $\RG'$ out of
-sequences of admissible contractions of \emph{abstract} ribbon graphs,
-with face operators defined like in \eqref{eq:5}; also $\RG' = \bigoplus_{g,n}
-\RG_{g,n}'$.
-
-
-\subsection{Equivariant cohomology of $\T_{g,n}$ and the complex of ribbon graphs}
+\subsection{Equivariant homology of $\T_{g,n}$ and the complex of
+  ribbon graphs}
 \label{sec:rg-complex}
 
-\begin{definition}
-  An orientation of the simplex $\delta = ({\tilde G}_0 \overset{f_0}\to {\tilde
-    G}_1 \overset{f_1}\to \cdots \overset{f_k}\to {\tilde G}_k)$ is a linear
-  ordering of the edges of ${\tilde G}_i$ such that the contraction maps
-  $f_i$ carry the ordering along: if $\alpha, \alpha' \in \Edges{{\tilde G}_{i+1}}$ then
-  \begin{equation*}
-    \alpha < \alpha' \Rightarrow \min f_i^{-1}(\alpha) \leq \min f_i^{-1}(\alpha').
-  \end{equation*}
+\begin{definition}\label{dfn:orientation}
+  An orientation of a ribbon graph $G$ is an orientation of the vector
+  space $\setQ\Edges{G}$, that is, the choice of an order of the edges of
+  $G$, up to an even number of exchanges.
 \end{definition}
-The above condition may be informally recast into saying that is
-monotone increasing on edges that are not contracted.
-\begin{lemma}
-  An orientation of the simplex $({\tilde G}_0 \overset{f_0}\to {\tilde
-    G}_1 \overset{f_1}\to \cdots \overset{f_k}\to {\tilde G}_k)$ is uniquely
-  determined by a linear order of the set $\Edges{{\tilde G}_0}$.
-\end{lemma}
-\begin{proof}
-  It suffices to show that we can transfer the ordering on
-  $\Edges{{\tilde G}_0}$ to $\Edges{{\tilde G}_1}$ through a
-  contraction $f: {\tilde G}_0 \to {\tilde G}_1$.
-  The morphism $f$ induces a injective mapping $f^*: \Edges{{\tilde
-      G}_1} \to \Edges{{\tilde G}_0}$ sending an edge $\alpha \in
-  \Edges{{\tilde G}_1}$ to the unique $\alpha' \in \Edges{{\tilde G}_1}$ that
-  is mapped homeorphically onto $\alpha$ by $f$.  Thus, we can pull back
-  the linear order by defining: $\alpha < \beta$ iff $f^*(\alpha) < f^*(\beta)$. 
-\end{proof}
+Giving an orientation on $G$ (resp.~${\tilde G}$) is the same as
+orienting the simplex $\Delta(G)$ (resp.~$T({\tilde G}$).
 
-\begin{definition}
-  An oriented simplex is a pair $(\delta, \omega)$ consisting of a simplex $\delta \in
-  \ERG'$ and an orientation $\omega$.
+If $G$ is a ribbon graph with $p$ edges, let $\Lambda_G := \bigwedge^p \setQ\Edges{G}$
+be the 1-dimensional vector space generated by wedge products $\alpha_1 \land \ldots
+\land \alpha_p$ of edges of $G$.  Every $f \in \Aut G$ induces a map $f:
+\Edges{G} \to \Edges{G}$ on the edges and thus a map $f_*: \alpha_1 \land \ldots
+\land \alpha_p \mapsto f(\alpha_1) \land \ldots \land f(\alpha_p)$.  It is trivial to check that $f_*(\alpha_1 \land
+\ldots \land \alpha_p) = \pm \alpha_1 \land \ldots \land \alpha_p$, depending on whether $f$ preserves or
+reverses the orientation of $G$.
+
+\begin{definition}\label{dfn:orientable}
+  Say that $G$ is \emph{orientable} iff it has no
+  orientation-reversing automorphisms.
 \end{definition}
-We shall often omit the orientation from $(\delta, \omega)$ and just write ``the
-oriented simplex $\delta$''.
 
-\begin{lemma}
-  \label{lemma:rg-iso1}
-  Let $C_*(\RG_{g,n}')$ be the differential complex generated by
-  sequences of oriented \emph{abstract} ribbon graphs of genus $g$
-  with $n$ boundary components, graded by the length of the sequence,
-  and equipped with the differential $\partial = \sum (-1)^id_i$.
-
-  The $\Gamma_{g,n}$-equivariant cohomology of $\T_{g,n}$ \emph{with
-    rational coefficients} is computed by the complex $C_*(\RG_{g,n}')$,
-  that is, there exists an isomorphism
-  \begin{equation*}
-    H^{\Gamma_{g,n}}_*(\T_{g,n}, \setQ) \cong H_*(C_*(\RG_{g,n}'), \partial) =: H_*(\RG_{g,n}').
-  \end{equation*}
-\end{lemma}
-\begin{proof}
-  For brevity, put $\T := \T{g,n}$ and $\Gamma := \Gamma_{g,n}$.  By \csref{thm:H}
-  and~\ref{thm:spine} we have
-  \begin{equation*}
-    H^\Gamma_*(\T, \setQ) = H^\Gamma_*(|U \setminus U_0|, \setQ) = H^\Gamma_*(|Y'|, \setQ).
-  \end{equation*}
-  A semi-simplicial complex has the same homology as its geometric
-  realization, so
-  \begin{equation*}
-    H^\Gamma_*(|Y'|, \setQ) = H^\Gamma_*(Y', \setQ),
-  \end{equation*}
-  and because of the equivariant isomorphism between $Y'$ and $\ERG'$
-  given by Lemmas~\ref{lemma:arcs-to-rg} and~\ref{lemma:erg-loop}, we
-  have:
-  \begin{equation*}
-    H^\Gamma_*(Y', \setQ) = H^\Gamma_*(\ERG'_{g,n}, \setQ).
-  \end{equation*}
-
-  The action of $\Gamma$ permutes the simplices of $|Y'|$; since $Y'$ is a
-  subcomplex of the first barycentric subdivision of $U$, if $\tau \in \Gamma$
-  fixes a geometric simplex $\upsilon \in |Y'|$ then $\tau$ fixes $\upsilon$ pointwise.
-  The complex $\ERG'_{g,n}$ is isomorphic to $Y'$ by an equivariant
-  isomorphism, so the same property holds: if $\tau \in \Gamma$ fixes a
-  geometric simplex $\Delta \in \ERG'_{g,n}$ then $\tau$ fixes $\Delta$ pointwise; in
-  particular, it does not permute the order of vertices and edges,
-  i.e., it preserves the orientation.\FIXME{%
-    Questa osservazione \`e cruciale, perch\'e ci permette di tralasciare
-    il ``carattere di orientazione'' quando si calcola la successione
-    spettrale dell'omologia di gruppo.}
-
-  Write $\Gamma(\delta)$ for the isotropy group of the simplex $\delta \in \ERG'_{g,n}$;
-  it is a \emph{finite} group.
-
-  Form the chain complex $C_*(\ERG'_{g,n})$ associated to the
-  semi-simplicial complex $\ERG'$ as usual.  Let $\ERG'_{g,n}(k)$ be
-  the set of \emph{oriented} simplices in $\ERG'{g,n}$ formed by a
-  sequence of $k+1$ graphs.  Let $C_k(\ERG', \setQ)$ be the free vector
-  space over $\setQ$ generated by $\ERG'{g,n}(k)$, modulo the relation
-  $(\delta, \omega) = -(\delta, -\omega)$.  Equip $C_k$ with the differential $\partial = \sum_0^k
-  (-1)^id_i$, where $d_i$ is the $i$-th face operator as
-  in~\eqref{eq:5}; then $(C_*, \partial)$ is a differential graded complex.
-
-  Recall that $H^\Gamma_*(\ERG'_{g,n})$ can be defined as the homology of
-  the double complex $P_* \otimes_\Gamma C_*(\ERG'_{g,n}, \setQ)$, where $P_*$ is a
-  projective resolution of $\setQ$ over $\setQ\Gamma$.  The spectral sequence
-  $E^1_{pq} := H_q(P_* \otimes_\Gamma C_p) = H_q(\Gamma, C_p)$ abuts to
-  $H^\Gamma_{p+q}(\ERG'_{g,n})$ (see \cite[VII.5 and VII.7]{brown}).
-
-  Define $R_p$ to be a set of representatives in $\ERG'(p)$ for the
-  orbits of $\Gamma$.  Since:
+Form a differential complex of orientable graphs as follows.
+\begin{definition}
+  The complex $(\Lambda_*, D)$ of orientable ribbon graphs is defined by:
   \begin{itemize}
-  \item $\Gamma$ changes only the \emph{embedding} of a graph ${\tilde G} \in
-    \ERG$;
-  \item two simplices defined by graphs ${\tilde G}$, $\tilde G'$
-    differing only in the embedding belong to the same $\Gamma$-orbit (by
-    \csref{lemma:penner-kontsevich-bridge}, orbits of embedded ribbon
-    graphs depend on the underlying abstract ribbon graph only);
+  \item $\Lambda_p := \bigoplus_G \Lambda_G$, where $G$ runs over orientable ribbon graphs
+    with $(2g + n - 1 + p)$ edges;
+  \item $D: \Lambda_p \to \Lambda_{p-1}$ is given by $D := \sum_1^p (-1)^i d_i$ where
+    \begin{equation*}
+      d_i(\alpha_1 \land \ldots \land \alpha_p) := \alpha_1 \land \ldots \land \widehat{\,\alpha_i\,} \land \ldots \land \alpha_p,
+    \end{equation*}
+    iff $\alpha_i$ is not a loop and $G/\alpha_i$ is orientable, otherwise set 
+    \begin{equation*}
+      d_i(\alpha_1 \land \ldots \land \alpha_p) := 0.
+    \end{equation*}
   \end{itemize}
-  then $R_p$ is (in bijective correspondence with) the set of
-  sequences in $\RG'$ having length $p+1$.\FIXME{%
-    Non sono del tutto sicuro che gli automorfismi non giochino
-    qualche ruolo qui\ldots Forse $R_p$ \`e un \emph{quoziente} dello spazio
-    indicato?}
+\end{definition}
+Every oriented ribbon graph $(G, \omega)$ defines an element $\omega_G \in \Lambda_G$ by
+taking the wedge product of edges of $G$ in the order given by $\omega$;
+conversely, any $\alpha_1 \land \ldots \land \alpha_p \in \Lambda_G$ defines an orientation on $G$ by
+setting $\alpha_1 < \ldots < \alpha_p$.
 
-  Following \cite[p.\ 173]{brown}, decompose
-  \begin{math}
-    C_p(\ERG', \setQ) = \bigoplus_{\Delta \in R_p} \setQ,
-  \end{math}
-  so that we obtain, by Shapiro's lemma,
-  \begin{equation*}
-    H_q(\Gamma, C_p(\ERG', \setQ)) \cong \bigoplus_{\Delta \in R_p} H_q(\Gamma(\delta), \setQ),
-  \end{equation*}
-  therefore, substituting back in the spectral sequence:
-  \begin{equation*}
-    E^1_{pq} = \bigoplus_{\Delta \in R_p} H_q(\Gamma(\delta), \setQ).
-  \end{equation*}
-  Since $\Gamma(\delta)$ is finite and we are taking \emph{rational}
-  coefficients, then $H_q(\Gamma(\delta), \setQ) = 0$ if $q>0$ (see
-  \cite[III.10.2]{brown}); on the other hand $H_0(\Gamma(\delta), \setQ) = \setQ$, so
-  we have:
-  \begin{itemize}
-  \item $E^1_{pq} = 0$ for all $q>0$;
-  \item $E^1_{p0} = \setQ R_p$ is the free vector space spanned over $\setQ$ by
-    ribbon graphs.
-  \end{itemize}
-
-  The differential $d^1: E^1 \to E^1$ is induced by the differential $\partial:
-  C_*(\ERG') \to C_*(\ERG')$, which also induces $\partial = \sum \pm d_i$ on $\RG'$;
-  therefore there is an isomorphism of differential graded algebras
-  \begin{equation}
-    \label{eq:4}
-    ({\textstyle \bigoplus}_{p\geq0} E^1_{p0}, d^1) \cong (C_*(\RG'), \partial),
-  \end{equation}
-  as was to be proved.
-\end{proof}
-
-The final step is to prove that a complex naturally formed by abstract
-ribbon graphs actually computes the homology we are looking for.
 \begin{theorem}
-  Let $C_*(\RG_{g,n})$ be the differential complex generated by
-  oriented \emph{abstract} ribbon graphs of genus $g$
-  with $n$ boundary components, graded by the number of vertices,
-  and equipped with the differential $\partial(G) = \sum_{\alpha \in \Edges{G}}
-  (-1)^id_\alpha$, where $d_\alpha$ is the contraction of the edge $\alpha$, if $\alpha$
-  is not a loop, or null if $\alpha$ is a loop.
-
-  Then $H_*(\RG_{g,n}) = H_*(C_*(\RG_{g,n}')$, that is, $C_*(\RG)$
-  computes the homology of $\M_{g,n}$.\FIXME{%
-    Pensavo di avere una dimostrazione per questo teorema, che
-    mostrava come $\RG'$ fosse una specie di ``suddivisione
-    baricentrica'' di $\RG$, ma quando sono andato a scriverla mi sono
-    accorto che \`e sbagliata. Riporto quindi solo l'inizio, fin dove
-    sono sicuro che sia corretta, ma non \`e detto che si riesca a
-    continuare su questa linea\ldots}%
+  The $\Gamma_{g,n}$-equivariant homology of $\T_{g,n}$ with rational
+  coefficients is computed by the complex of oriented ribbon graphs
+  $(\Lambda_*, D)$, that is, there exists an isomorphism
+  \begin{equation*}
+    H^{\Gamma_{g,n}}_*(\T_{g,n}, \setQ) \cong H_*(\Lambda_*, D)
+  \end{equation*}
 \end{theorem}
 \begin{proof}
-  We shall prove that there is a ``barycentric subdivision'' chain map
-  $b:C_*(\RG) \to C_*(\RG')$ that induces an isomorphism in homology.
-
-  Let $G \in \RG$ be an abstract ribbon graph.  Denote by $D(G)$ the
-  set of simplices $\delta = (G_0 \to \cdots \to G_k)$ such that $G_0$ is obtained
-  from $G$ by contraction of a non-loop edge.  Define an operator
-  $w_G: D(G) \to \RG'$ by
+  The genus and puncutre number will be fixed throughout, so for
+  brevity, put $\Gamma := \Gamma_{g,n}$, $\T := \_{g,n}$ and $\Tcomb :=
+  \Tcomb_{g,n}$.  By \csref{thm:HMT}, we have:
   \begin{equation*}
-    w_G(G_0 \to \cdots \to G_k) := (G \to G_0 \to \cdots \to G_k),
+    H^\Gamma_*(\T, \setQ) = H^\Gamma_*(\Tcomb, \setQ). 
   \end{equation*}
-  where $G \to G_0$ is the \emph{unique} contraction map connecting $G$
-  to $G_0$.  Extend $w_G$ to a linear map $w_G: C_*(\RG) \to C_*(\RG')$.
-  It is trival to check the following:
+  Recall that $H^\Gamma_*(\Tcomb, \setQ)$ can be defined as the homology of the
+  double complex $P_* \otimes C_*(\Tcomb, \setQ)$, where $P_*$ is any projective
+  resolution of $\setQ$ over $\setQ[\Gamma]$.  The spectral sequence $E^1_{pq} :=
+  H_q(P_* \otimes_\Gamma C_p) = H_q(\Gamma, C_p)$ abuts to $H^\Gamma_{p+q}(\Tcomb)$ (see
+  \cite[VII.5 and VII.7]{brown}).
+
+  The space $\Tcomb_{g,n}$ has, by definition, an equivariant
+  cellularization with cells indexed by embedded ribbon graphs of
+  genus $g$ with $n$ numbered boundary components.  Let $R_p$ be a set
+  of representatives for the orbits of $p$-cells under the action of
+  $\Gamma$.  By \csref{lemma:penner-kontsevich-bridge}, $R_p$ is in
+  bijective correspondence with the set of abstract ribbon graphs
+  having $p$ edges, and the orientation of a cell translates directly
+  to an orientation of the corresponding graph.  For each geometric
+  simplex $T{\tilde G} \subseteq \Tcomb$, let $\Gamma_{\tilde G}$ be its
+  isotropy group, and let $\setQ{\tilde G}$ be the $\Gamma_{\tilde
+      G}$-module consisting of the $\setQ$-vector space generated by an
+  element $\Delta$ on which $\Gamma_{\tilde G}$ acts by the orientation
+  character: $\tau \cdot \Delta = \pm \Delta$ depending on whether $\tau$ preserves or
+  reverses the orientation of the cell $T{\tilde G}$.  By
+  \csref{lemma:isotropy}, there is an isomorphism between $\Gamma_{\tilde
+      G}$ and $\Aut G$; if $\tau \in \Gamma_{\tilde G}$ reverses
+  (resp.~preserves) orientation of $T{\tilde G}$, then the
+  corresponding $f \in \Aut G$ reverses (resp.~preserves) orientation on
+  $G$.  Therefore, $\setQ{\tilde G}$ and $\Lambda_G$ are isomorphic as $\Aut G =
+  \Gamma_{T{\tilde G}}$ modules.
+
+  Following \cite[p.~173]{brown}, decompose (as a $\Gamma$-module)
+  $C_*(\Tcomb, \setQ) = \bigoplus_{G \in R_p} \Lambda_G$; then, by Shapiro's lemma
+  \cite[III.6.2]{brown}, we have:
+  \begin{equation*}
+    H_q(\Gamma, C_p) \cong \bigoplus_{G \in R_p} H_q(\Gamma_{\tilde G}, \setQ{\tilde G}) \cong
+    H_q(\Aut G, \Lambda_G). 
+  \end{equation*}
+  Since $\Aut G$ is finite and we take rational coefficients, then
+  $H_q(\Aut G, \Lambda_G) = 0$ if $q > 0$ \cite[III.10.2]{brown}.  On the
+  other hand,
+  \begin{equation*}
+    H_0(\Aut G, \Lambda_G) =
+    \begin{cases}
+      0
+      &\text{if $G$ has an orientation-reversing automorphism,}
+      \\
+      \Lambda_G
+      &\text{if $G$ has \emph{no} orientation-reversing automorphisms%
+        \footnote{In other words: $G$ is orientable, so $\Aut G$ acts
+          trivially on $\Lambda_G$.}}
+    \end{cases}
+  \end{equation*}
+  Hence, substituting back into the spectral sequence,
   \begin{align}
-    \label{eq:3}
-    \partial w_G(\delta) &= \delta - w_G(\partial\delta),  && \delta\in C_k(\RG'), k>0 
-%     \\
-%     \label{eq:6}
-%     \partial w_G(\delta) &= \delta - w_G(\partial\delta),  && \delta = \sum_i \nu_i(G_i) \in C_0(\RG').     
+    \label{eq:11}
+    E^1_{p,0} &= \Lambda_p,
+    &&
+    \\
+    \label{eq:12}
+    E^1_{p,q} &= 0
+    &\text{for all $q > 0$,}
   \end{align}
+  where $R'_p$ is the collection of all orientable ribbon graphs with
+  $p$ edges.
 
-  Define the operator $b:C_k(\RG) \to C_k(\RG')$ by recursion.  If $G \in
-  C_0(\RG)$, that is, $G$ is a ribbon graph with one vertex only, then
-  set:
-  \begin{math}
-    b: G \mapsto (G).
-  \end{math}
-  If $G \in C_k(\RG)$, with $k>0$, define recursively:
-  \begin{math}
-    b: G \mapsto w_G(b(\partial G)).
-  \end{math}
+  Finally, we show that the differential $d^1: E^1_{p,0} \to E^1_{p-1,
+    0}$ corresponds to the differential $D: \Lambda_p \to \Lambda_{p-1}$ under the
+  isomorphism \csref{eq:11}; this will end the proof.  Indeed, we
+  shall prove commutativity of the following diagram at the chain
+  level:
+  \begin{equation}
+    \label{eq:13}
+    \xymatrix{%
+      P_* \otimes \Lambda_p = 
+      &
+      \bigoplus_{G \in R'_p} P_* \otimes \Lambda_G
+      &
+      \bigoplus_{G' \in R'_{p-1}} P_* \otimes \Lambda_{G'} 
+      & 
+      = P_* \otimes \Lambda_{p-1} 
+      \\
+      & 
+      P_* \otimes C_p(\Tcomb, \setQ)
+      &
+      P_* \otimes C_{p-1}(\Tcomb, \setQ) 
+      &
+      \ar^{\id_P \otimes D} "1,2";"1,3"
+      \ar_{\id_P \otimes \partial} "2,2";"2,3"
+      \ar_{\theta_p} "1,2";"2,2"
+      \ar^{\theta_{p-3}} "1,3";"2,3"
+    }
+  \end{equation}
+  which implies commutativity at the homology level:
+  \begin{equation*}
+    \xymatrix{%
+      \bigoplus_{G \in R'_p} H_0(\Aut G, \Lambda_G)
+      &
+      \bigoplus_{G' \in R'_{p-1}} H_0(\Aut G', \Lambda_{G'})
+      \\
+      H_0(\Gamma, C_p(\Tcomb, \setQ))
+      &
+      H_0(\Gamma, C_{p-1}(\Tcomb, \setQ))
+      \ar^{D} "1,1";"1,2"
+      \ar_{d^1 = H_0(\Gamma, \partial)} "2,1";"2,2"
+      \ar_{\cong} "1,1";"2,1"
+      \ar^{\cong} "1,2";"2,2"
+    }
+  \end{equation*}
+  whence the thesis $E^1_{*,0} \cong (\Lambda_*, D)$.
 
-  It is easy to check that $b$ is a chain map: indeed, it is obvious
-  for $k=0$, and we can proceed by induction for $k>0$:
-  \begin{align*}
-    \partial \circ b 
-    &= \partial \circ w_G \circ b \circ \partial 
-    && \text{by definition of $b$,} 
-    \\
-    &= \partial \circ w_G \circ \partial \circ b
-    && \text{by induction,}
-    \\
-    &= b \circ \partial - w_G \circ \partial^2 \circ b
-    && \text{by \eqref{eq:3},}
-    \\
-    &= b \circ \partial
-    && \text{since $\partial^2=0$.}
-  \end{align*}
-
-  .......
+  The vertical maps $\theta_p$, $\theta_{p-1}$ in \eqref{eq:13} are the chain
+  isomorphisms underlying the $\Gamma$-module decomposition $C_p(\Tcomb, \setQ)
+  \cong \bigoplus_{G \in R_p} \Lambda_G$.  Forming the border of a cell $T{\tilde G} \subseteq
+  \Tcomb$ commutes with the $\Gamma$-action: $\partial T(\tau \cdot {\tilde G}) = \tau \cdot \partial
+  T({\tilde G})$.  Furthermore, $T({\tilde G}')$ is a cell in
+  $\partial T({\tilde G})$ iff ${\tilde G}'$ is obtained from ${\tilde G}$ by
+  contraction of an edge; but ${\tilde G}'$ is a contraction of
+  ${\tilde G}$ iff the underlying \emph{abstract} ribbon graphs $G'$
+  and $G$ stand in the same relation.  Thus, the $\Gamma$-complexes $(C_p,
+  \partial)$ and $(\bigoplus\Lambda_G, D)$ are isomorphic by $\theta_*$, so \eqref{eq:13}
+  commutes, as was to be proved.
 \end{proof}
+
 
 
 %%% Local Variables: 
