@@ -98,10 +98,26 @@ class Rational(object):
         return Rational(-self.numerator, self.denominator, _normalize=False)
         
 
-    def __add__(self, other):
-        new = Rational(self.numerator, self.denominator, _normalize=False)
-        new += other
-        return new
+    def __add__(first, second):
+        # protect against first-modification
+        result_num = first.numerator
+        result_den = first.denominator
+        second_num = second.numerator
+        second_den = second.denominator
+
+        try: # see boost::rational for an explanation of this algorithm
+            g = gcd(result_den, second_den)
+            result_den /= g
+            result_num *= (second_den / g) 
+            result_num += second_num * result_den
+            g = gcd(result_num, g)
+            result_num /= g
+            result_den *= second_den/g
+            
+        except AttributeError: # assume `second` is a whole number
+            result_num += result_den * second
+
+        return Rational(result_num, result_den, _normalize=False)
 
 
     def __cmp__(self, other):
@@ -145,11 +161,41 @@ class Rational(object):
         return (self, Rational(other))
     
 
-    def __div__(self, other):
-        new = Rational(self.numerator, self.denominator, _normalize=False)
-        new /= other
-        return new
-    
+    def __div__(first, second):
+        # protect against self-modification
+        result_num = first.numerator
+        result_den = first.denominator
+        second_num = second.numerator
+        second_den = second.denominator
+            
+        try:
+            # trap division by zero
+            if (second_num == 0):
+                raise ZeroDivisionError
+            
+            # shortcut
+            if (result_num == 0):
+                return Rational(0,1)
+        
+            # Avoid overflow and preserve normalization
+            gcd1 = gcd(result_num, second_num)
+            gcd2 = gcd(second_den, result_den)
+            result_num = (result_num/gcd1) * (second_den/gcd2)
+            result_den = (result_den/gcd2) * (second_num/gcd1)
+
+            if (result_den < 0):
+               result_num = -result_num
+               result_den = -result_den
+
+        except AttributeError:
+            result_num /= second
+
+            if (result_den < 0):
+               result_num = -result_num
+               result_den = -result_den
+
+        return Rational(result_num, result_den, _normalize=False)
+
 
     def __eq__(self, other):
         try:
@@ -181,7 +227,6 @@ class Rational(object):
             self.denominator *= other_den/g
             
         except AttributeError: # assume `other` is a whole number
-            # assume `other` is some kind of integer
             self.numerator += self.denominator * other
 
         return self
@@ -262,10 +307,23 @@ class Rational(object):
         return self
 
 
-    def __mul__(self, other):
-        new = Rational(self.numerator, self.denominator, _normalize=False)
-        new *= other
-        return new
+    def __mul__(first, second):
+        result_numerator = first.numerator
+        result_denominator = first.denominator
+        second_numerator = second.numerator
+        second_denominator = second.denominator
+        
+        try:
+            # avoid overflow and preserve normalization
+            gcd1 = gcd(result_numerator, second_denominator)
+            gcd2 = gcd(second_numerator, result_denominator)
+            result_numerator = (result_numerator/gcd1) * (second_numerator/gcd2)
+            result_denominator = (result_denominator/gcd2) * (second_denominator/gcd1)
+
+        except AttributeError: # assume `second` is a whole number
+            result_numerator *= second
+
+        return Rational(result_numerator, result_denominator, _normalize=False)
     
 
     def __neg__(self):
@@ -277,6 +335,7 @@ class Rational(object):
             return True
         else:
             return False
+
 
     def __pos__(self):
         return self
@@ -290,10 +349,26 @@ class Rational(object):
         return "%s/%s" % (self.numerator, self.denominator)
 
 
-    def __sub__(self, other):
-        new = Rational(self.numerator, self.denominator, _normalize=False)
-        new -= other
-        return new
+    def __sub__(first, second):
+        # protect against first-modification
+        result_num = first.numerator
+        result_den = first.denominator
+        second_num = second.numerator
+        second_den = second.denominator
+
+        try:
+            # see boost::rational for an explanation of this algorithm
+            g = gcd(result_den, second_den)
+            result_den /= g
+            result_num = result_num * (second_den / g) - second_num * result_den
+            g = gcd(result_num, g)
+            result_num /= g
+            result_den *= second_den/g
+            
+        except AttributeError: # assume `second` is a whole number
+            result_num -= result_den * second
+
+        return Rational(result_num, result_den, _normalize=False)
 
 
 ## main: run tests
