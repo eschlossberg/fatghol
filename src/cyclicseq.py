@@ -58,8 +58,9 @@ def CyclicSequence(base, factory=None):
         
     class _CyclicSequence(base):
 
+        __slots__ = []
+
         def __init__(self, sequence=None):
-            self._repetition_pattern = None
             if sequence is None:
                 base.__init__(self)
             else:
