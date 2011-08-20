@@ -1,12 +1,9 @@
 #! /usr/bin/env python
 #
-"""
+"""(>>>POINT<<<)
 """
 __docformat__ = 'reStructuredText'
 
-
-
-(>>>POINT<<<)
 
 
 
@@ -14,4 +11,5 @@ __docformat__ = 'reStructuredText'
 
 if "__main__" == __name__:
     import doctest
-    doctest.testmod(optionflags=doctest.NORMALIZE_WHITESPACE)
+    doctest.testmod(name="(>>>FILE_SANS<<<)",
+                    optionflags=doctest.NORMALIZE_WHITESPACE)
