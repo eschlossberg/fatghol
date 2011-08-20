@@ -2032,8 +2032,10 @@ class MgnGraphsIterator(BufferingIterator):
                     trivalent.append(graph)
                     # insert decorated graphs into iterator buffer
                     graphs.extend(MakeNumberedGraphs(graph))
-        logging.info("Found %d distinct unique trivalent graphs, discarded %d.",
+        logging.info("Found %d distinct trivalent graphs, discarded %d.",
                      len(trivalent), discarded)
+        logging.info("Found %d distinct numbered trivalent graphs.",
+                     len(graphs))
 
         #: Graphs to be contracted at next `.refill()` invocation
         self._batch = trivalent
@@ -2072,6 +2074,8 @@ class MgnGraphsIterator(BufferingIterator):
 
         logging.info("Found %d distinct unique graphs with %d vertices, discarded %d.",
                      len(next_batch), self._num_vertices, discarded)
+        logging.info("Found %d distinct numbered graphs with %d vertices.",
+                     len(result), self._num_vertices)
         return result
     
 

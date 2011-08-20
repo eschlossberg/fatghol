@@ -63,6 +63,8 @@ def FatgraphComplex(g, n):
         # set support module and differential
         C[i] = (FatgraphComplexSlice(generators[i]),
                 graph_homology_differential)
+        logging.info("Initialized grade %d chain module (with dimension %d)",
+                     i, len(generators[i]))
     return C
 
 
