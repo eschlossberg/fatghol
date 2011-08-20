@@ -5,9 +5,11 @@
 __docformat__ = 'reStructuredText'
 
 
-from combinatorics import InplacePermutationIterator
-from cyclic import CyclicList
-from utils import *
+import debug
+
+from combinatorics import InplacePermutationIterator,SetProductIterator
+from cyclicseq import CyclicList
+from utils import concat,deep_cmp,itranslate
 
 from itertools import *
 import operator
@@ -44,18 +46,18 @@ class Vertex(CyclicList):
 ##         # the following values will be computed when they are first requested
 ##         self._repetition_pattern = None
         
-    def is_maximal_representative(self):
+    def is_canonical_representative(self):
         """Return `True` if this `Vertex` object is maximal among
-        representatives of same cyclic sequence.
+        representatives of the same cyclic sequence.
         
         Examples::
-          >>> Vertex([3,2,1]).is_maximal_representative()
+          >>> Vertex([3,2,1]).is_canonical_representative()
           True
-          >>> Vertex([2,1,3]).is_maximal_representative()
+          >>> Vertex([2,1,3]).is_canonical_representative()
           False
-          >>> Vertex([1,1]).is_maximal_representative()
+          >>> Vertex([1,1]).is_canonical_representative()
           True
-          >>> Vertex([1]).is_maximal_representative()
+          >>> Vertex([1]).is_canonical_representative()
           True
         """
         L = len(self)
@@ -64,7 +66,7 @@ class Vertex(CyclicList):
                 # k := (i+j) mod L
                 k = i+j
                 if k >= L:
-                    k %= L
+                    k -= L
                 if self[k] < self[j]:
                     # continue with next i
                     break
@@ -72,6 +74,34 @@ class Vertex(CyclicList):
                     return False
                 # else, continue comparing
         return True
+
+    def make_canonical(self):
+        """Alter `Vertex` *in place* so that it is represented by a
+        canonical sequence.
+        
+        Examples::
+          >>> Vertex([3,2,1]).make_canonical()
+          [3, 2, 1]
+          >>> Vertex([2,1,3]).make_canonical()
+          [3, 2, 1]
+        """
+        L = len(self)
+        r = 0
+        for i in xrange(1,L):
+            for j in xrange(0,L):
+                # k := (i+j) mod L
+                k = i+j
+                if k >= L:
+                    k -= L
+                if self[k] < self[j]:
+                    # continue with next i
+                    break
+                elif self[k] > self[j]:
+                    r = i
+                # else, continue comparing
+        if r > 0:
+            self.rotate(r)
+        return self
 
 
 class Graph(object):
@@ -87,6 +117,7 @@ class Graph(object):
         '_num_vertices',
         '_genus',
         '_valence_spectrum',
+        '_vertex_factory',
         '_vertex_valences',
         'endpoints',
         'vertices',
@@ -117,16 +148,16 @@ class Graph(object):
         """
         # build graph for explicit vertex list
         if edge_seq is None:
-            assert is_sequence_of_type(Vertex, vertices), \
+            assert debug.is_sequence_of_type(Vertex, vertices), \
                    "Graph.__init__: parameter `vertices` must be" \
                    " sequence of `Vertex` instances."
             self.vertices = vertices
-            self._vertex_valences = tuple(len(v) for v in vertices)
+            self._vertex_valences = [ len(v) for v in vertices ]
             self._edge_seq = tuple(chain(*[iter(v) for v in vertices]))
 
         # build graph from linear list and vertex valences
         else:
-            assert is_sequence_of_integers(vertices), \
+            assert debug.is_sequence_of_integers(vertices), \
                    "Graph.__init__: parameter `vertices` must be" \
                    " sequence of integers, but got '%s' instead" \
                    % vertices
@@ -135,21 +166,19 @@ class Graph(object):
                    "Graph.__init__: invalid parameter `vertices`:"\
                    "sum of vertex valences must be even."
 
-            assert is_sequence_of_integers(edge_seq), \
+            assert debug.is_sequence_of_integers(edge_seq), \
                    "Graph.__init__: parameter `edge_seq` must be sequence of integers, "\
                    "but got '%s' instead" % edge_seq
 
             # record this for fast comparison and contractions
             self._edge_seq = tuple(edge_seq)
 
-            # Break up `edge_seq` into smaller sequences corresponding to vertices.
+            # Break up `edge_seq` into smaller sequences corresponding
+            # to vertices.
             self.vertices = []
             base = 0
             for current_vertex_index in xrange(len(vertices)):
                 VLEN = vertices[current_vertex_index]
-                # FIXME: this results in `edge_seq` being copied into smaller
-                # subsequences; can we avoid this by defining a list-like object
-                # "vertex" as a "view" on a portion of an existing list?
                 self.vertices.append(vertex_factory(edge_seq[base:base+VLEN]))
                 base += VLEN
 
@@ -161,6 +190,7 @@ class Graph(object):
         self._num_boundary_components = None
         self._genus = None
         self._valence_spectrum = None
+        self._vertex_factory = vertex_factory
         
         # `self.endpoints` is the adjacency list of this graph.  For
         # each edge, store a pair `(v1, v2)` where `v1` and `v2` are
@@ -230,7 +260,7 @@ class Graph(object):
         ## pass 2: for each vertex, pick a destination and return the resulting
         ##         automorphism. (FIXME: do we need to check that the adjacency 
         ##         matrix stays the same?)
-        for a in enumerate_set_product(candidates):
+        for a in SetProductIterator(candidates):
             # check that map does not map two distinct vertices to the same one
             already_assigned = []
             a_is_no_real_map = False
@@ -258,6 +288,60 @@ class Graph(object):
             yield ([ elt[0] for elt in a ],
                    [ elt[1] for elt in a ])
 
+    def contract(self, edgeno):
+        """Return new `Graph` obtained by contracting the specified edge.
+
+        The returned graph is presented in canonical form, that is,
+        vertices are ordered lexicographically, longest ones first.
+        
+        Examples::
+          >>> Graph([3,3], (2,2,0,0,1,1)).contract(0)
+          Graph([4], [[1, 1, 0, 0]])
+          >>> Graph([3,3], (2,1,0,2,1,0)).contract(1)
+          Graph([4], [[1, 1, 0, 0]])
+          >>> Graph([3,3], (2,1,0,2,0,1)).contract(1)
+          Graph([4], [[1, 0, 1, 0]])
+        """
+        # check that we are not contracting a loop
+        assert self.endpoints[edgeno][0] != self.endpoints[edgeno][1], \
+               "Graph.contract: cannot contract a loop."
+
+        # store position of the edge to be contracted at the endpoints
+        i1 = self.endpoints[edgeno][0]
+        i2 = self.endpoints[edgeno][1]
+        pos1 = self.vertices[i1].index(edgeno)
+        pos2 = self.vertices[i2].index(edgeno)
+        
+        # build new list of vertices, removing the contracted edge and
+        # shifting all indices above
+        map = { edgeno:None } # delete specified edge
+        for i in xrange(0, edgeno):
+            map[i] = i        # edges with lower color index are unchanged
+        for i in xrange(edgeno+1, self._num_edges+1):
+            map[i] = i-1       # edges with higher color index are shifted down
+        new_vertices = [ self._vertex_factory(itranslate(map,v)).make_canonical()
+                         for v in self.vertices ]
+
+        # Mate endpoints of contracted edge:
+        # 1. Rotate endpoints `v1`, `v2` so that the given edge
+        #    appears *last* in `v1` and *first* in `v2`:
+        if pos1 < len(new_vertices[i1]):
+            new_vertices[i1].rotate(pos1 + 1)
+        if pos2 < len(new_vertices[i2]):
+            new_vertices[i2].rotate(pos2)
+        # 2. Join vertices by concatenating the list of incident
+        # edges:
+        new_vertices[i1].extend(new_vertices[i2])
+        # 3. Restore canonical form
+        new_vertices[i1].make_canonical()
+        
+        # remove second endpoint from list of new vertices
+        del new_vertices[i2]
+
+        # build new graph in canonical form
+        return Graph(sorted(new_vertices),
+                     vertex_factory=self._vertex_factory)
+        
     def edges(self):
         """Iterate over edge colorings."""
         return xrange(0, self.num_edges())
@@ -282,6 +366,7 @@ class Graph(object):
         for a in self.automorphisms():
             if self.is_orientation_reversing(a):
                 return True
+        # no orientation reverersing automorphism found
         return False
 
     def is_connected(self):
@@ -395,7 +480,7 @@ class Graph(object):
         """
         previous_vertex = None
         for vertex in self.vertices:
-            if not vertex.is_maximal_representative():
+            if not vertex.is_canonical_representative():
                 return False
             if previous_vertex and (previous_vertex < vertex):
                 return False
@@ -551,7 +636,7 @@ class MorphismIteratorFactory(object):
                 # -but not including- `rp_shift`.
                 dests[i1] = dests[i1] + [ (i1,b1,i2,b2,sum(rp1[:s])) for s
                                           in rp1.all_shifts_for_linear_eq(rp2) ]
-            for perm in enumerate_set_product(dests):
+            for perm in SetProductIterator(dests):
                 effective = Mapping()
                 effective_is_ok = True
                 for (i1,b1,i2,b2,shift) in perm:
@@ -603,7 +688,7 @@ class MorphismIteratorFactory(object):
             ]
         vertex_to_vertex_mappings = [
             concat(ps)
-            for ps in enumerate_set_product(permutations_of_vertices_of_same_valence)
+            for ps in SetProductIterator(permutations_of_vertices_of_same_valence)
             ]
         return (vertex_to_vertex_mappings, vertex_to_vertex_mapping_domain)
 
@@ -649,7 +734,7 @@ class ConnectedGraphsIterator(object):
         )
 
     def __init__(self, vertex_valences, vertex_factory=VertexCache()):
-        assert is_sequence_of_integers(vertex_valences), \
+        assert debug.is_sequence_of_integers(vertex_valences), \
                "ConnectedGraphsIterator: parameter `vertex_valences` must be a sequence of integers, "\
                "but got %s" % vertex_valences
         assert 0 == sum(vertex_valences) % 2, \
