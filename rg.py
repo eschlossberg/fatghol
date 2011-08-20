@@ -18,7 +18,8 @@ from cyclicseq import CyclicList,CyclicTuple
 from utils import (
     BufferingIterator,
     concat,
-    itranslate
+    itranslate,
+    sign,
     )
 
 from copy import copy
@@ -776,13 +777,37 @@ class Graph(object):
                " must be in range 0..%d" \
                % (edgeno, self.num_edges)
 
-        # store endpoints and arrow on the edge-to-be-contracted, and
-        # possibly swap endpoints so that `v1 < v2`
+        ## Contraction of an edge should follow the arrow on that
+        ## edge: the vertex at the tail of the arrow is plugged into
+        ## the vertex at the head (or the other way round - it doesn't
+        ## matter as long as the same recipe is followed
+        ## consistently).  The resulting code is however simpler if we
+        ## plug the higher-numbered vertex into the lower-numbered
+        ## one, and possibly reverse the orientation on the resulting
+        ## graph.
+        
+        # store endpoints and arrow on the edge-to-be-contracted; edge
+        # orientation goes from `v1` to `v2`, unless
+        # `self.orient_a[edgeno]` is -1, in which case it is reversed;
+        # at the end of this block of code, `arrow` should be +1 if
+        # edges have been contracted in the order given by the arrow
+        # on `edgeno`, and -1 otherwise.
+        # FIXME: this piece of code must be
+        # kept in sync with `Graph._cmp_orient`.
         (v1, v2) = self.endpoints_v[edgeno]
         (pos1, pos2) = self.endpoints_i[edgeno]
         if v1 > v2:
+            arrow = self.orient_a[edgeno]
+            # swap endpoints so that `v1 < v2`
             v1, v2 = v2, v1
             pos1, pos2 = pos2, pos1
+        elif v1 == v2:
+            if pos1 > pos2:
+                arrow = self.orient_a[edgeno]
+            else:
+                arrow = -self.orient_a[edgeno]
+        else:
+            arrow = -self.orient_a[edgeno]
 
         # save highest-numbered index of vertices to be contracted
         l1 = len(self.vertices[v1]) - 1
@@ -803,10 +828,11 @@ class Graph(object):
                          for v in self.vertices ]
 
         # Mate endpoints of contracted edge:
-        # 1. Rotate endpoints `v1`, `v2` so that the given edge
-        #    appears *last* in `v1` and *first* in `v2` (*Note:*
-        #    the contracted edge has already been deleted from
-        #    `v1` and `v2`, so index positions need to be adjusted);
+        # 1. Rotate endpoints `v1`, `v2` so that the given edge would
+        #    appear *last* in `v1` and *first* in `v2` (*Note:* since
+        #    the contracted edge has already been deleted and `v1`,
+        #    `v2` are *cyclic*, this means that we do the same
+        #    operation on `v1` and `v2` alike).
         # 2. Join vertices by concatenating the list of incident
         #    edges;
         # 3. Set new `i1` vertex in place of old first endpoint:
@@ -865,10 +891,10 @@ class Graph(object):
             if v2 == self.endpoints_v[edge][1]:
                 new_endpoints_i[renumber_edges.get(edge, edge)][1] = renumber_pos2[self.endpoints_i[edge][1]]
 
-        # Properly orient contracted graph.
+        ## Orientation of the contracted graph.
 
-        # vertex order stays the same, but vertices numbered higher
-        # than `self.orient_v[v2]` need to be shifted down one place.
+        ## vertex order stays the same, but vertices numbered higher
+        ## than `self.orient_v[v2]` need to be shifted down one place.
         cut = self.orient_v[v2]
         renumber_orient_v = { cut:None }
         renumber_orient_v.update(dict((x,x) for x in xrange(cut)))
@@ -878,13 +904,36 @@ class Graph(object):
                          for x in xrange(self.num_vertices)
                          if x != v2 ]
         
-        # edges keep their arrows
+        ## edges keep their arrows, *unless* renumbering vertices has
+        ## altered the order relation on endpoints (e.g., an edge with
+        ## endpoints `[v3, v2]` with `v1<v3<v2` would now have
+        ## endpoints `[v3,v1]` and the order relation is exactly the
+        ## opposite, resulting in reversed orientation).
         new_orient_a = self.orient_a[:edgeno] + self.orient_a[edgeno+1:]
+        for x in xrange(self.num_edges):
+            if x == edgeno:
+                continue # with next `x`
+
+            s1 = sign(self.endpoints_v[x][0] - self.endpoints_v[x][1])
+            if s1 == 0:
+                s1 = sign(self.endpoints_i[x][0] - self.endpoints_i[x][1])
+
+            s2 = sign(new_endpoints_v[renumber_edges.get(x,x)][0]
+                      - new_endpoints_v[renumber_edges.get(x,x)][1])
+            if s2 == 0:
+                s2 = sign(new_endpoints_i[renumber_edges.get(x,x)][0]
+                          - new_endpoints_i[renumber_edges.get(x,x)][1])
+            if s1 == s2:
+                continue # with next `x`
+            else:
+                # compensate for changed orientation
+                new_orient_a[renumber_edges.get(x,x)] = s1/s2
+            
         
-        # if the contracted edge had a negative sign, then swap
-        # orientation on the first edge of contracted graph, to
-        # compensate
-        new_orient_a[0] *= self.orient_a[edgeno]
+        ## if vertices have been joined in the order opposite to the
+        ## arrow on `edgeno`, then swap orientation on the first edge
+        ## of contracted graph
+        new_orient_a[0] *= arrow
 
         numbering = None
         bc = None
