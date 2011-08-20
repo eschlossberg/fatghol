@@ -29,6 +29,7 @@ from combinatorics import (
     InplacePermutationIterator,
     SetProductIterator,
     Permutation,
+    PermutationIterator,
     )
 from cyclicseq import CyclicList,CyclicTuple
 from iterators import (
@@ -1873,21 +1874,82 @@ def MakeNumberedGraphs(graph):
                         numbering={CyclicTuple((1, 0, 1, 0)): 0})]
       
     """
-    graphs = []
     bc = graph.boundary_components()
     n = len(bc) # == graph.num_boundary_components()
 
-    for numbering in InplacePermutationIterator(range(n)):
-        # make a copy of `graph` and add the given numbering
-        g = NumberedFatgraph(graph,
-                             [(numbering[x], bc[x]) for x in xrange(n)])
+    ## Build a map of "twin" b.c. indices, that is, if the same
+    ## b.c. appears at positions 3 and 5 in `bc`, then map 3 to 5 and
+    ## 5 to 3.
+    twin = {}
+    for cy in bc:
+        try:
+            i = bc.index(cy)
+            j = bc.index(cy, i+1)
+            twin[i] = j
+            twin[j] =i
+        except ValueError: # only one occurrence of `cy`
+            pass
 
-        # only add `g` to list if it is *not* isomorphic to a graph
-        # already in the list
-        if g not in graphs:
-            graphs.append(g)
+    ## Find out which automorphisms permute the boundary cycles among
+    ## themselves.
+    # XXX: implement `Permutation.__hash__()` and turn `K` into a `set`.
+    K = []
+    for a in graph.automorphisms():
+        k = Permutation()
+        doubles = []
+        k_is_ok = True
+        for src in xrange(n):
+            dst_cy = CyclicTuple(a[2].itranslate(bc[src]))
+            c = bc.count(dst_cy)
+            if c == 2:
+                src2 = twin[src]
+                if src2 < src:
+                    continue # add (src, src2, ...) to doubles only *once*
+                dst = bc.index(dst_cy)
+                dst2 = twin[dst]
+                doubles.append((src, src2, dst, dst2))
+            elif c == 1:
+                dst = bc.index(dst_cy)
+                k[src] = dst
+            else: # `dst_cy` not in `bc`
+                k_is_ok = False
+                break # continue with next `a`
+        if k_is_ok and (k not in K):
+            # `a` induces permutation `k` on the set `bc`
+            K.append(k)
+    ## Augment `K` with the permutations that exchange repeated b.cycles
+    K_ = []
+    for (src, src2, dst, dst2) in doubles:
+        for k in K:
+            k[src] = dst
+            k[src2] = dst2
+            k_ = Permutation(k)  # copy constructor
+            k_[src] = dst2
+            k_[src2] = dst
+            K_.append(k_)
+    K.extend(K_)
 
-    return graphs
+    ## There will be as many distinct numberings as there are cosets
+    ## of `K` in `Sym(n)`.
+    if len(K) > 1:
+        def unseen(candidate, K, already):
+            """Return `False` iff any of the images of `candidate` by an
+            element of group `K` is contained in set `already`.
+            """
+            for k in K:
+                if k.rearrange(candidate) in already:
+                    return False
+            return True
+        numberings = [ ]
+        for candidate in InplacePermutationIterator(range(n)):
+            if unseen(candidate, K, numberings):
+                numberings.append(copy(candidate))
+    else:
+        # if `K` is the one-element group, then all orbits are trivial
+        numberings = PermutationIterator(range(n))
+    
+    result = [ NumberedFatgraph(graph, zip(numbering, bc)) for numbering in numberings ]
+    return result
 
 
 class NumberedFatgraph(Fatgraph):
@@ -2083,9 +2145,9 @@ class NumberedFatgraph(Fatgraph):
             yield (pv, rot, pe)
 
 
-    def numbering_get(self):
+    def _numbering_get(self):
         """Return the numbering previously set on this instance via
-        `.set_numbering()`.
+        `._numbering_set()`.
         """
         return self._numbering
 
@@ -2100,7 +2162,7 @@ class NumberedFatgraph(Fatgraph):
           >>> ug0 = Fatgraph([Vertex([1,2,0]), Vertex([1,0,2])])
           >>> bc = ug0.boundary_components()  # three b.c.'s
           >>> ng0 = NumberedFatgraph(ug0, enumerate(bc))
-          >>> ng0.numbering_get()             \
+          >>> ng0._numbering_get()             \
               == { CyclicTuple((0, 2)): 2, \
                    CyclicTuple((1, 0)): 0, \
                    CyclicTuple((2, 1)): 1  }
@@ -2113,7 +2175,7 @@ class NumberedFatgraph(Fatgraph):
           >>> ug1 = Fatgraph([Vertex([1,2,0,1,2,0])])
           >>> bc = ug1.boundary_components()  # two b.c.'s
           >>> ng1 = NumberedFatgraph(ug1, [(0, bc[1]), (1, bc[0])])
-          >>> ng1.numbering_get() \
+          >>> ng1._numbering_get() \
               == {CyclicTuple((1, 2, 0)): frozenset([0, 1])}
           True
           
@@ -2155,7 +2217,7 @@ class NumberedFatgraph(Fatgraph):
                 numbering[bcy] = n
         self._numbering = numbering
 
-    numbering = property(numbering_get, _numbering_set)
+    numbering = property(_numbering_get, _numbering_set)
     
     
 
