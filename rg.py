@@ -11,6 +11,7 @@ from combinatorics import InplacePermutationIterator,SetProductIterator
 from cyclicseq import CyclicList
 from utils import concat,deep_cmp,itranslate
 
+from copy import copy
 from itertools import *
 import operator
 
@@ -23,7 +24,7 @@ class VertexCache(object):
         self.cache = {}
     def __call__(self, edge_seq):
         key = tuple(edge_seq)
-        if not self.cache.has_key(key):
+        if key not in self.cache:
             self.cache[key] = Vertex(key)
         return self.cache[key]
 
@@ -77,7 +78,7 @@ class Vertex(CyclicList):
 
     def make_canonical(self):
         """Alter `Vertex` *in place* so that it is represented by a
-        canonical sequence.
+        canonical sequence.  Return modified sequence for convenience.
         
         Examples::
           >>> Vertex([3,2,1]).make_canonical()
@@ -111,14 +112,14 @@ class Graph(object):
     can be accessed.
     """
     __slots__ = (
-        '_edge_seq',
+        '_genus',
         '_num_boundary_components',
         '_num_edges',
         '_num_vertices',
-        '_genus',
         '_valence_spectrum',
         '_vertex_factory',
         '_vertex_valences',
+        'edge_seq',
         'endpoints',
         'vertices',
         )
@@ -126,7 +127,7 @@ class Graph(object):
     ## move the code making a `Graph` object out of vertex valences
     ## and edge colorings to a separate factory function
     ## `make_graph_from_edge_seq`, but then the constructor would need
-    ## to recompute `self._edge_seq` and `self._vertex_valences`.
+    ## to recompute `self.edge_seq` and `self._vertex_valences`.
     ## Thus, we favor performance over code elegance and choose to
     ## overload the ctor.
     def __init__(self, vertices, edge_seq=None, vertex_factory=Vertex):
@@ -153,7 +154,7 @@ class Graph(object):
                    " sequence of `Vertex` instances."
             self.vertices = vertices
             self._vertex_valences = [ len(v) for v in vertices ]
-            self._edge_seq = tuple(chain(*[iter(v) for v in vertices]))
+            self.edge_seq = tuple(chain(*[iter(v) for v in vertices]))
 
         # build graph from linear list and vertex valences
         else:
@@ -171,7 +172,7 @@ class Graph(object):
                    "but got '%s' instead" % edge_seq
 
             # record this for fast comparison and contractions
-            self._edge_seq = tuple(edge_seq)
+            self.edge_seq = tuple(edge_seq)
 
             # Break up `edge_seq` into smaller sequences corresponding
             # to vertices.
@@ -200,8 +201,37 @@ class Graph(object):
             for edge in self.vertices[current_vertex_index]:
                 self.endpoints[edge].append(current_vertex_index)
 
+    def __eq__(self, other):
+        """Return `True` if Graphs `self` and `other` are isomorphic.
+
+        Examples::
+          >>> Graph([Vertex([1,0,0,1])]) == Graph([Vertex([1,1,0,0])])
+          True
+        """
+        assert isinstance(other, Graph), \
+               "Graph.__eq__ called with non-Graph argument `other`: %s" % other
+        # shortcuts
+        if self.edge_seq == other.edge_seq:
+            return True
+        if tuple(self._vertex_valences) != tuple(other._vertex_valences):
+            return False
+
+        # go the long way: try to find an explicit isomorphims between
+        # graphs `self` and `other`
+        morphisms = MorphismIteratorFactory(self.valence_spectrum())
+        try:
+            # if there is any morphism, then return `True`
+            morphisms(self, other).next()
+            return True
+        except StopIteration:
+            # list of morphisms is empty, graphs are not equal.
+            return False
+
     def __getitem__(self, index):
         return self.vertices[index]
+
+    def __hash__(self):
+        return hash(self.edge_seq)
 
     def __iter__(self):
         """Return iterator over vertices."""
@@ -295,51 +325,64 @@ class Graph(object):
         vertices are ordered lexicographically, longest ones first.
         
         Examples::
-          >>> Graph([3,3], (2,2,0,0,1,1)).contract(0)
+          >>> Graph([Vertex([2,2,0]), Vertex([0,1,1])]).contract(0)
           Graph([4], [[1, 1, 0, 0]])
-          >>> Graph([3,3], (2,1,0,2,1,0)).contract(1)
+          >>> Graph([Vertex([2,1,0]), Vertex([2,0,1])]).contract(1)
           Graph([4], [[1, 1, 0, 0]])
-          >>> Graph([3,3], (2,1,0,2,0,1)).contract(1)
+
+        The M_{1,1} trivalent graph yield the same result no matter
+        what edge is contracted::
+          >>> Graph([Vertex([2,1,0]), Vertex([2,1,0])]).contract(0)
+          Graph([4], [[1, 0, 1, 0]])
+          >>> Graph([Vertex([2,1,0]), Vertex([2,1,0])]).contract(1)
+          Graph([4], [[1, 0, 1, 0]])
+          >>> Graph([Vertex([2,1,0]), Vertex([2,1,0])]).contract(2)
           Graph([4], [[1, 0, 1, 0]])
         """
         # check that we are not contracting a loop
         assert self.endpoints[edgeno][0] != self.endpoints[edgeno][1], \
                "Graph.contract: cannot contract a loop."
-
         # store position of the edge to be contracted at the endpoints
         i1 = self.endpoints[edgeno][0]
         i2 = self.endpoints[edgeno][1]
         pos1 = self.vertices[i1].index(edgeno)
         pos2 = self.vertices[i2].index(edgeno)
-        
+
         # build new list of vertices, removing the contracted edge and
         # shifting all indices above
-        map = { edgeno:None } # delete specified edge
+        subst = { edgeno:None } # delete specified edge
         for i in xrange(0, edgeno):
-            map[i] = i        # edges with lower color index are unchanged
+            subst[i] = i        # edges with lower color index are unchanged
         for i in xrange(edgeno+1, self._num_edges+1):
-            map[i] = i-1       # edges with higher color index are shifted down
-        new_vertices = [ self._vertex_factory(itranslate(map,v)).make_canonical()
+            subst[i] = i-1       # edges with higher color index are shifted down
+        new_vertices = [ self._vertex_factory(itranslate(subst, v))
                          for v in self.vertices ]
 
         # Mate endpoints of contracted edge:
+        # 0. make copies of vertices `v1`, `v2` so that subsequent
+        #    operations do not alter the (possibly) shared `Vertex`
+        #    object.
+        v1 = copy(new_vertices[i1])
+        v2 = copy(new_vertices[i2])
         # 1. Rotate endpoints `v1`, `v2` so that the given edge
-        #    appears *last* in `v1` and *first* in `v2`:
-        if pos1 < len(new_vertices[i1]):
-            new_vertices[i1].rotate(pos1 + 1)
-        if pos2 < len(new_vertices[i2]):
-            new_vertices[i2].rotate(pos2)
+        #    appears *last* in `v1` and *first* in `v2` (*Note:*
+        #    the contracted edge has already been deleted from
+        #    `v1` and `v2`, so index positions need to be adjusted):
+        if (0 < pos1) and (pos1 < len(v1)):
+            v1.rotate(pos1)
+        if (0 < pos2) and (pos2 < len(v2)):
+            v2.rotate(pos2)
         # 2. Join vertices by concatenating the list of incident
         # edges:
-        new_vertices[i1].extend(new_vertices[i2])
-        # 3. Restore canonical form
-        new_vertices[i1].make_canonical()
-        
-        # remove second endpoint from list of new vertices
+        v1.extend(v2)
+
+        # set new `v1` vertex in place of old first endpoint, 
+        new_vertices[i1]= v1
+        # and remove second endpoint from list of new vertices
         del new_vertices[i2]
 
         # build new graph in canonical form
-        return Graph(sorted(new_vertices),
+        return Graph(sorted(v.make_canonical() for v in new_vertices),
                      vertex_factory=self._vertex_factory)
         
     def edges(self):
@@ -653,14 +696,6 @@ class MorphismIteratorFactory(object):
                         break
                 if effective_is_ok and (len(effective) > 0):
                     # then `perm` really defines a graph morphism between `g1` and `g2`
-##                     print "DEBUG: found isomorphism of %s and %s:" % (g1, g2)
-##                     for (i1,b1,i2,b2,shift) in perm:
-##                         val = len(g1.vertices[i1])
-##                         print "DEBUG:   would map vertex %d to vertex %d (%s ~ %s)" \
-##                               % (i1, i2,
-##                                  g1.vertices[i1][b1+shift:b1+shift+val],
-##                                  g2[i2][b2:b2+val])
-##                     print "DEBUG:   under permutation %s" % effective
                     yield perm
 
     @staticmethod
@@ -700,7 +735,36 @@ class MorphismIteratorFactory(object):
 
 class ConnectedGraphsIterator(object):
     """Iterate over all connected graphs having vertices of the
-    prescribed valences.
+    prescribed valences.  Each step of the iteration returns either a
+    `Graph` object (representing a primitive graph with the given
+    vertex valences), or a tuple `(alias, canonical)` meaning that
+    edge sequence `alias` gives rise to a graph isomorphic to `Graph`
+    instance `canonical`.
+
+    A simple example::
+      >>> list(ConnectedGraphsIterator([4]))
+      [Graph([4], [[1, 0, 1, 0]]),
+       Graph([4], [[1, 1, 0, 0]])]
+
+    An example with aliases:
+      >>> list(ConnectedGraphsIterator([3,3]))
+      [Graph([3, 3], [[2, 0, 1], [2, 0, 1]]),
+       Graph([3, 3], [[2, 1, 0], [2, 0, 1]]),
+       (Graph([3, 3], [[2, 1, 0], [2, 1, 0]]),
+        Graph([3, 3], [[2, 0, 1], [2, 0, 1]])),
+       Graph([3, 3], [[2, 1, 1], [2, 0, 0]]),
+       (Graph([3, 3], [[2, 2, 0], [1, 1, 0]]),
+        Graph([3, 3], [[2, 1, 1], [2, 0, 0]])),
+       (Graph([3, 3], [[2, 2, 1], [1, 0, 0]]),
+        Graph([3, 3], [[2, 1, 1], [2, 0, 0]]))]
+
+    To iterate over primitve graphs only (i.e., to discard aliases),
+    you need to filter the elements returned by the iterator::
+      >>> filter(lambda _: isinstance(_, Graph), ConnectedGraphsIterator([3,3]))
+      [Graph([3, 3], [[2, 0, 1], [2, 0, 1]]),
+       Graph([3, 3], [[2, 1, 0], [2, 0, 1]]),
+       Graph([3, 3], [[2, 1, 1], [2, 0, 0]])]
+    
 
     Generation of all graphs with prescribed vertex valences `(v_1,
     v_2, ..., v_n)` goes this way:
@@ -720,14 +784,6 @@ class ConnectedGraphsIterator(object):
          permutation of the edge labels that transforms `G` into an
          already-found graph, then go back to step 2).
 
-    Examples::
-      >>> list(ConnectedGraphsIterator([4]))
-      [Graph([4], [[1, 0, 1, 0]]),
-       Graph([4], [[1, 1, 0, 0]])]
-      >>> list(ConnectedGraphsIterator([3,3]))
-      [Graph([3, 3], [[2, 0, 1], [2, 0, 1]]),
-       Graph([3, 3], [[2, 1, 0], [2, 0, 1]]),
-       Graph([3, 3], [[2, 1, 1], [2, 0, 0]])]
     """
 
     __slots__ = (

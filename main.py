@@ -4,8 +4,11 @@
 __docformat__ = 'reStructuredText'
 
 
+from graph_homology import FatgraphComplex
 from rg import Graph,ConnectedGraphsIterator
 from valences import vertex_valences_for_given_g_and_n
+
+from itertools import ifilter
 import sys
 from utils import positive_int
 
@@ -106,13 +109,18 @@ parser = OptionParser(usage="""Usage: %prog [options] action [arg ...]
     """)
 parser.add_option("-n", "--silent",
                   action='store_true', dest='silent', default=False,
-                  help="No output. (Use mainly for timing the algorithm.)")
+                  help="No output. (Mainly used for timing the algorithm.)")
 parser.add_option("-L", "--latex",
                   action='store_true', dest='latex', default=False,
                   help="Print Xy-Pic code to draw graphs.")
 parser.add_option("-o", "--output", dest="outfile", default=None,
                   help="Output file for `vertices` action.")
 (options, args) = parser.parse_args()
+
+# hack to allow 'N1,N2,...' or 'N1 N2 ...' syntaxes
+for (i, arg) in enumerate(args):
+    if arg.find(","):
+        args[i:i+1] = arg.split(",")
 
 if 0 == len(args) or 'help' == args[0]:
     parser.print_help()
@@ -153,23 +161,20 @@ elif 'graphs' == args[0]:
     if len(args) == 0:
         parser.print_help()
         sys.exit(1)
-    valences_list = []
-    for pattern in args:
-        try:
-            valences = [ positive_int(v) for v in pattern.split(',') ]
-        except ValueError, msg:
-            sys.stderr.write("Bad argument '%s': " \
-                             "vertex valences must be a comma-separated " \
-                             "list of positive integers: %s" \
-                             % (pattern, msg))
-            sys.exit(1)
-        if sum(valences) % 2 != 0:
-            sys.stderr.write("Invalid argument '%s': " \
-                             "sum of vertex valences must be an even number. " \
-                             "Aborting." \
-                             % (pattern,))
-            sys.exit(1)
-        valences_list.append(valences)
+
+    try:
+        valences = [ positive_int(val) for val in args ]
+    except ValueError, msg:
+        sys.stderr.write("Invalid command line:"\
+                         " all vertex valences must be positive integers: %s\n" \
+                         % msg)
+        sys.exit(1)
+    if sum(valences) % 2 != 0:
+        sys.stderr.write("Invalid valence list '%s': " \
+                         "sum of vertex valences must be an even number. " \
+                         "Aborting.\n" \
+                         % (" ".join(str(val) for val in valences)))
+        sys.exit(1)
 
     # open output file
     if options.outfile is None:
@@ -178,9 +183,8 @@ elif 'graphs' == args[0]:
         outfile = open(options.outfile, 'w')
     # compute graphs matching given vertex sequences
     graphs = []
-    for vertex_pattern in args:
-        valences = map(int, vertex_pattern.split(','))
-        graphs += tuple(ConnectedGraphsIterator(valences))
+    graphs += tuple(ifilter(lambda g: not isinstance(g, tuple),
+                            ConnectedGraphsIterator(valences)))
 
     # output results
     if not options.silent:
@@ -205,3 +209,35 @@ elif 'graphs' == args[0]:
         if options.latex:
             outfile.write(r"\end{document}")
             outfile.write("\n")
+
+elif 'homology' == args[0]:
+    # parse command line
+    del args[0]
+    if len(args) == 0:
+        parser.print_help()
+        sys.exit(1)
+
+    try:
+        g = int(args[0])
+        if g < 0:
+            raise ValueError
+    except ValueError:
+        sys.stderr.write("Bad value '%s' for argument G: " \
+                         "should be positive integer.\n" \
+                         % (args[0],))
+        sys.exit(1)
+    try:
+        n = positive_int(args[1])
+    except ValueError, msg:
+        sys.stderr.write("Bad value '%s' for argument N: " \
+                         "should be non-negative integer.\n" \
+                         % (args[1],))
+        sys.exit(1)
+
+    # compute graph complex and its homology ranks
+    graph_complex = FatgraphComplex(g,n)
+    hs = graph_complex.compute_homology_ranks()
+
+    # print results
+    for (i, h) in enumerate(hs):
+        print "h_%d(M_{%d,%d}) = %d" % (i, g, n, h)

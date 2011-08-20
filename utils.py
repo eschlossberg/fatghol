@@ -135,7 +135,7 @@ class itranslate:
     def next(self):
         while True:
             next = self.iterable.next()
-            if not self.mappings.has_key(next):
+            if next not in self.mappings:
                 return next
             translated = self.mappings[next]
             if translated is None:
