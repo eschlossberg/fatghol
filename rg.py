@@ -4,10 +4,20 @@
 """
 __docformat__ = 'reStructuredText'
 
+## logging subsystem
+
+import logging
+
+## stdlib imports
 
 import debug, pydb, sys
 sys.excepthook = pydb.exception_hook
 
+from copy import copy
+from itertools import chain,count,izip
+
+
+## application-local imports
 
 from combinatorics import (
     InplacePermutationIterator,
@@ -22,9 +32,8 @@ from utils import (
     sign,
     )
 
-from copy import copy
-from itertools import chain,count,izip
 
+## main
 
 class VertexCache(object):
     """A caching factory of `Vertex` objects.
@@ -1981,21 +1990,31 @@ class MgnGraphsIterator(BufferingIterator):
         max_valence = 2 * (2*g + n - 1)
 
         ## pass 1: Gather all roses.
+        logging.info("Computing roses with %d leaves ...", max_valence/2)
         roses = []
+        discarded = 0
         for rose in GivenValenceGraphsIterator((max_valence,)):
             if (rose.genus() != self.g) \
                    or (rose.num_boundary_components() != self.n) \
                    or (rose in roses):
+                discarded += 1
                 continue
             roses.append(rose)
             # a rose is a valid fatgraph too
             #graphs.extend(MakeNumberedGraphs(rose))
+        logging.info("Found %d distinct unique roses; discarded %d.",
+                     len(roses), discarded)
             
         ## pass 2: Gather all 3-valent graphs.
         trivalent = []
         #: Full binary trees
+        logging.info("Computing full binary trees with %d leaves ...",
+                     max_valence - 3)
         trees = [ Tree(zip(l,r))
                   for l,r in AlgorithmB(max_valence - 3) ]
+
+        logging.info("Computing trivalent fat graphs ...")
+        discarded = 0
         for rose in roses:
             # now substitute the unique vertex with any possible tree
             # and any possible rotation
@@ -2008,10 +2027,13 @@ class MgnGraphsIterator(BufferingIterator):
                     if (graph.genus() != self.g) \
                            or (graph.num_boundary_components() != self.n) \
                            or (graph in trivalent):
+                        discarded += 1
                         continue
                     trivalent.append(graph)
                     # insert decorated graphs into iterator buffer
                     graphs.extend(MakeNumberedGraphs(graph))
+        logging.info("Found %d distinct unique trivalent graphs, discarded %d.",
+                     len(trivalent), discarded)
 
         #: Graphs to be contracted at next `.refill()` invocation
         self._batch = trivalent
@@ -2029,7 +2051,10 @@ class MgnGraphsIterator(BufferingIterator):
     def refill(self):
         if self._num_vertices == 0:
             raise StopIteration
-        
+
+        logging.info("Generating graphs with %d vertices ...",
+                     self._num_vertices)
+        discarded = 0
         result = []
         next_batch = []
         for graph in self._batch:
@@ -2044,6 +2069,9 @@ class MgnGraphsIterator(BufferingIterator):
                         next_batch.append(dg)
         self._batch = next_batch
         self._num_vertices -= 1
+
+        logging.info("Found %d distinct unique graphs with %d vertices, discarded %d.",
+                     len(next_batch), self._num_vertices, discarded)
         return result
     
 
