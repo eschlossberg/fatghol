@@ -27,6 +27,7 @@ from combinatorics import (
     factorial,
     minus_one_exp,
     )
+import timing
 from utils import concat, positive_int
 
 
@@ -107,12 +108,15 @@ def do_graphs(g,n):
     `(g,n)`-graphs, and `D` is a list, the `k`-th element of which is
     the list of differentials of graphs with `k` edges.
     """
+    timing.start("do_graphs(%d,%d)" % (g,n))
+
     logging.info("Stage I: Computing fat graphs for g=%d, n=%d ...", g, n)
     G = FatgraphComplex(g,n)
     
     logging.info("Stage II: Computing matrix form of boundary operator ...")
     D = G.compute_boundary_operators()
 
+    timing.stop("do_graphs(%d,%d)" % (g,n))
     return (G, D)
 
     
@@ -121,6 +125,8 @@ def do_homology(g, n):
 
     Return array of homology ranks.
     """
+    timing.start("do_homology(%d,%d)" % (g,n))
+
     logging.info("Stage I: Computing fat graphs for g=%d, n=%d ...", g, n)
     G = FatgraphComplex(g,n)
 
@@ -129,6 +135,8 @@ def do_homology(g, n):
 
     logging.info("Stage III: Computing rank of homology modules ...")
     hs = list(reversed(D.compute_homology_ranks()))
+
+    timing.stop("do_homology(%d,%d)" % (g,n))
 
     # compare orbifold Euler characteristics
     chi = G.orbifold_euler_characteristics
@@ -523,6 +531,8 @@ elif "graphs" == args[0]:
 
     graphs, D = do_graphs(g,n)
     #graphs = concat([ list(aggr.itervalues()) for aggr in G.module ])
+    logging.info("Graph family computation took %.3fs.",
+                 timing.get("do_homology(%d,%d)" % (g,n)))
     
     # output results
     if options.latex:
@@ -666,6 +676,8 @@ elif 'homology' == args[0]:
 
     # compute graph complex and its homology ranks
     hs = do_homology(g, n)
+    logging.info("Homology computation took %.3fs.",
+                 timing.get("do_homology(%d,%d)" % (g,n)))
 
     # print results
     for (i, h) in enumerate(hs):
@@ -707,7 +719,7 @@ elif minutes > 0:
     elapsed = "%d minutes and %2.3f seconds" % (minutes, seconds)
 else:
     elapsed = "%2.3f seconds" % seconds
-logging.info("CPU time used: " + elapsed)
+logging.info("Total CPU time used: " + elapsed)
 
 # That's all folks!
 logging.debug("Done: %s" % str.join(" ", sys.argv))

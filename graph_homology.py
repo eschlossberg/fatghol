@@ -43,6 +43,7 @@ from rg import (
     Vertex, 
     BoundaryCycle,
     )
+import timing
 from utils import maybe
 from valences import vertex_valences_for_given_g_and_n
 
@@ -110,6 +111,7 @@ class MgnChainComplex(ChainComplex):
         D = DifferentialComplex()
         D.append(NullMatrix, 0, len(m[0]))
         for i in xrange(1, len(self)):
+            timing.start("D[%d]" % i)
             p = len(m[i-1]) # == dim C[i-1]
             q = len(m[i])   # == dim C[i]
             d = SimpleMatrix(p, q)
@@ -129,7 +131,9 @@ class MgnChainComplex(ChainComplex):
                     k0 += len(pool2)
                 j0 += len(pool1)
             D.append(d, p, q)
-            logging.info("  Computed %dx%d matrix D[%d]", p, q, i)
+            timing.stop("D[%d]" % i)
+            logging.info("  Computed %dx%d matrix D[%d] (elapsed: %.3fs)", 
+                         p, q, i, timing.get("D[%d]" % i))
         return D
 
 

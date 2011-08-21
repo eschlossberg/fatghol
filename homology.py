@@ -18,6 +18,7 @@ from collections import defaultdict
 ## application-local imports
 
 from simplematrix import SimpleMatrix, is_null_product
+import timing
 
 
 ## main
@@ -288,10 +289,13 @@ class DifferentialComplex(list):
         #: ranks of `D[n]` matrices, for 0 <= n < len(self); the differential
         #: `D[0]` is the null map.
         ranks = []
+        i = 0
         for (A, ddim, cdim) in self:
+            timing.start("rank D[%d]" % i)
             ranks.append(A.rank())
-        for (i, r) in enumerate(ranks):
-            logging.info("  rank D[%d]=%d", i, r)
+            timing.stop("rank D[%d]" % i)
+            logging.info("  rank D[%d]=%d (Elapsed: %.3fs)", 
+                         i, ranks[-1], timing.get("rank D[%d]" % i))
 
         ## compute homology group ranks from rank and nullity
         ## of boundary operators.

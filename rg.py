@@ -41,6 +41,7 @@ from iterators import (
     Iterator,
     itranslate,
     )
+import timing
 from utils import (
     concat,
     maybe,
@@ -1659,7 +1660,8 @@ def MgnTrivalentGraphsRecursiveGenerator(g, n):
             ##                         yield Fatgraph.bridge2(G1, x1, 0, G2, x2, 1)
             ##                         yield Fatgraph.bridge2(G1, x1, 1, G2, x2, 0)
             ##                         yield Fatgraph.bridge2(G1, x1, 1, G2, x2, 1)
-
+                        
+        timing.start("MgnTrivalentGraphsRecursiveGenerator(%d,%d)" % (g,n))
         unique = []
         discarded = 0
         for G in graphs(g,n):
@@ -1670,8 +1672,11 @@ def MgnTrivalentGraphsRecursiveGenerator(g, n):
                 continue
             unique.append(G)
             yield G
+        timing.stop("MgnTrivalentGraphsRecursiveGenerator(%d,%d)" % (g,n))
 
-        logging.debug("  MgnTrivalentGraphsRecursiveGenerator(%d,%d) done: %d unique graphs, discarded %d duplicates." % (g,n, len(unique), discarded))
+        logging.debug("  MgnTrivalentGraphsRecursiveGenerator(%d,%d) done: %d unique graphs, discarded %d duplicates. (Elapsed: %.3fs)", 
+                      g,n, len(unique), discarded, 
+                      timing.get("MgnTrivalentGraphsRecursiveGenerator(%d,%d)" % (g,n)))
 
 
 
@@ -1710,7 +1715,9 @@ class MgnGraphsIterator(BufferingIterator):
         self.n = n
         
         # Gather all 3-valent graphs.
+        timing.start("MgnGraphsIterator: trivalent graphs")
         trivalent = list(MgnTrivalentGraphsRecursiveGenerator(g,n))
+        timing.stop("MgnGraphsIterator: trivalent graphs")
 
         #: Fatgraphs to be contracted at next `.refill()` invocation
         self._batch = trivalent
@@ -1721,7 +1728,8 @@ class MgnGraphsIterator(BufferingIterator):
         
         # initialize superclass with list of trivalent graphs
         BufferingIterator.__init__(self, trivalent)
-        logging.info("  Found %d distinct unique trivalent fatgraphs." % len(trivalent))
+        logging.info("  Found %d distinct unique trivalent fatgraphs. (Elapsed: %.3fs)",
+                     len(trivalent), timing.get("MgnGraphsIterator: trivalent graphs"))
 
 
     def refill(self):
@@ -1730,6 +1738,7 @@ class MgnGraphsIterator(BufferingIterator):
 
         logging.debug("Generating graphs with %d vertices ...",
                      self._num_vertices)
+        timing.start("MgnGraphsIterator: %d vertices" % self._num_vertices)
         discarded = 0
         next_batch = []
         for graph in self._batch:
@@ -1742,8 +1751,10 @@ class MgnGraphsIterator(BufferingIterator):
                         next_batch.append(dg)
                     else:
                         discarded += 1
-        logging.info("  Found %d distinct unique fatgraphs with %d vertices, discarded %d duplicates.",
-                     len(self._batch), self._num_vertices, discarded)
+        timing.stop("MgnGraphsIterator: %d vertices" % self._num_vertices)
+        logging.info("  Found %d distinct unique fatgraphs with %d vertices, discarded %d duplicates. (Elapsed: %.3fs)",
+                     len(self._batch), self._num_vertices, discarded,
+                     timing.get("MgnGraphsIterator: %d vertices" % self._num_vertices))
 
         self._batch = next_batch
         self._num_vertices -= 1
