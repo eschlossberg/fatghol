@@ -1,18 +1,25 @@
 #! /bin/sh
 
-## set up Python module search path
 basedir="`dirname $0`"
+if [ "$basedir" = '.' ]; then
+  basedir="`pwd`"
+fi
+
+## set up Python module search path
+
+PATH="$basedir"/sw/bin:$PATH; export PATH
+hash -d python 2>/dev/null
 
 arch="`uname -m`"
 v="`python -V 2>&1 | cut -d' ' -f2 | cut -d. -f1,2`"
 os="`uname -s | tr A-Z a-z`"
 
 PYTHONPATH="$basedir":"$basedir"/build/lib.${os}-${arch}-${v}:$PYTHONPATH; export PYTHONPATH
-LD_LIBRARY_PATH="$basedir"/build/lib.${os}-${arch}-${v}:"$basedir"/sw/lib:$LD_LIBRARY_PATH; export LD_LIBRARY_PATH
+LD_LIBRARY_PATH="$basedir"/build/lib.${os}-${arch}-${v}:"$basedir"/sw/lib/python${v}:"$basedir"/sw/lib:"$basedir":$LD_LIBRARY_PATH; export LD_LIBRARY_PATH
 
 ## try to use GNU time
 if [ -x /usr/bin/time ]; then
-    # usueal location in Linux systems
+    # usual location in Linux systems
     time_cmd=/usr/bin/time
 else
     # whatever is in PATH
