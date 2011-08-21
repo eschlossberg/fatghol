@@ -29,12 +29,7 @@ from cache import (
     cache_id
     )
 from collections import defaultdict
-from combinatorics import (
-    InplacePermutationIterator,
-    SetProductIterator,
-    Permutation,
-    PermutationIterator,
-    )
+from combinatorics import Permutation
 from cyclicseq import CyclicList,CyclicTuple
 from iterators import (
     BufferingIterator,

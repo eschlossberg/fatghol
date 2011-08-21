@@ -20,8 +20,6 @@ from combinatorics import (
     factorial,
     minus_one_exp,
     Permutation,
-    PermutationIterator,
-    InplacePermutationIterator,
     )
 from cache import (
     ocache0,
@@ -516,14 +514,12 @@ class NumberedFatgraphPool(object):
                         return False
                 return True
             numberings = []
-            for candidate in InplacePermutationIterator(range(n)):
+            for candidate in itertools.permutations(range(n)):
                 if unseen(candidate, P, numberings):
-                    numberings.append(copy(candidate))
+                    numberings.append(list(candidate))
         else:
             # if `P` is the one-element group, then all orbits are trivial
-            #numberings = PermutationList(n)
-            #numberings = list(PermutationIterator(range(n)))
-            numberings = [ copy(p) for p in InplacePermutationIterator(range(n)) ]
+            numberings = [ list(p) for p in itertools.permutations(range(n)) ]
 
         # things to remember
         self.graph = graph

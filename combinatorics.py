@@ -84,7 +84,9 @@ def choose(n,k):
     Examples::
     
       # Pascal's triangle
-      >>> for n in range(4): print str.join(" ", [choose(n,k) for k in range(n+1)])
+      >>> for n in range(5): 
+      ...   print str.join(" ", [("%d" % choose(n,k)) for k in range(n+1)])
+      1
       1 1
       1 2 1
       1 3 3 1
@@ -258,68 +260,72 @@ class OrderedSetPartitionsIterator(object):
         raise StopIteration
 
 
+try:
+    # use the `itertools` version if there is one...
+    SetProductIterator = itertools.product
+except AttributeError:
+    # ...otherwise use our pure-Python version
+    class SetProductIterator(object):
+        """Iterate over all elements in a cartesian product.
 
-class SetProductIterator(object):
-    """Iterate over all elements in a cartesian product.
+        Argument `factors` is a sequence, all whose items are sequences
+        themselves: the returned iterator will return -upon each
+        successive invocation- a tuple `(t_1, t_2, ..., t_n)` where `t_k`
+        is an item in the `k`-th sequence.
 
-    Argument `factors` is a sequence, all whose items are sequences
-    themselves: the returned iterator will return -upon each
-    successive invocation- a list `[t_1, t_2, ..., t_n]` where `t_k`
-    is an item in the `k`-th sequence.
+        Examples::
+          >>> list(SetProductIterator())
+          [()]
+          >>> list(SetProductIterator([1]))
+          [(1,)]
+          >>> list(SetProductIterator([1],[1]))
+          [(1, 1)]
+          >>> list(SetProductIterator([1,2],[]))
+          [()]
+          >>> list(SetProductIterator([1,2],[1]))
+          [(1, 1), (2, 1)]
+          >>> list(SetProductIterator([1,2],[1,2]))
+          [(1, 1), (2, 1), (1, 2), (2, 2)]
+        """
+        def __init__(self, *factors):
+            self.__closed = False
+            self.__factors = factors
+            self.__L = len(factors)
+            self.__M = [ len(s)-1 for s in factors ]
+            self.__m = [0] * self.__L
+            self.__i = 0
 
-    Examples::
-      >>> list(SetProductIterator([]))
-      [[]]
-      >>> list(SetProductIterator([[1]]))
-      [[1]]
-      >>> list(SetProductIterator([[1],[1]]))
-      [[1, 1]]
-      >>> list(SetProductIterator([[1,2],[]]))
-      [[]]
-      >>> list(SetProductIterator([[1,2],[1]]))
-      [[1, 1], [2, 1]]
-      >>> list(SetProductIterator([[1,2],[1,2]]))
-      [[1, 1], [2, 1], [1, 2], [2, 2]]
-    """
-    def __init__(self, factors):
-        self.__closed = False
-        self.__factors = factors
-        self.__L = len(factors)
-        self.__M = [ len(s)-1 for s in factors ]
-        self.__m = [0] * self.__L
-        self.__i = 0
+        def __iter__(self):
+            return self
 
-    def __iter__(self):
-        return self
-
-    def next(self):
-        if self.__closed:
-            raise StopIteration
-        if (0 == self.__L) or (-1 in self.__M):
-            # there are no factors, or one of them has no elements
-            self.__closed = True
-            return []
-        else:
-            if self.__i < self.__L:
-                # will return element corresponding to current multi-index
-                result = [ s[self.__m[i]]
-                           for (i,s) in enumerate(self.__factors) ]
-                # advance multi-index
-                i = 0
-                while (i < self.__L):
-                    if self.__m[i] == self.__M[i]:
-                        self.__m[i] = 0
-                        i += 1
-                    else:
-                        self.__m[i] += 1
-                        break
-                self.__i = i
-                # back to caller
-                return result
-            else:
-                # at end of iteration
-                self.__closed = True
+        def next(self):
+            if self.__closed:
                 raise StopIteration
+            if (0 == self.__L) or (-1 in self.__M):
+                # there are no factors, or one of them has no elements
+                self.__closed = True
+                return tuple()
+            else:
+                if self.__i < self.__L:
+                    # will return element corresponding to current multi-index
+                    result = tuple(s[self.__m[i]]
+                                   for (i,s) in enumerate(self.__factors))
+                    # advance multi-index
+                    i = 0
+                    while (i < self.__L):
+                        if self.__m[i] == self.__M[i]:
+                            self.__m[i] = 0
+                            i += 1
+                        else:
+                            self.__m[i] += 1
+                            break
+                    self.__i = i
+                    # back to caller
+                    return result
+                else:
+                    # at end of iteration
+                    self.__closed = True
+                    raise StopIteration
 
 
 class Permutation(dict):
@@ -565,9 +571,9 @@ class PermutationList(object):
     Examples::
       >>> ps = PermutationList(3)
       >>> ps[0]
-      [0, 1, 2]
+      (0, 1, 2)
       >>> ps[5]
-      [2, 1, 0]
+      (2, 1, 0)
 
       >>> for n in range(6):
       ...   print len(set(tuple(x) for x in PermutationList(n+1)))
@@ -598,7 +604,7 @@ class PermutationList(object):
             temp = perm[i+j]
             perm[i+1 : i+j+1] = perm[i : i+j]
             perm[i] = temp
-        return perm
+        return tuple(perm)
     
     def __len__(self):
         return factorial(self.__order)
@@ -613,17 +619,17 @@ class PermutationIterator(object):
     The permutations are returned in no particular order::
       >>> p = PermutationIterator([1,2,3])
       >>> p.next()
-      [3, 1, 2]
+      (3, 1, 2)
       >>> p.next()
-      [3, 2, 1]
+      (3, 2, 1)
       >>> p.next()
-      [2, 3, 1]
+      (2, 3, 1)
       >>> p.next()
-      [1, 3, 2]
+      (1, 3, 2)
       >>> p.next()
-      [2, 1, 3]
+      (2, 1, 3)
       >>> p.next()
-      [1, 2, 3]
+      (1, 2, 3)
 
       >>> for n in range(6):
       ...   print len(set(tuple(x) for x in PermutationIterator(range(n+1))))
@@ -650,7 +656,7 @@ class PermutationIterator(object):
             i /= j - 1
             seq[j-1], seq[i % j] = seq[i % j], seq[j-1]
         self.rank += 1
-        return seq
+        return tuple(seq)
 
 
 class InplacePermutationIterator(object):
