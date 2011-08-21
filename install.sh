@@ -1,4 +1,4 @@
-#! /bin/sh -x
+#! /bin/sh
 #
 ## Customization section
 
@@ -8,12 +8,12 @@
 #
 PYTHON=2.7.2 # http://www.python.org/ftp/python/2.7.2/Python-2.7.2.tar.bz2
 #CYTHON=0.13
-#SWIG=1.3.35
+SWIG=2.0.4
 LINBOX=1.1.7
 GMP=5.0.2
 GIVARO=3.3.2
 ATLAS=3.8.4
-TCMALLOC=1.8.2 # http://google-perftools.googlecode.com/files/google-perftools-1.8.2.tar.gz
+#TCMALLOC=1.8.2 # http://google-perftools.googlecode.com/files/google-perftools-1.8.2.tar.gz
 
 
 ## No customization should be necessary further down here
@@ -139,9 +139,9 @@ fi # PYTHON
 if [ -n "${SWIG}" ]; then
     _ Downloading SWIG ${SWIG}
     cd ${sw}/src/
-    wget -N http://mirror.switch.ch/ftp/ubuntu/pool/main/s/swig1.3/swig1.3_${SWIG}.orig.tar.gz
+    wget -N http://downloads.sourceforge.net/project/swig/swig/swig-${SWIG}/swig-${SWIG}.tar.gz
     set -x
-    tar -xzf swig1.3_${SWIG}.orig.tar.gz
+    tar -xzf swig-${SWIG}.tar.gz
     cd swig-${SWIG}
     ./configure --prefix=${sw} \
         --with-python=${sw}/bin \
