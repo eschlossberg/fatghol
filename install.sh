@@ -8,12 +8,12 @@
 #
 PYTHON=2.7.2 # http://www.python.org/ftp/python/2.7.2/Python-2.7.2.tar.bz2
 #CYTHON=0.13
-SWIG=2.0.4
+SWIG=1.3.40
 LINBOX=1.1.7
-GMP=5.0.2
+GMP=5.0.1
 GIVARO=3.3.2
 ATLAS=3.8.4
-#TCMALLOC=1.8.2 # http://google-perftools.googlecode.com/files/google-perftools-1.8.2.tar.gz
+TCMALLOC=1.8.3 # http://google-perftools.googlecode.com/files/google-perftools-1.8.3.tar.gz
 
 
 ## No customization should be necessary further down here
@@ -86,10 +86,11 @@ require_command wget
 set -e
 
 # target directory
-if [ $# -eq 0 ]; then
-    sw='sw';
+if [ -n "$1" ]; then
+    sw="$1"
+    shift
 else
-    sw="${1}"; shift 1
+    sw='sw'
 fi
 if ! is_absolute_path "$sw"; then 
     sw="$(pwd)/${sw}"
@@ -274,32 +275,10 @@ if [ -n "$TCMALLOC" ]; then
     tar -xzf "google-perftools-${TCMALLOC}.tar.gz"
     cd google-perftools-${TCMALLOC}
     ./configure --prefix=${sw} \
-        --enable-frame-pointers --disable-debualloc \
+        --enable-frame-pointers --disable-debugalloc \
         "$@";
     $concurrent_make
     make install
-    set +x
-fi
-
-
-# Intel TBB
-if [ -n "$TBB" ]; then
-    _ Installing Intel TBB $TBB ...
-    cd ${sw}/src/
-    set -x 
-    case "$TBB" in
-        20100915oss) # TBB download URL changes with release ...
-            wget -N "http://www.threadingbuildingblocks.org/uploads/77/161/3.0%20update%203/tbb30_20100915oss_lin.tgz"
-            wget -N "http://www.threadingbuildingblocks.org/uploads/77/161/3.0%20update%203/tbb30_20100915oss_src.tgz"
-            ;;
-        *)
-            die 1 "Unknown download URL for Intel TBB ${TBB}"
-            ;;
-    esac
-    mkdir -p ${sw}/opt
-    for tgz in tbb*.tgz; do
-        tar -xzf "$tgz" -C "${sw}/opt"
-    done
     set +x
 fi
 
