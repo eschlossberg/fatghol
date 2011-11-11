@@ -1,5 +1,8 @@
+import cython
+
 import itertools
 
+@cython.cclass
 class AggregateList(object):
     """Act on a set of lists as if they were concatenated together.
 
@@ -51,7 +54,8 @@ class AggregateList(object):
         for component in self.__components:
             if component.__contains__(value):
                 return True
-            
+
+    @cython.locals(i=cython.int, l=cython.int, n=cython.int)
     def __delitem__(self, i):
         for (n, component) in enumerate(self.__components):
             l = len(component)
@@ -62,6 +66,7 @@ class AggregateList(object):
                 self.__lengths[n] -= 1
         raise IndexError("AggregateList.__delitem__(): list assignment out of range")
 
+    @cython.locals(i=cython.int, l=cython.int)
     def __getitem__(self, i):
         for component in self.__components:
             l = len(component)
@@ -71,22 +76,28 @@ class AggregateList(object):
                 return component.__getitem__(i)
         raise IndexError("AggregateList.__getitem__(): list assignment out of range")
 
+    @cython.ccall
     def iterblocks(self):
         return iter(self.__components)
+
+    @cython.ccall
     def itervalues(self):
         return itertools.chain(* self.__components)
-    __iter__ = itervalues
+    def __iter__(self):
+        return self.itervalues()
 
     def __len__(self):
         return sum(self.__lengths)
 
+    @cython.locals(i=cython.int, l=cython.int)
     def __setitem__(self, i, value):
         for component in self.__components:
             l = len(component)
             if i >= l:
                 i -= l
             else:
-                return component.__setitem__(i, value)
+                component.__setitem__(i, value)
+                return
         raise IndexError("AggregateList.__setitem__(): list assignment out of range")
 
     def aggregate(self, *seqs):
@@ -103,21 +114,39 @@ class AggregateList(object):
             self.__components.append(s)
             self.__lengths.append(len(s))
 
+    @cython.ccall
+    def aggregate1(self, seq):
+        """Append sequence `seq` to the aggregate list.
+
+        Example::
+
+          >>> a = AggregateList([0,1,2])
+          >>> a.aggregate([3,4])
+          >>> a.aggregate([5,6])
+          >>> list(a)
+          [0, 1, 2, 3, 4, 5, 6]
+        """
+        self.__components.append(seq)
+        self.__lengths.append(len(seq))
+
+    @cython.cfunc
     def append(self, item):
         """Append `item` to the last component."""
         self.__components[-1].append(item)
         self.__lengths[-1] += 1
         
+    @cython.cfunc
     def extend(self, seq):
         """Extend the last component with `seq`."""
         self.__components[-1].extend(seq)
         self.__lengths[-1] = len(self.__components[-1])
 
+    @cython.cfunc(cython.int)
     def index(self, value, start=0):
         """Return index of the first element equal to `value`."""
-        index = 0
+        index = cython.declare(cython.int, 0)
         for component in self.__components:
-            l = len(component)
+            l = cython.declare(cython.int, len(component))
             if start > l:
                 start -= l
                 index += l
