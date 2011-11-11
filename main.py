@@ -21,12 +21,9 @@ import resource
 
 ## application-local imports
 
+from const import euler_characteristics, orbifold_euler_characteristics
 from fractions import Fraction
-from combinatorics import (
-    bernoulli,
-    factorial,
-    minus_one_exp,
-    )
+from combinatorics import minus_one_exp
 import timing
 from utils import concat, positive_int
 
@@ -139,68 +136,25 @@ def do_homology(g, n):
     timing.stop("do_homology(%d,%d)" % (g,n))
 
     # compare orbifold Euler characteristics
-    chi = G.orbifold_euler_characteristics
-    logging.info("Computed orbifold Euler characteristics: %s" % chi)
-    if g==0:
-        chi_hz = factorial(n-3) * minus_one_exp(n-3)
-    elif g==1:
-        chi_hz = Fraction(minus_one_exp(n), 12) * factorial(n-1)
-    else: # g > 1
-        chi_hz = bernoulli(2*g) * factorial(2*g+n-3) / (factorial(2*g-2) * 2*g) * minus_one_exp(n)
-    logging.info("  Expected orbifold Euler characteristics (according to Harer): %s", chi_hz)
-    if chi != chi_hz:
+    computed_chi = G.orbifold_euler_characteristics
+    logging.info("Computed orbifold Euler characteristics: %s", computed_chi)
+    expected_chi = orbifold_euler_characteristics(g,n)
+    logging.info("  Expected orbifold Euler characteristics (according to Harer): %s",
+                 expected_chi)
+    if computed_chi != expected_chi:
         logging.error("Expected and computed orbifold Euler characteristics do not match!"
-                      " (computed: %s, expected: %s)" % (chi, chi_hz))
+                      " (computed: %s, expected: %s)" % (computed_chi, expected_chi))
 
     # compare Euler characteristics
-    def e(g,n):
-        """Return Euler characteristics of `M_{g,n}`.
-        """
-        if g==0:
-            # according to Bini-Gaiffi-Polito arXiv:math/9806048, p.3
-            return factorial(n-3)*minus_one_exp(n-3)
-        elif g==1:
-            # according to Bini-Gaiffi-Polito, p. 15
-            if n>4:
-                return factorial(n-1)*Fraction(minus_one_exp(n-1),12)
-            else:
-                es = [1,1,0,0]
-                return es[n-1] # no n==0 computed in [BGP]
-        elif g==2:
-            # according to Bini-Gaiffi-Polito, p. 14
-            if n>6:
-                return factorial(n+1)*Fraction(minus_one_exp(n+1),240)
-            else:
-                es = [1,2,2,0,-4,0,-24]
-                return es[n]
-        elif g>2:
-            # according to Bini-Harer arXiv:math/0506083, p. 10
-            es = [None, # g==0 already done above
-                  None, # g==1
-                  None, # g==2
-                  # n==1  n==2     n==3     n==4        n==5        n==6          n==7          n==8
-                  [    8,    6,       4,     -10,         30,       -660,         6540,        79200], # g==3
-                  [   -2,  -10,     -24,     -24,       -360,       2352,       -37296,       501984], # g==4
-                  [   12,   26,      92,     182,       1674,     -16716,       238980,     -3961440], # g==5
-                  [    0,  -46,    -206,     188,      -7512,     124296,     -2068392,     37108656], # g==6
-                  [   38,  120,     676,   -1862,      71866,   -1058676,     21391644,   -422727360], # g==7
-                  [ -166, -630,   -5362,   16108,    -680616,   12234600,   -259464240,   5719946400], # g==8
-                  [  748, 2132,   29632, -323546,    7462326, -164522628,   3771668220, -90553767840], # g==9
-                  [-1994, 6078, -213066, 4673496, -106844744, 2559934440, -64133209320,    1.664e+12], # g==10
-                  ]
-            return es[g][n]
-        else:
-            raise ValueError("No Euler characteristics known for M_{g,n},"
-                             " where g=%s and n=%s" % (g,n))
-
-    e_ = 0
+    computed_e = 0
     for i in xrange(len(hs)):
-        e_ += minus_one_exp(i)*hs[i]
-    logging.info("Computed Euler characteristics: %s" % e_)
-    logging.info("  Expected Euler characteristics: %s" % e(g,n))
-    if e_ != e(g,n):
+        computed_e += minus_one_exp(i)*hs[i]
+    expected_e = euler_characteristics(g,n)
+    logging.info("Computed Euler characteristics: %s" % computed_e)
+    logging.info("  Expected Euler characteristics: %s" % expected_e)
+    if computed_e != euler_characteristics(g,n):
         logging.error("Computed and expected Euler characteristics do not match:"
-                      " %s vs %s" % (e_, e(g,n)))
+                      " %s vs %s" % (computed_e, expected_e))
 
     # verify result against other known theorems
     if g>0:
