@@ -14,16 +14,19 @@ if sys.version < '2.6.0':
                      % (sys.argv[0], sys.version.split()[0]))
     sys.exit(1)
 
+import cython
+from fractions import Fraction
 import gc
 import logging
+import os
 import resource
 
 
 ## application-local imports
 
 from const import euler_characteristics, orbifold_euler_characteristics
-from fractions import Fraction
 from combinatorics import minus_one_exp
+from runtime import runtime
 import timing
 from utils import concat, positive_int
 
@@ -99,7 +102,8 @@ def graph_to_xypic(graph, g=None, n=None, orientable=None):
 ## actions
 
 def do_graphs(g,n):
-    """Compute Fatgraphs occurring in `M_{g,n}`.
+    """
+    Compute Fatgraphs occurring in `M_{g,n}`.
 
     Return a pair `(graphs, D)`, where `graphs` is the list of
     `(g,n)`-graphs, and `D` is a list, the `k`-th element of which is
@@ -107,10 +111,17 @@ def do_graphs(g,n):
     """
     timing.start("do_graphs(%d,%d)" % (g,n))
 
-    logging.info("Stage I: Computing fat graphs for g=%d, n=%d ...", g, n)
+    runtime.g = g
+    runtime.n = n
+    
+    logging.info("Stage I:"
+                 " Computing fat graphs for g=%d, n=%d ...",
+                 g, n)
     G = FatgraphComplex(g,n)
     
-    logging.info("Stage II: Computing matrix form of boundary operator ...")
+    logging.info("Stage II:"
+                 " Computing matrix form of boundary operators D[1],...,D[%d] ...",
+                 G.length-1)
     D = G.compute_boundary_operators()
 
     timing.stop("do_graphs(%d,%d)" % (g,n))
@@ -118,17 +129,17 @@ def do_graphs(g,n):
 
     
 def do_homology(g, n):
-    """Compute homology ranks of the graph complex of `M_{g,n}`.
+    """
+    Compute homology ranks of the graph complex of `M_{g,n}`.
 
     Return array of homology ranks.
     """
     timing.start("do_homology(%d,%d)" % (g,n))
 
-    logging.info("Stage I: Computing fat graphs for g=%d, n=%d ...", g, n)
-    G = FatgraphComplex(g,n)
+    runtime.g = g
+    runtime.n = n
 
-    logging.info("Stage II: Computing matrix form of boundary operator ...")
-    D = G.compute_boundary_operators()
+    (G, D) = do_graphs(g, n)
 
     logging.info("Stage III: Computing rank of homology modules ...")
     hs = list(reversed(D.compute_homology_ranks()))
@@ -152,7 +163,7 @@ def do_homology(g, n):
     expected_e = euler_characteristics(g,n)
     logging.info("Computed Euler characteristics: %s" % computed_e)
     logging.info("  Expected Euler characteristics: %s" % expected_e)
-    if computed_e != euler_characteristics(g,n):
+    if computed_e != expected_e:
         logging.error("Computed and expected Euler characteristics do not match:"
                       " %s vs %s" % (computed_e, expected_e))
 
@@ -175,11 +186,14 @@ def do_homology(g, n):
 
 
 def do_valences(g,n):
-    """Compute vertex valences occurring in g,n Fatgraphs.
+    """
+    Compute vertex valences occurring in g,n Fatgraphs.
 
     Return list of valences.
     """
-    logging.debug("Computing vertex valences occurring in g=%d,n=%d fatgraphs ...", g, n)
+    runtime.g = g
+    runtime.n = n
+    logging.info("Computing vertex valences occurring in g=%d,n=%d fatgraphs ...", g, n)
     return vertex_valences_for_given_g_and_n(g,n)
 
 
@@ -191,13 +205,10 @@ resource.setrlimit(resource.RLIMIT_CORE, (0,0))
 
 # parse command-line options
 from optparse import OptionParser
-parser = OptionParser(version="4.0",
+parser = OptionParser(version="5.0",
     usage="""Usage: %prog [options] action [arg ...]
 
 Actions:
-
-  valences G N
-    Print the vertex valences occurring in M_{g,n} graphs
 
   graphs G N
     Print the graphs occurring in M_{g,n}
@@ -205,21 +216,22 @@ Actions:
   homology G N
     Print homology ranks of M_{g,n}
 
+  valences G N
+    Print the vertex valences occurring in M_{g,n} graphs
+
   shell
     Start an interactive PyDB shell.
   
   selftest
     Run internal code tests and report failures.
     """)
-parser.add_option("-C", "--cache",
-                  action="store_true", dest="cache", default=False,
-                  help="""Turn on internal result caching (trade memory for speed).""")
-parser.add_option("-f", "--feature", dest="features", default=None,
-                  help="""Enable optional speedup or tracing features:
-                  * pydb -- run Python debugger if an error occurs
-                  * psyco -- run the Psyco JIT compiler
-                  * profile -- dump profiler statistics in a .pf file.
-                  Several features may be enabled by separating them with a comma, as in '-f pydb,profile'.""")
+if not cython.compiled:
+    parser.add_option("-f", "--feature", dest="features", default=None,
+                      help="""Enable optional speedup or tracing features:
+                      * pydb -- run Python debugger if an error occurs
+                      * psyco -- run the Psyco JIT compiler
+                      * profile -- dump profiler statistics in a .pf file.
+                      Several features may be enabled by separating them with a comma, as in '-f pydb,profile'.""")
 parser.add_option("-l", "--logfile",
                   action='store', dest='logfile', default=None,
                   help="Redirect log messages to the named file (by default log messages are output to STDERR).")
@@ -228,13 +240,17 @@ parser.add_option("-L", "--latex",
                   help="Output list of M_{g,n} graphs as a LaTeX file.")
 parser.add_option("-o", "--output", dest="outfile", default=None,
                   help="Save results into named file.")
-parser.add_option("-O", "--optimize",
-                  action="store_true", dest="optimize", default=False,
-                  help="Turn on Python bytecode optimizer.")
+parser.add_option("-u", "--afresh", dest="restart", action="store_false", default=True,
+                  help="Do NOT restart computation from the saved state in checkpoint directory.")
+parser.add_option("-s", "--checkpoint", dest="checkpoint_dir", default=None,
+                  help="Directory for saving computation state.")
 parser.add_option("-v", "--verbose",
                   action="count", dest="verbose", default=0,
                   help="Print informational and status messages as the computation goes on.")
 (options, args) = parser.parse_args()
+
+# make options available to loaded modules
+runtime.options = options
 
 # print usage message if no args given
 if 0 == len(args) or 'help' == args[0]:
@@ -260,16 +276,16 @@ logging.basicConfig(level=log_level,
                     datefmt="%H:%M:%S")
     
 # ensure the proper optimization level is selected
-if __debug__ and options.optimize:
+if __debug__:
     try:
         import os
-        os.execl(sys.executable, *([sys.executable, '-OO'] + sys.argv))
+        os.execl(sys.executable, *([sys.executable, '-O'] + sys.argv))
     finally:
         logging.warning("Could not execute '%s', ignoring '-O' option." 
-                        % str.join(" ", [sys.executable, '-OO'] + sys.argv))
+                        % str.join(" ", [sys.executable, '-O'] + sys.argv))
 
 # enable optional features
-if options.features is not None:
+if not cython.compiled and options.features is not None:
     features = options.features.split(",")
     if 'pydb' in features:
         try:
@@ -304,15 +320,14 @@ from cache import (
     ocache_weakref,
     )
 
-if options.cache:
+if True: # WAS: options.cache:
     ocache0.enabled = True
     ocache_weakref.enabled = True
     ocache_symmetric.enabled = True
     ocache_iterator.enabled = True
     # this reduces memory usage at the cost of some speed
     gc.enable()
-    if options.cache < 3:
-        gc.set_threshold(256, 4, 4)
+    gc.set_threshold(256, 4, 4)
 else:
     # default: no caching at all
     ocache_iterator.enabled = False
@@ -343,24 +358,28 @@ else:
 
 # shell -- start interactive debugging shell
 if 'shell' == args[0]:
-    try:
-        import pydb
-    except ImportError:
-        logging.warning("Could not import 'pydb' module - Aborting.")
+    if cython.compiled:
+        logging.error("The 'shell' command is not available when compiled.")
         sys.exit(1)
-        
-    print ("""Starting interactive session (with PyDB %s).
-    
-    Any Python expression may be evaluated at the prompt.
-    All symbols from modules `rg`, `homology`, `graph_homology`
-    have already been imported into the main namespace.
-    
-    """ % pydb.version)
-    pydb.debugger([
-        "from homology import *",
-        "from graph_homology import *",
-        "from rg import *",
-        ])
+    else:
+        try:
+            import pydb
+        except ImportError:
+            logging.warning("Could not import 'pydb' module - Aborting.")
+            sys.exit(1)
+
+        print ("""Starting interactive session (with PyDB %s).
+
+        Any Python expression may be evaluated at the prompt.
+        All symbols from modules `rg`, `homology`, `graph_homology`
+        have already been imported into the main namespace.
+
+        """ % pydb.version)
+        pydb.debugger([
+            "from homology import *",
+            "from graph_homology import *",
+            "from rg import *",
+            ])
         
 # selftest -- run doctests and acceptance tests on simple cases
 elif 'selftest' == args[0]:
@@ -395,12 +414,18 @@ elif 'selftest' == args[0]:
         finally:
             file.close()
 
+    # ensure checkpoint path is defined and valid
+    if runtime.options.checkpoint_dir is None:
+        runtime.options.checkpoint_dir = os.getenv("TMPDIR") or "/tmp"
+
     # second, try known cases and inspect results
+    failures = 0
     for (g, n, ok) in [ (0,3, [1,0,0]),
+                        (0,4, [1,2,0,0,0,0]),
+                        (0,5, [1,5,6,0,0,0,0,0,0]),
                         (1,1, [1,0,0]),
                         (1,2, [1,0,0,0,0,0]),
                         (2,1, [1,0,1,0,0,0,0,0,0]),
-                        (0,4, [1,2,0,0,0,0]),
                         ]:
         sys.stdout.write("Computation of M_{%d,%d} homology: " % (g,n))
         # compute homology of M_{g,n}
@@ -412,46 +437,54 @@ elif 'selftest' == args[0]:
             logging.error("Computation of M_{%d,%d} homology: FAILED, got %s expected %s"
                           % (g,n,hs,ok))
             print("FAILED, got %s expected %s" % (hs,ok))
+            failures += 1
 
-    # third, count graphs produced in known good cases
-    for (g, n, ok) in [ (0,5, 290),
-                        ]:
-        sys.stdout.write("Number of M_{%d,%d} graphs: " % (g,n))
-        # compute number of graphs in M_{g,n}
-        qty = len(list(MgnGraphsIterator(g,n)))
-        # check result
-        if qty == ok:
-            print("OK")
+    # exit code >0 is number of failures
+    sys.exit(failures)
+        
+        
+# common code for invocations of `graphs`, `homology` and `valences`
+if len(args) < 3:
+    parser.print_help()
+    sys.exit(1)
+try:
+    g = int(args[1])
+    if g < 0:
+        raise ValueError
+except ValueError:
+    sys.stderr.write("Invalid value '%s' for argument G: " \
+                     "should be positive integer.\n" \
+                     % (args[1],))
+    sys.exit(1)
+try:
+    n = positive_int(args[2])
+except ValueError, msg:
+    sys.stderr.write("Invalid value '%s' for argument N: " \
+                     "should be non-negative integer.\n" \
+                     % (args[2],))
+    sys.exit(1)
+
+# make g,n available to loaded modules
+runtime.g = g
+runtime.n = n
+
+# ensure checkpoint path is defined and valid
+if runtime.options.checkpoint_dir is None:
+    runtime.options.checkpoint_dir = os.path.join(os.getcwd(), "M%d,%d.saved" % (g,n))
+    if not os.path.isdir(runtime.options.checkpoint_dir):
+        if os.path.exists(runtime.options.checkpoint_dir):
+            logging.error("Checkpoint path '%s' exists but is not a directory. Aborting.",
+                          runtime.options.checkpoint_dir)
+            sys.exit(1)
         else:
-            logging.error("Number of M_{%d,%d} graphs: FAILED, got %s expected %s"
-                          % (g,n,qty,ok))
-            print("FAILED, got %s expected %s" % (qty,ok))
-        
-        
+            os.mkdir(runtime.options.checkpoint_dir)
+logging.debug("Saving computation state to directory '%s'", runtime.options.checkpoint_dir)
+if not runtime.options.restart:
+    logging.debug("NOT restarting: will ignore any saved state in checkpoint directory '%s'")
+
 
 # valences -- show vertex valences for given g,n
 elif 'valences' == args[0]:
-    del args[0]
-    if len(args) < 2:
-        parser.print_help()
-        sys.exit(1)
-    try:
-        g = int(args[0])
-        if g < 0:
-            raise ValueError
-    except ValueError:
-        sys.stderr.write("Bad value '%s' for argument G: " \
-                         "should be positive integer.\n" \
-                         % (args[0],))
-        sys.exit(1)
-    try:
-        n = positive_int(args[1])
-    except ValueError, msg:
-        sys.stderr.write("Bad value '%s' for argument N: " \
-                         "should be non-negative integer.\n" \
-                         % (args[1],))
-        sys.exit(1)
-
     logging.debug("Computing vertex valences occurring in g=%d,n=%d fatgraphs ...", g, n)
     vvs = do_valences(g,n)
     for vv in vvs:
@@ -460,33 +493,9 @@ elif 'valences' == args[0]:
 
 # graphs -- list graphs from given g,n
 elif "graphs" == args[0]:
-    # parse command line
-    del args[0]
-    if len(args) < 2:
-        parser.print_help()
-        sys.exit(1)
-
-    try:
-        g = int(args[0])
-        if g < 0:
-            raise ValueError
-    except ValueError:
-        sys.stderr.write("Bad value '%s' for argument G: " \
-                         "should be positive integer.\n" \
-                         % (args[0],))
-        sys.exit(1)
-    try:
-        n = positive_int(args[1])
-    except ValueError, msg:
-        sys.stderr.write("Bad value '%s' for argument N: " \
-                         "should be non-negative integer.\n" \
-                         % (args[1],))
-        sys.exit(1)
-
     graphs, D = do_graphs(g,n)
-    #graphs = concat([ list(aggr.itervalues()) for aggr in G.module ])
     logging.info("Graph family computation took %.3fs.",
-                 timing.get("do_homology(%d,%d)" % (g,n)))
+                 timing.get("do_graphs(%d,%d)" % (g,n)))
     
     # output results
     if options.latex:
@@ -605,29 +614,6 @@ reverses the associated cell orientation.
 
 # homology -- compute homology ranks
 elif 'homology' == args[0]:
-    # parse command line
-    del args[0]
-    if len(args) == 0:
-        parser.print_help()
-        sys.exit(1)
-
-    try:
-        g = int(args[0])
-        if g < 0:
-            raise ValueError
-    except ValueError:
-        sys.stderr.write("Bad value '%s' for argument G: " \
-                         "should be positive integer.\n" \
-                         % (args[0],))
-        sys.exit(1)
-    try:
-        n = positive_int(args[1])
-    except ValueError, msg:
-        sys.stderr.write("Bad value '%s' for argument N: " \
-                         "should be non-negative integer.\n" \
-                         % (args[1],))
-        sys.exit(1)
-
     # compute graph complex and its homology ranks
     hs = do_homology(g, n)
     logging.info("Homology computation took %.3fs.",
