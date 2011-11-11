@@ -119,7 +119,7 @@ class Cacheable(object):
         to be re-used.
         
         (In contrast, Python's standard `id()` function returns a
-        value based on the intance memory address, which *can* be
+        value based on the instance memory address, which *can* be
         re-used during the lifetime of a program.)
         """
         return self.__id
