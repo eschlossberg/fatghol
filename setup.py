@@ -46,9 +46,57 @@ try:
         ])
 except ImportError:
     pass
-    
+
+
+def read_whole_file(path):
+    stream = open(path, 'r')
+    text = stream.read()
+    stream.close
+    return text
+
+
 
 setup (
+    name = "fatghol",
+    version = "5.0", # see: http://packages.python.org/distribute/setuptools.html
+
+    # for building the package
     cmdclass = ext_commands,
     ext_modules = ext_modules,
+
+    # metadata for upload to PyPI
+    description = "A Python library and simple command-line frontend for computing with Penner's Fat Graphs",
+    long_description = read_whole_file('README.txt'),
+    author = "Riccardo Murri",
+    author_email = "riccardo.murri@gmail.com",
+    license = "LGPL",
+    keywords = "geometry fatgraphs homology",
+    url = "http://fatghol.googlecode.com/", # project home page
+    # see http://pypi.python.org/pypi?%3Aaction=list_classifiers
+    classifiers = [
+        "Development Status :: 5 - Production/Stable",
+        "Environment :: Console",
+        "Intended Audience :: Science/Research",
+        "License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)",
+        "License :: DFSG approved",
+        "Operating System :: POSIX :: Linux",
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 2",
+        "Programming Language :: Python :: 2.6",
+        "Programming Language :: Python :: 2.7",
+        "Topic :: Scientific/Engineering",
+        ],
+
+    # run-time dependencies
+    install_requires = [
+        # Cython
+        'cython',
+        # Michele Simionato's "decorator" package
+        'decorator',
+        ],
+
+    # `zip_safe` can ease deployment, but is only allowed if the package
+    # do *not* do any __file__/__path__ magic nor do they access package data
+    # files by file name (use `pkg_resources` instead).
+    zip_safe = True,
 )
