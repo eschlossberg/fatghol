@@ -532,7 +532,6 @@ class Fatgraph(EqualIfIsomorphic):
         return self.isomorphisms(self)
 
 
-    @ocache0
     def compute_boundary_cycles(self):
         """Return a list of boundary cycles of this `Fatgraph` object.
 
