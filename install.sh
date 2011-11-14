@@ -9,9 +9,9 @@
 PYTHON=2.7.2 # http://www.python.org/ftp/python/2.7.2/Python-2.7.2.tar.bz2
 #CYTHON=0.13
 SWIG=1.3.40
-LINBOX=1.1.7
-GMP=5.0.1
-GIVARO=3.3.2
+LINBOX=1.1.6
+GMP=5.0.2
+GIVARO=3.3.5
 ATLAS=3.8.4
 TCMALLOC=1.8.3 # http://google-perftools.googlecode.com/files/google-perftools-1.8.3.tar.gz
 
@@ -256,7 +256,7 @@ if [ -n "$LINBOX" ]; then
     tar -xzf linbox-${LINBOX}.tar.gz
     cd linbox-${LINBOX}
     ./configure --prefix=${sw} \
-        ${ATLAS:+"--with-blas=${sw}/lib"} \
+        ${ATLAS:+"--with-blas=${sw}"} \
         ${GMP:+"--with-gmp=${sw}"} \
         ${GIVARO:+"--with-givaro=${sw}"} \
         "$@";
