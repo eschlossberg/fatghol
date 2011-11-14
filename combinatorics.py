@@ -4,6 +4,7 @@
 """
 __docformat__ = 'reStructuredText'
 
+import cython
 
 import itertools
 
@@ -66,7 +67,7 @@ def bernoulli(n):
     # compute B(n) by the recursive formula:
     #   \sum_{k=0,...,m} \choose{m+1}{k} B(k) = 0
     return Fraction(-1, n+1) * reduce(operator.add,
-                                      (choose(n+1,k)*bernoulli(k) for k in range(n)))
+                                      [choose(n+1,k)*bernoulli(k) for k in range(n)])
 
 
 
@@ -209,6 +210,7 @@ class OrderedSetPartitionsIterator(object):
     def __iter__(self):
         return self
 
+    @cython.locals(index=cython.int, size=cython.int, x=cython.int)
     def next(self):
         if self.state is None:
             # initial partition arrangement is the most obvious one:
@@ -228,7 +230,13 @@ class OrderedSetPartitionsIterator(object):
         for x in xrange(len(self.state)):
             parts[self.state[x]].append(self.items[x])
         return parts
+    
+    # XXX: Cython iterators must use `__next__()` not `next()`
+    def __next__(self):
+        return self.next()
 
+    @cython.locals(s=list, end=cython.int, off=cython.int,
+                   inc=cython.int, cur=cython.int, l=cython.int)
     def _next_state(self):
         s = self.state
         end = len(s) - 1
@@ -262,72 +270,71 @@ class OrderedSetPartitionsIterator(object):
         raise StopIteration
 
 
-try:
-    # use the `itertools` version if there is one...
-    SetProductIterator = itertools.product
-except AttributeError:
-    # ...otherwise use our pure-Python version
-    class SetProductIterator(object):
-        """Iterate over all elements in a cartesian product.
+# use the `itertools` version...
+SetProductIterator = itertools.product
 
-        Argument `factors` is a sequence, all whose items are sequences
-        themselves: the returned iterator will return -upon each
-        successive invocation- a tuple `(t_1, t_2, ..., t_n)` where `t_k`
-        is an item in the `k`-th sequence.
+# ...but keep our pure-Python version around until I can figure out which is faster
+class SetProductIterator_(object):
+    """Iterate over all elements in a cartesian product.
 
-        Examples::
-          >>> list(SetProductIterator())
-          [()]
-          >>> list(SetProductIterator([1]))
-          [(1,)]
-          >>> list(SetProductIterator([1],[1]))
-          [(1, 1)]
-          >>> list(SetProductIterator([1,2],[]))
-          [()]
-          >>> list(SetProductIterator([1,2],[1]))
-          [(1, 1), (2, 1)]
-          >>> list(SetProductIterator([1,2],[1,2]))
-          [(1, 1), (2, 1), (1, 2), (2, 2)]
-        """
-        def __init__(self, *factors):
-            self.__closed = False
-            self.__factors = factors
-            self.__L = len(factors)
-            self.__M = [ len(s)-1 for s in factors ]
-            self.__m = [0] * self.__L
-            self.__i = 0
+    Argument `factors` is a sequence, all whose items are sequences
+    themselves: the returned iterator will return -upon each
+    successive invocation- a tuple `(t_1, t_2, ..., t_n)` where `t_k`
+    is an item in the `k`-th sequence.
 
-        def __iter__(self):
-            return self
+    Examples::
+      >>> list(SetProductIterator_())
+      [()]
+      >>> list(SetProductIterator_([1]))
+      [(1,)]
+      >>> list(SetProductIterator_([1],[1]))
+      [(1, 1)]
+      >>> list(SetProductIterator_([1,2],[]))
+      [()]
+      >>> list(SetProductIterator_([1,2],[1]))
+      [(1, 1), (2, 1)]
+      >>> list(SetProductIterator_([1,2],[1,2]))
+      [(1, 1), (2, 1), (1, 2), (2, 2)]
+    """
+    def __init__(self, *factors):
+        self.__closed = False
+        self.__factors = factors
+        self.__L = len(factors)
+        self.__M = [ len(s)-1 for s in factors ]
+        self.__m = [0] * self.__L
+        self.__i = 0
 
-        def next(self):
-            if self.__closed:
-                raise StopIteration
-            if (0 == self.__L) or (-1 in self.__M):
-                # there are no factors, or one of them has no elements
-                self.__closed = True
-                return tuple()
+    def __iter__(self):
+        return self
+
+    @cython.locals(result=tuple, i=cython.int)
+    def next(self):
+        if self.__closed:
+            raise StopIteration
+        if (0 == self.__L) or (-1 in self.__M):
+            # there are no factors, or one of them has no elements
+            self.__closed = True
+            return tuple()
+        else:
+            if self.__i < self.__L:
+                # will return element corresponding to current multi-index
+                result = tuple(s[self.__m[i]] for (i,s) in enumerate(self.__factors))
+                # advance multi-index
+                i = 0
+                while (i < self.__L):
+                    if self.__m[i] == self.__M[i]:
+                        self.__m[i] = 0
+                        i += 1
+                    else:
+                        self.__m[i] += 1
+                        break
+                self.__i = i
+                # back to caller
+                return result
             else:
-                if self.__i < self.__L:
-                    # will return element corresponding to current multi-index
-                    result = tuple(s[self.__m[i]]
-                                   for (i,s) in enumerate(self.__factors))
-                    # advance multi-index
-                    i = 0
-                    while (i < self.__L):
-                        if self.__m[i] == self.__M[i]:
-                            self.__m[i] = 0
-                            i += 1
-                        else:
-                            self.__m[i] += 1
-                            break
-                    self.__i = i
-                    # back to caller
-                    return result
-                else:
-                    # at end of iteration
-                    self.__closed = True
-                    raise StopIteration
+                # at end of iteration
+                self.__closed = True
+                raise StopIteration
 
 
 class Permutation(dict):
@@ -381,10 +388,11 @@ class Permutation(dict):
             for src,dst in self.iteritems():
                 assert 0 <= src
                 assert 0 <= dst
-            
+
+    @cython.locals(x=cython.int)
     def __iter__(self):
         """Iterate over values."""
-        return (self[x] for x in xrange(len(self)))
+        return iter([self[x] for x in xrange(len(self))])
 
     def inverse(self):
         """Construct and return the inverse permutation.
@@ -402,7 +410,7 @@ class Permutation(dict):
           False
         
         """
-        return Permutation((dst,src) for (src,dst) in self.iteritems())
+        return Permutation([ (dst,src) for (src,dst) in self.iteritems() ])
 
     def is_identity(self):
         """Return `True` if permutation leaves all items fixed."""
@@ -410,7 +418,8 @@ class Permutation(dict):
             if src != dst:
                 return False
         return True
-        
+
+    @cython.locals(x=cython.int)
     def rearranged(self, seq):
         """Return a new list containing the items in `seq`, rearranged
         according to this permutation.
@@ -429,6 +438,7 @@ class Permutation(dict):
                % (len(seq), len(self))
         return [ seq[self[x]] for x in xrange(len(self)) ]
 
+    @cython.locals(p=list, n=cython.int, s=cython.int, j=cython.int, q=cython.int)
     def sign(self):
         """Return sign of this `Permutation`.
 
@@ -478,6 +488,7 @@ class Permutation(dict):
         return s
 
 
+    @cython.locals(i=cython.int)
     def translate(self, seq):
         """Alter `seq`, applying this permutation to the value of its items.
         Return modified sequence.
@@ -523,6 +534,32 @@ class Permutation(dict):
                    % (item, self.keys())
             yield self[item]
 
+
+    @cython.locals(result=list)
+    def ltranslate(self, iterable):
+        """Retutn list of items from `iterable`, permuted according to
+        this `Permutation` instance.
+
+        For this to work, items in `iterable` must be integers in the
+        range from 0 up to (and excluding) the length of this
+        permutation.  Otherwise a `KeyError` is raised.
+
+        Examples::
+
+          >>> s = [1, 0, 2]
+          >>> p = Permutation(enumerate([0, 2, 1])) # map 0->0, 1->2, 2->1
+          >>> p.ltranslate(s)
+          [2, 0, 1]
+        """
+        result = list()
+        for item in iter(iterable):
+            assert item in self, \
+                   "Permutation.ltranslate(): " \
+                   "Got item `%s` which is not in the permutation domain `%s`. " \
+                   % (item, self.keys())
+            result.append(self[item])
+        return result
+
     
     def extend(self, srcs, dsts):
         """Return `True` if the mapping can be extended by mapping
@@ -545,6 +582,7 @@ class Permutation(dict):
             else:
                 self[src] = dst
         return True
+
 
     def update(self, mappings):
         """Return `True` if the mapping can be extended by mapping each
@@ -592,7 +630,9 @@ class PermutationList(object):
 
     def __contains__(self, item):
         return len(item) == self.__order and set(item) == self.__base_set
-        
+
+    @cython.locals(r=cython.long, n=cython.long,
+                   x=cython.int, i=cython.int, j=cython.int, temp=cython.int)
     def __getitem__(self, r):
         """Return permutation at `r`-th place."""
         n = self.__order
@@ -646,8 +686,11 @@ class PermutationIterator(object):
         self.seq = seq
         self.rank = initial
         self.order = len(seq)
+
     def __iter__(self):
         return self
+
+    @cython.locals(i=cython.long, seq=list, j=cython.int)
     def next(self):
         """Return next permutation of initially given `sequence`."""
         i = self.rank
@@ -659,6 +702,9 @@ class PermutationIterator(object):
             seq[j-1], seq[i % j] = seq[i % j], seq[j-1]
         self.rank += 1
         return tuple(seq)
+    # XXX: Cython requires `__next__()` instead of `next()`
+    def __next__(self):
+        return next(self)
 
 
 class InplacePermutationIterator(object):
@@ -701,8 +747,11 @@ class InplacePermutationIterator(object):
             self.enumeration_finished = True
         else:
             self.enumeration_finished = False
+            
     def __iter__(self):
         return self
+
+    @cython.locals(seq=list, end=cython.int, i=cython.int, j=cython.int, k=cython.int)
     def next(self):
         """Return next permutation of initially given `sequence`."""
         if self.enumeration_finished:
@@ -726,6 +775,10 @@ class InplacePermutationIterator(object):
                 # reverse slice seq[j:] *in-place*
                 seq[j:] = reversed(seq[j:])
                 return seq
+            
+    # XXX: Cython iterators must use `__next__()` instead of `next()`
+    def __next__(self):
+        return next(self)
 
 
 class FixedLengthPartitionIterator(object):
@@ -776,6 +829,7 @@ class FixedLengthPartitionIterator(object):
     def __iter__(self):
         return self
 
+    @cython.locals(i=cython.int, head=cython.long)
     def next(self):
         if self.done:
             raise StopIteration
@@ -796,7 +850,7 @@ class FixedLengthPartitionIterator(object):
                         i -= 1
                 # only change the first `k` parts
                 self._k += 1
-                head = (self._N - self._k - self._min*self._K + self._min + 1)
+                head = self._N - self._k - self._min*self._K + self._min + 1
                 if (head < self._min+1) or (head > self._max) \
                        or (self._k > self._K):
                     continue
@@ -807,6 +861,9 @@ class FixedLengthPartitionIterator(object):
                           + ([self._min] * (self._K - self._k))
                 return tuple(self._p)
             raise StopIteration
+    # XXX: Cython requires `__next__()` instead of `next()`
+    def __next__(self):
+        return next(self)
 
 
 def PartitionIterator(N, K, min_=1, max_=None):
@@ -832,46 +889,6 @@ def PartitionIterator(N, K, min_=1, max_=None):
     return itertools.chain(*[FixedLengthPartitionIterator(N,k,min_,max_)
                              for k in xrange(1,K+1)])
 
-
-
-def SortingPermutation(seq):
-    """Sort `seq` *in-place* with the CombSort11 algorithm, and return
-    the permutation of indices that transforms the original sequence
-    into the sorted one.
-
-    Examples::
-    
-      >>> SortingPermutation([3, 1, 2])
-      {0: 1, 1: 2, 2: 0}
-      
-      >>> SortingPermutation([0, 1, 2])
-      {0: 0, 1: 1, 2: 2}
-      
-    See http://en.wikipedia.org/wiki/Comb_sort for an explanation of
-    the "Comb sort" algorithm and the original pseudocode.
-    """
-    gap = len(seq)  # initialize gap size
-    indices = range(gap)
-    swap_occurred = False
-    while (gap > 1) or swap_occurred:
-        # update the gap value for a next comb
-        if gap > 1:
-            gap = int(gap / 1.247330950103979)
-            # adjust gap size for final steps of the sequence;
-            # see http://en.wikipedia.org/wiki/Comb_sort#Combsort11
-            if gap in (9, 10):
-                gap = 11
-        
-        # a single "comb" over the input list
-        swap_occurred = False 
-        for i in xrange(len(seq) - gap): # see shellsort for similar idea
-            j = i + gap
-            if seq[i] > seq[j]:
-                # swap seq[i] and seq[i+gap]
-                seq[i], seq[j] = seq[j], seq[i]
-                indices[i], indices[j] = indices[j], indices[i]
-                swap_occurred = True
-    return Permutation(enumerate(indices))
 
 
 
