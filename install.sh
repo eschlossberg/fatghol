@@ -7,12 +7,16 @@
 # standard PATH/LD_LIBRARY_PATH
 #
 PYTHON=2.7.2 # http://www.python.org/ftp/python/2.7.2/Python-2.7.2.tar.bz2
-#CYTHON=0.13
+CYTHON=0.15
 SWIG=1.3.40
-LINBOX=1.1.6
+
+# LinBox requires GMP, Givaro and ATLAS
+LINBOX=1.1.7
 GMP=5.0.2
-GIVARO=3.3.5
-ATLAS=3.8.4
+GIVARO=3.3.3 # later versions in the 3.3.x series give incorrect results
+ATLAS=3.8.3 # 3.8.4 does not compile on Ubuntu 11.04 w/ GCC 4.5.2
+
+# this is really optional
 TCMALLOC=1.8.3 # http://google-perftools.googlecode.com/files/google-perftools-1.8.3.tar.gz
 
 
@@ -239,9 +243,11 @@ if [ -n "$ATLAS" ]; then
         -Ss pmake "$concurrent_make" \
         --prefix=${sw}
     make build
-    (cd lib; make cshared cptshared && cp -a *.so ${sw}/lib)
-    #make check
-    #make time
+    # for shared library support, the following flags
+    # must be added to the `../configure` line above:
+    #             -Fa alg -fPIC 
+    # then the shared libraries can be compiled with this:
+    #(cd lib; make cshared cptshared && cp -a *.so ${sw}/lib)
     make install
     set +x
 fi # ATLAS
@@ -260,6 +266,12 @@ if [ -n "$LINBOX" ]; then
         ${GMP:+"--with-gmp=${sw}"} \
         ${GIVARO:+"--with-givaro=${sw}"} \
         "$@";
+    if [ "$LINBOX" = '1.1.7' ]; then
+        # patch error in distribute sources
+        sed -r -i -e 's/^namespace/using namespace std;\nnamespace/;' \
+            linbox/algorithms/rational-reconstruction-base.h \
+            linbox/algorithms/rational-reconstruction.h
+    fi
     $concurrent_make
     make install
     set +x
