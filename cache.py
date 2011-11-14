@@ -24,31 +24,6 @@ from iterators import Iterator
 ## auxiliary classes
 
 @cython.cclass
-class _TimeBasedUnique(Iterator):
-    """Return a new unique ID at each iteration step.
-
-    The returned ID is the number of nanoseconds elapsed since the
-    system epoch.  The returned ID is guaranteed to be monotonically
-    increasing::
-
-      >>> u = _TimeBasedUnique()
-      >>> u1 = u.next()
-      >>> u2 = u.next()
-      >>> u3 = u.next()
-      >>> u1 < u2 < u3
-      True
-
-    """
-    def __init__(self):
-        pass
-
-    def next(self):
-        return int(time() * 1000000)
-
-_unique = _TimeBasedUnique()
-
-
-@cython.cclass
 class _IteratorRecorder(object):
     """Cache results from a given iterator.  Client classes provided
     by the `replay()` method will then replay the iterator history;
@@ -139,34 +114,11 @@ class Caching(object):
     """
 
     __slots__ = [
-        '__id',
         '_cache0',             # cache for nullary methods
         '_cache_contract',     # cache `Fatgraph.contract` results
         '_cache_eq',           # cache `Fatgraph.__eq__` results
         '_cache_isomorphisms', # cache `Fatgraph.isomorphisms` results
         ]
-
-    def __init__(self):
-        self.__id = _unique.next()
-
-    @cython.ccall
-    def cache_id(self):
-        """Return a integer value which is unique and guaranteed not
-        to be re-used.
-        
-        (In contrast, Python's standard `id()` function returns a
-        value based on the instance memory address, which *can* be
-        re-used during the lifetime of a program.)
-        """
-        return self.__id
-
-
-@cython.ccall
-def cache_id(o):
-    try:
-        return o.cache_id()
-    except AttributeError:
-        return id(o)
 
 
 
