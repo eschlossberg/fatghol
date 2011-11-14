@@ -26,9 +26,16 @@ import resource
 
 from const import euler_characteristics, orbifold_euler_characteristics
 from combinatorics import minus_one_exp
+from graph_homology import FatgraphComplex
+from rg import (
+    Fatgraph,
+    MgnGraphsIterator,
+    )
 from runtime import runtime
 import timing
 from utils import concat, positive_int
+from valences import vertex_valences_for_given_g_and_n
+
 
 
 ## utility functions
@@ -309,40 +316,6 @@ if not cython.compiled and options.features is not None:
             logging.debug("Started call profiling with 'hotshot' module.")
         except ImportError:
             logging.warning("Could not import 'hotshot' - call profiling *not* enabled.")
-
-
-# configure caching
-
-from cache import (
-    ocache0,
-    ocache_iterator,
-    ocache_symmetric,
-    ocache_weakref,
-    )
-
-if True: # WAS: options.cache:
-    ocache0.enabled = True
-    ocache_weakref.enabled = True
-    ocache_symmetric.enabled = True
-    ocache_iterator.enabled = True
-    # this reduces memory usage at the cost of some speed
-    gc.enable()
-    gc.set_threshold(256, 4, 4)
-else:
-    # default: no caching at all
-    ocache_iterator.enabled = False
-    ocache_symmetric.enabled = False
-    ocache_weakref.enabled = False
-
-# fat-graph handling routines need to be loaded *after* the cache module
-# (in order for caching to be a runtime-selectable option)
-from graph_homology import FatgraphComplex
-from rg import (
-    Fatgraph,
-    MgnGraphsIterator,
-    )
-from valences import vertex_valences_for_given_g_and_n
-
 
 
 # hack to allow 'N1,N2,...' or 'N1 N2 ...' syntaxes

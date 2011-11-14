@@ -21,7 +21,6 @@ import weakref
 ## application-local imports
 
 from cache import (
-    ocache0,
     ocache_iterator,
     ocache_symmetric,
     ocache_weakref,
@@ -257,7 +256,7 @@ class EqualIfIsomorphic(Cacheable):
         Cacheable.__init__(self)
 
     
-    @maybe(ocache_symmetric)
+    @ocache_symmetric
     def __eq__(self, other):
         """Return `True` if `self` and `other` are isomorphic."""
 
@@ -533,7 +532,7 @@ class Fatgraph(EqualIfIsomorphic):
         return self.isomorphisms(self)
 
 
-    @maybe(ocache0)
+    @ocache_weakref
     def compute_boundary_cycles(self):
         """Return a list of boundary cycles of this `Fatgraph` object.
 
@@ -924,7 +923,7 @@ class Fatgraph(EqualIfIsomorphic):
                         )
 
 
-    @maybe(ocache_weakref)
+    @ocache_weakref
     def contract(self, edge):
         """Return new `Fatgraph` obtained by contracting the specified edge.
 
@@ -1068,7 +1067,7 @@ class Fatgraph(EqualIfIsomorphic):
         return BoundaryCycle(new_bcy)
 
 
-    @maybe(ocache0)
+    @ocache_weakref
     def edge_orbits(self):
         """Compute orbits of the edges under the action of graph
         automorphism group, and a representative for each orbit.
@@ -1107,7 +1106,7 @@ class Fatgraph(EqualIfIsomorphic):
         return orbits
 
 
-    @maybe(ocache0)
+    @ocache_weakref
     def edge_pair_orbits(self):
         """Compute orbits of pairs `(edge1, edge2)` under the action
         of graph automorphism group, and a representative for each
@@ -1307,7 +1306,7 @@ class Fatgraph(EqualIfIsomorphic):
         return True
 
 
-    @maybe(ocache_iterator)
+    @ocache_iterator
     def isomorphisms(G1, G2):
         """Iterate over `Fatgraph` isomorphisms from `G1` to `G2`.
 
@@ -1563,7 +1562,7 @@ class Fatgraph(EqualIfIsomorphic):
         return len(list(self.automorphisms()))
     
 
-    @maybe(ocache0)
+    @ocache_weakref
     def vertex_valences(self):
         return frozenset(len(v) for v in self.vertices)
 

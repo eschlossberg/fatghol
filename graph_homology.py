@@ -22,7 +22,6 @@ from combinatorics import (
     Permutation,
     )
 from cache import (
-    ocache0,
     ocache_iterator,
     ocache_symmetric,
     ocache_weakref,
@@ -318,7 +317,7 @@ class NumberedFatgraph(Fatgraph):
                % (repr(self.underlying), canonical)
     
 
-    @maybe(ocache_weakref)
+    @ocache_weakref
     def contract(self, edgeno):
         """Return a new `NumberedFatgraph` instance, obtained by
         contracting the specified edge.
@@ -371,7 +370,7 @@ class NumberedFatgraph(Fatgraph):
         return NumberedFatgraph(contracted, numbering=new_numbering)
         
 
-    #@maybe(ocache_iterator)
+    #@ocache_iterator
     def isomorphisms(G1, G2):
         """Iterate over isomorphisms from `G1` to `G2`.
 
