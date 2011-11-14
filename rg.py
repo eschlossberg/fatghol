@@ -23,9 +23,9 @@ import weakref
 from cache import (
     Caching,
     ocache0,
-    ocache_iterator,
-    ocache_symmetric,
-    ocache_weakref,
+    ocache_contract,
+    ocache_eq,
+    ocache_isomorphisms,
     )
 from collections import defaultdict
 from combinatorics import Permutation
@@ -256,7 +256,7 @@ class EqualIfIsomorphic(Caching):
         Caching.__init__(self)
 
     
-    @ocache_symmetric
+    @ocache_eq
     def __eq__(self, other):
         """Return `True` if `self` and `other` are isomorphic."""
 
@@ -923,7 +923,7 @@ class Fatgraph(EqualIfIsomorphic):
                         )
 
 
-    @ocache_weakref
+    @ocache_contract
     def contract(self, edge):
         """Return new `Fatgraph` obtained by contracting the specified edge.
 
@@ -1306,7 +1306,7 @@ class Fatgraph(EqualIfIsomorphic):
         return True
 
 
-    @ocache_iterator
+    @ocache_isomorphisms
     def isomorphisms(G1, G2):
         """Iterate over `Fatgraph` isomorphisms from `G1` to `G2`.
 

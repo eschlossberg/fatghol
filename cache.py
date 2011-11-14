@@ -140,9 +140,10 @@ class Caching(object):
 
     __slots__ = [
         '__id',
-        '_cache0', # cache for nullary methods
-        '_cache',  # strong result cache
-        '_wcache', # WeakValueRef cache
+        '_cache0',             # cache for nullary methods
+        '_cache_contract',     # cache `Fatgraph.contract` results
+        '_cache_eq',           # cache `Fatgraph.__eq__` results
+        '_cache_isomorphisms', # cache `Fatgraph.isomorphisms` results
         ]
 
     def __init__(self):
@@ -224,87 +225,91 @@ def ocache0(func):
 
 
 @cython.ccall
-def ocache_weakref(func):
-    """Cache result of a generic object method.
+def ocache_contract(func):
+    """Cache result of the `Fatgraph.contract` method.
     
     Only a weak reference to the method's result is held, so the cache
-    entry is automatically freed when the result object goes out of
+    entry is automatically freed when the result Fatgraph goes out of
     scope.
 
-    On the contrary, function arguments are stored as strong
-    references, so any object referenced in the arguments will be kept
-    alive as long as it is in the cache.
-
-    This decorator can cache results of calls `obj.method()`. The
-    result cache is held in the object itself; therefore, to cache
-    result from methods of objects using a '__slots__' declaration, a
-    '_cache' slot must be present and writable.
+    Results of calls are cached in the `Fatgraph` instance on which
+    the method is called, so they are automatically dropped when that
+    object is collected.
     """
     @functools.wraps(func)
-    def wrapper(obj, *args):
+    def wrapper(obj, edgeno):
         try:
-            cache = obj._wcache
+            cache = obj._cache_contract
         except AttributeError:
-            obj._wcache = cache = defaultdict(weakref.WeakValueDictionary)
+            obj._cache_contract = cache = weakref.WeakValueDictionary()
         try:
-            return cache[func.func_name][args]
+            return cache[edgeno]
         except KeyError:
-            result = func(obj, *args)
-            cache[func.func_name][args] = result
+            result = func(obj, edgeno)
+            cache[edgeno] = result
             return result
     return wrapper
 
 
 @cython.ccall
-def ocache_symmetric(func):
-    """Cache result of 2-ary symmetric method.
+def ocache_eq(func):
+    """Cache result of the 2-ary symmetric `Fatgraph.__eq__` method.
 
-    This decorator can cache results of calls `obj1.method(obj2)`,
-    subject to the constraint that swapping `obj1` and `obj2` gives
-    the *same result* (e.g., equality tests).  When
-    `obj1.method(obj2)` is first called, the result is also stored in
-    the location corresponding to `obj2.method(obj1)`.    
+    Results of calls are cached in the `Fatgraph` instance on which
+    the method is called, *and* (simmetrically) in the `Fatgraph` to
+    which that is compared to.
+    
+    Only a weak reference to the compared-to graph is held, so the
+    cache entry is automatically freed when the compared-to Fatgraph
+    goes out of scope.
     """
     @functools.wraps(func)
     def wrapper(o1, o2):
         try:
-            cache1 = o1._cache
+            cache1 = o1._cache_eq
         except AttributeError:
-            o1._cache = cache1 = defaultdict(dict)
+            o1._cache_eq = cache1 = weakref.WeakKeyDictionary()
         try:
             cache2 = o2._cache
         except AttributeError:
-            o2._cache = cache2 = defaultdict(dict)
+            o2._cache_eq = cache2 = weakref.WeakKeyDictionary()
         try:
-            return cache1[func.func_name][cache_id(o2)]
+            return cache1[o2]
         except KeyError:
             result = func(o1, o2)
-            cache1[func.func_name][cache_id(o2)] = result
-            cache2[func.func_name][cache_id(o1)] = result
+            cache1[o2] = result
+            cache2[o1] = result
             return result
     return wrapper
 
 
 @cython.ccall
-def ocache_iterator(func):
-    """Cache results of `isomorphism(g1,g2)` methods, which return an
+def ocache_isomorphisms(func):
+    """Cache results of `isomorphisms(g1,g2)` methods, which return an
     iterator/generator.
 
     Iterator results cannot be cached like any other object, because
     they need to return the same set of values each time the
     generating function is invoked.
+
+    Results of calls are cached in the `Fatgraph` instance on which
+    the method is called, so they are automatically dropped when that
+    object is collected.
+
+    Only a weak reference to the target Fatgraph is held, so the cache
+    entry is automatically freed when it goes out of scope.
     """
     @functools.wraps(func)
     def wrapper(o1, o2):
         try:
-            cache = o1._wcache
+            cache = o1._cache_isomorphisms
         except AttributeError:
-            cache = o1._wcache = defaultdict(weakref.WeakValueDictionary)
+            cache = o1._cache_isomorphisms = weakref.WeakKeyDictionary()
         try:
-            return cache[func.func_name][cache_id(o2)].replay()
+            return cache[o2].replay()
         except KeyError:
             result = _IteratorRecorder(func(o1, o2))
-            cache[func.func_name][cache_id(o2)] = result
+            cache[o2] = result
             return result.replay()
     return wrapper
 
