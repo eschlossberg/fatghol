@@ -424,8 +424,8 @@ class NumberedFatgraphPool(object):
       >>> for g in p: print g
       NumberedFatgraph(Fatgraph([Vertex([2, 0, 0]), Vertex([2, 1, 1])]),
                        numbering={BoundaryCycle([(0, 2, 0), (1, 2, 0), (0, 0, 1), (1, 0, 1)]): 0,
-                                  BoundaryCycle([(1, 1, 2)]): 1,
-                                  BoundaryCycle([(0, 1, 2)]): 2})
+                                  BoundaryCycle([(0, 1, 2)]): 1,
+                                  BoundaryCycle([(1, 1, 2)]): 2})
       NumberedFatgraph(Fatgraph([Vertex([2, 0, 0]), Vertex([2, 1, 1])]),
                        numbering={BoundaryCycle([(0, 1, 2)]): 0,
                                   BoundaryCycle([(0, 2, 0), (1, 2, 0), (0, 0, 1), (1, 0, 1)]): 1,
@@ -444,8 +444,8 @@ class NumberedFatgraphPool(object):
       >>> for g in NumberedFatgraphPool(ug2): print g
       NumberedFatgraph(Fatgraph([Vertex([2, 1, 0]), Vertex([2, 0, 1])]),
                         numbering={BoundaryCycle([(1, 2, 0), (0, 0, 1)]): 0,
-                                   BoundaryCycle([(0, 2, 0), (1, 0, 1)]): 1,
-                                   BoundaryCycle([(0, 1, 2), (1, 1, 2)]): 2})
+                                   BoundaryCycle([(0, 1, 2), (1, 1, 2)]): 1,
+                                   BoundaryCycle([(0, 2, 0), (1, 0, 1)]): 2})
 
     When the graph has only one boundary component, there is only one
     possible numbering, which is actually returned::
@@ -463,9 +463,9 @@ class NumberedFatgraphPool(object):
       >>> pool = NumberedFatgraphPool(ug4)
       >>> pool[0]
       NumberedFatgraph(Fatgraph([Vertex([0, 1, 0, 1, 2, 2])]),
-                       numbering={BoundaryCycle([(0, 4, 5)]): 0,
-                                  BoundaryCycle([(0, 2, 3), (0, 3, 4),
-                                                 (0, 1, 2), (0, 0, 1), (0, 5, 0)]): 1})
+                       numbering={BoundaryCycle([(0, 2, 3), (0, 3, 4),
+                                                 (0, 1, 2), (0, 0, 1), (0, 5, 0)]): 0,
+                                  BoundaryCycle([(0, 4, 5)]): 1})
     """
     def __init__(self, graph):
         bc = graph.boundary_cycles

@@ -25,8 +25,11 @@ class _TimeBasedUnique(Iterator):
     system epoch.  The returned ID is guaranteed to be monotonically
     increasing::
 
-      >>> u = TimeBasedUnique()
-      >>> u.next() < u.next() < u.next()
+      >>> u = _TimeBasedUnique()
+      >>> u1 = u.next()
+      >>> u2 = u.next()
+      >>> u3 = u.next()
+      >>> u1 < u2 < u3
       True
 
     """
@@ -45,6 +48,19 @@ class _IteratorRecorder(object):
     multiple players can replay from one recorded source
     independently.
 
+    Example::
+
+      >>> L = [1,2,3]
+      >>> R = _IteratorRecorder(iter(L))
+      >>> for x in R: print x
+      1
+      2
+      3
+      >>> for x in R.replay(): print x
+      1
+      2
+      3
+      
     **WARNING:** This is not thread-safe!
     """
 
@@ -79,6 +95,10 @@ class _IteratorReplayer(Iterator):
     """Replay values recorded into a given `_IteratorRecorder` class;
     multiple players can replay from one recorded source
     independently.
+
+    Instances of `_IteratorReplayer`:class: are only produced as a
+    result of the `_IteratorRecorder.replay` method.  See
+    `_IteratorRecorder`:class: for examples.
 
     **WARNING:** This is not thread-safe!
     """

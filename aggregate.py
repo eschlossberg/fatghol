@@ -1,3 +1,10 @@
+#! /usr/bin/env python
+#
+"""
+The `AggregateList` class.
+"""
+__docformat__ = 'reStructuredText'
+
 import cython
 
 import itertools

@@ -200,8 +200,10 @@ class OrderedSetPartitionsIterator(object):
             self.items = items
         else:
             self.items = range(sum(self.sizes))
-        assert (len(self.items) == sum(sizes)), \
-               "Sum of partition lengths is not equal to set size."
+        # XXX: should be an `assert`, but that breaks the "selftest" command
+        # in main.py, which is executed with __debug__==False.
+        if (len(self.items) != sum(sizes)):
+            raise AssertionError("Sum of partition lengths is not equal to set size.")
         self.state = None
         
     def __iter__(self):

@@ -16,9 +16,9 @@ def vertex_valences_for_given_g_and_n(g,n):
 
     Examples::
       >>> vertex_valences_for_given_g_and_n(0,3)
-      set([(3, 3), (4,)])
+      [(3, 3), (4,)]
       >>> vertex_valences_for_given_g_and_n(1,1)
-      set([(3, 3), (4,)])
+      [(3, 3), (4,)]
     """
     # with 1 vertex only, there are this many edges:
     L = 2*g + n - 1
