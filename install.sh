@@ -7,7 +7,7 @@
 # standard PATH/LD_LIBRARY_PATH
 #
 PYTHON=2.7.2 # http://www.python.org/ftp/python/2.7.2/Python-2.7.2.tar.bz2
-CYTHON=0.15
+CYTHON=0.15.1
 SWIG=1.3.40
 
 # LinBox requires GMP, Givaro and ATLAS
@@ -179,7 +179,7 @@ fi # SWIG
 if [ -n "$CYTHON" ]; then
     _ Installing Cython-${CYTHON}
     cd ${sw}/src/
-    wget -N http://www.cython.org/Cython-${CYTHON}.tar.gz
+    wget -N http://www.cython.org/release/Cython-${CYTHON}.tar.gz
     set -x
     tar -xzf Cython-${CYTHON}.tar.gz
     cd Cython-${CYTHON}
