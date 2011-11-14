@@ -32,7 +32,6 @@
 #define SIMPLE_HPP
 
 #include <cassert>
-#include <cstdint>
 #include <fstream>
 #include <string>
 #include <iostream>
@@ -52,20 +51,20 @@
 class SimpleMatrix {
 public:
   /** Default ctor: make null sparse matrix. */
-  SimpleMatrix(int32_t const m, int32_t const n);  
+  SimpleMatrix(int const m, int const n);  
 
   /** Add an entry. */
-  void addToEntry(int32_t const i, int32_t const j, 
+  void addToEntry(int const i, int const j, 
                   int const value);
 
   /** Return the value of entry at row @a i and column @j */
-  int getEntry(int32_t const i, int32_t const j) const;
+  int getEntry(int const i, int const j) const;
 
   /** Return rank of this matrix. */
-  unsigned int32_t rank(void);
+  unsigned long rank(void);
 
-  int32_t const num_rows;
-  int32_t const num_columns;
+  const int num_rows;
+  const int num_columns;
 
   /** Return `true` if product of given matrices is null */
   friend bool is_null_product(const SimpleMatrix &M1, 
@@ -79,10 +78,10 @@ public:
 
 private:
 #ifdef FATGHOL_USE_RHEINFALL
-  typedef std::pair< const int32_t,int64_t >                  _coord_and_val;
-  typedef std::map< int32_t, int64_t, std::less<int32_t> >    _simplerow;
-  typedef std::pair< const int32_t,_simplerow >               _coord_and_simplerow;
-  typedef std::map< int32_t, _simplerow, std::less<int32_t> > _simplerows;
+  typedef std::pair< const int,long >                  _coord_and_val;
+  typedef std::map< int, long, std::less<int> >    _simplerow;
+  typedef std::pair< const int,_simplerow >               _coord_and_simplerow;
+  typedef std::map< int, _simplerow, std::less<int> > _simplerows;
   _simplerows m;
 #else
   typedef LinBox::PID_integer _CoefficientRingType;
@@ -96,7 +95,7 @@ private:
 // --- inline methods ---
 
 inline
-SimpleMatrix::SimpleMatrix(int32_t const m, int32_t const n):
+SimpleMatrix::SimpleMatrix(int const m, int const n):
   num_rows(m), num_columns(n), 
 #ifdef FATGHOL_USE_RHEINFALL
 #  error Rheinfall support not yet implemented.  Please define FATGHOL_USE_LINBOX_ELIMINATION_PIVOT_LINEAR.
@@ -110,7 +109,7 @@ SimpleMatrix::SimpleMatrix(int32_t const m, int32_t const n):
 
 inline 
 void
-SimpleMatrix::addToEntry(int32_t const i, int32_t const j,
+SimpleMatrix::addToEntry(int const i, int const j,
                       int const value)
 {
 #ifdef FATGHOL_USE_RHEINFALL
@@ -131,7 +130,7 @@ SimpleMatrix::addToEntry(int32_t const i, int32_t const j,
 
 inline 
 int
-SimpleMatrix::getEntry(int32_t const i, int32_t const j) const
+SimpleMatrix::getEntry(int const i, int const j) const
 {
   if (num_rows == 0 or num_columns == 0)
     return 0;
@@ -155,12 +154,13 @@ SimpleMatrix::getEntry(int32_t const i, int32_t const j) const
 
 
 inline
-unsigned int32_t
+unsigned long
 SimpleMatrix::rank()
 {
   if (num_rows == 0 or num_columns == 0)
     return 0;
-  else {
+
+  unsigned long r;
 #if defined(FATGHOL_USE_LINBOX_ELIMINATION_PIVOT_LINEAR)
     LinBox::Method::SparseElimination se;
     se.strategy(LinBox::Specifier::PIVOT_LINEAR);
@@ -169,19 +169,18 @@ SimpleMatrix::rank()
     se.strategy(LinBox::Specifier::PIVOT_NONE);
 #endif
 
-    unsigned int32_t r;
 #if defined(FATGHOL_USE_LINBOX_ELIMINATION_PIVOT_LINEAR) || defined(FATGHOL_USE_LINBOX_ELIMINATION_PIVOT_NONE)
     // use the prescribed elimination strategy
-    return LinBox::rank(r, m, se);
+    r = LinBox::rank(r, m, se);
 #elif defined(FATGHOL_USE_LINBOX_DEFAULT)
     // use LinBox' default strategy (blackbox, as of 1.1.7)
-    return LinBox::rank(r, m);
+    r = LinBox::rank(r, m);
 #else
 # ifndef SWIG
 #  error Rheinfall support not yet implemented.  Please define FATGHOL_USE_LINBOX_ELIMINATION_PIVOT_LINEAR.
 # endif
 #endif  
-  }
+    return r;
 }
 
 
@@ -191,10 +190,10 @@ is_null_product(const SimpleMatrix &A, const SimpleMatrix &B)
 {
   assert (A.num_columns == B.num_rows);
 #ifdef FATGHOL_USE_RHEINFALL
-  for(int32_t i=0; i<A.num_rows; i++) {
-    for (int32_t j=0; j<B.num_columns; j++) {
-      int64_t x = 0;
-      for (int32_t k=0; k<A.num_columns; k++) 
+  for(int i=0; i<A.num_rows; i++) {
+    for (int j=0; j<B.num_columns; j++) {
+      long x = 0;
+      for (int k=0; k<A.num_columns; k++) 
         x += A.m.getEntry(i,k) * B.m.getEntry(k,j);
       if (not (x == 0))
         return false;
@@ -203,11 +202,11 @@ is_null_product(const SimpleMatrix &A, const SimpleMatrix &B)
 #else // use LinBox
   assert (A.m.coldim() == B.m.rowdim());
   SimpleMatrix::_CoefficientRingType ZZ;
-  for(int32_t i=0; i<A.m.rowdim(); i++) {
-    for (int32_t j=0; j<B.m.coldim(); j++) {
+  for(int i=0; i<A.m.rowdim(); i++) {
+    for (int j=0; j<B.m.coldim(); j++) {
       SimpleMatrix::_CoefficientRingType::Element x;
       ZZ.init(x, 0);
-      for (int32_t k=0; k<A.m.coldim(); k++) 
+      for (int k=0; k<A.m.coldim(); k++) 
         x += A.m.getEntry(i,k) * B.m.getEntry(k,j);
       if (not (x == 0))
         return false;
@@ -228,7 +227,7 @@ SimpleMatrix::load(const char *const filename)
 
 #ifdef FATGHOL_USE_RHEINFALL
   // XXX: this is basically ripped off Rheinfall's "rank.hpp"
-  int32_t nrows, ncols; 
+  int nrows, ncols; 
   char M;
   input >> nrows >> ncols >> M;
   if (input.fail() or 'M' != M)
@@ -239,8 +238,8 @@ SimpleMatrix::load(const char *const filename)
   if (ncols != num_columns)
     throw std::runtime_error("Number of columns in SMS header does not match"
                              " number of columns passed to constructor");
-  int32_t i, j;
-  int64_t value;
+  int i, j;
+  long value;
   while (not input.eof()) {
     input >> i >> j >> value;
     if (0 == i and 0 == j and 0 == value)
