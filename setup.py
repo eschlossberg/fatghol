@@ -91,8 +91,6 @@ setup (
     install_requires = [
         # Cython
         'cython',
-        # Michele Simionato's "decorator" package
-        'decorator',
         ],
 
     # `zip_safe` can ease deployment, but is only allowed if the package

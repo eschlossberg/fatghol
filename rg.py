@@ -21,12 +21,11 @@ import weakref
 ## application-local imports
 
 from cache import (
+    Caching,
     ocache0,
     ocache_iterator,
     ocache_symmetric,
     ocache_weakref,
-    Cacheable,
-    cache_id
     )
 from collections import defaultdict
 from combinatorics import Permutation
@@ -243,7 +242,7 @@ class Isomorphism(object):
 
 
 
-class EqualIfIsomorphic(Cacheable):
+class EqualIfIsomorphic(Caching):
     """Instances of this class will compare equal if there is an
     isomorphism mapping one to the other.
     """
@@ -254,7 +253,7 @@ class EqualIfIsomorphic(Cacheable):
     def __init__(self, invariants):
         self.invariants = invariants
         # set this instance's ``persistent id''
-        Cacheable.__init__(self)
+        Caching.__init__(self)
 
     
     @ocache_symmetric

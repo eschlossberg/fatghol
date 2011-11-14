@@ -5,11 +5,16 @@
 __docformat__ = 'reStructuredText'
 
 
-## additional imports
-
-from decorator import decorator
+## stdlib imports
+from collections import defaultdict
+import functools
 from time import time
 import weakref
+
+
+## additional imports
+
+import cython
 
 ## local imports
 
@@ -18,6 +23,7 @@ from iterators import Iterator
 
 ## auxiliary classes
 
+@cython.cclass
 class _TimeBasedUnique(Iterator):
     """Return a new unique ID at each iteration step.
 
@@ -42,6 +48,7 @@ class _TimeBasedUnique(Iterator):
 _unique = _TimeBasedUnique()
 
 
+@cython.cclass
 class _IteratorRecorder(object):
     """Cache results from a given iterator.  Client classes provided
     by the `replay()` method will then replay the iterator history;
@@ -64,7 +71,7 @@ class _IteratorRecorder(object):
     **WARNING:** This is not thread-safe!
     """
 
-    __slots__ = ['done', 'iterable', 'history']
+    __slots__ = ['done', 'iterable', 'history', '__weakref__']
     
     def __init__(self, iterable):
         self.iterable = iterable
@@ -91,9 +98,10 @@ class _IteratorRecorder(object):
         return _IteratorReplayer(self)
     
 
+@cython.cclass
 class _IteratorReplayer(Iterator):
-    """Replay values recorded into a given `_IteratorRecorder` class;
-    multiple players can replay from one recorded source
+    """Replay values recorded into a given `_IteratorRecorder` class.
+    Multiple players can replay from one recorded source
     independently.
 
     Instances of `_IteratorReplayer`:class: are only produced as a
@@ -124,16 +132,23 @@ class _IteratorReplayer(Iterator):
             raise
 
 
-class Cacheable(object):
+@cython.cclass
+class Caching(object):
     """Instances of this class provide an interface for use by caches
     based on a `dict` subclass.
     """
 
-    __slots__ = ['__id', '_cache']
+    __slots__ = [
+        '__id',
+        '_cache0', # cache for nullary methods
+        '_cache',  # strong result cache
+        '_wcache', # WeakValueRef cache
+        ]
 
     def __init__(self):
         self.__id = _unique.next()
 
+    @cython.ccall
     def cache_id(self):
         """Return a integer value which is unique and guaranteed not
         to be re-used.
@@ -145,6 +160,7 @@ class Cacheable(object):
         return self.__id
 
 
+@cython.ccall
 def cache_id(o):
     try:
         return o.cache_id()
@@ -155,107 +171,122 @@ def cache_id(o):
 
 ## caching functions
 
-@decorator
-def fcache(func, *args):
+# store 
+_func_cache = defaultdict(dict)
+
+@cython.ccall
+def fcache(func):
     """Cache result of a generic function.
 
     This decorator can cache results of calls `func(*args)`.
 
-    CAVEAT: The result cache is held in the function object itself, so
-    any object present in the cache will *not* be garbage collected!
+    CAVEATS:
+
+    1. The whole argument tuple is cached, so any object referenced
+      there will *not* be garbage collected!
+    2. No keyword arguments are allowed in the cached function.
     """
-    try:
-        rcache = func._cache
-    except AttributeError:
-        func._cache = rcache = {}
-    key = (args,)
-    try:
-        return rcache[key]
-    except KeyError:
-        result = func(*args)
-        rcache[key] = result
-        return result
+    @functools.wraps(func)
+    def wrapper(*args):
+        cache = _func_cache[id(func)]
+        key = args
+        try:
+            return cache[key]
+        except KeyError:
+            result = func(*args)
+            cache[key] = result
+            return result
+    return wrapper
 
 
-@decorator
-def ocache0(func, obj):
+@cython.ccall
+def ocache0(func):
     """Cache result of a nullary object method.
-
+    
     This decorator can cache results of calls `obj.method()`. The
     result cache is held in the object itself; therefore, to cache
     result from methods of objects using a '__slots__' declaration, a
     '_cache' slot must be present and writable.
     """
-    try:
-        rcache = obj._cache
-    except AttributeError:
-        obj._cache = rcache = {}
-    key = func.func_name
-    try:
-        return rcache[key]
-    except KeyError:
-        result = func(obj)
-        rcache[key] = result
-        return result
+    @functools.wraps(func)
+    def wrapper(obj):
+        try:
+            cache = obj._cache0
+        except AttributeError:
+            obj._cache0 = cache = dict()
+        try:
+            return cache[func.func_name]
+        except KeyError:
+            result = func(obj)
+            cache[func.func_name] = result
+            return result
+    return wrapper
 
 
-@decorator
-def ocache_weakref(func, obj, *args):
+@cython.ccall
+def ocache_weakref(func):
     """Cache result of a generic object method.
+    
+    Only a weak reference to the method's result is held, so the cache
+    entry is automatically freed when the result object goes out of
+    scope.
+
+    On the contrary, function arguments are stored as strong
+    references, so any object referenced in the arguments will be kept
+    alive as long as it is in the cache.
 
     This decorator can cache results of calls `obj.method()`. The
     result cache is held in the object itself; therefore, to cache
     result from methods of objects using a '__slots__' declaration, a
     '_cache' slot must be present and writable.
     """
-    try:
-        rcache = obj._cache
-    except AttributeError:
-        obj._cache = rcache = {}
-    key = (func.func_name, args)
-    try:
-        result = rcache[key]()
-    except KeyError:
-        result = func(obj, *args)
-        def cleanup(ref): del rcache[key]
-        rcache[key] = weakref.ref(result, cleanup)
-    return result
+    @functools.wraps(func)
+    def wrapper(obj, *args):
+        try:
+            cache = obj._wcache
+        except AttributeError:
+            obj._wcache = cache = defaultdict(weakref.WeakValueDictionary)
+        try:
+            return cache[func.func_name][args]
+        except KeyError:
+            result = func(obj, *args)
+            cache[func.func_name][args] = result
+            return result
+    return wrapper
 
 
-@decorator
-def ocache_symmetric(func, o1, o2):
+@cython.ccall
+def ocache_symmetric(func):
     """Cache result of 2-ary symmetric method.
 
     This decorator can cache results of calls `obj1.method(obj2)`,
     subject to the constraint that swapping `obj1` and `obj2` gives
     the *same result* (e.g., equality tests).  When
     `obj1.method(obj2)` is first called, the result is also stored in
-    the location corresponding to `obj2.method(obj1)`.
-
-    The result cache is held in the object itself; therefore, to cache
-    result from methods of objects using a '__slots__' declaration, a
-    '_cache' slot must be present and writable.
+    the location corresponding to `obj2.method(obj1)`.    
     """
-    try:
-        rcache1 = o1._cache
-    except AttributeError:
-        o1._cache = rcache1 = {}
-    try:
-        rcache2 = o2._cache
-    except AttributeError:
-        o2._cache = rcache2 = {}
-    key = (func.func_name, cache_id(o2))
-    try:
-        result = rcache1[key]
-    except KeyError:
-        result = func(o1, o2)
-        rcache1[key] = result
-        rcache2[(func.func_name, cache_id(o1))] = result
-    return result
+    @functools.wraps(func)
+    def wrapper(o1, o2):
+        try:
+            cache1 = o1._cache
+        except AttributeError:
+            o1._cache = cache1 = defaultdict(dict)
+        try:
+            cache2 = o2._cache
+        except AttributeError:
+            o2._cache = cache2 = defaultdict(dict)
+        try:
+            return cache1[func.func_name][cache_id(o2)]
+        except KeyError:
+            result = func(o1, o2)
+            cache1[func.func_name][cache_id(o2)] = result
+            cache2[func.func_name][cache_id(o1)] = result
+            return result
+    return wrapper
 
 
-@decorator
-def ocache_iterator(func, o1, o2):
+@cython.ccall
+def ocache_iterator(func):
     """Cache results of `isomorphism(g1,g2)` methods, which return an
     iterator/generator.
 
@@ -263,17 +294,19 @@ def ocache_iterator(func, o1, o2):
     they need to return the same set of values each time the
     generating function is invoked.
     """
-    try:
-        rcache = o1._cache
-    except AttributeError:
-        rcache = o1._cache = {}
-    key = (func.func_name, o2.cache_id())
-    try:
-        return rcache[key].replay()
-    except KeyError:
-        result = _IteratorRecorder(func(o1, o2))
-        rcache[key] = result
-        return result.replay()
+    @functools.wraps(func)
+    def wrapper(o1, o2):
+        try:
+            cache = o1._wcache
+        except AttributeError:
+            cache = o1._wcache = defaultdict(weakref.WeakValueDictionary)
+        try:
+            return cache[func.func_name][cache_id(o2)].replay()
+        except KeyError:
+            result = _IteratorRecorder(func(o1, o2))
+            cache[func.func_name][cache_id(o2)] = result
+            return result.replay()
+    return wrapper
 
 
 

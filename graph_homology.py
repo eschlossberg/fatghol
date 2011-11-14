@@ -25,8 +25,7 @@ from cache import (
     ocache_iterator,
     ocache_symmetric,
     ocache_weakref,
-    Cacheable,
-    cache_id
+    Caching,
     )
 from copy import copy
 from fractions import Fraction
