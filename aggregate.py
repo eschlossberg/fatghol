@@ -141,7 +141,7 @@ class AggregateList(object):
         self.__components[-1].extend(seq)
         self.__lengths[-1] = len(self.__components[-1])
 
-    @cython.cfunc(cython.int)
+    #@cython.cfunc(cython.int)
     def index(self, value, start=0):
         """Return index of the first element equal to `value`."""
         index = cython.declare(cython.int, 0)
