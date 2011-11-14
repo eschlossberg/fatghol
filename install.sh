@@ -211,7 +211,17 @@ fi # GMP
 if [ -n "$GIVARO" ]; then
     _ Installing Givaro ${GIVARO}
     cd ${sw}/src
-    wget -N http://www-lmc.imag.fr/CASYS/LOGICIELS/givaro/Downloads/givaro-${GIVARO}.tar.gz
+    case "$GIVARO" in
+        [0-9]*) 
+            # it's a version number, use fixed-format URL
+            wget -N http://www-lmc.imag.fr/CASYS/LOGICIELS/givaro/Downloads/givaro-${GIVARO}.tar.gz
+            ;;
+        *) 
+            # presume it's a URL: download it and extract version number
+            wget --no-check-certificate -N "$GIVARO" 
+            GIVARO=$(expr match "$GIVARO" '.*/givaro-\([0-9\.]\+\).tar.gz')
+            ;;
+    esac
     set -x
     tar -xzf givaro-${GIVARO}.tar.gz
     cd givaro-${GIVARO%%rc[0-9]}
