@@ -21,6 +21,7 @@ import weakref
 ## application-local imports
 
 from cache import (
+    ocache0,
     ocache_iterator,
     ocache_symmetric,
     ocache_weakref,
@@ -532,7 +533,7 @@ class Fatgraph(EqualIfIsomorphic):
         return self.isomorphisms(self)
 
 
-    @ocache_weakref
+    @ocache0
     def compute_boundary_cycles(self):
         """Return a list of boundary cycles of this `Fatgraph` object.
 
@@ -1067,7 +1068,7 @@ class Fatgraph(EqualIfIsomorphic):
         return BoundaryCycle(new_bcy)
 
 
-    @ocache_weakref
+    @ocache0
     def edge_orbits(self):
         """Compute orbits of the edges under the action of graph
         automorphism group, and a representative for each orbit.
@@ -1106,7 +1107,7 @@ class Fatgraph(EqualIfIsomorphic):
         return orbits
 
 
-    @ocache_weakref
+    @ocache0
     def edge_pair_orbits(self):
         """Compute orbits of pairs `(edge1, edge2)` under the action
         of graph automorphism group, and a representative for each
@@ -1562,7 +1563,7 @@ class Fatgraph(EqualIfIsomorphic):
         return len(list(self.automorphisms()))
     
 
-    @ocache_weakref
+    @ocache0
     def vertex_valences(self):
         return frozenset(len(v) for v in self.vertices)
 
