@@ -576,8 +576,9 @@ class NumberedFatgraphPool(object):
         g2 = other.graph
         assert len(g1.boundary_cycles) == len(g2.boundary_cycles)
         
-        ## 1. compute map induced on `g0.boundary_cycles` from the
+        ## 1. compute map `f0_push_fwd` induced on `g0.boundary_cycles` from the
         ##    graph map `f0` which contracts `edge`.
+        ##
         (e1, e2) = g0.endpoints(edge)
         assert set(g1.boundary_cycles) == set([ g0.contract_boundary_cycle(bcy, e1, e2)
                                                 for bcy in g0.boundary_cycles ]), \
@@ -587,49 +588,99 @@ class NumberedFatgraphPool(object):
                " `%s` vs `%s`" % (g1.boundary_cycles,
                                   [ g0.contract_boundary_cycle(bcy, e1, e2)
                                     for bcy in g0.boundary_cycles ])
-        f0_push_fwd = Permutation((i1,i0) for (i0,i1) in enumerate(
-            g1.boundary_cycles.index(g0.contract_boundary_cycle(bcy, e1, e2))
-            for bcy in g0.boundary_cycles
-            ))
-        assert len(f0_push_fwd) == len(g1.boundary_cycles)
-        assert len(f0_push_fwd) == g0.num_boundary_cycles
-        if __debug__:
-            p1 = NumberedFatgraphPool(g1)
-            for (i, nb) in enumerate(self.numberings):
-                nb_ = f0_push_fwd.rearranged(nb)
-                i_ = p1._index(nb_)[0]
-                assert p1[i_] == self[i].contract(edge)
-
+        ## This would result in::
+        ##
+        ##     f0_push_fwd = Permutation((i1,i0) for (i0, i1) in enumerate(
+        ##         g1.boundary_cycles.index(g0.contract_boundary_cycle(bcy, e1, e2))
+        ##         for bcy in g0.boundary_cycles
+        ##         ))
+        ##
+        ## which satisfies:
+        ## 
+        ##     p1 = NumberedFatgraphPool(g1)
+        ##     for (i, nb) in enumerate(self.numberings):
+        ##         nb_ = f0_push_fwd.rearranged(nb)
+        ##         i_ = p1._index(nb_)[0]
+        ##        assert p1[i_] == self[i].contract(edge)
+        ##
+        ## Now, `f0_push_fwd` is not actually computed, as we only need
+        ## the composite map; see below.
+        ##
         ## 2. compute isomorphism map `f1` from `other.graph` to `self.graph.contract(edge)`;
         ##    if there is no such isomorphisms, then stop iteration.
-        ##    The reason for having this map go in the opposite direction as `f0`
-        ##    is to avoid inverting its push-forward.  (Thus saving a little complexity.)
+        ##
         f1 = Fatgraph.isomorphisms(g1,g2).next()
-        f1_push_fwd = Permutation((i1,i0) for (i0,i1) in enumerate(
-            g2.boundary_cycles.index(f1.transform_boundary_cycle(bc1))
-            for bc1 in g1.boundary_cycles
+        ##
+        ## 3. Compute the composite map `f1^(-1) * f0`.
+        ##
+        ## Using the notation from the `combinatorics` module, we could write the action of the composite map on a numbering `nb` as:
+        ##
+        ##     f1_push_fwd.rearranged(f0_push_fwd.rearranged(nb))
+        ##
+        ## by expanding the definition of `Permutation.rearranged`, we have:
+        ##
+        ##     (1): f1_push_fwd.rearranged([ nb[f0_push_fwd[x]] for x in xrange(len(f0_push_fwd)) ])
+        ##
+        ##     (2): [ [nb[f0_push_fwd[x]] for x in xrange(len(f0_push_fwd))][f1_push_fwd[y]] for y in xrange(len(f1_push_fwd) ]
+        ##
+        ## now, if `j == f1_push_fwd[y]`, then:
+        ##
+        ##     f0_push_fwd[i] == j
+        ##
+        ## is equivalent to:
+        ##
+        ##     i == f0_push_fwd.inverse()[j]
+        ##
+        ## hence we can rewrite (2) as:
+        ##
+        ##     [ nb[f0_push_fwd_inv[f1_push_fwd[y]]] for y in xrange(g0.num_boundary_cycles) ]
+        ## so we are only interested in the composed map `f0_push_fwd_inv[f1_push_fwd[y]]`.
+        ##
+        ## Recall the definitions:
+        ##
+        ##     f0_push_fwd_inv = Permutation(enumerate(
+        ##         g1.boundary_cycles.index(g0.contract_boundary_cycle(bcy, e1, e2))
+        ##         for bcy in g0.boundary_cycles
+        ##         ))
+        ##     f1_push_fwd = Permutation((i1,i0) for (i0,i1) in enumerate(
+        ##         g2.boundary_cycles.index(f1.transform_boundary_cycle(bc1))
+        ##         for bc1 in g1.boundary_cycles
+        ##         ))
+        ##
+        ## from which we get:
+        ##
+        f0invf1_push_fwd = Permutation(enumerate(
+            g2.boundary_cycles.index(
+                f1.transform_boundary_cycle(
+                    g0.contract_boundary_cycle(bcy, e1, e2)))
+            for bcy in g0.boundary_cycles
             ))
-        # now check that every numbering of `g0` can be mapped to
-        # a numbering on `g2` through the composite map `f1^(-1) * f0`
-        def pull_back(nb):
-            return f1_push_fwd.rearranged(f0_push_fwd.rearranged(nb))
-        nb_map, a_map = NumberedFatgraphPool._compute_nb_map(pull_back, self, other)
-
-        # check that non-orientable contractions have been caught by
-        # the above code.
-        if __debug__:
-            p1 = NumberedFatgraphPool(g1)
-            assert p1.is_orientable
-        assert len(f1_push_fwd) == len(g1.boundary_cycles)
-        assert len(f1_push_fwd) == len(g2.boundary_cycles)
+        assert len(f0invf1_push_fwd) == len(g1.boundary_cycles)
+        assert len(f0invf1_push_fwd) == len(g2.boundary_cycles)
 
         ## For every numbering `nb` on `g0`, compute the (index of)
         ## corresponding numbering on `g2` (under the composition map
-        ## `f1^(-1) * f0`) and return the triple `(index of nb, index of
+        ## `f1^(-1) * f0`) and return a triple `(index of nb, index of
         ## push-forward, sign)`.
-        for (j, nb) in enumerate(self.numberings):
-            k = nb_map[j]
-            a = a_map[j]
+        ##
+        ## In the following:
+        ##
+        ## - `j` is the index of a numbering `nb` in `self.numberings`;
+        ## - `k` is the index of the corresponding numbering in `other.numberings`,
+        ##   under the composition map `f1^(-1) * f0`;
+        ## - `a` is the the unique automorphism `a` of `other.graph` such that::
+        ##
+        ##       self.numberings[j] = pull_back(<permutation induced by `a` applied to> other.numberings[k])
+        ##
+        ## - `s` is the pull-back sign (see below).
+        ##
+        ## The pair `k`,`a` is computed using the
+        ## `NumberedFatgraphPool._index` (which see), applied to each
+        ## of `self.numberings`, rearranged according to the
+        ## permutation of boundary cycles induced by `f1^(-1) * f0`.
+        ##
+        for (j, (k, a)) in enumerate(other._index(f0invf1_push_fwd.rearranged(nb))
+                                     for nb in self.numberings):
             ## there are three components to the sign `s`:
             ##   - the sign given by the ismorphism `f1`
             ##   - the sign of the automorphism of `g2` that transforms the
@@ -640,58 +691,13 @@ class NumberedFatgraphPool(object):
                 * minus_one_exp(g0.edge_numbering[edge])
             yield (j, k, s)
 
-    @staticmethod
-    #@cython.cfunc
-    @cython.locals()
-    def _push_fwd(f, g1, g2):
-        """Return a `Permutation` instance corresponding to the
-        map induced by ismorphism `f` on the boundary cycles, or
-        `None` if no such map exists.
-
-        Indeed, there are cases (see examples in the
-        `Fatgraph.__eq__` docstring), in which the
-        `Fatgraph.isomorphisms` algorithm may find a valid
-        mapping, changing from `g1` to an *alternate*
-        representation of `g2` - these should fail as they don't
-        preserve the boundary cycles.
-        """
-        pass
-
-    @staticmethod
-    #@cython.cfunc
-    @cython.locals(#src=NumberedFatgraphPool, dst=NumberedFatgraphPool,
-                   i=cython.int, i_=cython.int, k=cython.int)
-    def _compute_nb_map(pull_back_bcy_map, src, dst):
-        """
-        Return a pair of `dict` instances:
-          - the first maps (indices of ) numberings in
-            `NumberedFatgraphPool` instance `src` to corresponding
-            (indices of) numberings in `NumberedFatgraphPool`
-            instance `dst`.
-
-          - the second maps the same indices into the
-            automorphism `a` of `dst.graph` such that::
-
-              src.numberings[i] = pull_back(<permutation induced by a applied to> dst.numberings[i])
-
-        Raises `KeyError` if no such mapping could be found.
-
-        Indices must be `int`s here, as `list`s cannot be used as
-        dictionary keys.
-        """
-        nb_map = dict()
-        a_map = dict()
-        for (i, nb) in enumerate(src.numberings):
-            (i_, k) = dst._index(pull_back_bcy_map(nb))
-            nb_map[i] = i_
-            a_map[i] = k
-        return (nb_map, a_map)
-
     #@cython.cfunc
     @cython.locals(numbering=Permutation,
                    i=cython.int, j=cython.int, p=Permutation)
     def _index(self, numbering):
         """
+        Return pair `(j, p)` such that `j` is the index of `p * numbering`,
+        and `p` belongs in `self.P`.
         """
         for (i, p) in enumerate(self.P):
             try:
