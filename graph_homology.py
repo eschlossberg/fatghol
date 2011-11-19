@@ -75,10 +75,13 @@ class MgnChainComplex(ChainComplex):
             timing.start("D[%d]" % i)
             p = len(m[i-1]) # == dim C[i-1]
             q = len(m[i])   # == dim C[i]
-            checkpoint = os.path.join(runtime.options.checkpoint_dir,
-                                      ('M%d,%d-D%d.sms' % (runtime.g, runtime.n, i)))
+            try:
+                checkpoint = os.path.join(runtime.options.checkpoint_dir,
+                                          ('M%d,%d-D%d.sms' % (runtime.g, runtime.n, i)))
+            except AttributeError:
+                checkpoint = None
             # maybe load `D[i]` from persistent storage
-            if p>0 and q>0 and runtime.options.restart:
+            if checkpoint and p>0 and q>0 and runtime.options.restart:
                 d = SimpleMatrix(p, q)
                 if d.load(checkpoint):
                     D.append(d, p, q)
@@ -109,7 +112,8 @@ class MgnChainComplex(ChainComplex):
                 # XXX: using implementation detail!
                 pool1.graph._cache_isomorphisms.clear()
             timing.stop("D[%d]" % i)
-            d.save(checkpoint)
+            if checkpoint:
+                d.save(checkpoint)
             D.append(d, p, q)
             logging.info("  Computed %dx%d matrix D[%d] (elapsed: %.3fs)", 
                          p, q, i, timing.get("D[%d]" % i))
