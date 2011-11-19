@@ -4,19 +4,13 @@
 """
 __docformat__ = 'reStructuredText'
 
-## logging subsystem
 
-import logging
+import cython
 
 ## stdlib imports
 
-from copy import copy
-import operator
-import itertools
-import sys
-import types
-import weakref
-
+from collections import defaultdict, Iterator
+import logging
 
 ## application-local imports
 
@@ -27,12 +21,10 @@ from cache import (
     ocache_eq,
     ocache_isomorphisms,
     )
-from collections import defaultdict
 from combinatorics import Permutation
-from cyclicseq import CyclicList,CyclicTuple
+from cyclicseq import CyclicList, CyclicTuple
 from iterators import (
     BufferingIterator,
-    Iterator,
     )
 import timing
 from utils import (
@@ -50,8 +42,8 @@ class BoundaryCycle(frozenset):
 
     Boundary cycles are a cyclic sequence of 'corners': a corner
     consists of a vertex `v` and (an unordered pair of) two
-    consecutive indices (in the cyclic order at `v`, so, either `j
-    == i+1` or `i` and `j` are the starting and ending indices).
+    consecutive indices (in the cyclic order at `v`, so, either
+    `j == i+1` or `i` and `j` are the starting and ending indices).
 
     Two boundary cycles are equal if they comprise the same
     corners.
@@ -62,7 +54,7 @@ class BoundaryCycle(frozenset):
     is performed in the constructor code.)
     """
 
-    __slots__ = [ ]
+    __slots__ = ()
 
     # no code to be added to the `frozenset` base class
     pass
@@ -83,13 +75,9 @@ class Vertex(CyclicList):
       >>> Vertex([1,1,0,0]).num_loops
       2
     """
-    # *Note:* `Vertex` cannot be a `tuple` subclass because:
-    #   1) `tuple` has no `index()` method and re-implementing one in
-    #      pure Python would be less efficient;
-    #   2) we could not implement `rotate()` and friends: tuples are
-    #      immutable.
+    # FIXME: reimplement `Vertex` as a `tuple`/`CyclicTuple` subclass.
 
-    __slots__ = [ 'num_loops' ]
+    __slots__ = ( 'num_loops' )
 
     def __init__(self, seq):
         CyclicList.__init__(self, seq)
@@ -123,7 +111,7 @@ class Edge(object):
     operations.
     """
 
-    __slots__ = [ 'endpoints' ]
+    __slots__ = ( 'endpoints' )
     
     def __init__(self, va1, va2):
         if va1[0] < va2[0]:
@@ -179,13 +167,13 @@ class Isomorphism(object):
     """An isomorphism of `Fatgraphs`.
     """
 
-    __slots__ = [
+    __slots__ = (
         'pe',
         'pv',
         'rot',
         'source',
         'target',
-        ]
+        )
     
     def __init__(self, source, target, pv, rot, pe):
         # sanity checks
@@ -247,7 +235,7 @@ class EqualIfIsomorphic(Caching):
     isomorphism mapping one to the other.
     """
 
-    __slots__ = [ 'invariants' ]
+    __slots__ = ( 'invariants' )
 
 
     def __init__(self, invariants):
@@ -345,7 +333,7 @@ class Fatgraph(EqualIfIsomorphic):
       False
     """
 
-    __slots__ = [
+    __slots__ = (
         '__weakref__',
         'boundary_cycles',
         'edges',
@@ -356,7 +344,7 @@ class Fatgraph(EqualIfIsomorphic):
         'num_edges',
         'num_vertices',
         'vertices',
-        ]
+        )
 
     def __init__(self, g_or_vs, **kwargs):
         """Construct a `Fatgraph` instance, taking list of vertices.
@@ -532,6 +520,18 @@ class Fatgraph(EqualIfIsomorphic):
         return self.isomorphisms(self)
 
 
+    @cython.locals(vertices=list, corners=list,
+                   v=cython.int, i=cython.int, corner=tuple)
+    @staticmethod
+    def _first_unused_corner(vertices, corners):
+        # fast-forward to the first unused corner
+        for v in xrange(len(vertices)):
+            for i in xrange(len(vertices[v])):
+                corner = corners[v][i]
+                if corner is not None:
+                    return (v, i, corner)
+        return (v, i, None)
+       
     def compute_boundary_cycles(self):
         """Return a list of boundary cycles of this `Fatgraph` object.
 
@@ -562,31 +562,18 @@ class Fatgraph(EqualIfIsomorphic):
                       for i in xrange(len(self.vertices[v])) ]
                     for v in xrange(self.num_vertices) ]
 
-        def first_not_none(lst):
-            for index, item in enumerate(lst):
-                if item is not None:
-                    return index
-            return None
-        
         result = []
         while True:
             # fast-forward to the first unused corner
-            for v in xrange(self.num_vertices):
-                i = first_not_none(corners[v])
-                if i is not None:
-                    break
-            # if all corners were browsed and all of them are `None`:
-            # we're done
-            if v == len(corners)-1 and i is None:
+            (v, i, corner) = Fatgraph._first_unused_corner(self.vertices, corners)
+            if corner is None:
                 break
-            assert i is not None
 
             # build a list of corners comprising the same boundary
             # cycle: start with one corner, follow the edge starting
             # at the second delimiter of the corner to its other
             # endpoint, and repeat until we come back to the starting
             # point.  
-            corner = None
             start = (v,i)
             triples = []
             while (v,i) != start or len(triples) == 0:
@@ -980,12 +967,10 @@ class Fatgraph(EqualIfIsomorphic):
         # 2. Join vertices by concatenating the list of incident
         #    edges;
         # 3. Set new `i1` vertex in place of old first endpoint:
-        def rotated(L, p):
-            return L[p+1:] + L[:p]
         new_vertices[v1] = Vertex(
-            rotated(new_vertices[v1], pos1)
+            Fatgraph._rotate_and_trim(new_vertices[v1], pos1)
             +
-            rotated(new_vertices[v2], pos2)
+            Fatgraph._rotate_and_trim(new_vertices[v2], pos2)
             )
         # 4. Remove second endpoint from list of new vertices:
         del new_vertices[v2]
@@ -1003,9 +988,27 @@ class Fatgraph(EqualIfIsomorphic):
                                if x != edge ]
         
         # build new graph
-        return Fatgraph(new_vertices,
-                        orientation = new_edge_numbering,
-                        )
+        return Fatgraph(
+            new_vertices,
+            orientation = new_edge_numbering,
+            )
+
+    @cython.locals(L=list, p=cython.int)
+    #@cython.cfunc(list)
+    @staticmethod
+    def _rotate_and_trim(V, p):
+        """
+        Return a copy of the given list `V`, with items rotated `p`
+        positions leftwards; additionally, the item originally at
+        position `p` is removed.
+
+        Examples::
+
+          >>> Fatgraph._rotate_and_trim([1,2,3,4,5], 2)
+          [4, 5, 1, 2]
+
+        """
+        return V[p+1:] + V[:p]
 
 
     def contract_boundary_cycle(self, bcy, vi1, vi2):
@@ -1086,10 +1089,11 @@ class Fatgraph(EqualIfIsomorphic):
         """
         orbits = dict( (x, set([x])) for x in xrange(self.num_edges) )
         for a in self.automorphisms():
+            edge_permutation = a.pe
             for x in xrange(self.num_edges):
                 if x not in orbits:
                     continue
-                y = a.pe[x]
+                y = edge_permutation[x]
                 if y not in orbits:
                     continue
                 # `x` and `y` are in the same orbit, only keep the one
@@ -1128,10 +1132,11 @@ class Fatgraph(EqualIfIsomorphic):
                        for y in xrange(self.num_edges) ]
         orbits = dict( (p, set([p])) for p in edge_pairs )
         for a in self.automorphisms():
+            edge_permutation = a.pe
             for p in edge_pairs:
                 if p not in orbits:
                     continue
-                q = (a.pe[p[0]], a.pe[p[1]])
+                q = (edge_permutation[p[0]], edge_permutation[p[1]])
                 if q not in orbits:
                     continue
                 # `p` and `q` are in the same orbit, only keep the one
@@ -1339,166 +1344,11 @@ class Fatgraph(EqualIfIsomorphic):
           >>> g3 = Fatgraph([Vertex([2, 1, 0]), Vertex([2, 0, 1])])
           >>> list(G1.isomorphisms(g3))
           []
+
         """
-        
-        # As this procedure is quite complex, we break it into a
-        # number of auxiliary functions.
-
-        def valence_spectrum(self):
-            """Return a dictionary mapping valences into vertex indices.
-
-            Examples::
-
-               >>> Fatgraph([Vertex([1,1,0,0])]).valence_spectrum()
-               {4: [0]}
-
-               >>> Fatgraph([Vertex([1,1,0]), Vertex([2,2,0])]).valence_spectrum()
-               {3: [0, 1]}
-
-               >>> Fatgraph([Vertex([3, 1, 0, 1]), \
-                          Vertex([4, 4, 0]), Vertex([3, 2, 2])]).valence_spectrum()
-               {3: [1, 2], 4: [0]}
-            """
-            result = defaultdict(list)
-            for (index, vertex) in enumerate(self.vertices):
-                l = len(vertex)
-                result[l].append(index)
-            # consistency checks
-            assert set(result.keys()) == set(self.vertex_valences()), \
-                   "Fatgraph.valence_spectrum:" \
-                   "Computed valence spectrum `%s` does not exhaust all " \
-                   " vertex valences %s" \
-                   % (result, self.vertex_valences())
-            assert set(concat(result.values())) \
-                   == set(range(self.num_vertices)), \
-                   "Fatgraph.valence_spectrum:" \
-                   "Computed valence spectrum `%s` does not exhaust all " \
-                   " %d vertex indices" % (result, self.num_vertices)
-            return result
-
-        def starting_vertices(graph):
-            """
-            Return the pair `(valence, vertices)`, which minimizes the
-            product of valence with the number of vertices of that
-            valence.
-
-            Examples::
-
-              >>> g = Fatgraph([Vertex([0,1,2]), Vertex([0,2,3]), Vertex([3,4,4,5,5])])
-              >>> g.starting_vertices()
-              (5, [Vertex([3, 4, 4, 5, 5])])
-            """
-            val = max(graph.vertex_valences())
-            vs = None
-            n = len(graph.vertices)+1
-            for (val_, vs_) in valence_spectrum(graph).iteritems():
-                n_ = len(vs_)
-                if (n_*val_ < n*val) \
-                       or (n_*val_ == n*val and val_<val):
-                    val = val_
-                    vs = vs_
-                    n = n_
-            return (val, vs)
-
-        def compatible(v1, v2):
-            """Return `True` if vertices `v1` and `v2` are compatible.
-            (i.e., same valence and number of loops - one *could* be
-            mapped onto the other.)
-            """
-            if len(v1) == len(v2) and v1.num_loops == v2.num_loops:
-                return True
-            else:
-                return False
-                
-        def compatible_vertices(v, g, ixs):
-            """Iterate over all (indices of) vertices in `g`, which
-            `v` *could* be mapped to (that is, the destination vertex
-            matches `v` in valence and number of loops.
-
-            Third argument `ixs` restricts the search to the given
-            subset of vertex indices in `g`.
-            """
-            for i in ixs:
-                if compatible(v, g.vertices[i]):
-                    yield i
-
-        class CannotExtendMap(Exception):
-            """Exception raised by `extend_map` on failure to extend a
-            partial map.
-            """
-            pass
-
-        def extend_map(pv, rots, pe, G1, i1, r, G2, i2):
-            """Extend map `(pv, rots, pe)` by mapping the `i1`-th
-            vertex in `G1` to the `i2`-th vertex in `G2` (and rotating
-            the source vertex by `r` places leftwards).  Return the
-            extended map `(pv, rot, pe)`.
-
-            The partial map is a triple `(pv, rot, pe)` as in
-            `Fatgraph.isomorphism` (which see), with the additional
-            proviso that unassigned items in `rot` are represented by
-            `None`.
-            """
-            v1 = G1.vertices[i1]
-            v2 = G2.vertices[i2]
-            if not compatible(v1, v2):
-                raise CannotExtendMap
-
-            # XXX: rotation has to be >=0 for the [r:r+..] shift below to work
-            if r < 0:
-                r += len(v2)
-
-            if pv.has_key(i1):
-                if pv[i1] != i2 or (rots[i1] - r) % len(v2) != 0:
-                    raise CannotExtendMap
-                else:
-                    # this pair has already been added
-                    return (pv, rots, pe)
-
-            # rotating `v1` leftwards is equivalent to rotating `v2` rightwards...
-            v2 = v2[r:r+len(v2)]
-            if not pe.extend(v1, v2):
-                raise CannotExtendMap
-
-            pv[i1] = i2
-            rots[i1] = r
-            return (pv, rots, pe)
-
-        def neighbors(pv, pe, G1, v1, G2, v2):
-            """List of vertex-to-vertex mappings that extend map `pv`
-            in the neighborhood of vertices `v1` (in the domain) and
-            `v2` (in the codomain).
-
-            Return a list of triplets `(src, dst, rot)`, where:
-               * `src` is the index of a vertex in `G1`,
-                 connected to `v1` by an edge `x`;
-               * `dst` is the index of a vertex in `G2`,
-                 connected to `v2` by the image (according to `pe`)
-                 of edge `x`;
-               * `rot` is the rotation to be applied to `G1[src]`
-                 so that edge `x` and its image appear
-                 at the same index position;
-            """
-            assert v2 == pv[v1]
-            result = []
-            for x in G1.vertices[v1]:
-                if G1.edges[x].is_loop():
-                    continue # with next edge `x`
-                ((s1, a1), (s2, a2)) = G1.edges[x].endpoints
-                src_v = s2 if (s1 == v1) else s1
-                # ignore vertices that are already in the domain of `m`
-                if src_v in pv:
-                    continue # to next `x`
-                src_i = a2 if (s1 == v1) else a1
-                ((d1, b1), (d2, b2)) = G2.edges[pe[x]].endpoints
-                dst_v, dst_i = (d2,b2) if (d1 == v2) else (d1,b1)
-                # array of (source vertex index, dest vertex index, rotation)
-                result.append((src_v, dst_v, dst_i-src_i))
-            return result
-            
         # if graphs differ in vertex valences, no isomorphisms
-        vs1 = valence_spectrum(G1)
-        vs2 = valence_spectrum(G2)
+        vs1 = G1._valence_spectrum()
+        vs2 = G2._valence_spectrum()
         if not set(vs1.keys()) == set(vs2.keys()):
             return # StopIteration
         # if graphs have unequal vertex distribution by valence, no isomorphisms
@@ -1506,10 +1356,10 @@ class Fatgraph(EqualIfIsomorphic):
             if len(vs1[val]) != len(vs2[val]):
                 return # StopIteration
 
-        (valence, indexes) = starting_vertices(G2)
+        (valence, indexes) = G2._starting_vertices()
         v1_index = vs1[valence][0]
         v1 = G1.vertices[v1_index]
-        for v2_index in compatible_vertices(v1, G2, indexes):
+        for v2_index in Fatgraph._compatible_vertices(v1, G2, indexes):
             for rot in xrange(valence):
                 try:
                     # pass 0: init new (pv, rots, pe) triple
@@ -1528,23 +1378,186 @@ class Fatgraph(EqualIfIsomorphic):
                             assert x in pe, "Edge `%d` of vertex `%s` (in graph `%s`) not mapped to any edge of graph `%s` (at line 1740, `pe=%s`)" % (x, v1, G1, G2, pe)
 
                     # pass 2: extend map to neighboring vertices
-                    nexts = neighbors(pv, pe, G1, v1_index, G2, v2_index)
+                    nexts = Fatgraph._neighbors(pv, pe, G1, v1_index, G2, v2_index)
                     while len(pv) < G1.num_vertices:
                         neighborhood = []
                         for (i1, i2, r) in nexts:
-                            (pv, rots, pe) = extend_map(pv, rots, pe, G1, i1, r, G2, i2)
+                            (pv, rots, pe) = Fatgraph._extend_map(pv, rots, pe, G1, i1, r, G2, i2)
                             if __debug__:
                                 for x in G1.vertices[i1]:
                                     assert x in pe, "Edge `%d` of vertex `%s` (in graph `%s`) not mapped to any edge of graph `%s` (at line 1751, `pe=%s`)" % (x, G1.vertices[i1], G1, G2, pe)
-                            neighborhood += neighbors(pv, pe, G1, i1, G2, i2)
+                            neighborhood += Fatgraph._neighbors(pv, pe, G1, i1, G2, i2)
                         nexts = neighborhood
 
                 # extension failed in the above block, continue with next candidate
-                except CannotExtendMap:
+                except Fatgraph._CannotExtendMap:
                     continue # to next `rot`
 
                 # finally
                 yield Isomorphism(G1, G2, pv, rots, pe)
+
+    ## auxiliary functions for `Fatgraph.isomorphism`
+
+    @ocache0
+    def _valence_spectrum(self):
+        """Return a dictionary mapping valences into vertex indices.
+
+        Examples::
+
+           >>> Fatgraph([Vertex([1,1,0,0])])._valence_spectrum()
+           defaultdict(<type 'list'>, {4: [0]})
+
+           >>> Fatgraph([Vertex([1,1,0]), Vertex([2,2,0])])._valence_spectrum()
+           defaultdict(<type 'list'>, {3: [0, 1]})
+
+           >>> Fatgraph([Vertex([3, 1, 0, 1]), \
+                      Vertex([4, 4, 0]), Vertex([3, 2, 2])])._valence_spectrum()
+           defaultdict(<type 'list'>, {3: [1, 2], 4: [0]})
+        """
+        result = defaultdict(list)
+        for (index, vertex) in enumerate(self.vertices):
+            l = len(vertex)
+            result[l].append(index)
+        # consistency checks
+        assert set(result.keys()) == set(self.vertex_valences()), \
+               "Fatgraph.valence_spectrum:" \
+               "Computed valence spectrum `%s` does not exhaust all " \
+               " vertex valences %s" \
+               % (result, self.vertex_valences())
+        assert set(concat(result.values())) \
+               == set(range(self.num_vertices)), \
+               "Fatgraph.valence_spectrum:" \
+               "Computed valence spectrum `%s` does not exhaust all " \
+               " %d vertex indices" % (result, self.num_vertices)
+        return result
+
+    @ocache0
+    def _starting_vertices(self):
+        """
+        Return the pair `(valence, vertices)`, which minimizes the
+        product of valence with the number of vertices of that
+        valence.  The `vertices` part of the pair is the list of
+        indices in `self.vertices` corresponding to vertices with the
+        chosen valence.
+
+        Examples::
+
+          >>> g = Fatgraph([Vertex([0,1,2]), Vertex([0,2,3]),
+          ...              Vertex([3,4,4,5,5]), Vertex([1,6,6])])
+          >>> g._starting_vertices()
+          (5, [2])
+        """
+        val = max(self.vertex_valences())
+        vs = None
+        n = len(self.vertices)+1
+        for (val_, vs_) in self._valence_spectrum().iteritems():
+            n_ = len(vs_)
+            if (n_*val_ < n*val) \
+                   or (n_*val_ == n*val and val_<val):
+                val = val_
+                vs = vs_
+                n = n_
+        return (val, vs)
+
+    @staticmethod
+    def _compatible(v1, v2):
+        """Return `True` if vertices `v1` and `v2` are compatible.
+        (i.e., same valence and number of loops - one *could* be
+        mapped onto the other.)
+        """
+        if len(v1) == len(v2) and v1.num_loops == v2.num_loops:
+            return True
+        else:
+            return False
+
+    @staticmethod
+    def _compatible_vertices(v, g, ixs):
+        """Iterate over all (indices of) vertices in `g`, which
+        `v` *could* be mapped to (that is, the destination vertex
+        matches `v` in valence and number of loops.
+
+        Third argument `ixs` restricts the search to the given
+        subset of vertex indices in `g`.
+        """
+        for i in ixs:
+            if Fatgraph._compatible(v, g.vertices[i]):
+                yield i
+
+    class _CannotExtendMap(Exception):
+        """Exception raised by `extend_map` on failure to extend a
+        partial map.
+        """
+        pass
+
+    @staticmethod
+    def _extend_map(pv, rots, pe, G1, i1, r, G2, i2):
+        """Extend map `(pv, rots, pe)` by mapping the `i1`-th
+        vertex in `G1` to the `i2`-th vertex in `G2` (and rotating
+        the source vertex by `r` places leftwards).  Return the
+        extended map `(pv, rot, pe)`.
+
+        The partial map is a triple `(pv, rot, pe)` as in
+        `Fatgraph.isomorphism` (which see), with the additional
+        proviso that unassigned items in `rot` are represented by
+        `None`.
+        """
+        v1 = G1.vertices[i1]
+        v2 = G2.vertices[i2]
+        if not Fatgraph._compatible(v1, v2):
+            raise Fatgraph._CannotExtendMap
+
+        # XXX: rotation has to be >=0 for the [r:r+..] shift below to work
+        if r < 0:
+            r += len(v2)
+
+        if i1 in pv:
+            if pv[i1] != i2 or (rots[i1] - r) % len(v2) != 0:
+                raise Fatgraph._CannotExtendMap
+            else:
+                # this pair has already been added
+                return (pv, rots, pe)
+
+        # rotating `v1` leftwards is equivalent to rotating `v2` rightwards...
+        v2 = v2[r:r+len(v2)]
+        if not pe.extend(v1, v2):
+            raise Fatgraph._CannotExtendMap
+
+        pv[i1] = i2
+        rots[i1] = r
+        return (pv, rots, pe)
+
+    @staticmethod
+    def _neighbors(pv, pe, G1, v1, G2, v2):
+        """List of vertex-to-vertex mappings that extend map `pv`
+        in the neighborhood of vertices `v1` (in the domain) and
+        `v2` (in the codomain).
+
+        Return a list of triplets `(src, dst, rot)`, where:
+           * `src` is the index of a vertex in `G1`,
+             connected to `v1` by an edge `x`;
+           * `dst` is the index of a vertex in `G2`,
+             connected to `v2` by the image (according to `pe`)
+             of edge `x`;
+           * `rot` is the rotation to be applied to `G1[src]`
+             so that edge `x` and its image appear
+             at the same index position;
+        """
+        assert v2 == pv[v1]
+        result = []
+        for x in G1.vertices[v1]:
+            if G1.edges[x].is_loop():
+                continue # with next edge `x`
+            ((s1, a1), (s2, a2)) = G1.edges[x].endpoints
+            src_v = s2 if (s1 == v1) else s1
+            # ignore vertices that are already in the domain of `m`
+            if src_v in pv:
+                continue # to next `x`
+            src_i = a2 if (s1 == v1) else a1
+            ((d1, b1), (d2, b2)) = G2.edges[pe[x]].endpoints
+            dst_v, dst_i = (d2,b2) if (d1 == v2) else (d1,b1)
+            # array of (source vertex index, dest vertex index, rotation)
+            result.append((src_v, dst_v, dst_i-src_i))
+        return result
 
 
     def num_automorphisms(self):
@@ -1607,60 +1620,12 @@ def MgnTrivalentGraphsRecursiveGenerator(g, n):
 
     ## General case
     else:
-        def graphs(g,n):
-            logging.debug("  MgnTrivalentGraphsRecursiveGenerator(%d,%d): "
-                          "pass 1: hang a circle to all edges of graphs in M_{%d,%d} ..." % (g,n, g,n-1))
-            for G in MgnTrivalentGraphsRecursiveGenerator(g,n-1):
-                for x in G.edge_orbits():
-                    yield G.hangcircle(x,0)
-                    yield G.hangcircle(x,1)
-
-            logging.debug("  MgnTrivalentGraphsRecursiveGenerator(%d,%d): "
-                          "pass 2: bridge all edges of a single graph in M_{%d,%d} ..." % (g,n, g,n-1))
-            for G in MgnTrivalentGraphsRecursiveGenerator(g,n-1):
-                for (x,y) in G.edge_pair_orbits():
-                        yield G.bridge(x,0, y,0)
-                        yield G.bridge(x,0, y,1)
-                        yield G.bridge(x,1, y,0)
-                        yield G.bridge(x,1, y,1)
-
-            logging.debug("  MgnTrivalentGraphsRecursiveGenerator(%d,%d): "
-                          "pass 3: bridge all edges of a single graph in M_{%d,%d} ..." % (g,n, g-1,n+1))
-            for G in MgnTrivalentGraphsRecursiveGenerator(g-1,n+1):
-                for (x,y) in G.edge_pair_orbits():
-                        yield G.bridge(x,0, y,0)
-                        yield G.bridge(x,0, y,1)
-                        yield G.bridge(x,1, y,0)
-                        yield G.bridge(x,1, y,1)
-
-            ## logging.debug("  MgnTrivalentGraphsRecursiveGenerator(%d,%d): "
-            ##               "pass 4: bridge two graphs of such that g_1+g_2=%d, n_1+n_2=%d ..." % (g,n, g,n+1)) 
-            ## def add_up_to(x, min=0):
-            ##     if x == 0 and min == 0:
-            ##         yield (0,0)
-            ##     elif x-min >= 0:
-            ##         for y in xrange(min, x-min+1):
-            ##             yield (y, x-y)
-            ## for (g1, g2) in add_up_to(g, min=0):
-            ##     for (n1, n2) in add_up_to(n+1, min=1):
-            ##         if (g1, n1) < (0, 3) or (g2, n2) < (0,3):
-            ##             continue
-            ##         for G1 in MgnTrivalentGraphsRecursiveGenerator(g1,n1):
-            ##             for G2 in MgnTrivalentGraphsRecursiveGenerator(g2,n2):
-            ##                 for x1 in G1.edge_orbits():
-            ##                     for x2 in G2.edge_orbits():
-            ##                         yield Fatgraph.bridge2(G1, x1, 0, G2, x2, 0)
-            ##                         yield Fatgraph.bridge2(G1, x1, 0, G2, x2, 1)
-            ##                         yield Fatgraph.bridge2(G1, x1, 1, G2, x2, 0)
-            ##                         yield Fatgraph.bridge2(G1, x1, 1, G2, x2, 1)
-                        
         timing.start("MgnTrivalentGraphsRecursiveGenerator(%d,%d)" % (g,n))
         unique = []
         discarded = 0
-        for G in graphs(g,n):
-            # XXX: should this check be done in graphs(g,n)?
-            if (G.genus, G.num_boundary_cycles) != (g,n) \
-                   or (G in unique):
+        for G in _MgnTrivalentGraphsRecursiveGenerator_main(g,n):
+            # XXX: should this check be done in  *_main(g,n)?
+            if (G.genus, G.num_boundary_cycles) != (g,n) or (G in unique):
                 discarded += 1
                 continue
             unique.append(G)
@@ -1670,6 +1635,55 @@ def MgnTrivalentGraphsRecursiveGenerator(g, n):
         logging.debug("  MgnTrivalentGraphsRecursiveGenerator(%d,%d) done: %d unique graphs, discarded %d duplicates. (Elapsed: %.3fs)", 
                       g,n, len(unique), discarded, 
                       timing.get("MgnTrivalentGraphsRecursiveGenerator(%d,%d)" % (g,n)))
+
+
+def _MgnTrivalentGraphsRecursiveGenerator_main(g,n):
+    logging.debug("  MgnTrivalentGraphsRecursiveGenerator(%d,%d): "
+                  "pass 1: hang a circle to all edges of graphs in M_{%d,%d} ..." % (g,n, g,n-1))
+    for G in MgnTrivalentGraphsRecursiveGenerator(g,n-1):
+        for x in G.edge_orbits():
+            yield G.hangcircle(x,0)
+            yield G.hangcircle(x,1)
+
+    logging.debug("  MgnTrivalentGraphsRecursiveGenerator(%d,%d): "
+                  "pass 2: bridge all edges of a single graph in M_{%d,%d} ..." % (g,n, g,n-1))
+    for G in MgnTrivalentGraphsRecursiveGenerator(g,n-1):
+        for (x,y) in G.edge_pair_orbits():
+                yield G.bridge(x,0, y,0)
+                yield G.bridge(x,0, y,1)
+                yield G.bridge(x,1, y,0)
+                yield G.bridge(x,1, y,1)
+
+    logging.debug("  MgnTrivalentGraphsRecursiveGenerator(%d,%d): "
+                  "pass 3: bridge all edges of a single graph in M_{%d,%d} ..." % (g,n, g-1,n+1))
+    for G in MgnTrivalentGraphsRecursiveGenerator(g-1,n+1):
+        for (x,y) in G.edge_pair_orbits():
+                yield G.bridge(x,0, y,0)
+                yield G.bridge(x,0, y,1)
+                yield G.bridge(x,1, y,0)
+                yield G.bridge(x,1, y,1)
+
+    ## logging.debug("  MgnTrivalentGraphsRecursiveGenerator(%d,%d): "
+    ##               "pass 4: bridge two graphs of such that g_1+g_2=%d, n_1+n_2=%d ..." % (g,n, g,n+1)) 
+    ## def add_up_to(x, min=0):
+    ##     if x == 0 and min == 0:
+    ##         yield (0,0)
+    ##     elif x-min >= 0:
+    ##         for y in xrange(min, x-min+1):
+    ##             yield (y, x-y)
+    ## for (g1, g2) in add_up_to(g, min=0):
+    ##     for (n1, n2) in add_up_to(n+1, min=1):
+    ##         if (g1, n1) < (0, 3) or (g2, n2) < (0,3):
+    ##             continue
+    ##         for G1 in MgnTrivalentGraphsRecursiveGenerator(g1,n1):
+    ##             for G2 in MgnTrivalentGraphsRecursiveGenerator(g2,n2):
+    ##                 for x1 in G1.edge_orbits():
+    ##                     for x2 in G2.edge_orbits():
+    ##                         yield Fatgraph.bridge2(G1, x1, 0, G2, x2, 0)
+    ##                         yield Fatgraph.bridge2(G1, x1, 0, G2, x2, 1)
+    ##                         yield Fatgraph.bridge2(G1, x1, 1, G2, x2, 0)
+    ##                         yield Fatgraph.bridge2(G1, x1, 1, G2, x2, 1)
+
 
 
 
