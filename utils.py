@@ -7,8 +7,11 @@ These were mostly ripped out of `rg.py` for readability.
 __docformat__ = 'reStructuredText' 
 
 
+import cython
+
 ## stdlib imports
 
+import itertools
 import operator
 import types
 
@@ -26,10 +29,50 @@ def concat(seqs):
       >>> concat([[0],[1]])
       [0, 1]
 
-      >>> concat(['a','b'])
-      'ab'
+      >>> concat(['ab','c'])
+      'abc'
     """
     return reduce(operator.add, seqs)
+
+
+#@cython.ccall(list)
+def lconcat(seqs):
+    """Return list concatenation of all sequences in `seqs`.
+
+    Examples::
+    
+      >>> lconcat([[0]])
+      [0]
+
+      >>> lconcat([[0],[1]])
+      [0, 1]
+
+      >>> lconcat(['ab','c'])
+      ['a', 'b', 'c']
+    """
+    return list(itertools.chain(*seqs))
+
+
+#@cython.ccall(list)
+def ltranslate(subst, iterable):
+    """Return list of items from a sequence, substituting them as specified.
+
+    First argument `subst` is a dictionary, specifying substitutions
+    to be applied.  If an item matches a key of the `subst`
+    dictionary, the associated dictionary value is returned instead;
+    unless the value is `None`, in which case the item is skipped
+    altogether.
+
+    *Note:* you should use an appropriate `dict`-subclass if you want
+     to translate items which are not immutable.
+    
+    Examples::
+      >>> ltranslate({0:None, 3:2}, [2,1,0,0,1,3])
+      [2, 1, 1, 2]
+    """
+    return [ (subst[item] if (item in subst) else item)
+             for item in iterable
+             if (item not in subst) or (subst[item] is not None) ]
 
 
 ## conditional application of decorators
@@ -45,6 +88,8 @@ def maybe(deco, default=False, cond=None):
         return (lambda fn: fn)
 
 
+#@cython.ccall(int)
+@cython.locals(arg=str, result=cython.int)
 def positive_int(arg):
     """Convert a string or number to a positive integer, if possible.
     Behaves just like the built-in `int` (which see), and additionally
@@ -57,6 +102,8 @@ def positive_int(arg):
     return result
 
 
+#@cython.ccall(int)
+@cython.locals(x=cython.int)
 def sign(x):
     """Return the sign of `x`: that is, 0 if `x` is zero, +1 iff it is
     positive, -1 iff it is negative.
