@@ -4,21 +4,15 @@
 """
 __docformat__ = 'reStructuredText'
 
+import cython
+
+from collections import Iterator
 
 
 ## main content
 
-class Iterator(object):
-    """Base class for user-defined iterators."""
-
-    def __iter__(self):
-        return self
-
-    def next(self):
-        raise StopIteration
-
-    
-class BufferingIterator(object):
+@cython.cclass
+class BufferingIterator(Iterator):
     """Iterate over items stored in an internal buffer; when all items
     in the buffer have been handed out to caller, refill the buffer by
     calling `self.refill()` and start over again.
@@ -44,7 +38,7 @@ class BufferingIterator(object):
       
     """
     
-##     __slots__ = ('__buffer',)
+    __slots__ = ('__buffer',)
 
     def __init__(self, initial=None):
         """Create a `BufferingIterator` instance and fill the internal
@@ -55,9 +49,7 @@ class BufferingIterator(object):
         else:
             self.__buffer = list(initial)
 
-    def __iter__(self):
-        return self
-    
+
     def next(self):
         """Return next item from queue, refilling queue if empty."""
         # try to refill buffer if empty
@@ -69,6 +61,7 @@ class BufferingIterator(object):
             raise StopIteration
 
         return self.__buffer.pop(0)
+
 
     def refill(self):
         """Return new items to store in the buffer.
@@ -82,7 +75,8 @@ class BufferingIterator(object):
         raise StopIteration
 
 
-class chunks(object):
+@cython.cclass
+class chunks(Iterator):
     """Lump items from iterable into chunks of specified size.
 
     Instanciate the iterator passing a sequence of chunk sizes in
@@ -121,8 +115,8 @@ class chunks(object):
         self.current_chunk = -1
         self.sizes = sizes
         self.iterable = iter(iterable)
-    def __iter__(self):
-        return self
+
+    @cython.locals(x=cython.int)
     def next(self):
         """Return next chunk."""
         self.current_chunk += 1
@@ -132,12 +126,22 @@ class chunks(object):
                    for x in xrange(self.sizes[self.current_chunk]) ]
 
 
+@cython.cclass
 class IndexedIterator(Iterator):
     """Return the items corresponding to indices `start`, `start+1`, etc.
     in the initialization sequence `lst`.
 
     Iteration stops as soon as an `IndexError` (indicating
     out-of-bounds) is returned.
+
+    Examples::
+
+      >>> lst = [0, 1, 2, 3]
+      >>> for x in IndexedIterator(lst): print x,
+      0 1 2 3
+      >>> for y in IndexedIterator(lst, 2): print y,
+      2 3
+      
     """
     def __init__(self, lst, start=0):
         self.__lst = lst
@@ -151,7 +155,8 @@ class IndexedIterator(Iterator):
             raise StopIteration
 
 
-class itranslate(object):
+@cython.cclass
+class itranslate(Iterator):
     """Return items from a sequence, substituting them as specified.
 
     First argument `subst` is a dictionary, specifying substitutions
@@ -170,8 +175,6 @@ class itranslate(object):
     def __init__(self, subst, iterable):
         self.mappings = subst
         self.iterable = iter(iterable)
-    def __iter__(self):
-        return self
     def next(self):
         while True:
             next = self.iterable.next()
