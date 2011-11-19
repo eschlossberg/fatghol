@@ -402,10 +402,13 @@ elif 'selftest' == args[0]:
                         ]:
         sys.stdout.write("Computation of M_{%d,%d} homology: " % (g,n))
         # compute homology of M_{g,n}
+        timing.start("homology M%d,%d" % (g,n))
         hs = do_homology(g,n)
+        timing.stop("homology M%d,%d" % (g,n))
         # check result
         if hs == ok:
-            print("OK")
+            print("OK (elapsed: %0.3fs)"
+                  % timing.get("homology M%d,%d" % (g,n)))
         else:
             logging.error("Computation of M_{%d,%d} homology: FAILED, got %s expected %s"
                           % (g,n,hs,ok))
