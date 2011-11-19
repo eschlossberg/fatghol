@@ -576,7 +576,7 @@ class NumberedFatgraphPool(object):
         g2 = other.graph
         assert len(g1.boundary_cycles) == len(g2.boundary_cycles)
         
-        ## 1. compute map `f0_push_fwd` induced on `g0.boundary_cycles` from the
+        ## 1. compute map `phi0` induced on `g0.boundary_cycles` from the
         ##    graph map `f0` which contracts `edge`.
         ##
         (e1, e2) = g0.endpoints(edge)
@@ -588,75 +588,22 @@ class NumberedFatgraphPool(object):
                " `%s` vs `%s`" % (g1.boundary_cycles,
                                   [ g0.contract_boundary_cycle(bcy, e1, e2)
                                     for bcy in g0.boundary_cycles ])
-        ## This would result in::
-        ##
-        ##     f0_push_fwd = Permutation((i1,i0) for (i0, i1) in enumerate(
-        ##         g1.boundary_cycles.index(g0.contract_boundary_cycle(bcy, e1, e2))
-        ##         for bcy in g0.boundary_cycles
-        ##         ))
-        ##
-        ## which satisfies:
-        ## 
-        ##     p1 = NumberedFatgraphPool(g1)
-        ##     for (i, nb) in enumerate(self.numberings):
-        ##         nb_ = f0_push_fwd.rearranged(nb)
-        ##         i_ = p1._index(nb_)[0]
-        ##        assert p1[i_] == self[i].contract(edge)
-        ##
-        ## Now, `f0_push_fwd` is not actually computed, as we only need
-        ## the composite map; see below.
-        ##
-        ## 2. compute isomorphism map `f1` from `other.graph` to `self.graph.contract(edge)`;
+        phi0_inv = Permutation((i1,i0) for (i0,i1) in enumerate(
+            g1.boundary_cycles.index(g0.contract_boundary_cycle(bcy, e1, e2))
+            for bcy in g0.boundary_cycles
+            ))
+        ## 2. compute isomorphism map `f1` from `g2` to `g0.contract(edge)`;
         ##    if there is no such isomorphisms, then stop iteration.
         ##
         f1 = Fatgraph.isomorphisms(g1,g2).next()
-        ##
+        phi1_inv = Permutation((i1,i0) for (i0,i1) in enumerate(
+            g2.boundary_cycles.index(f1.transform_boundary_cycle(bc1))
+            for bc1 in g1.boundary_cycles
+            ))
+        assert len(phi1_inv) == len(g1.boundary_cycles)
+        assert len(phi1_inv) == len(g2.boundary_cycles)
         ## 3. Compute the composite map `f1^(-1) * f0`.
         ##
-        ## Using the notation from the `combinatorics` module, we could write the action of the composite map on a numbering `nb` as:
-        ##
-        ##     f1_push_fwd.rearranged(f0_push_fwd.rearranged(nb))
-        ##
-        ## by expanding the definition of `Permutation.rearranged`, we have:
-        ##
-        ##     (1): f1_push_fwd.rearranged([ nb[f0_push_fwd[x]] for x in xrange(len(f0_push_fwd)) ])
-        ##
-        ##     (2): [ [nb[f0_push_fwd[x]] for x in xrange(len(f0_push_fwd))][f1_push_fwd[y]] for y in xrange(len(f1_push_fwd) ]
-        ##
-        ## now, if `j == f1_push_fwd[y]`, then:
-        ##
-        ##     f0_push_fwd[i] == j
-        ##
-        ## is equivalent to:
-        ##
-        ##     i == f0_push_fwd.inverse()[j]
-        ##
-        ## hence we can rewrite (2) as:
-        ##
-        ##     [ nb[f0_push_fwd_inv[f1_push_fwd[y]]] for y in xrange(g0.num_boundary_cycles) ]
-        ## so we are only interested in the composed map `f0_push_fwd_inv[f1_push_fwd[y]]`.
-        ##
-        ## Recall the definitions:
-        ##
-        ##     f0_push_fwd_inv = Permutation(enumerate(
-        ##         g1.boundary_cycles.index(g0.contract_boundary_cycle(bcy, e1, e2))
-        ##         for bcy in g0.boundary_cycles
-        ##         ))
-        ##     f1_push_fwd = Permutation((i1,i0) for (i0,i1) in enumerate(
-        ##         g2.boundary_cycles.index(f1.transform_boundary_cycle(bc1))
-        ##         for bc1 in g1.boundary_cycles
-        ##         ))
-        ##
-        ## from which we get:
-        ##
-        f0invf1_push_fwd = Permutation(enumerate(
-            g2.boundary_cycles.index(
-                f1.transform_boundary_cycle(
-                    g0.contract_boundary_cycle(bcy, e1, e2)))
-            for bcy in g0.boundary_cycles
-            ))
-        assert len(f0invf1_push_fwd) == len(g1.boundary_cycles)
-        assert len(f0invf1_push_fwd) == len(g2.boundary_cycles)
 
         ## For every numbering `nb` on `g0`, compute the (index of)
         ## corresponding numbering on `g2` (under the composition map
@@ -679,7 +626,7 @@ class NumberedFatgraphPool(object):
         ## of `self.numberings`, rearranged according to the
         ## permutation of boundary cycles induced by `f1^(-1) * f0`.
         ##
-        for (j, (k, a)) in enumerate(other._index(f0invf1_push_fwd.rearranged(nb))
+        for (j, (k, a)) in enumerate(other._index(phi1_inv.rearranged(phi0_inv.rearranged(nb)))
                                      for nb in self.numberings):
             ## there are three components to the sign `s`:
             ##   - the sign given by the ismorphism `f1`
