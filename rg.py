@@ -11,6 +11,7 @@ import cython
 
 from collections import defaultdict, Iterator
 import logging
+import os.path
 
 ## application-local imports
 
@@ -26,6 +27,8 @@ from cyclicseq import CyclicList, CyclicTuple
 from iterators import (
     BufferingIterator,
     )
+from loadsave import load, save
+from runtime import runtime
 import timing
 from utils import (
     concat,
@@ -1580,7 +1583,6 @@ class Fatgraph(EqualIfIsomorphic):
 
 
     
-    
 def MgnTrivalentGraphsRecursiveGenerator(g, n):
     """Return a list of all connected trivalent fatgraphs having the
     prescribed genus `g` and number of boundary cycles `n`.
@@ -1620,21 +1622,56 @@ def MgnTrivalentGraphsRecursiveGenerator(g, n):
 
     ## General case
     else:
-        timing.start("MgnTrivalentGraphsRecursiveGenerator(%d,%d)" % (g,n))
-        unique = []
-        discarded = 0
-        for G in _MgnTrivalentGraphsRecursiveGenerator_main(g,n):
-            # XXX: should this check be done in  *_main(g,n)?
-            if (G.genus, G.num_boundary_cycles) != (g,n) or (G in unique):
-                discarded += 1
-                continue
-            unique.append(G)
-            yield G
-        timing.stop("MgnTrivalentGraphsRecursiveGenerator(%d,%d)" % (g,n))
+        try:
+            checkpoint = os.path.join(runtime.options.checkpoint_dir,
+                                      ("MgnTrivalentGraphsRecursiveGenerator%d,%d.txt"
+                                       % (g, n)))
+        except AttributeError:
+            # test run, `runtime.options` not defined
+            checkpoint = None
 
-        logging.debug("  MgnTrivalentGraphsRecursiveGenerator(%d,%d) done: %d unique graphs, discarded %d duplicates. (Elapsed: %.3fs)", 
-                      g,n, len(unique), discarded, 
-                      timing.get("MgnTrivalentGraphsRecursiveGenerator(%d,%d)" % (g,n)))
+        # try loading from file
+        unique = None
+        if checkpoint and runtime.options.restart:
+            try:
+                unique = load(checkpoint)
+                logging.debug("  Loaded %d trivalent graphs from file '%s'",
+                              len(unique), checkpoint)
+            except Exception, error:
+                logging.debug("  Could not load saved state from file '%s': %s",
+                              checkpoint, error.message)
+                # ignore error and proceed
+
+        if unique is None:
+            # could not restore from saved state, have to compute
+            unique = [ ]
+            discarded = 0
+            timing.start("MgnTrivalentGraphsRecursiveGenerator(%d,%d)" % (g,n))
+            for G in _MgnTrivalentGraphsRecursiveGenerator_main(g,n):
+                # XXX: should this check be done in  *_main(g,n)?
+                if (G.genus, G.num_boundary_cycles) != (g,n) or (G in unique):
+                    discarded += 1
+                    continue
+                unique.append(G)
+                yield G
+            timing.stop("MgnTrivalentGraphsRecursiveGenerator(%d,%d)" % (g,n))
+            logging.debug(
+                "  MgnTrivalentGraphsRecursiveGenerator(%d,%d) done: %d unique graphs, discarded %d duplicates. (Elapsed: %.3fs)", 
+                g,n, len(unique), discarded, 
+                timing.get("MgnTrivalentGraphsRecursiveGenerator(%d,%d)" % (g,n)))
+            # clear cached isomorphisms, they will not be needed in the sequel
+            for G in unique:
+                try:
+                    G._cache_isomorphisms.clear() # XXX: private impl. detail!
+                except AttributeError:
+                    pass
+            # save to checkpoint file (if defined)
+            if checkpoint:
+                save(unique, checkpoint)
+        else:
+            # re-use loaded graphs
+            for G in unique:
+                yield G
 
 
 def _MgnTrivalentGraphsRecursiveGenerator_main(g,n):
@@ -1743,25 +1780,47 @@ class MgnGraphsIterator(BufferingIterator):
         if self._num_vertices == 0:
             raise StopIteration
 
-        logging.debug("Generating graphs with %d vertices ...",
-                     self._num_vertices)
-        timing.start("MgnGraphsIterator: %d vertices" % self._num_vertices)
-        discarded = 0
-        next_batch = []
-        for graph in self._batch:
-            # contract all edges
-            for edge in graph.edge_orbits():
-                if not graph.is_loop(edge):
-                    dg = graph.contract(edge)
-                    if dg not in next_batch:
-                        # put graph back into next batch for processing
-                        next_batch.append(dg)
-                    else:
-                        discarded += 1
-        timing.stop("MgnGraphsIterator: %d vertices" % self._num_vertices)
-        logging.info("  Found %d distinct unique fatgraphs with %d vertices, discarded %d duplicates. (Elapsed: %.3fs)",
-                     len(self._batch), self._num_vertices, discarded,
-                     timing.get("MgnGraphsIterator: %d vertices" % self._num_vertices))
+        try:
+            checkpoint = os.path.join(runtime.options.checkpoint_dir,
+                                      ("M%d,%d-MgnGraphsIterator%d.txt"
+                                       % (runtime.g, runtime.n, self._num_vertices)))
+        except AttributeError:
+            # running a test, so no `runtime.options` defined
+            checkpoint = None
+
+        # try loading `next_batch` from old persisted state
+        next_batch = None
+        if checkpoint and runtime.options.restart:
+            try:
+                next_batch = load(checkpoint)
+                logging.info("  Loaded graphs with %d vertices from file '%s'",
+                             self._num_vertices, checkpoint)
+            except Exception, error:
+                logging.debug("  Could not retrieve state from file '%s': %s",
+                              checkpoint, error.message)
+                # ignore error, continue generating graphs
+
+        if next_batch is None:
+            # really compute `next_batch`
+            logging.debug("Generating graphs with %d vertices ...",
+                         self._num_vertices)
+            discarded = 0
+            next_batch = []
+            timing.start("MgnGraphsIterator: %d vertices" % self._num_vertices)
+            for graph in self._batch:
+                # contract all edges
+                for edge in graph.edge_orbits():
+                    if not graph.is_loop(edge):
+                        dg = graph.contract(edge)
+                        if dg not in next_batch:
+                            # put graph back into next batch for processing
+                            next_batch.append(dg)
+                        else:
+                            discarded += 1
+            timing.stop("MgnGraphsIterator: %d vertices" % self._num_vertices)
+            logging.info("  Found %d distinct unique fatgraphs with %d vertices, discarded %d duplicates. (Elapsed: %.3fs)",
+                         len(self._batch), self._num_vertices, discarded,
+                         timing.get("MgnGraphsIterator: %d vertices" % self._num_vertices))
 
         self._batch = next_batch
         self._num_vertices -= 1
