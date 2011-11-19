@@ -4,13 +4,14 @@
 """
 __docformat__ = 'reStructuredText'
 
-import types
+import cython
 
-## logging subsystem
+## stdlib imports
 
 import itertools
 import logging
-
+import os
+import types
 
 ## application-local imports
 
@@ -26,9 +27,12 @@ from cache import (
     ocache_isomorphisms,
     Caching,
     )
-from copy import copy
 from fractions import Fraction
-from homology import *
+from homology import (
+    ChainComplex,
+    DifferentialComplex,
+    NullMatrix,
+    )
 from iterators import IndexedIterator
 from rg import (
     Fatgraph,
@@ -38,67 +42,29 @@ from rg import (
     Vertex, 
     BoundaryCycle,
     )
+from runtime import runtime
+from simplematrix import SimpleMatrix
 import timing
-from utils import maybe
-from valences import vertex_valences_for_given_g_and_n
-
-
-def FatgraphComplex(g, n):
-    """Return the fatgraph complex for given genus `g` and number of
-    boundary components `n`.
-
-    This is a factory method returning a `homology.ChainComplex`
-    instance, populated with the correct vector spaces and
-    differentials to compute the graph homology of the space
-    `M_{g,n}`.
-    """
-    ## Minimum number of edges is attained when there's only one
-    ## vertex; so, by Euler's formula `V - E + n = 2 - 2*g`, we get:
-    ## `E = 2*g + n - 1`.
-    min_edges = 2*g + n - 1
-    logging.debug("  Minimum number of edges: %d", min_edges)
-    
-    ## Maximum number of edges is reached in graphs with all vertices
-    ## tri-valent, so, combining Euler's formula with `3*V = 2*E`, we
-    ## get: `E = 6*g + 3*n - 6`.  These are also graphs corresponding
-    ## to top-dimensional cells.
-    top_dimension = 6*g + 3*n - 6
-    logging.debug("  Maximum number of edges: %d", top_dimension)
-
-    #: list of primitive graphs, graded by number of edges
-    #generators = [ AggregateList() for dummy in xrange(top_dimension) ]
-    C = MgnChainComplex(top_dimension)
-
-    # gather graphs
-    chi = Fraction(0)
-    for graph in MgnGraphsIterator(g,n):
-        grade = graph.num_edges - 1
-        pool = NumberedFatgraphPool(graph)
-        # compute orbifold Euler characteristics (needs to include *all* graphs)
-        chi += Fraction(minus_one_exp(grade-min_edges)*len(pool), pool.num_automorphisms)
-        # discard non-orientable graphs
-        if not pool.is_orientable:
-            continue
-        C.module[grade].aggregate(pool)
-    C.orbifold_euler_characteristics = chi
-        
-    for i in xrange(top_dimension):
-        logging.debug("  Initialized grade %d chain module (with dimension %d)",
-                     i, len(C[i]))
-        
-    return C
 
 
 
+@cython.cclass
 class MgnChainComplex(ChainComplex):
     """A specialized `ChainComplex`.
     """
+    @cython.locals(length=cython.int, i=cython.int)
     def __init__(self, length):
         ChainComplex.__init__(self, length)
         for i in xrange(length):
             self.module[i] = AggregateList()
 
-    def compute_boundary_operators(self, outputs=None):
+    #@cython.ccall(DifferentialComplex))
+    @cython.locals(m=list, D=DifferentialComplex,
+                   i=cython.int, p=cython.int, q=cython.int,
+                   j0=cython.int, k0=cython.int, s=cython.int,
+                   j=cython.int, k=cython.int, edgeno=cython.int)
+                   #pool1=NumberedFatgraphPool, pool2=NumberedFatgraphPool)
+    def compute_boundary_operators(self):
         #: Matrix form of boundary operators; the `i`-th differential
         #: `D[i]` is `dim C[i-1]` rows (range) by `dim C[i]` columns
         #: (domain).
@@ -109,6 +75,17 @@ class MgnChainComplex(ChainComplex):
             timing.start("D[%d]" % i)
             p = len(m[i-1]) # == dim C[i-1]
             q = len(m[i])   # == dim C[i]
+            checkpoint = os.path.join(runtime.options.checkpoint_dir,
+                                      ('M%d,%d-D%d.sms' % (runtime.g, runtime.n, i)))
+            # maybe load `D[i]` from persistent storage
+            if p>0 and q>0 and runtime.options.restart:
+                d = SimpleMatrix(p, q)
+                if d.load(checkpoint):
+                    D.append(d, p, q)
+                    logging.info("  Loaded %dx%d matrix D[%d] from file '%s'",
+                                 p, q, i, checkpoint)
+                    continue # with next `i`
+            # compute `D[i]`
             d = SimpleMatrix(p, q)
             j0 = 0
             for pool1 in m[i].iterblocks():
@@ -124,15 +101,23 @@ class MgnChainComplex(ChainComplex):
                             assert j+j0 < q
                             d.addToEntry(k+k0, j+j0, s)
                     k0 += len(pool2)
+                    # # `pool2` will never be used again, so clear it from the cache.
+                    # # XXX: using implementation detail!
+                    # pool2.graph._cache_isomorphisms.clear()
                 j0 += len(pool1)
-            D.append(d, p, q)
+                # `pool1` will never be used again, so clear it from the cache.
+                # XXX: using implementation detail!
+                pool1.graph._cache_isomorphisms.clear()
             timing.stop("D[%d]" % i)
+            d.save(checkpoint)
+            D.append(d, p, q)
             logging.info("  Computed %dx%d matrix D[%d] (elapsed: %.3fs)", 
                          p, q, i, timing.get("D[%d]" % i))
         return D
 
 
 
+@cython.cclass
 class NumberedFatgraph(Fatgraph):
     """A `Fatgraph` decorated with a numbering of the boundary components.
 
@@ -148,13 +133,14 @@ class NumberedFatgraph(Fatgraph):
                  numbering=[(BoundaryCycle([(0,3,0), (0,2,3), (0,1,2), (0,0,1)]), 0)])
 
     The `numbering` attribute is set to a dictionary mapping the
-    boundary cycle `bcy` to the integer `n`; for this, an initializer
-    is needed, which can be:
+    boundary cycle `bcy` to the integer `n`; for this, a valid `dict`
+    initializer is needed, which can be:
         - either a sequence of tuples `(bcy, n)`, where each `n` is
           a non-negative integer, and each `bcy` is a
           `BoundaryCycle` instance,
         - or a `dict` instance mapping `BoundaryCycle` instances to
           `int`s.
+
     In either case, an assertion is raised if:
         - the number of pairs in the initializer does not match
           the number of boundary cycles;
@@ -298,24 +284,26 @@ class NumberedFatgraph(Fatgraph):
         form is sorted by values (i.e., by boundary component index)
         to make doctests more stable.
         """
-        def sort_by_values_then_by_keys(kv1,kv2):
-            (k1, v1) = kv1
-            (k2, v2) = kv2
-            q = cmp(v1, v2)
-            if 0 == q:
-                return cmp(k1, k2)
-            else:
-                return q
-        parts = []
-        for (k, v) in sorted(self.numbering.iteritems(),
-                             cmp=sort_by_values_then_by_keys):
-            parts.append("%s: %s" % (repr(k), repr(v)))
-        canonical = "{" + str.join(", ", parts) + "}"
-        return "NumberedFatgraph(%s, numbering=%s)" \
-               % (repr(self.underlying), canonical)
+        return ("NumberedFatgraph(%s, numbering=%s)"
+                % (repr(self.underlying),
+                   # print the `numbering` dictionary,
+                   # sorting the output by values
+                   str.join('', [
+                       "{",
+                       str.join(", ", [
+                           ("%s: %s" % (repr(k), repr(v)))
+                           for (k, v) in sorted(self.numbering.iteritems(),
+                                                key=(lambda item: item[1])) ]),
+                        "}"
+                       ])))
     
 
     @ocache_contract
+    @cython.locals(edgeno=cython.int,
+                   v1=cython.int, v2=cython.int,
+                   pos1=cython.int, pos2=cython.int,
+                   n=cython.int)
+    #@cython.cfunc(NumberedFatgraph)
     def contract(self, edgeno):
         """Return a new `NumberedFatgraph` instance, obtained by
         contracting the specified edge.
@@ -369,6 +357,7 @@ class NumberedFatgraph(Fatgraph):
         
 
     #@ocache_isomorphisms
+    @cython.ccall
     def isomorphisms(G1, G2):
         """Iterate over isomorphisms from `G1` to `G2`.
 
@@ -380,13 +369,11 @@ class NumberedFatgraph(Fatgraph):
             for bc1 in G1.underlying.boundary_cycles:
                 bc2 = iso.transform_boundary_cycle(bc1)
                 # there are cases (see examples in the
-                # `Fatgraph.__eq__` docstring, in which the
-                # above algorithm may find a valid
-                # mapping, changing from `g1` to an
-                # *alternate* representation of `g2` -
-                # these should fail as they don't preserve
-                # the boundary cycles, so we catch them
-                # here.
+                # `Fatgraph.__eq__` docstring, in which the above
+                # algorithm may find a valid mapping, changing from
+                # `g1` to an *alternate* representation of `g2` -
+                # these should fail as they don't preserve the
+                # boundary cycles, so we catch them here.
                 if (bc2 not in G2.numbering) \
                        or (G1.numbering[bc1] != G2.numbering[bc2]):
                     pe_does_not_preserve_bc = True
@@ -405,6 +392,7 @@ class NumberedFatgraph(Fatgraph):
 
 
 
+@cython.cclass
 class NumberedFatgraphPool(object):
     """An immutable virtual collection of `NumberedFatgraph`s.
     Items are all distinct (up to isomorphism) decorations of a
@@ -465,6 +453,11 @@ class NumberedFatgraphPool(object):
                                                  (0, 1, 2), (0, 0, 1), (0, 5, 0)]): 0,
                                   BoundaryCycle([(0, 4, 5)]): 1})
     """
+    @cython.locals(graph=Fatgraph,
+                   bc=dict, n=cython.int, orienbtable=cython.bint,
+                   P=list, P_=list, automorphisms=list,
+                   p=Permutation, src=cython.int, dst=cython.int, dst_cy=BoundaryCycle,
+                   numberings=list, candidate=list)
     def __init__(self, graph):
         bc = graph.boundary_cycles
         n = len(bc) # == graph.num_boundary_cycles
@@ -502,17 +495,9 @@ class NumberedFatgraphPool(object):
         ## There will be as many distinct numberings as there are cosets
         ## of `P` in `Sym(n)`.
         if len(P) > 1:
-            def unseen(candidate, P, already):
-                """Return `False` iff any of the images of `candidate` by an
-                element of group `P` is contained in set `already`.
-                """
-                for p in P:
-                    if p.rearranged(candidate) in already:
-                        return False
-                return True
             numberings = []
             for candidate in itertools.permutations(range(n)):
-                if unseen(candidate, P, numberings):
+                if NumberedFatgraphPool._unseen(candidate, P, numberings):
                     numberings.append(list(candidate))
         else:
             # if `P` is the one-element group, then all orbits are trivial
@@ -526,9 +511,23 @@ class NumberedFatgraphPool(object):
         self.numberings = numberings
         self.num_automorphisms = len(automorphisms)
 
+    @staticmethod
+    @cython.locals(candidate=list, P=list, already=list,
+                   p=Permutation)
+    def _unseen(candidate, P, already):
+        """Return `False` iff any of the images of `candidate` by an
+        element of group `P` is contained in set `already`.
+        """
+        for p in P:
+            if p.rearranged(candidate) in already:
+                return False
+        return True
 
+
+    @cython.locals(pos=cython.int)
     def __getitem__(self, pos):
-        return NumberedFatgraph(self.graph, zip(self.graph.boundary_cycles, self.numberings[pos]))
+        return NumberedFatgraph(self.graph,
+                                zip(self.graph.boundary_cycles, self.numberings[pos]))
 
 
     def __iter__(self):
@@ -544,10 +543,13 @@ class NumberedFatgraphPool(object):
             return "NumberedFatgraphPool(%s)" % self.graph
         else:
             return object.__repr__(self)
-        
-    __str__ = __repr__
+    def __str__(self):
+        return repr(self)
         
 
+    @cython.locals(edge=cython.int,
+                   #other=NumberedFatgraphPool,
+                   g0=Fatgraph, g1=Fatgraph, g2=Fatgraph)
     def facets(self, edge, other):
         """Iterate over facets obtained by contracting `edge` and
         projecting onto `other`.
@@ -569,46 +571,6 @@ class NumberedFatgraphPool(object):
         assert self.is_orientable
         assert other.is_orientable
         
-        def push_fwd(f, g1, g2):
-            """Return a `Permutation` instance corresponding to the
-            map induced by ismorphism `f` on the boundary cycles, or
-            `None` if no such map exists.
-
-            Indeed, there are cases (see examples in the
-            `Fatgraph.__eq__` docstring), in which the
-            `Fatgraph.isomorphisms` algorithm may find a valid
-            mapping, changing from `g1` to an *alternate*
-            representation of `g2` - these should fail as they don't
-            preserve the boundary cycles.
-            """
-            pass
-
-        def compute_nb_map(pull_back_bcy_map, src, dst):
-            """
-            Return a pair of `dict` instances:
-              - the first maps (indices of ) numberings in
-                `NumberedFatgraphPool` instance `src` to corresponding
-                (indices of) numberings in `NumberedFatgraphPool`
-                instance `dst`.
-
-              - the second maps the same indices into the
-                automorphism `a` of `dst.graph` such that::
-
-                  src.numberings[i] = pull_back(<permutation induced by a applied to> dst.numberings[i])
-
-            Raises `KeyError` if no such mapping could be found.
-
-            Indices must be `int`s here, as `list`s cannot be used as
-            dictionary keys.
-            """
-            nb_map = dict()
-            a_map = dict()
-            for (i, nb) in enumerate(src.numberings):
-                (i_, k) = dst._index(pull_back_bcy_map(nb))
-                nb_map[i] = i_
-                a_map[i] = k
-            return (nb_map, a_map)
-
         g0 = self.graph
         g1 = g0.contract(edge)
         g2 = other.graph
@@ -622,8 +584,9 @@ class NumberedFatgraphPool(object):
                "NumberedFatgraphPool.facets():" \
                " Boundary cycles of contracted graph are not the same" \
                " as contracted boundary cycles of parent graph:" \
-               " `%s` vs `%s`" % (g1.boundary_cycles, [ g0.contract_boundary_cycle(bcy, e1, e2)
-                                                        for bcy in g0.boundary_cycles ])
+               " `%s` vs `%s`" % (g1.boundary_cycles,
+                                  [ g0.contract_boundary_cycle(bcy, e1, e2)
+                                    for bcy in g0.boundary_cycles ])
         f0_push_fwd = Permutation(enumerate(
             g1.boundary_cycles.index(g0.contract_boundary_cycle(bcy, e1, e2))
             for bcy in g0.boundary_cycles
@@ -650,7 +613,7 @@ class NumberedFatgraphPool(object):
         # a numbering on `g2` through the composite map `f1^(-1) * f0`
         def pull_back(nb):
             return f1_push_fwd.rearranged(f0_push_fwd.rearranged(nb))
-        nb_map, a_map = compute_nb_map(pull_back, self, other)
+        nb_map, a_map = NumberedFatgraphPool._compute_nb_map(pull_back, self, other)
 
         # check that non-orientable contractions have been caught by
         # the above code.
@@ -677,6 +640,56 @@ class NumberedFatgraphPool(object):
                 * minus_one_exp(g0.edge_numbering[edge])
             yield (j, k, s)
 
+    @staticmethod
+    #@cython.cfunc
+    @cython.locals()
+    def _push_fwd(f, g1, g2):
+        """Return a `Permutation` instance corresponding to the
+        map induced by ismorphism `f` on the boundary cycles, or
+        `None` if no such map exists.
+
+        Indeed, there are cases (see examples in the
+        `Fatgraph.__eq__` docstring), in which the
+        `Fatgraph.isomorphisms` algorithm may find a valid
+        mapping, changing from `g1` to an *alternate*
+        representation of `g2` - these should fail as they don't
+        preserve the boundary cycles.
+        """
+        pass
+
+    @staticmethod
+    #@cython.cfunc
+    @cython.locals(#src=NumberedFatgraphPool, dst=NumberedFatgraphPool,
+                   i=cython.int, i_=cython.int, k=cython.int)
+    def _compute_nb_map(pull_back_bcy_map, src, dst):
+        """
+        Return a pair of `dict` instances:
+          - the first maps (indices of ) numberings in
+            `NumberedFatgraphPool` instance `src` to corresponding
+            (indices of) numberings in `NumberedFatgraphPool`
+            instance `dst`.
+
+          - the second maps the same indices into the
+            automorphism `a` of `dst.graph` such that::
+
+              src.numberings[i] = pull_back(<permutation induced by a applied to> dst.numberings[i])
+
+        Raises `KeyError` if no such mapping could be found.
+
+        Indices must be `int`s here, as `list`s cannot be used as
+        dictionary keys.
+        """
+        nb_map = dict()
+        a_map = dict()
+        for (i, nb) in enumerate(src.numberings):
+            (i_, k) = dst._index(pull_back_bcy_map(nb))
+            nb_map[i] = i_
+            a_map[i] = k
+        return (nb_map, a_map)
+
+    #@cython.cfunc
+    @cython.locals(numbering=Permutation,
+                   i=cython.int, j=cython.int, p=Permutation)
     def _index(self, numbering):
         """
         """
@@ -690,6 +703,57 @@ class NumberedFatgraphPool(object):
         assert False, \
                "%s._index(%s): No match found." % (self, numbering)
         
+
+
+@cython.locals(g=cython.int, n=cython.int,
+               min_edges=cython.int, top_dimension=cython.int,
+               C=MgnChainComplex,
+               #pool=NumberedFatgraphPool,
+               chi=Fraction, grade=cython.int, i=cython.int)
+def FatgraphComplex(g, n):
+    """Return the fatgraph complex for given genus `g` and number of
+    boundary components `n`.
+
+    This is a factory method returning a `homology.ChainComplex`
+    instance, populated with the correct vector spaces and
+    differentials to compute the graph homology of the space
+    `M_{g,n}`.
+    """
+    ## Minimum number of edges is attained when there's only one
+    ## vertex; so, by Euler's formula `V - E + n = 2 - 2*g`, we get:
+    ## `E = 2*g + n - 1`.
+    min_edges = 2*g + n - 1
+    logging.debug("  Minimum number of edges: %d", min_edges)
+    
+    ## Maximum number of edges is reached in graphs with all vertices
+    ## tri-valent, so, combining Euler's formula with `3*V = 2*E`, we
+    ## get: `E = 6*g + 3*n - 6`.  These are also graphs corresponding
+    ## to top-dimensional cells.
+    top_dimension = 6*g + 3*n - 6
+    logging.debug("  Maximum number of edges: %d", top_dimension)
+
+    #: list of primitive graphs, graded by number of edges
+    #generators = [ AggregateList() for dummy in xrange(top_dimension) ]
+    C = MgnChainComplex(top_dimension)
+
+    # gather graphs
+    chi = Fraction(0)
+    for graph in MgnGraphsIterator(g,n):
+        grade = graph.num_edges - 1
+        pool = NumberedFatgraphPool(graph)
+        # compute orbifold Euler characteristics (needs to include *all* graphs)
+        chi += Fraction(minus_one_exp(grade-min_edges)*len(pool), pool.num_automorphisms)
+        # discard non-orientable graphs
+        if not pool.is_orientable:
+            continue
+        C.module[grade].aggregate(pool)
+    C.orbifold_euler_characteristics = chi
+        
+    for i in xrange(top_dimension):
+        logging.debug("  Initialized grade %d chain module (with dimension %d)",
+                      i, len(C[i]))
+        
+    return C
 
 
 ## main: run tests
