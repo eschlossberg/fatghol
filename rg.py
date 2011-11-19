@@ -33,11 +33,11 @@ from cyclicseq import CyclicList,CyclicTuple
 from iterators import (
     BufferingIterator,
     Iterator,
-    itranslate,
     )
 import timing
 from utils import (
     concat,
+    ltranslate,
     maybe,
     sign,
     )
@@ -834,11 +834,11 @@ class Fatgraph(EqualIfIsomorphic):
                                     for x in xrange(other.num_edges))
         # Orientation needs the same numbering:
         new_edge_numbering = self.edge_numbering \
-                             + list(itranslate(renumber_other_edges, other.edge_numbering))
+                             + ltranslate(renumber_other_edges, other.edge_numbering)
         # Similarly, vertices of `self` retain indices `[0..v]`, while
         # vertices of `other` follow.
         new_vertices = self.vertices \
-                       + [ Vertex(itranslate(renumber_other_edges, ov))
+                       + [ Vertex(ltranslate(renumber_other_edges, ov))
                            for ov in other.vertices ]
         renumber_other_vertices = dict((x, x+self.num_vertices)
                                        for x in xrange(other.num_vertices))

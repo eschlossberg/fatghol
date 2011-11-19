@@ -11,6 +11,7 @@ import cython
 
 ## stdlib imports
 
+from collections import Iterator
 import itertools
 import operator
 import types
@@ -33,6 +34,41 @@ def concat(seqs):
       'abc'
     """
     return reduce(operator.add, seqs)
+
+
+@cython.cclass
+class itranslate(Iterator):
+    """Return items from a sequence, substituting them as specified.
+
+    First argument `subst` is a dictionary, specifying substitutions
+    to be applied.  If an item matches a key of the `subst`
+    dictionary, the associated dictionary value is returned instead;
+    unless the value is `None`, in which case the item is skipped
+    altogether.
+
+    *Note:* you should use an appropriate `dict`-subclass if you want
+     to translate items which are not immutable.
+    
+    Examples::
+      >>> list(itranslate({0:None, 3:2}, [2,1,0,0,1,3]))
+      [2, 1, 1, 2]
+    """
+
+    __slots__ = ('mappings', 'iterable')
+    
+    def __init__(self, subst, iterable):
+        self.mappings = subst
+        self.iterable = iter(iterable)
+    def next(self):
+        while True:
+            next = self.iterable.next()
+            if next not in self.mappings:
+                return next
+            translated = self.mappings[next]
+            if translated is None:
+                # skip this item
+                continue
+            return translated
 
 
 #@cython.ccall(list)
