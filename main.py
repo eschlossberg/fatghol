@@ -19,7 +19,9 @@ from fractions import Fraction
 import gc
 import logging
 import os
+import os.path
 import resource
+import tempfile
 
 
 ## application-local imports
@@ -356,6 +358,8 @@ if 'shell' == args[0]:
         
 # selftest -- run doctests and acceptance tests on simple cases
 elif 'selftest' == args[0]:
+    failures = 0
+    
     import doctest
     import imp
     for module in [ 'rg',
@@ -376,44 +380,85 @@ elif 'selftest' == args[0]:
             # restore normal logging level
             logging.getLogger().setLevel(log_level)
             if failed>0:
+                failures += 1
                 logging.error("  module '%s' FAILED %d tests out of %d." % (module, failed, tested))
-                print("Module '%s' FAILED %d tests out of %d." % (module, failed, tested))
+                sys.stdout.write("Module '%s' FAILED %d tests out of %d.\n" % (module, failed, tested))
             else:
                 if tested>0:
                     logging.debug("  OK - module '%s' passed all doctests." % module)
-                    print("Module '%s' OK, passed all doctests." % module)
+                    sys.stdout.write("Module '%s' OK, passed all doctests.\n" % module)
                 else:
                     logging.warning("  module '%s' had no doctests." % module)
         finally:
             file.close()
 
-    # ensure checkpoint path is defined and valid
-    if runtime.options.checkpoint_dir is None:
-        runtime.options.checkpoint_dir = os.getenv("TMPDIR") or "/tmp"
+    def run_homology_selftest(output=sys.stdout):
+        ok = True
+        # second, try known cases and inspect results
+        for (g, n, ok) in [ (0,3, [1,0,0]),
+                            (0,4, [1,2,0,0,0,0]),
+                            (0,5, [1,5,6,0,0,0,0,0,0]),
+                            (1,1, [1,0,0]),
+                            (1,2, [1,0,0,0,0,0]),
+                            (2,1, [1,0,1,0,0,0,0,0,0]),
+                            ]:
+            output.write("  Computation of M_{%d,%d} homology: " % (g,n))
+            # compute homology of M_{g,n}
+            timing.start("homology M%d,%d" % (g,n))
+            hs = do_homology(g,n)
+            timing.stop("homology M%d,%d" % (g,n))
+            # check result
+            if hs == ok:
+                output.write("OK (elapsed: %0.3fs)\n"
+                             % timing.get("homology M%d,%d" % (g,n)))
+            else:
+                logging.error("Computation of M_{%d,%d} homology: FAILED, got %s expected %s"
+                              % (g,n,hs,ok))
+                output.write("FAILED, got %s expected %s\n" % (hs,ok))
+                ok = False
+        return ok
 
-    # second, try known cases and inspect results
-    failures = 0
-    for (g, n, ok) in [ (0,3, [1,0,0]),
-                        (0,4, [1,2,0,0,0,0]),
-                        (0,5, [1,5,6,0,0,0,0,0,0]),
-                        (1,1, [1,0,0]),
-                        (1,2, [1,0,0,0,0,0]),
-                        (2,1, [1,0,1,0,0,0,0,0,0]),
-                        ]:
-        sys.stdout.write("Computation of M_{%d,%d} homology: " % (g,n))
-        # compute homology of M_{g,n}
-        timing.start("homology M%d,%d" % (g,n))
-        hs = do_homology(g,n)
-        timing.stop("homology M%d,%d" % (g,n))
-        # check result
-        if hs == ok:
-            print("OK (elapsed: %0.3fs)"
-                  % timing.get("homology M%d,%d" % (g,n)))
-        else:
-            logging.error("Computation of M_{%d,%d} homology: FAILED, got %s expected %s"
-                          % (g,n,hs,ok))
-            print("FAILED, got %s expected %s" % (hs,ok))
-            failures += 1
+    ## run the self-test suite 3 times:
+    ##
+
+    ## 1. without any persistence stuff enabled, so we can test the
+    ## real results of the algorithm and the performance
+    sys.stdout.write("Checking homology algorithm (no checkpointing)\n")
+    
+    try:
+        del runtime.options.checkpoint_dir
+    except AttributeError:
+        pass
+
+    ok = run_homology_selftest(sys.stdout)
+    if not ok:
+        failures += 1
+
+    ## 2. run with a temporary checkpoint directory, to test saving of state
+    sys.stdout.write("Checking homology algorithm (checkpointing)\n")
+        
+    runtime.options.checkpoint_dir = tempfile.mkdtemp(prefix="mgn.selftest.")
+    
+    ok = run_homology_selftest(sys.stdout)
+    if not ok:
+        failures += 1
+
+    ## 3. run with the same temporary directory, to test that
+    ## persistence picks up results of rpevious runs correctly
+    sys.stdout.write("Checking homology algorithm (restoring from checkpointed state)\n")
+            
+    ok = run_homology_selftest(sys.stdout)
+    if not ok:
+        failures += 1
+
+    # remove anything in the temporary directory
+    if failures == 0:
+        for entry in os.listdir(runtime.options.checkpoint_dir):
+            os.remove(os.path.join(runtime.options.checkpoint_dir, entry))
+        os.rmdir(runtime.options.checkpoint_dir)
+    else:
+        sys.stdout.write("Persisted files left in directory '%s'"
+                         % runtime.options.checkpoint_dir)
 
     # exit code >0 is number of failures
     sys.exit(failures)
