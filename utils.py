@@ -138,6 +138,22 @@ def positive_int(arg):
     return result
 
 
+@cython.locals(L=list, p=cython.int)
+#@cython.ccall(list)
+def rotated(L, p):
+    """
+    Return a copy of the given list `L`, with items rotated `p`
+    positions leftwards.
+
+    Examples::
+
+      >>> rotated([1,2,3,4,5], 2)
+      [3, 4, 5, 1, 2]
+      
+    """
+    return L[p:] + L[:p]
+
+
 #@cython.ccall(int)
 @cython.locals(x=cython.int)
 def sign(x):
