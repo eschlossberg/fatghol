@@ -587,10 +587,10 @@ class NumberedFatgraphPool(object):
                " `%s` vs `%s`" % (g1.boundary_cycles,
                                   [ g0.contract_boundary_cycle(bcy, e1, e2)
                                     for bcy in g0.boundary_cycles ])
-        f0_push_fwd = Permutation(enumerate(
+        f0_push_fwd = Permutation((i1,i0) for (i0,i1) in enumerate(
             g1.boundary_cycles.index(g0.contract_boundary_cycle(bcy, e1, e2))
             for bcy in g0.boundary_cycles
-            )).inverse()
+            ))
         assert len(f0_push_fwd) == len(g1.boundary_cycles)
         assert len(f0_push_fwd) == g0.num_boundary_cycles
         if __debug__:
@@ -605,10 +605,10 @@ class NumberedFatgraphPool(object):
         ##    The reason for having this map go in the opposite direction as `f0`
         ##    is to avoid inverting its push-forward.  (Thus saving a little complexity.)
         f1 = Fatgraph.isomorphisms(g1,g2).next()
-        f1_push_fwd = Permutation(enumerate(
+        f1_push_fwd = Permutation((i1,i0) for (i0,i1) in enumerate(
             g2.boundary_cycles.index(f1.transform_boundary_cycle(bc1))
             for bc1 in g1.boundary_cycles
-            )).inverse()
+            ))
         # now check that every numbering of `g0` can be mapped to
         # a numbering on `g2` through the composite map `f1^(-1) * f0`
         def pull_back(nb):
