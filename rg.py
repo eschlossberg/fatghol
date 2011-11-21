@@ -1793,8 +1793,9 @@ class MgnGraphsIterator(BufferingIterator):
         if checkpoint and runtime.options.restart:
             try:
                 next_batch = load(checkpoint)
-                logging.info("  Loaded graphs with %d vertices from file '%s'",
-                             self._num_vertices, checkpoint)
+                if next_batch is not None:
+                    logging.info("  Loaded graphs with %d vertices from file '%s'",
+                                 self._num_vertices, checkpoint)
             except Exception, error:
                 logging.debug("  Could not retrieve state from file '%s': %s",
                               checkpoint, error.message)
@@ -1821,7 +1822,7 @@ class MgnGraphsIterator(BufferingIterator):
             logging.info("  Found %d distinct unique fatgraphs with %d vertices, discarded %d duplicates. (Elapsed: %.3fs)",
                          len(self._batch), self._num_vertices, discarded,
                          timing.get("MgnGraphsIterator: %d vertices" % self._num_vertices))
-
+                
         self._batch = next_batch
         self._num_vertices -= 1
         return next_batch
