@@ -1822,6 +1822,8 @@ class MgnGraphsIterator(BufferingIterator):
             logging.info("  Found %d distinct unique fatgraphs with %d vertices, discarded %d duplicates. (Elapsed: %.3fs)",
                          len(self._batch), self._num_vertices, discarded,
                          timing.get("MgnGraphsIterator: %d vertices" % self._num_vertices))
+            if checkpoint is not None:
+                save(next_batch, checkpoint)
                 
         self._batch = next_batch
         self._num_vertices -= 1
