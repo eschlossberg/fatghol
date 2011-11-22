@@ -19,6 +19,7 @@ from zlib import adler32
                error=Exception)
 #@cython.cfunc(list)
 def load(filename):
+    from rg import Fatgraph, Vertex, BoundaryCycle
     result = list()
     checksum = 0
     try:
@@ -26,9 +27,14 @@ def load(filename):
             for line in checkpoint_file:
                 result.append(eval(line))
                 checksum = adler32(line, checksum)
+        checksum &= 0xffffffff
 
         with open(filename+'.sum', 'r') as checksum_file:
-            if checksum != int(checksum_file.read(), 16):
+            saved_checksum = int(checksum_file.read(), 16)
+            if checksum != saved_checksum:
+                logging.warning("Computed checksum of file '%s' is 0x%x,"
+                                " but saved checksum is 0x%x.  Ignoring checkpoint file.",
+                                filename, checksum, saved_checksum)
                 return None
 
         # checksum ok, return to caller
