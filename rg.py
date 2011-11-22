@@ -1635,8 +1635,9 @@ def MgnTrivalentGraphsRecursiveGenerator(g, n):
         if checkpoint and runtime.options.restart:
             try:
                 unique = load(checkpoint)
-                logging.debug("  Loaded %d trivalent graphs from file '%s'",
-                              len(unique), checkpoint)
+                if unique is not None:
+                    logging.debug("  Loaded %d trivalent graphs from file '%s'",
+                                  len(unique), checkpoint)
             except Exception, error:
                 logging.debug("  Could not load saved state from file '%s': %s",
                               checkpoint, error.message)
