@@ -499,9 +499,9 @@ if runtime.options.checkpoint_dir is None:
             sys.exit(1)
         else:
             os.mkdir(runtime.options.checkpoint_dir)
-logging.debug("Saving computation state to directory '%s'", runtime.options.checkpoint_dir)
+logging.info("Saving computation state to directory '%s'", runtime.options.checkpoint_dir)
 if not runtime.options.restart:
-    logging.debug("NOT restarting: will ignore any saved state in checkpoint directory '%s'")
+    logging.warning("NOT restarting: will ignore any saved state in checkpoint directory '%s'")
 
 
 # valences -- show vertex valences for given g,n
