@@ -236,9 +236,8 @@ Actions:
     """)
 if not cython.compiled:
     parser.add_option("-f", "--feature", dest="features", default=None,
-                      help="""Enable optional speedup or tracing features:
+                      help="""Enable optional features (mainly tracing/debug):
                       * pydb -- run Python debugger if an error occurs
-                      * psyco -- run the Psyco JIT compiler
                       * profile -- dump profiler statistics in a .pf file.
                       Several features may be enabled by separating them with a comma, as in '-f pydb,profile'.""")
 parser.add_option("-l", "--logfile",
@@ -303,13 +302,6 @@ if not cython.compiled and options.features is not None:
             logging.debug("PyDB enabled: exceptions will start a debugging session.")
         except ImportError:
             logging.warning("Could not import 'pydb' module - PyDB not enabled.")
-    if 'psyco' in features:
-        try:
-            import psyco
-            psyco.full()
-            logging.debug("Psyco enabled.")
-        except ImportError:
-            logging.warning("Could not import 'psyco' module - Psyco JIT accelerator not enabled.")
     if 'profile' in features:
         try:
             import hotshot
