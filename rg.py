@@ -208,6 +208,25 @@ class Isomorphism(object):
                                            for x in xrange(self.source.num_edges))
         return image_edge_numbering.sign()
 
+    def is_identity(self):
+        """
+        Return `True` if this is the identity morphism.
+
+        Only makes sense for automorphisms, so an `AssertionException`
+        is raised if source and target differ.
+        """
+        assert self.source == self.target
+        for v in xrange(len(self.pv)):
+            if v != self.pv[v]:
+                return False
+            l = len(self.source.vertices[v])
+            if self.rot[v] % l != 0:
+                return False
+        for e in xrange(len(self.pe)):
+            if e != self.pe[e]:
+                return False
+        return True
+
     def is_orientation_reversing(self):
         """Return `True` if this `Isomorphism` reverses orientation on
         the source and target `Fatgraph` instances."""

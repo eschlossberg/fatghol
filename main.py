@@ -501,59 +501,83 @@ elif "latex" == args[0]:
                 all_graphs[num_edges] = gs
 
     import output
-    output_prefix = os.path.join(dir, ("M%d,%d-graphs-" % (g,n)))
+    output_prefix = os.path.join(dir, ("M%d,%d-fatgraphs" % (g,n)))
 
-    outfile_all = output.LaTeXFile(output_prefix + "ALL.tex")
-    outfile_all.section("Fatgraphs labeling cells of $M_{%d,%d}$" % (g,n))
-    outfile_all.write(r"""
-The graph $G_{l,k}$ is the $k$-th graph in the
-set of graphs of genus $%d$ with $l$ edges and $%d$
-boundary cycles.
+    outfile = output.LaTeXFile(output_prefix + ".tex")
+    outfile.section("Fatgraphs labeling cells of $M_{%d,%d}$" % (g,n))
+    outfile.write(r"""
+There are $%(num_graphs)d$ fatgraphs in the Kontsevich-Penner complex
+of $M_{%(g)d, %(n)d}$.  In the following listing, we denote $G_{l,k}$
+the $k$-th graph in the set of graphs with $l$ edges.
+
+\subsection*{Notation}
 
 Fatgraph vertices are marked with lowercase latin letters
 ``a'', ``b'', ``c'', etc.; edges are marked with an arabic
-numeral starting from ``1''.
+numeral starting from ``1''; boundary cycles are denoted
+by lowercase greek letters ``$\alpha$'', ``$\beta$'', etc.
 
-Crossed-out graphs are those having an automorphism that
-reverses the associated cell orientation.
+Automorphisms are only listed if the automorphism group is
+non-trivial.  Automorphisms are specified by their action on the set
+of vertices, edges, and boundary cycles: for each automorphism $A_k$,
+a table line lists how it permutes vertices, edges and boundary cycles
+relative to the identity morphism $A_0$.
 
-""" % (g,n))
+If a fatgraph has automorphisms that reverse the orientation of the
+associated cell, then its picture is crossed out;
+orientation-reversing automorphisms are marked with an asterisk in
+the automorphism table.
+
+Boundary cycles are specified using a ``sequence of corners''
+notation: each corner is represented as \corner{L}{p}{q} where $L$ is
+a latin letter indicating a vertex, and $p$,~$q$ are the attachment
+indices of the incoming and outgoing edges, respectively.  Attachment
+indices match the Python representation of the vertex: e.g., if
+a$=$\verb'Vertex([0,0,1])', the two legs of edge~$0$ have attachment
+indices~0 and~1, and the boundary cycle enclosed by them is
+represented by the (single) corner~\corner{a}{0}{1}.
+
+""" % dict(
+                          g = g,
+                          n = n,
+                          num_graphs = sum(len(gs) for gs in all_graphs.itervalues())))
     
     for num_edges, graphs in all_graphs.iteritems():
-        outfile_all.section("Fatgraphs with $%d$ edges" % num_edges)
+        outfile.section(("Fatgraphs with $%d$ edges" % num_edges))
+        outfile.write(r"""
+There are $%d$ graphs in this section.
+
+""" % len(graphs))
         for j, graph in enumerate(graphs):
             name = ("\ensuremath{G_{%d,%d}}" % (num_edges, j))
-            outfile_all.section("The Fatgraph $%s$%s" % (
+            outfile.section("The Fatgraph $%s$%s" % (
                 name,
                 "" if graph.is_oriented() else " {\em (non-orientable)}"
             ), level=1)
             # draw graph
-            outfile_all.write_graph(graph, name)
-            # print differential
-            p = len(all_graphs[num_edges-1]) if (num_edges-1 in all_graphs) else 0
-            q = len(all_graphs[num_edges]) if (num_edges in all_graphs) else 0
-            i = num_edges - min_num_edges + 1
-            matrix_file = os.path.join(dir, ("M%d,%d-D%d.sms" % (g,n,i)))
-            if os.path.exists(matrix_file):
-                D = SimpleMatrix(p, q)
-                D.load(matrix_file)
-                if D is not None:
-                    outfile_all.section("Differential", level=2)
-                    outfile_all.write_differential(D, j, name,
-                                           lambda D,i: ("G_{%d,%d}" % (num_edges-1, i)))
+            outfile.write_graph(graph, name)
             # print boundary cycles
-            #outfile_all.section("Boundary cycles", level=2)
-            #outfile_all.write_boundary_cycles(graph.boundary_cycles)
+            outfile.section("Boundary cycles", level=2)
+            outfile.write_boundary_cycles(graph.boundary_cycles)
             # print automorphisms
             Aut = list(graph.automorphisms())
             if len(Aut) > 1:
-                outfile_all.section("Non-trivial Automorphisms", level=2)
-                outfile_all.write_automorphisms(graph, Aut)
-            # print python repr
-            #outfile_all.section("FatGHoL Python representation", level=2)
-            #outfile_all.write_repr(graph) 
+                outfile.section("Automorphisms", level=2)
+                outfile.write_automorphisms(Aut)
+            # print differential
+            # p = len(all_graphs[num_edges-1]) if (num_edges-1 in all_graphs) else 0
+            # q = len(all_graphs[num_edges]) if (num_edges in all_graphs) else 0
+            # i = num_edges - min_num_edges + 1
+            # matrix_file = os.path.join(dir, ("M%d,%d-D%d.sms" % (g,n,i)))
+            # if os.path.exists(matrix_file):
+            #     D = SimpleMatrix(p, q)
+            #     D.load(matrix_file)
+            #     if D is not None:
+            #         outfile.section("Differential", level=2)
+            #         outfile.write_differential(D, j, name,
+            #                                lambda D,i: ("G_{%d,%d}" % (num_edges-1, i)))
 
-    outfile_all.close()
+    outfile.close()
 
 
 else:

@@ -20,12 +20,24 @@ class LaTeXFile(file):
 \documentclass[a4paper]{article}
 \raggedbottom
 
+% use Knuth's "concrete" fonts, which blend better with the
+% typewriter font used for code listings
+\usepackage[T1]{fontenc}
+\usepackage[boldsans]{ccfonts}
+
 \usepackage{amsmath}
 \usepackage{colortbl}
-\usepackage{multirow}
+\usepackage{tensor}
 \usepackage[usenames,dvipsnames]{xcolor}
-\usepackage[xdvi,color,curve,frame,line,poly]{xy}%
+% Xy-Pic v3.8 is needed for PDF support
+\usepackage[pdf,color,curve,frame,line,poly]{xy}%
   \UseCrayolaColors
+
+\newcommand{\corner}[3]{\ensuremath{\tensor[^{#2}]{#1}{^{#3}}}}
+\newcommand{\cornerjoin}{\to}
+% alternate:
+%\newcommand{\corner}[3]{\ensuremath{\stackrel{#2}{-}#1\stackrel{#3}{-}}}
+%\newcommand{\cornerjoin}{\kern-0.25ex\to\kern-0.25ex}
 
 \begin{document}
 """)
@@ -93,7 +105,7 @@ class LaTeXFile(file):
 
 \vspace{-1em}
 \begin{tabular}{lr}
-  \begin{minipage}{0.6\textwidth}
+  \begin{minipage}{0.5\textwidth}
   {% left column: Xy-Pic diagram
 """)
         self.write(LaTeXFile.render_to_xypic(graph))
@@ -101,7 +113,7 @@ class LaTeXFile(file):
   }%
   \end{minipage}
   &% right column: Python code
-  \begin{minipage}{0.3\textwidth}
+  \begin{minipage}{0.4\textwidth}
 """)
         self.write_repr(graph)
         self.write(r"""
@@ -111,80 +123,121 @@ class LaTeXFile(file):
 """)
 
 
-    def write_automorphisms(self, graph, Aut=None):
+    def write_automorphisms(self, automorphisms):
         """
         Output a table of graph automorphisms (if any).
         """
-        if Aut is None:
-            Aut = list(graph.automorphisms())
+        if len(automorphisms) == 0:
+            return
+        graph = automorphisms[0].source
         vfmt = 'c' * graph.num_vertices
         efmt = 'c' * graph.num_edges
+        bfmt = 'c' * graph.num_boundary_cycles
         self.write(r"""
 \begin{center}
-  \newcommand\C{\cellcolor{gray!20}}
-  \begin{tabular}{|c|%s|%s|}
-  \hline
-""" % (vfmt, efmt))
+  \newcommand\Reven{\rowcolor{gray!5}}
+  \newcommand\Rodd{\rowcolor{gray!25}}
+  \begin{tabular}{l|%s|%s|%s}
+""" % (vfmt, efmt, bfmt))
+        # header
+        self.write(r"$A_0$")
+        self.write(" & ")
+        self.write(str.join("&", [(r"{\slshape %s}" % LaTeXFile._vertex_label(v))
+                                  for v in xrange(graph.num_vertices)]))
+        self.write(" & ")
+        self.write(str.join("&", [(r"{\slshape %s}" % str(graph.edge_numbering[e]))
+                                  for e in xrange(graph.num_edges)]))
+        self.write(" & ")
+        self.write(str.join("&", [(r"$%s$" % LaTeXFile._BOUNDARY_CYCLES_LABELS[b])
+                                  for b in xrange(graph.num_boundary_cycles)]))
+        self.write(r"\\")
+        self.write("\n")
+        self.write(r"\hline")
+        # one line per autormorphism
         nr = 0
-        for a in Aut:
-            if LaTeXFile._is_identity(a):
+        for a in automorphisms:
+            if a.is_identity():
                 continue # with next `a`
-            # use uppercase latin letter for automorphism
             nr += 1
-            self.write(r"\multirow{2}{1em}{%s}" % (chr(64 + nr)))
+            # mark rows with alternating colors
+            if nr % 2 == 0:
+                self.write(r"\Reven")
+            else:
+                self.write(r"\Rodd")
+            # automorphisms are named A_n
+            self.write(r"$A_{%d}$" % nr)
+            if a.is_orientation_reversing():
+                self.write(r"$\ast$")
+            # write vertices permutation
             self.write(" & ")
-            self.write(str.join("&", [LaTeXFile._vertex_label(v)
+            self.write(str.join("&", [(r"{%s}" % LaTeXFile._vertex_label(a.pv[v]))
                                       for v in xrange(graph.num_vertices)]))
+            # edges permutation
             self.write(" & ")
-            self.write(str.join("&", [str(graph.edge_numbering[e])
+            self.write(str.join("&", [(r"{%s}" % graph.edge_numbering[a.pe[e]])
                                       for e in xrange(graph.num_edges)]))
-            self.write(r"\\")
-            self.write("\n")
-            #self.write(r"\rowcolor{gray!20}")
+            # boundary cycles permutation
             self.write(" & ")
-            self.write(str.join("&", [(r"\C{%s}" % LaTeXFile._vertex_label(a.pv[v]))
-                                      for v in xrange(graph.num_vertices)]))
-            self.write(" & ")
-            self.write(str.join("&", [(r"\C{%s}" % graph.edge_numbering[a.pe[e]])
-                                      for e in xrange(graph.num_edges)]))
+            self.write(str.join("&", [
+                (r"$%s$" % LaTeXFile._BOUNDARY_CYCLES_LABELS[
+                    graph.boundary_cycles.index(
+                        a.transform_boundary_cycle(bcy))])
+                 for bcy in graph.boundary_cycles ]))
             self.write(r"\\")
-            self.write(r"\hline")
             self.write("\n")
         self.write(r"""
   \end{tabular}
 \end{center}
 """)
 
-    @staticmethod
-    def _is_identity(a):
-        for v in xrange(len(a.pv)):
-            if v != a.pv[v]:
-                return False
-        for e in xrange(len(a.pe)):
-            if e != a.pe[e]:
-                return False
-        return True
-
-
+    _BOUNDARY_CYCLES_LABELS = [
+        r'\alpha',
+        r'\beta',
+        r'\gamma',
+        r'\delta',
+        r'\epsilon',
+        r'\zeta',
+        r'\eta',
+        r'\theta',
+        r'\iota',
+        r'\kappa',
+        r'\lambda',
+        r'\mu',
+        r'\nu',
+        r'\xi',
+        #r'$o$' # not visually distinct from 'o' or '0'
+        r'\pi',
+        r'\rho',
+        r'\sigma',
+        r'\tau',
+        r'\upsilon',
+        r'\phi',
+        r'\chi',
+        r'\psi',
+        r'\omega'
+        ]
+    
     def write_boundary_cycles(self, bcys):
         """
         Output a table of the given boundary cycles.
         """
         self.write(r"""
-\begin{tabular}{rl}
+\begin{align*}
 """)
-        for (bcy, nr) in sorted(bcys.iteritems(),
-                                key=LaTeXFile._sort_bcy_marking):
-            self.write(r"""\textsl{%s} & (%s) \\ """ % (
-                LaTeXFile._fmt_bcy_marking(nr),
-                str.join(",", [("(%s,%d,%d)"
-                                % (LaTeXFile._vertex_label(corner[0]),
-                                   corner[1], corner[2]))
-                                for corner in bcy]),
+        for nr, bcy in enumerate(sorted(bcys, key=LaTeXFile._sort_bcy_marking)):
+            self.write(r"""%s &= (%s) \\ """ % (
+                LaTeXFile._BOUNDARY_CYCLES_LABELS[nr],
+                str.join(r'\cornerjoin',
+                         [(r"\corner{%s}{%d}{%d}"
+                           % (
+                               LaTeXFile._vertex_label(corner[0]),
+                               corner[1], # incoming
+                               corner[2]  # outgoing
+                               ))
+                          for corner in bcy]),
                 ))
-            self.write('\n')
         self.write(r"""
-\end{tabular}
+\end{align*}
 """)
 
 
@@ -236,9 +289,23 @@ class LaTeXFile(file):
 """)
         assert isinstance(graph, Fatgraph)
         self.write("""Fatgraph([\n""")
-        for V in graph.vertices:
-            self.write("  %s,\n" % V)
-        self.write("""])\n""")
+        vertex_reprs = [ str(V) for V in graph.vertices ]
+        m = max(len(vtxt) for vtxt in vertex_reprs)
+        self.write(
+            str.join("\n", [
+                str.join("", [
+                    # initial indent
+                    "  ",
+                    # vertex representation
+                    vtxt,
+                    # padding to align `#`'s
+                    (' ' * (m - len(vtxt) + 1)),
+                    # vertex label
+                    "# ",
+                    LaTeXFile._vertex_label(v),
+                    ])
+                for v,vtxt in enumerate(vertex_reprs) ]))
+        self.write("""\n])\n""")
         self.write(r"""
 \end{verbatim}
 """)
@@ -271,13 +338,13 @@ class LaTeXFile(file):
         # mark invisible "control points" for bezier curves connecting vertices
         for k in range(1,K+1):
             result.append(r'"v%d",{\xypolygon%d"v%dl"{~:{(1.20,0):}~={%d}~>{}}},'
-                          % (k, 2*len(graph.vertices[k-1])-2, k,
+                          % (k, max(5, 1+len(graph.vertices[k-1])), k,
                              LaTeXFile._rotation_angle(K,k)))
 
         for l in xrange(graph.num_edges):
             ((v1, i1), (v2, i2)) = graph.edges[l].endpoints
             if v1 != v2:
-                result.append((r'"v%d"*+[o]\hbox{{%s}}*\frm{o};"v%d"*+\txt{{%s}}**\crv{"v%dl%d"&"v%dl%d"}?(.75)*\txt{\colorbox{gray!25}{\small\bfseries %d}},%%?(.3)*\dir{>},'
+                result.append((r'"v%d"*+[o]\txt{{%s}}*\frm{o};"v%d"*+\txt{{%s}}**\crv{"v%dl%d"&"v%dl%d"}?(.75)*\txt{\colorbox{gray!25}{\scriptsize\bfseries %d}},'
                                % (v1+1, LaTeXFile._vertex_label(v1),
                                   v2+1, LaTeXFile._vertex_label(v2),
                                   v1+1, 1+graph.vertices[v1].index(l),
@@ -285,7 +352,7 @@ class LaTeXFile(file):
                                   graph.edge_numbering[l])))
             else:
                 h = graph.vertices[v1].index(l)
-                result.append((r'"v%d"*+[o]\hbox{{%s}}*\frm{o};"v%d"*+\txt{%s}**\crv{"v%dl%d"&"v%dl%d"}?(.75)*\txt{\colorbox{gray!25}{\small\bfseries %d}},%%?(.3)*\dir{>},'
+                result.append((r'"v%d"*+[o]\txt{{%s}}*\frm{o};"v%d"*+\txt{%s}**\crv{"v%dl%d"&"v%dl%d"}?(.75)*\txt{\colorbox{gray!25}{\scriptsize\bfseries %d}},'
                                % (v1+1, LaTeXFile._vertex_label(v1),
                                   v2+1, LaTeXFile._vertex_label(v2),
                                   v1+1, h+1, v2+1, 1+graph.vertices[v1].index(l,h+1),
@@ -320,9 +387,9 @@ class LaTeXFile(file):
     @staticmethod
     def _sort_bcy_marking(nr):
         try:
-            return min(x)
+            return min(nr)
         except TypeError: # `nr` not iterable
-            return x
+            return nr
 
 
 ## main: run tests
