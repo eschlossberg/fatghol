@@ -150,7 +150,7 @@ resource.setrlimit(resource.RLIMIT_CORE, (0,0))
 
 # parse command-line options
 from optparse import OptionParser
-parser = OptionParser(version="5.1",
+parser = OptionParser(version="5.2dev",
     usage="""Usage: %prog [options] action [arg ...]
 
 Actions:
@@ -253,7 +253,10 @@ if not cython.compiled and options.features is not None:
 # hack to allow 'N1,N2,...' or 'N1 N2 ...' syntaxes
 for (i, arg) in enumerate(args):
     if arg.find(","):
-        args[i:i+1] = arg.split(",")
+        if arg.startswith('M'):
+            args[i:i+1] = arg[1:].split(",")
+        else:
+            args[i:i+1] = arg.split(",")
 
 # open output file
 if options.outfile is None:
