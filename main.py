@@ -30,7 +30,7 @@ import tempfile
 
 from const import euler_characteristics, orbifold_euler_characteristics
 from combinatorics import minus_one_exp
-from graph_homology import FatgraphComplex
+from graph_homology import FatgraphComplex, NumberedFatgraphPool
 from loadsave import load
 from rg import (
     Fatgraph,
@@ -549,7 +549,7 @@ There are $%d$ graphs in this section.
 
 """ % len(graphs))
         for j, graph in enumerate(graphs):
-            name = ("\ensuremath{G_{%d,%d}}" % (num_edges, j))
+            name = ("G_{%d,%d}" % (num_edges, j))
             outfile.section("The Fatgraph $%s$%s" % (
                 name,
                 "" if graph.is_oriented() else " {\em (non-orientable)}"
@@ -564,6 +564,10 @@ There are $%d$ graphs in this section.
             if len(Aut) > 1:
                 outfile.section("Automorphisms", level=2)
                 outfile.write_automorphisms(Aut)
+            # print markings
+            if n > 1:
+                outfile.section("Markings", level=2)
+                outfile.write_markings(name, NumberedFatgraphPool(graph))
             # print differential
             # p = len(all_graphs[num_edges-1]) if (num_edges-1 in all_graphs) else 0
             # q = len(all_graphs[num_edges]) if (num_edges in all_graphs) else 0
