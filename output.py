@@ -29,8 +29,10 @@ class LaTeXFile(file):
 \usepackage[boldsans]{ccfonts}
 
 \usepackage{amsmath}
+\usepackage{amsfonts}
 \usepackage{colortbl}
-\usepackage{longtable}
+\usepackage{longtable}%
+  \setcounter{LTchunksize}{100}%
 \usepackage{tensor}
 \usepackage[usenames,dvipsnames]{xcolor}
 % Xy-Pic v3.8 is needed for PDF support
@@ -245,55 +247,16 @@ class LaTeXFile(file):
 """)
 
 
-    def write_markings(self, name, markings, per_row=8):
+    def write_differential_start(self, title="Differentials", level=2, omit_null=True):
         """
-        Output a table showing how the different markings of the same
-        underlying fatgraph do number the boundary components.
+        Open the "Differentials" section.
         """
-        graph = markings.graph
-        n = graph.num_boundary_cycles
-        N = len(markings.numberings)
-        cfmt = '|c' * N
-
-        # make one table per each group of `per_row` markings
-        self.write(r"""
-\begin{center}
-  \newcommand\Reven{\rowcolor{Tan!5}}
-  \newcommand\Rodd{\rowcolor{Tan!25}}
-  \begin{longtable}{l%s}
-""" % cfmt)
-        done = 0
-        for ms in iterators.chunks([per_row] * (N / per_row) + [N % per_row],
-                                   markings.numberings):
-            # if N % per_row == 0, we have an extra cycle; skip it
-            if len(ms) == 0:
-                break
-            # table header lists graph/marking names
-            if done > 0:
-                self.write(r""" \hline""")
-            for j in xrange(done, done + len(ms)):
-                self.write(r""" & $%s^{(%d)}$""" % (name, j))
-            self.write(r"""\\""")
-            self.write('\n')
-            # each row lists the marking of a certain boundary cycle
-            for b in range(graph.num_boundary_cycles):
-                if b % 2 == 0:
-                    self.write(r"""\Reven""")
-                else:
-                    self.write(r"""\Rodd""")
-                self.write("$%s$" % LaTeXFile._BOUNDARY_CYCLES_LABELS[b])
-                self.write(r""" & """)
-                self.write(str.join(" & ",
-                                    (str(ms[j][b]) for j in range(len(ms)))))
-                self.write(r""" \\""")
-                self.write('\n')
-            done += per_row
-        self.write(r"""
-  \end{longtable}
-\end{center}
-""")
-
-            
+        self._d_omit_null = omit_null
+        self._d_parts = [ (r"""
+\%(sectioncmd)s{%(title)s}
+\begin{longtable}[c]{r@{$\thinspace$}c@{$\thinspace$}l}
+""") % dict(title=title, sectioncmd=LaTeXFile._SECTIONING_COMMANDS[level])]
+        
     def write_differential(self, D, j, name, labelfn=None):
         """
         Output the expansion of the `j`-th column of differential
@@ -310,10 +273,8 @@ class LaTeXFile(file):
         :param str name:
         :param function labelfn:
         """
-        self.write(r"""
-\begin{equation*}
-  D(%s) = """ % name)
         cnt = 0
+        parts = [(r"""$D(%s)$ &$=$& $""" % name)]
         for i in xrange(D.num_rows):
             coeff = D.getEntry(i, j)
             if coeff == 0:
@@ -324,13 +285,76 @@ class LaTeXFile(file):
                 coeff = "-"
             else:
                 coeff = "%+d" % coeff
-            self.write(" %s%s" % (coeff, labelfn(D, i)))
+            parts.append(" %s%s" % (coeff, labelfn(D, i)))
             cnt += 1
         if cnt == 0:
-            self.write("0")
+            parts.append("0")
+        parts.append(r"$ \\")
+        parts.append('\n')
+        if cnt != 0 or (cnt == 0 and not self._d_omit_null):
+            self._d_parts.extend(parts)
+
+    def write_differential_end(self):
+        """
+        Close the "Differentials" section.
+        """
+        self._d_parts.append(r"""\end{longtable}""")
+        if len(self._d_parts) > 2:
+            self.write(str.join(" ", self._d_parts))
+
+
+    def write_markings(self, name, markings, per_row=8):
+        """
+        Output a table showing how the different markings of the same
+        underlying fatgraph do number the boundary components.
+        """
+        graph = markings.graph
+        n = graph.num_boundary_cycles
+        N = len(markings.numberings)
+        cfmt = '|c' * N
+
+        # make one table per each group of `per_row` markings
         self.write(r"""
-\end{equation*}
-        """)
+\begin{center}
+  \newcommand\Reven{\rowcolor{Tan!5}}
+  \newcommand\Rodd{\rowcolor{Tan!25}}
+  \begin{longtable}{l%s}
+    \multicolumn{%d}{c}{} \endfirsthead
+    \multicolumn{%d}{c}{\em (Markings table --- continued.)} \endhead
+""" % (cfmt, N-1, N-1))
+        done = 0
+        for ms in iterators.chunks([per_row] * (N / per_row) + [N % per_row],
+                                   markings.numberings):
+            # if N % per_row == 0, we have an extra cycle; skip it
+            if len(ms) == 0:
+                break
+            # table header lists graph/marking names
+            if done > 0:
+                self.write(r"""\pagebreak[0]""")
+                self.write(r""" \hline""")
+            for j in xrange(done, done + len(ms)):
+                self.write(r""" & $%s^{(%d)}$""" % (name, j))
+            self.write(r"""\\""")
+            self.write('\n')
+            # each row lists the marking of a certain boundary cycle
+            for b in range(graph.num_boundary_cycles):
+                if b == graph.num_boundary_cycles - 1:
+                    self.write(r"""\nopagebreak""")
+                if b % 2 == 0:
+                    self.write(r"""\Reven""")
+                else:
+                    self.write(r"""\Rodd""")
+                self.write("$%s$" % LaTeXFile._BOUNDARY_CYCLES_LABELS[b])
+                self.write(r""" & """)
+                self.write(str.join(" & ",
+                                    (str(ms[j][b]) for j in range(len(ms)))))
+                self.write(r""" \\""")
+                self.write('\n')
+            done += per_row
+        self.write(r"""
+  \end{longtable}
+\end{center}
+""")
 
 
     def write_repr(self, graph):

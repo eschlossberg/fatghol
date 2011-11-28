@@ -506,9 +506,11 @@ elif "latex" == args[0]:
     outfile = output.LaTeXFile(output_prefix + ".tex")
     outfile.section("Fatgraphs labeling cells of $M_{%d,%d}$" % (g,n))
     outfile.write(r"""
-There are $%(num_graphs)d$ fatgraphs in the Kontsevich-Penner complex
-of $M_{%(g)d, %(n)d}$.  In the following listing, we denote $G_{l,k}$
-the $k$-th graph in the set of graphs with $l$ edges.
+Marked fatgraphs in the Kontsevich-Penner complex of $M_{%(g)d,
+%(n)d}$ are decorations of $%(num_graphs)d$ abstract fatgraphs.  In
+the following listing, we denote $G_{m,j}$ the $j$-th graph in the set
+of undecorated fatgraphs with $m$ edges; the symbol $G_{m,j}^{(k)}$
+denotes the $k$-th inequivalent marking of $G_{m,j}$.
 
 \subsection*{Notation}
 
@@ -525,8 +527,18 @@ relative to the identity morphism $A_0$.
 
 If a fatgraph has automorphisms that reverse the orientation of the
 associated cell, then its picture is crossed out;
-orientation-reversing automorphisms are marked with an asterisk in
-the automorphism table.
+orientation-reversing automorphisms are marked with an $\ast$ symbol
+in the automorphism table.
+
+If a fatgraph is orientable, a ``Markings'' section lists all the
+inequivalent ways of assigning distinct numbers $\{0, \ldots, n-1\}$
+to the boundary cycles; this is of course a set of representatives for
+the orbits of $\mathfrak{S}$ under the action of $\mathrm{Aut}(G)$.
+Marked fatgraphs are the graphs that comprise the Kontsevich-Penner complex.
+
+A separate section lists the differential of marked fatgraphs; graphs
+with null differential are omitted.  If no marked fatgraph has a
+non-zero differential, the entire section is dropped.
 
 Boundary cycles are specified using a ``sequence of corners''
 notation: each corner is represented as \corner{L}{p}{q} where $L$ is
@@ -537,49 +549,82 @@ a$=$\verb'Vertex([0,0,1])', the two legs of edge~$0$ have attachment
 indices~0 and~1, and the boundary cycle enclosed by them is
 represented by the (single) corner~\corner{a}{0}{1}.
 
-""" % dict(
-                          g = g,
-                          n = n,
-                          num_graphs = sum(len(gs) for gs in all_graphs.itervalues())))
-    
+""" % dict(g = g, n = n, num_graphs = sum(len(gs) for gs in all_graphs.itervalues()), ))
+
+    pools = None
     for num_edges, graphs in all_graphs.iteritems():
         outfile.section(("Fatgraphs with $%d$ edges" % num_edges))
         outfile.write(r"""
 There are $%d$ graphs in this section.
 
 """ % len(graphs))
-        for j, graph in enumerate(graphs):
+
+        pools_prev = pools
+        pools = [ NumberedFatgraphPool(G) for G in graphs ]
+        # make list of partial sums for mapping matrix indices to graph numbers
+        thresholds = [ 0 ]
+        for p in (pools_prev or []):
+            thresholds.append(len(p) + thresholds[-1])
+        def matrix_index_to_G(i):
+            if i == 0:
+                return (0, 0)
+            i0 = 0
+            while thresholds[i0] < i:
+                i0 += 1
+            i0 -= 1
+            return (i0, i-i0)
+        def labelfn(D, i):
+            i0, i1 = matrix_index_to_G(i)
+            return ("G_{%d,%d}^{(%d)}" % (num_edges-1, i0, i))
+
+        p = len(all_graphs[num_edges-1]) if (num_edges-1 in all_graphs) else 0
+        q = len(all_graphs[num_edges]) if (num_edges in all_graphs) else 0
+        r = num_edges - min_num_edges + 1
+        matrix_file = os.path.join(dir, ("M%d,%d-D%d.sms" % (g,n,r)))
+        if os.path.exists(matrix_file):
+            d = SimpleMatrix(p, q)
+            d.load(matrix_file)
+
+        k0 = 0
+        for j, G in enumerate(graphs):
+            pool = pools[j]
             name = ("G_{%d,%d}" % (num_edges, j))
             outfile.section("The Fatgraph $%s$%s" % (
                 name,
-                "" if graph.is_oriented() else " {\em (non-orientable)}"
+                "" if G.is_oriented() else " {\em (non-orientable)}"
             ), level=1)
             # draw graph
-            outfile.write_graph(graph, name)
+            outfile.write_graph(G, name)
             # print boundary cycles
             outfile.section("Boundary cycles", level=2)
-            outfile.write_boundary_cycles(graph.boundary_cycles)
+            outfile.write_boundary_cycles(G.boundary_cycles)
             # print automorphisms
-            Aut = list(graph.automorphisms())
+            Aut = list(G.automorphisms())
             if len(Aut) > 1:
                 outfile.section("Automorphisms", level=2)
                 outfile.write_automorphisms(Aut)
-            # print markings
-            if n > 1:
-                outfile.section("Markings", level=2)
-                outfile.write_markings(name, NumberedFatgraphPool(graph))
-            # print differential
-            # p = len(all_graphs[num_edges-1]) if (num_edges-1 in all_graphs) else 0
-            # q = len(all_graphs[num_edges]) if (num_edges in all_graphs) else 0
-            # i = num_edges - min_num_edges + 1
-            # matrix_file = os.path.join(dir, ("M%d,%d-D%d.sms" % (g,n,i)))
-            # if os.path.exists(matrix_file):
-            #     D = SimpleMatrix(p, q)
-            #     D.load(matrix_file)
-            #     if D is not None:
-            #         outfile.section("Differential", level=2)
-            #         outfile.write_differential(D, j, name,
-            #                                lambda D,i: ("G_{%d,%d}" % (num_edges-1, i)))
+            if G.is_oriented():
+                # print markings
+                if n > 1:
+                    outfile.section("Markings", level=2)
+                    if len(Aut) == 1:
+                        outfile.write(r"""
+Fatgraph $%(name)s$ only has the identity automorphism, so the
+marked fatgraphs $%(name)s^{(0)}$ to $%(name)s^{(%(num_markings)d)}$
+are formed by decorating boundary cycles of $%(name)s$ with
+all permutations of $(%(basetuple)s)$ in lexicographic order.
+""" % dict(name=name, num_markings=len(pool.numberings),
+           basetuple=(str.join(',', [str(x) for x in xrange(G.num_boundary_cycles)]))))
+                    else:
+                        outfile.write_markings(name, pool)
+                # print differential
+                if d is not None and d.num_rows > 0 and d.num_columns > 0:
+                    outfile.write_differential_start()
+                    for k in xrange(len(pool)):
+                        name_k = ("%s^{(%d)}" % (name, k))
+                        outfile.write_differential(d, k0 + k, name_k, labelfn=labelfn)
+                    outfile.write_differential_end()
+                k0 += len(pool)
 
     outfile.close()
 
