@@ -1624,7 +1624,7 @@ def MgnTrivalentGraphsRecursiveGenerator(g, n):
     else:
         try:
             checkpoint = os.path.join(runtime.options.checkpoint_dir,
-                                      ("MgnTrivalentGraphsRecursiveGenerator%d,%d.txt"
+                                      ("MgnTrivalentGraphsRecursiveGenerator%d,%d.list"
                                        % (g, n)))
         except AttributeError:
             # test run, `runtime.options` not defined
@@ -1783,7 +1783,7 @@ class MgnGraphsIterator(BufferingIterator):
 
         try:
             checkpoint = os.path.join(runtime.options.checkpoint_dir,
-                                      ("M%d,%d-MgnGraphsIterator%d.txt"
+                                      ("M%d,%d-MgnGraphsIterator%d.list"
                                        % (runtime.g, runtime.n, self._num_vertices)))
         except AttributeError:
             # running a test, so no `runtime.options` defined
