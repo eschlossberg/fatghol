@@ -139,8 +139,8 @@ class LaTeXFile(file):
         bfmt = 'c' * graph.num_boundary_cycles
         self.write(r"""
 \begin{center}
-  \newcommand\Reven{\rowcolor{gray!5}}
-  \newcommand\Rodd{\rowcolor{gray!25}}
+  \newcommand\Reven{\rowcolor{MidnightBlue!5}}
+  \newcommand\Rodd{\rowcolor{MidnightBlue!25}}
   \begin{longtable}{l|%s|%s|%s}
 """ % (vfmt, efmt, bfmt))
         # header
@@ -258,8 +258,8 @@ class LaTeXFile(file):
         # make one table per each group of `per_row` markings
         self.write(r"""
 \begin{center}
-  \newcommand\Reven{\rowcolor{gray!5}}
-  \newcommand\Rodd{\rowcolor{gray!25}}
+  \newcommand\Reven{\rowcolor{Tan!5}}
+  \newcommand\Rodd{\rowcolor{Tan!25}}
   \begin{longtable}{l%s}
 """ % cfmt)
         done = 0
@@ -397,7 +397,7 @@ class LaTeXFile(file):
         for l in xrange(graph.num_edges):
             ((v1, i1), (v2, i2)) = graph.edges[l].endpoints
             if v1 != v2:
-                result.append((r'"v%d"*+[o]\txt{{%s}}*\frm{o};"v%d"*+\txt{{%s}}**\crv{"v%dl%d"&"v%dl%d"}?(.75)*\txt{\colorbox{gray!25}{\scriptsize\bfseries %d}},'
+                result.append((r'"v%d"*+[o]\txt{{%s}}*\frm{o};"v%d"*+[o]\txt{{%s}}*\frm{o}**\crv{"v%dl%d"&"v%dl%d"}?(.75)*\txt{\colorbox{CadetBlue!25}{\scriptsize\bfseries %d}},'
                                % (v1+1, LaTeXFile._vertex_label(v1),
                                   v2+1, LaTeXFile._vertex_label(v2),
                                   v1+1, 1+graph.vertices[v1].index(l),
@@ -405,7 +405,7 @@ class LaTeXFile(file):
                                   graph.edge_numbering[l])))
             else:
                 h = graph.vertices[v1].index(l)
-                result.append((r'"v%d"*+[o]\txt{{%s}}*\frm{o};"v%d"*+\txt{%s}**\crv{"v%dl%d"&"v%dl%d"}?(.75)*\txt{\colorbox{gray!25}{\scriptsize\bfseries %d}},'
+                result.append((r'"v%d"*+[o]\txt{{%s}}*\frm{o};"v%d"*+[o]\txt{{%s}}*\frm{o}**\crv{"v%dl%d"&"v%dl%d"}?(.75)*\txt{\colorbox{CadetBlue!25}{\scriptsize\bfseries %d}},'
                                % (v1+1, LaTeXFile._vertex_label(v1),
                                   v2+1, LaTeXFile._vertex_label(v2),
                                   v1+1, h+1, v2+1, 1+graph.vertices[v1].index(l,h+1),
