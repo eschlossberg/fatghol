@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 """Command-line front-end for `rg.py`.
 """
+__version__ = '5.2'
 __docformat__ = 'reStructuredText'
 
 
@@ -150,7 +151,7 @@ resource.setrlimit(resource.RLIMIT_CORE, (0,0))
 
 # parse command-line options
 from optparse import OptionParser
-parser = OptionParser(version="5.2dev",
+parser = OptionParser(version=__version__,
     usage="""Usage: %prog [options] action [arg ...]
 
 Actions:
@@ -518,12 +519,13 @@ elif "latex" == args[0]:
     outfile.section("Fatgraphs labeling cells of $M_{%d,%d}$" % (g,n))
     outfile.write(r"""
 Marked fatgraphs in the Kontsevich-Penner complex of $M_{%(g)d,
-%(n)d}$ are decorations of $%(num_graphs)d$ abstract fatgraphs.  In
-the following listing, we denote $G_{m,j}$ the $j$-th graph in the set
-of undecorated fatgraphs with $m$ edges; the symbol $G_{m,j}^{(k)}$
-denotes the $k$-th inequivalent marking of $G_{m,j}$.
+%(n)d}$ are decorations of $%(num_graphs)d$ abstract fatgraphs.  
 
 \subsection*{Notation}
+
+We denote $G_{m,j}$ the $j$-th graph in the set of undecorated
+fatgraphs with $m$ edges; the symbol $G_{m,j}^{(k)}$ denotes the
+$k$-th inequivalent marking of $G_{m,j}$.
 
 Fatgraph vertices are marked with lowercase latin letters
 ``a'', ``b'', ``c'', etc.; edges are marked with an arabic
@@ -544,8 +546,7 @@ in the automorphism table.
 If a fatgraph is orientable, a ``Markings'' section lists all the
 inequivalent ways of assigning distinct numbers $\{0, \ldots, n-1\}$
 to the boundary cycles; this is of course a set of representatives for
-the orbits of $\mathfrak{S}$ under the action of $\mathrm{Aut}(G)$.
-Marked fatgraphs are the graphs that comprise the Kontsevich-Penner complex.
+the orbits of $\mathfrak{S}_n$ under the action of $\mathrm{Aut}(G)$.
 
 A separate section lists the differential of marked fatgraphs; graphs
 with null differential are omitted.  If no marked fatgraph has a

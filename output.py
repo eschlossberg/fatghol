@@ -34,6 +34,7 @@ class LaTeXFile(file):
 \usepackage{hyperref}
 \usepackage{longtable}%
   \setcounter{LTchunksize}{100}%
+\usepackage{multicol}
 \usepackage{tensor}
 \usepackage[usenames,dvipsnames]{xcolor}
 % Xy-Pic v3.8 is needed for PDF support
@@ -87,8 +88,8 @@ class LaTeXFile(file):
             self.write("\n")
         self.write(r"""
 
-  \%(sectioncmd)s{%(title)s}%%
-  %(intro)s%%
+\%(sectioncmd)s{%(title)s}%%
+%(intro)s%%
 
 """ % {
                        'sectioncmd': LaTeXFile._SECTIONING_COMMANDS[level],
@@ -253,10 +254,11 @@ class LaTeXFile(file):
         Open the "Differentials" section.
         """
         self._d_omit_null = omit_null
-        self._d_parts = [ (r"""
+        self._d_head = (r"""
 \%(sectioncmd)s{%(title)s}
-\begin{longtable}[c]{r@{$\thinspace$}c@{$\thinspace$}l}
-""") % dict(title=title, sectioncmd=LaTeXFile._SECTIONING_COMMANDS[level])]
+""") % dict(title=title, sectioncmd=LaTeXFile._SECTIONING_COMMANDS[level])
+        self._d_parts = [ ]
+        self._d_maxterms = 0
         
     def write_differential(self, D, j, name, labelfn=None):
         """
@@ -274,8 +276,8 @@ class LaTeXFile(file):
         :param str name:
         :param function labelfn:
         """
+        parts = [ r"$", (r"D(%s) = " % name) ]
         cnt = 0
-        parts = [(r"""$D(%s)$ &$=$& $""" % name)]
         for i in xrange(D.num_rows):
             coeff = D.getEntry(i, j)
             if coeff == 0:
@@ -290,18 +292,35 @@ class LaTeXFile(file):
             cnt += 1
         if cnt == 0:
             parts.append("0")
-        parts.append(r"$ \\")
-        parts.append('\n')
+        parts.append(r"$")
         if cnt != 0 or (cnt == 0 and not self._d_omit_null):
-            self._d_parts.extend(parts)
+            self._d_parts.append(str.join("", parts))
+            self._d_maxterms = max(cnt, self._d_maxterms)
 
     def write_differential_end(self):
         """
         Close the "Differentials" section.
         """
-        self._d_parts.append(r"""\end{longtable}""")
-        if len(self._d_parts) > 2:
-            self.write(str.join(" ", self._d_parts))
+        if len(self._d_parts) > 0:
+            self.write(self._d_head)
+            if self._d_maxterms < 4:
+                # use two-column layout
+                self.write(r"""
+\begin{multicols}{2}
+""")
+                self.write(str.join("\n\n", self._d_parts))
+                self.write(r"""
+\end{multicols}
+""")
+            else:
+                # use 1-column layout
+                self.write(r"""
+\begin{longtable}[c]{l}
+""")
+                self.write(str.join(r"\\", self._d_parts))
+                self.write(r"""
+\end{longtable}
+""")
 
 
     def write_markings(self, name, markings, per_row=8):
@@ -312,17 +331,19 @@ class LaTeXFile(file):
         graph = markings.graph
         n = graph.num_boundary_cycles
         N = len(markings.numberings)
-        cfmt = '|c' * N
+        W = 1 + (per_row if N>per_row else N)
+        cfmt = '|c' * (W-1)
 
         # make one table per each group of `per_row` markings
         self.write(r"""
 \begin{center}
-  \newcommand\Reven{\rowcolor{Tan!5}}
-  \newcommand\Rodd{\rowcolor{Tan!25}}
+  \newcommand\Rhead{\rowcolor{Tan!25}}
+  \newcommand\Reven{\rowcolor{Tan!10}}
+  \newcommand\Rodd{\rowcolor{white}}
   \begin{longtable}{l%(cfmt)s}
     \multicolumn{%(width)d}{l}{} \endfirsthead
-    \multicolumn{%(width)d}{l}{\em (Markings --- continued.)} \endhead
-""" % dict(cfmt=cfmt, width=(per_row if N>per_row else N)))
+    \multicolumn{%(width)d}{l}{\em (continued.)} \endhead
+""" % dict(cfmt=cfmt, width=W))
         done = 0
         for ms in iterators.chunks([per_row] * (N / per_row) + [N % per_row],
                                    markings.numberings):
@@ -332,7 +353,7 @@ class LaTeXFile(file):
             # table header lists graph/marking names
             if done > 0:
                 self.write(r"""\pagebreak[0]""")
-                self.write(r""" \hline""")
+            self.write(r""" \Rhead""")
             for j in xrange(done, done + len(ms)):
                 self.write(r""" & $%s^{(%d)}$""" % (name, j))
             self.write(r"""\\""")
