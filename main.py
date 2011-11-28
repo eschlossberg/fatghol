@@ -150,7 +150,7 @@ resource.setrlimit(resource.RLIMIT_CORE, (0,0))
 
 # parse command-line options
 from optparse import OptionParser
-parser = OptionParser(version="5.1dev",
+parser = OptionParser(version="5.1",
     usage="""Usage: %prog [options] action [arg ...]
 
 Actions:
