@@ -707,8 +707,8 @@ def FatgraphComplex(g, n):
     C.orbifold_euler_characteristics = chi
         
     for i in xrange(top_dimension):
-        logging.debug("  Initialized grade %d chain module (with dimension %d)",
-                      i, len(C[i]))
+        logging.debug("  Initialized grade %d chain module (dimension %d)",
+                      i, len(C.module[i]))
         
     return C
 
