@@ -415,7 +415,9 @@ class LaTeXFile(file):
         # mark invisible "control points" for bezier curves connecting vertices
         for k in range(1,K+1):
             result.append(r'"v%d",{\xypolygon%d"v%dl"{~:{(1.20,0):}~={%d}~>{}}},'
-                          % (k, max(5, 1+len(graph.vertices[k-1])), k,
+                          % (k,
+                             LaTeXFile._ensure_large_odd(len(graph.vertices[k-1])),
+                             k,
                              LaTeXFile._rotation_angle(K,k)))
 
         for l in xrange(graph.num_edges):
@@ -467,6 +469,13 @@ class LaTeXFile(file):
             return min(nr)
         except TypeError: # `nr` not iterable
             return nr
+
+    @staticmethod
+    def _ensure_large_odd(nr):
+        if nr % 2 == 0:
+            return 1+nr
+        else:
+            return 2+nr
 
 
 ## main: run tests
