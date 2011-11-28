@@ -31,6 +31,7 @@ class LaTeXFile(file):
 \usepackage{amsmath}
 \usepackage{amsfonts}
 \usepackage{colortbl}
+\usepackage{hyperref}
 \usepackage{longtable}%
   \setcounter{LTchunksize}{100}%
 \usepackage{tensor}
@@ -318,10 +319,10 @@ class LaTeXFile(file):
 \begin{center}
   \newcommand\Reven{\rowcolor{Tan!5}}
   \newcommand\Rodd{\rowcolor{Tan!25}}
-  \begin{longtable}{l%s}
-    \multicolumn{%d}{c}{} \endfirsthead
-    \multicolumn{%d}{c}{\em (Markings table --- continued.)} \endhead
-""" % (cfmt, N-1, N-1))
+  \begin{longtable}{l%(cfmt)s}
+    \multicolumn{%(width)d}{l}{} \endfirsthead
+    \multicolumn{%(width)d}{l}{\em (Markings --- continued.)} \endhead
+""" % dict(cfmt=cfmt, width=(per_row if N>per_row else N)))
         done = 0
         for ms in iterators.chunks([per_row] * (N / per_row) + [N % per_row],
                                    markings.numberings):
@@ -335,6 +336,7 @@ class LaTeXFile(file):
             for j in xrange(done, done + len(ms)):
                 self.write(r""" & $%s^{(%d)}$""" % (name, j))
             self.write(r"""\\""")
+            self.write(r"""\nopagebreak""")
             self.write('\n')
             # each row lists the marking of a certain boundary cycle
             for b in range(graph.num_boundary_cycles):

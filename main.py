@@ -504,9 +504,17 @@ elif "latex" == args[0]:
                 all_graphs[num_edges] = gs
 
     import output
-    output_prefix = os.path.join(dir, ("M%d,%d-fatgraphs" % (g,n)))
+    outfile = output.LaTeXFile(os.path.join(dir, ("M%d,%d.tex" % (g,n))))
+    outfile.write(r"""
+\title{Fatgraphs of $M_{%d,%d}$}
+\author{Riccardo Murri}
+\date{\today}
+\maketitle
 
-    outfile = output.LaTeXFile(output_prefix + ".tex")
+%%\tableofcontents
+
+""" % (g,n))
+
     outfile.section("Fatgraphs labeling cells of $M_{%d,%d}$" % (g,n))
     outfile.write(r"""
 Marked fatgraphs in the Kontsevich-Penner complex of $M_{%(g)d,
