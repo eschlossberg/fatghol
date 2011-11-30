@@ -183,13 +183,13 @@ parser.add_argument('args', metavar='ARG', nargs='*',
                     help="Arguments depend on the actual action, see above.")
 # option arguments
 if not cython.compiled:
-    parser.add_argument("-f", "--feature",
-                        dest="features", default=None,
-                        help="""Enable optional features (mainly tracing/debug):
+    parser.add_argument("-D", "--debug", nargs='?',
+                        dest="debug", default=None, const='debug',
+                        help="""Enable debug features:
 * pydb -- run Python debugger if an error occurs
 * profile -- dump profiler statistics in a .pf file.
 Several features may be enabled by separating them
-with a comma, as in '-f pydb,profile'.""")
+with a comma, as in '-D pydb,profile'.""")
 parser.add_argument("-l", "--logfile",
                     action='store', dest='logfile', default=None,
                     help="""Redirect log messages to the named file
@@ -233,7 +233,7 @@ logging.basicConfig(level=log_level,
                     datefmt="%H:%M:%S")
     
 # ensure the proper optimization level is selected
-if __debug__:
+if __debug__ and cmdline.debug is None:
     try:
         import os
         os.execl(sys.executable, *([sys.executable, '-O'] + sys.argv))
@@ -242,16 +242,16 @@ if __debug__:
                         % str.join(" ", [sys.executable, '-O'] + sys.argv))
 
 # enable optional features
-if not cython.compiled and cmdline.features is not None:
-    features = cmdline.features.split(",")
-    if 'pydb' in features:
+if not cython.compiled and cmdline.debug is not None:
+    debug = cmdline.debug.split(",")
+    if 'pydb' in debug:
         try:
             import pydb
             sys.excepthook = pydb.exception_hook
             logging.debug("PyDB enabled: exceptions will start a debugging session.")
         except ImportError:
             logging.warning("Could not import 'pydb' module - PyDB not enabled.")
-    if 'profile' in features:
+    if 'profile' in debug:
         try:
             import hotshot
             pf = hotshot.Profile(__name__ + '.pf')
