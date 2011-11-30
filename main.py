@@ -150,10 +150,9 @@ def compute_valences(g,n):
 resource.setrlimit(resource.RLIMIT_CORE, (0,0))
 
 # parse command-line options
-from optparse import OptionParser
-parser = OptionParser(version=__version__,
-    usage="""Usage: %prog [options] action [arg ...]
-
+import argparse
+parser = argparse.ArgumentParser(
+    description="""
 Actions:
 
   graphs G N
@@ -175,44 +174,55 @@ Actions:
   
   selftest
     Run internal code tests and report failures.
-    """)
+    """,
+    formatter_class=argparse.RawTextHelpFormatter)
+# positional arguments
+parser.add_argument('action', metavar='ACTION', default='help',
+                    help="Action to perform, see above.")
+parser.add_argument('args', metavar='ARG', nargs='*',
+                    help="Arguments depend on the actual action, see above.")
+# option arguments
 if not cython.compiled:
-    parser.add_option("-f", "--feature", dest="features", default=None,
-                      help="""Enable optional features (mainly tracing/debug):
-                      * pydb -- run Python debugger if an error occurs
-                      * profile -- dump profiler statistics in a .pf file.
-                      Several features may be enabled by separating them with a comma, as in '-f pydb,profile'.""")
-parser.add_option("-l", "--logfile",
-                  action='store', dest='logfile', default=None,
-                  help="Redirect log messages to the named file (by default log messages are output to STDERR).")
-parser.add_option("-o", "--output", dest="outfile", default=None,
-                  help="Save results into named file.")
-parser.add_option("-u", "--afresh", dest="restart", action="store_false", default=True,
-                  help="Do NOT restart computation from the saved state in checkpoint directory.")
-parser.add_option("-s", "--checkpoint", dest="checkpoint_dir", default=None,
-                  help="Directory for saving computation state.")
-parser.add_option("-v", "--verbose",
-                  action="count", dest="verbose", default=0,
-                  help="Print informational and status messages as the computation goes on.")
-(options, args) = parser.parse_args()
+    parser.add_argument("-f", "--feature",
+                        dest="features", default=None,
+                        help="""Enable optional features (mainly tracing/debug):
+* pydb -- run Python debugger if an error occurs
+* profile -- dump profiler statistics in a .pf file.
+Several features may be enabled by separating them
+with a comma, as in '-f pydb,profile'.""")
+parser.add_argument("-l", "--logfile",
+                    action='store', dest='logfile', default=None,
+                    help="""Redirect log messages to the named file
+(by default log messages are output to STDERR).""")
+parser.add_argument("-o", "--output", dest="outfile", default=None,
+                    help="Save results into named file.")
+parser.add_argument("-s", "--checkpoint", dest="checkpoint_dir", default=None,
+                    help="Directory for saving computation state.")
+parser.add_argument("-u", "--afresh", dest="restart", action="store_false", default=True,
+                    help="Do NOT restart computation from the saved state in checkpoint directory.")
+parser.add_argument("-v", "--verbose",
+                    action="count", dest="verbose", default=0,
+                    help="Print informational and status messages as the computation goes on.")
+parser.add_argument('-V', '--version', action='version', version=__version__)
+cmdline = parser.parse_args()
 
 # make options available to loaded modules
-runtime.options = options
+runtime.options = cmdline
 
 # print usage message if no args given
-if 0 == len(args) or 'help' == args[0]:
+if 'help' == cmdline.action:
     parser.print_help()
-    sys.exit(1)
+    sys.exit(0)
 
 # configure logging
-if options.logfile is None:
+if cmdline.logfile is None:
     log_output = sys.stderr
 else:
-    log_output = file(options.logfile, 'a')
+    log_output = file(cmdline.logfile, 'a')
 
-if options.verbose == 0:
+if cmdline.verbose == 0:
     log_level = logging.ERROR
-elif options.verbose == 1:
+elif cmdline.verbose == 1:
     log_level = logging.INFO
 else:
     log_level = logging.DEBUG
@@ -232,8 +242,8 @@ if __debug__:
                         % str.join(" ", [sys.executable, '-O'] + sys.argv))
 
 # enable optional features
-if not cython.compiled and options.features is not None:
-    features = options.features.split(",")
+if not cython.compiled and cmdline.features is not None:
+    features = cmdline.features.split(",")
     if 'pydb' in features:
         try:
             import pydb
@@ -252,21 +262,22 @@ if not cython.compiled and options.features is not None:
 
 
 # hack to allow 'N1,N2,...' or 'N1 N2 ...' syntaxes
-for (i, arg) in enumerate(args):
+for (i, arg) in enumerate(cmdline.args):
     if arg.find(","):
         if arg.startswith('M'):
-            args[i:i+1] = arg[1:].split(",")
+            cmdline.args[i:i+1] = arg[1:].split(",")
         else:
-            args[i:i+1] = arg.split(",")
+            cmdline.args[i:i+1] = arg.split(",")
 
 # open output file
-if options.outfile is None:
+if cmdline.outfile is None:
     outfile = sys.stdout
 else:
-    outfile = open(options.outfile, 'w')
+    outfile = open(cmdline.outfile, 'w')
+
 
 # shell -- start interactive debugging shell
-if 'shell' == args[0]:
+if 'shell' == cmdline.action:
     if cython.compiled:
         logging.error("The 'shell' command is not available when compiled.")
         sys.exit(1)
@@ -291,7 +302,7 @@ if 'shell' == args[0]:
             ])
         
 # selftest -- run doctests and acceptance tests on simple cases
-elif 'selftest' == args[0]:
+elif 'selftest' == cmdline.action:
     failures = 0
     
     import doctest
@@ -399,24 +410,24 @@ elif 'selftest' == args[0]:
         
         
 # common code for invocations of `graphs`, `homology` and `valences`
-if len(args) < 3:
+if len(cmdline.args) < 2:
     parser.print_help()
     sys.exit(1)
 try:
-    g = int(args[1])
+    g = int(cmdline.args[0])
     if g < 0:
         raise ValueError
 except ValueError:
     sys.stderr.write("Invalid value '%s' for argument G: " \
                      "should be positive integer.\n" \
-                     % (args[1],))
+                     % (cmdline.args[0],))
     sys.exit(1)
 try:
-    n = positive_int(args[2])
+    n = positive_int(cmdline.args[1])
 except ValueError, msg:
     sys.stderr.write("Invalid value '%s' for argument N: " \
                      "should be non-negative integer.\n" \
-                     % (args[2],))
+                     % (cmdline.args[1],))
     sys.exit(1)
 
 # make g,n available to loaded modules
@@ -439,7 +450,7 @@ if not runtime.options.restart:
 
 
 # valences -- show vertex valences for given g,n
-elif 'valences' == args[0]:
+elif 'valences' == cmdline.action:
     logging.debug("Computing vertex valences occurring in g=%d,n=%d fatgraphs ...", g, n)
     vvs = compute_valences(g,n)
     for vv in vvs:
@@ -447,7 +458,7 @@ elif 'valences' == args[0]:
 
 
 # graphs -- create graphs from given g,n but do not compute homology
-elif "graphs" == args[0]:
+elif "graphs" == cmdline.action:
     logging.info("Will save graph list files into directory '%s'.",
                  runtime.options.checkpoint_dir)
     graphs, D = compute_graphs(g,n)
@@ -456,7 +467,7 @@ elif "graphs" == args[0]:
     
 
 # homology -- compute homology ranks
-elif 'homology' == args[0]:
+elif 'homology' == cmdline.action:
     # compute graph complex and its homology ranks
     hs = compute_homology(g, n)
     logging.info("Homology computation took %.3fs.",
@@ -465,16 +476,16 @@ elif 'homology' == args[0]:
     # print results
     for (i, h) in enumerate(hs):
         outfile.write("h_%d(M_{%d,%d}) = %d\n" % (i, g, n, h))
-    if options.outfile is not None:
-        logging.info("Results written to file '%s'" % options.outfile)
+    if cmdline.outfile is not None:
+        logging.info("Results written to file '%s'" % cmdline.outfile)
 
 
 # latex -- pretty-print graph lists
-elif "latex" == args[0]:
+elif "latex" == cmdline.action:
     if runtime.options.checkpoint_dir is not None:
         dir = runtime.options.checkpoint_dir
-    elif len(args) > 3:
-        dir = args[3]
+    elif len(cmdline.args) > 2:
+        dir = cmdline.args[2]
     else:
         msg = ("Missing path to directory where graph list files are stored."
                " Pass it either as third argument or using the `-s` option.")
@@ -642,7 +653,7 @@ all permutations of $(%(basetuple)s)$ in lexicographic order.
 
 
 else:
-    sys.stderr.write("Unknown action `%s`, aborting.\n" % args[0])
+    sys.stderr.write("Unknown action `%s`, aborting.\n" % cmdline.action)
     sys.exit(1)
 
 
