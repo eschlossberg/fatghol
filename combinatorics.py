@@ -584,6 +584,25 @@ class Permutation(dict):
                 self[src] = dst
         return True
 
+    
+    def find(self, value):
+        """
+        Return the key that maps to `value`, or `None` if `value` is
+        not in this `Permutation` domain.
+
+        Examples::
+
+          >>> m = Permutation({0:2, 1:0, 2:1})
+          >>> m.find(0)
+          1
+          >>> m.find(3) is None
+          True
+        """
+        for k,v in self.iteritems():
+            if v == value:
+                return k
+        return None
+
 
     def update(self, mappings):
         """Return `True` if the mapping can be extended by mapping each

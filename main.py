@@ -285,6 +285,7 @@ if 'shell' == cmdline.action:
         try:
             import pydb
         except ImportError:
+            sys.stderr.write("ERROR: Could not import 'pydb' module - Aborting.\n")
             logging.warning("Could not import 'pydb' module - Aborting.")
             sys.exit(1)
 
@@ -294,7 +295,7 @@ if 'shell' == cmdline.action:
         All symbols from modules `rg`, `homology`, `graph_homology`
         have already been imported into the main namespace.
 
-        """ % pydb.version)
+        """ % pydb.__version__)
         pydb.debugger([
             "from homology import *",
             "from graph_homology import *",

@@ -367,6 +367,28 @@ class NumberedFatgraph(Fatgraph):
 
         See `Fatgraph.isomrphisms` for a discussion of the
         representation of isomorphisms and example usage.
+
+        A concrete example taken from `M_{1,4}`:latex: ::
+
+          >>> g1 = NumberedFatgraph(
+          ...         Fatgraph([Vertex([1, 0, 2]), Vertex([2, 1, 5]), Vertex([0, 4, 3]), Vertex([8, 5, 6]), Vertex([3, 6, 7, 7]), Vertex([8, 4, 9, 9])]),
+          ...         numbering={
+          ...             BoundaryCycle([(0, 0, 1), (0, 1, 2), (0, 2, 0), (1, 0, 1), (1, 1, 2), (1, 2, 0), (2, 0, 1), (2, 2, 0), (3, 0, 1), (3, 1, 2), (4, 1, 2), (4, 3, 0), (5, 1, 2), (5, 3, 0)]):0,
+          ...             BoundaryCycle([(2, 1, 2), (3, 2, 0), (4, 0, 1), (5, 0, 1)]):1,
+          ...             BoundaryCycle([(4, 2, 3)]):2,
+          ...             BoundaryCycle([(5, 2, 3)]):3,
+          ...       })
+          >>> g2 = NumberedFatgraph(
+          ...         Fatgraph([Vertex([1, 0, 5, 6]), Vertex([1, 0, 2]), Vertex([5, 2, 3]), Vertex([8, 4, 3]), Vertex([7, 7, 6]), Vertex([4, 8, 9, 9])]),
+          ...         numbering={
+          ...             BoundaryCycle([(0, 0, 1), (0, 1, 2), (0, 2, 3), (0, 3, 0), (1, 0, 1), (1, 1, 2), (1, 2, 0), (2, 0, 1), (2, 1, 2), (2, 2, 0), (3, 1, 2), (3, 2, 0), (4, 1, 2), (4, 2, 0), (5, 1, 2), (5, 3, 0)]):0,
+          ...             BoundaryCycle([(3, 0, 1), (5, 0, 1)]):1,
+          ...             BoundaryCycle([(4, 0, 1)]):2,
+          ...             BoundaryCycle([(5, 2, 3)]):3,
+          ...      })
+          >>> len(list(NumberedFatgraph.isomorphisms(g1, g2)))
+          0
+
         """
         for iso in Fatgraph.isomorphisms(G1.underlying, G2.underlying):
             pe_does_not_preserve_bc = False
@@ -579,6 +601,12 @@ class NumberedFatgraphPool(object):
         g1 = g0.contract(edge)
         g2 = other.graph
         assert len(g1.boundary_cycles) == len(g2.boundary_cycles)
+
+        # compute isomorphism map `f1` from `g1` to `g2`: if there is
+        # no such isomorphisms, then stop iteration (do this first so
+        # then we do not waste time on computing if we need to abort
+        # anyway)
+        f1 = Fatgraph.isomorphisms(g1,g2).next()
         
         ## 1. compute map `phi0` induced on `g0.boundary_cycles` from the
         ##    graph map `f0` which contracts `edge`.
@@ -593,11 +621,11 @@ class NumberedFatgraphPool(object):
                                   [ g0.contract_boundary_cycle(bcy, e1, e2)
                                     for bcy in g0.boundary_cycles ])
         phi0_inv = Permutation((i1,i0) for (i0,i1) in enumerate(
-            g1.boundary_cycles.index(g0.contract_boundary_cycle(bcy, e1, e2))
-            for bcy in g0.boundary_cycles
+            g1.boundary_cycles.index(g0.contract_boundary_cycle(bc0, e1, e2))
+            for bc0 in g0.boundary_cycles
             ))
-        ## 2. compute isomorphism map `f1` from `g2` to `g0.contract(edge)`;
-        ##    if there is no such isomorphisms, then stop iteration.
+        ## 2. compute map `phi1` induced by isomorphism map `f1` on
+        ##    the boundary cycles of `g1` and `g2`.
         ##
         f1 = Fatgraph.isomorphisms(g1,g2).next()
         phi1_inv = Permutation((i1,i0) for (i0,i1) in enumerate(

@@ -185,7 +185,10 @@ class Isomorphism(object):
         assert len(pe) == source.num_edges
         assert len(pe) == target.num_edges
         assert set(pv.keys()) == set(range(source.num_vertices))
-        assert set(pv.values()) == set(range(target.num_vertices))
+        assert set(pv.values()) == set(range(target.num_vertices)), \
+               ("Got pv.values=%r but target.num_vertices=%r"
+                " (and target=%r): number of elements do not match!"
+                % (pv.values(), target.num_vertices, target))
         assert set(pe.keys()) == set(range(source.num_edges))
         assert set(pe.values()) == set(range(target.num_edges))
 
@@ -1367,6 +1370,12 @@ class Fatgraph(EqualIfIsomorphic):
           >>> list(G1.isomorphisms(g3))
           []
 
+        A concrete example taken from `M_{1,4}`:latex: ::
+
+          >>> g1 = Fatgraph([Vertex([1, 0, 2]), Vertex([2, 1, 5]), Vertex([0, 4, 3]), Vertex([8, 5, 6]), Vertex([3, 6, 7, 7]), Vertex([8, 4, 9, 9])])
+          >>> g2 = Fatgraph([Vertex([1, 0, 5, 6]), Vertex([1, 0, 2]), Vertex([5, 2, 3]), Vertex([8, 4, 3]), Vertex([7, 7, 6]), Vertex([4, 8, 9, 9])])
+          >>> len(list(Fatgraph.isomorphisms(g1, g2)))
+          0
         """
         # if graphs differ in vertex valences, no isomorphisms
         vs1 = G1._valence_spectrum()
@@ -1539,6 +1548,14 @@ class Fatgraph(EqualIfIsomorphic):
                 # this pair has already been added
                 return (pv, rots, pe)
 
+        i = pv.find(i2)
+        if i is not None: # i.e., i in pv.values()
+            if i != i1 or (rots[i] - r) % len(v2) != 0:
+                raise Fatgraph._CannotExtendMap
+            else:
+                # this pair has already been added
+                return (pv, rots, pe)
+
         # rotating `v1` leftwards is equivalent to rotating `v2` rightwards...
         v2 = v2[r:r+len(v2)]
         if not pe.extend(v1, v2):
@@ -1570,13 +1587,14 @@ class Fatgraph(EqualIfIsomorphic):
             if G1.edges[x].is_loop():
                 continue # with next edge `x`
             ((s1, a1), (s2, a2)) = G1.edges[x].endpoints
-            src_v = s2 if (s1 == v1) else s1
+            src_v, src_i = (s2,a2) if (s1 == v1) else (s1,a1)
             # ignore vertices that are already in the domain of `m`
-            if src_v in pv:
+            if src_v in pv.keys():
                 continue # to next `x`
-            src_i = a2 if (s1 == v1) else a1
             ((d1, b1), (d2, b2)) = G2.edges[pe[x]].endpoints
             dst_v, dst_i = (d2,b2) if (d1 == v2) else (d1,b1)
+            if dst_v in pv.values():
+                continue # to next `x`
             # array of (source vertex index, dest vertex index, rotation)
             result.append((src_v, dst_v, dst_i-src_i))
         return result
