@@ -384,6 +384,7 @@ class Permutation(dict):
         """
         dict.__init__(self, initial)
         # XXX: this is stuff for DBC's invariants
+        assert set(self.keys()) == set(self.values())
         if __debug__:
             for src,dst in self.iteritems():
                 assert 0 <= src
