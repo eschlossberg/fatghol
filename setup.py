@@ -1,9 +1,14 @@
 #! /usr/bin/env python
 
+# See http://packages.python.org/distribute/setuptools.html for details
+from distribute_setup import use_setuptools
+use_setuptools()
+
+
 import os
 swdir = os.getcwd()+'/sw'
 
-from distutils.core import setup
+from setuptools import setup
 from distutils.extension import Extension
 
 
@@ -31,19 +36,19 @@ try:
         ('PYREX_WITHOUT_ASSERTIONS', 1),
         ('NDEBUG', 1),
         ]
-    ext_modules.extend([
-        Extension("aggregate",      ["aggregate.py"],      define_macros=NO_ASSERTS),
-        Extension("cache",          ["cache.py"],          define_macros=NO_ASSERTS),
-        Extension("combinatorics",  ["combinatorics.py"],  define_macros=NO_ASSERTS),
-        Extension("cycliclist",     ["cycliclist.py"],     define_macros=NO_ASSERTS),
-        Extension("graph_homology", ["graph_homology.py"], define_macros=NO_ASSERTS),
-        Extension("homology",       ["homology.py"],       define_macros=NO_ASSERTS),
-        Extension("iterators",      ["iterators.py"],      define_macros=NO_ASSERTS),
-        Extension("loadsave",       ["loadsave.py"],       define_macros=NO_ASSERTS),
-        Extension("rg",             ["rg.py"],             define_macros=NO_ASSERTS),
-        Extension("utils",          ["utils.py"],          define_macros=NO_ASSERTS),
-        Extension("valences",       ["valences.py"],       define_macros=NO_ASSERTS),
-        ])
+    # ext_modules.extend([
+    #     Extension("aggregate",      ["aggregate.py"],      define_macros=NO_ASSERTS),
+    #     Extension("cache",          ["cache.py"],          define_macros=NO_ASSERTS),
+    #     Extension("combinatorics",  ["combinatorics.py"],  define_macros=NO_ASSERTS),
+    #     Extension("cycliclist",     ["cycliclist.py"],     define_macros=NO_ASSERTS),
+    #     Extension("graph_homology", ["graph_homology.py"], define_macros=NO_ASSERTS),
+    #     Extension("homology",       ["homology.py"],       define_macros=NO_ASSERTS),
+    #     Extension("iterators",      ["iterators.py"],      define_macros=NO_ASSERTS),
+    #     Extension("loadsave",       ["loadsave.py"],       define_macros=NO_ASSERTS),
+    #     Extension("rg",             ["rg.py"],             define_macros=NO_ASSERTS),
+    #     Extension("utils",          ["utils.py"],          define_macros=NO_ASSERTS),
+    #     Extension("valences",       ["valences.py"],       define_macros=NO_ASSERTS),
+    #     ])
 except ImportError:
     pass
 
@@ -55,10 +60,9 @@ def read_whole_file(path):
     return text
 
 
-
 setup (
     name = "fatghol",
-    version = "5.0", # see: http://packages.python.org/distribute/setuptools.html
+    version = "5.3", # see: http://packages.python.org/distribute/setuptools.html
 
     # for building the package
     cmdclass = ext_commands,
@@ -89,12 +93,19 @@ setup (
 
     # run-time dependencies
     install_requires = [
-        # Cython
+        # Cython (not really required)
         'cython',
+        # tempita -- simple templating
+        'tempita',
         ],
 
-    # `zip_safe` can ease deployment, but is only allowed if the package
-    # do *not* do any __file__/__path__ magic nor do they access package data
-    # files by file name (use `pkg_resources` instead).
-    zip_safe = True,
+    # additional non-Python files to be bundled in the package
+    package_data = {
+        'fatghol': [
+            'template.tex',
+            ],
+        },
+
+    # we're using a C extension module, which I guess is not at all zip-safe
+    zip_safe = False,
 )

@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 """Command-line front-end for `rg.py`.
 """
-__version__ = '5.2'
+__version__ = '5.3'
 __docformat__ = 'reStructuredText'
 
 
@@ -161,7 +161,7 @@ Actions:
   homology G N
     Print homology ranks of M_{g,n}.
 
-  latex G N [DIR]
+  latex G N
     Read the listings of M_{g,n} fatgraphs and create
     a pretty-print catalogue of the graphs as LaTeX documents.
     Directory DIR should be a valid checkpoint directory.
@@ -517,72 +517,13 @@ elif "latex" == cmdline.action:
                 all_graphs[num_edges] = gs
 
     import output
-    outfile = output.LaTeXFile(os.path.join(dir, ("M%d,%d.tex" % (g,n))))
-    outfile.write(r"""
-\title{Fatgraphs of $M_{%d,%d}$}
-\author{Riccardo Murri}
-\date{\today}
-\maketitle
-
-%%\tableofcontents
-
-""" % (g,n))
-
-    outfile.section("Fatgraphs labeling cells of $M_{%d,%d}$" % (g,n))
-    outfile.write(r"""
-Marked fatgraphs in the Kontsevich-Penner complex of $M_{%(g)d,
-%(n)d}$ are decorations of $%(num_graphs)d$ abstract fatgraphs.  
-
-\subsection*{Notation}
-
-We denote $G_{m,j}$ the $j$-th graph in the set of undecorated
-fatgraphs with $m$ edges; the symbol $G_{m,j}^{(k)}$ denotes the
-$k$-th inequivalent marking of $G_{m,j}$.
-
-Fatgraph vertices are marked with lowercase latin letters
-``a'', ``b'', ``c'', etc.; edges are marked with an arabic
-numeral starting from ``1''; boundary cycles are denoted
-by lowercase greek letters ``$\alpha$'', ``$\beta$'', etc.
-
-Automorphisms are only listed if the automorphism group is
-non-trivial.  Automorphisms are specified by their action on the set
-of vertices, edges, and boundary cycles: for each automorphism $A_k$,
-a table line lists how it permutes vertices, edges and boundary cycles
-relative to the identity morphism $A_0$.
-
-If a fatgraph has automorphisms that reverse the orientation of the
-associated cell, then its picture is crossed out;
-orientation-reversing automorphisms are marked with an $\ast$ symbol
-in the automorphism table.
-
-If a fatgraph is orientable, a ``Markings'' section lists all the
-inequivalent ways of assigning distinct numbers $\{0, \ldots, n-1\}$
-to the boundary cycles; this is of course a set of representatives for
-the orbits of $\mathfrak{S}_n$ under the action of $\mathrm{Aut}(G)$.
-
-A separate section lists the differential of marked fatgraphs; graphs
-with null differential are omitted.  If no marked fatgraph has a
-non-zero differential, the entire section is dropped.
-
-Boundary cycles are specified using a ``sequence of corners''
-notation: each corner is represented as \corner{L}{p}{q} where $L$ is
-a latin letter indicating a vertex, and $p$,~$q$ are the attachment
-indices of the incoming and outgoing edges, respectively.  Attachment
-indices match the Python representation of the vertex: e.g., if
-a$=$\verb'Vertex([0,0,1])', the two legs of edge~$0$ have attachment
-indices~0 and~1, and the boundary cycle enclosed by them is
-represented by the (single) corner~\corner{a}{0}{1}.
-
-""" % dict(g = g, n = n, num_graphs = sum(len(gs) for gs in all_graphs.itervalues()), ))
+    outfile = output.LaTeXOutput(os.path.join(dir, ("M%d,%d.tex" % (g,n))),
+                                 g=g, n=n, version=__version__,
+                                 checkpoint_dir=runtime.options.checkpoint_dir)
 
     pools = None
     for num_edges, graphs in all_graphs.iteritems():
-        outfile.section(("Fatgraphs with $%d$ edges" % num_edges))
-        outfile.write(r"""
-There are $%d$ graphs in this section.
-
-""" % len(graphs))
-
+        outfile.start_section(num_edges, max_num_vertices-(max_num_edges-num_edges))
         pools_prev = pools
         pools = [ NumberedFatgraphPool(G) for G in graphs ]
         # make list of partial sums for mapping matrix indices to graph numbers
@@ -613,43 +554,25 @@ There are $%d$ graphs in this section.
         for j, G in enumerate(graphs):
             pool = pools[j]
             name = ("G_{%d,%d}" % (num_edges, j))
-            outfile.section("The Fatgraph $%s$%s" % (
-                name,
-                "" if G.is_oriented() else " {\em (non-orientable)}"
-            ), level=1)
-            # draw graph
-            outfile.write_graph(G, name)
-            # print boundary cycles
-            outfile.section("Boundary cycles", level=2)
-            outfile.write_boundary_cycles(G.boundary_cycles)
+            outfile.start_graph(G, name)
             # print automorphisms
             Aut = list(G.automorphisms())
             if len(Aut) > 1:
-                outfile.section("Automorphisms", level=2)
-                outfile.write_automorphisms(Aut)
+                outfile.add_automorphisms(Aut)
             if G.is_oriented():
                 # print markings
                 if n > 1:
-                    outfile.section("Markings", level=2)
-                    if len(Aut) == 1:
-                        outfile.write(r"""
-Fatgraph $%(name)s$ only has the identity automorphism, so the
-marked fatgraphs $%(name)s^{(0)}$ to $%(name)s^{(%(num_markings)d)}$
-are formed by decorating boundary cycles of $%(name)s$ with
-all permutations of $(%(basetuple)s)$ in lexicographic order.
-""" % dict(name=name, num_markings=len(pool.numberings),
-           basetuple=(str.join(',', [str(x) for x in xrange(G.num_boundary_cycles)]))))
-                    else:
-                        outfile.write_markings(name, pool)
+                    outfile.add_markings(name, pool)
                 # print differential
                 if d is not None and d.num_rows > 0 and d.num_columns > 0:
-                    outfile.write_differential_start()
+                    outfile.add_differential_start()
                     for k in xrange(len(pool)):
                         name_k = ("%s^{(%d)}" % (name, k))
-                        outfile.write_differential(d, k0 + k, name_k, labelfn=labelfn)
-                    outfile.write_differential_end()
+                        outfile.add_differential(d, k0 + k, name_k, labelfn=labelfn)
+                    outfile.add_differential_end()
                 k0 += len(pool)
-
+            outfile.end_graph()
+        outfile.end_section()
     outfile.close()
 
 

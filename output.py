@@ -5,133 +5,104 @@
 __docformat__ = 'reStructuredText'
 
 
+import datetime
+import os.path
+import pkg_resources
+import tempita
+
+from combinatorics import factorial
 import iterators
 
 
-class LaTeXFile(file):
-    """
-    
-    """
+class LaTeXOutput(object):
 
-    def __new__(cls, path, buffering=1):
-        return file.__new__(cls, path, 'w', buffering)
-
-
-    def __init__(self, path, buffering=1):
-        file.__init__(self, path, 'w', buffering)
-        self.write(r"""
-\documentclass[a4paper]{article}
-\raggedbottom
-
-% use Knuth's "concrete" fonts, which blend better with the
-% typewriter font used for code listings
-\usepackage[T1]{fontenc}
-\usepackage[boldsans]{ccfonts}
-
-\usepackage{amsmath}
-\usepackage{amsfonts}
-\usepackage{colortbl}
-\usepackage{hyperref}
-\usepackage{longtable}%
-  \setcounter{LTchunksize}{100}%
-\usepackage{multicol}
-\usepackage{tensor}
-\usepackage[usenames,dvipsnames]{xcolor}
-% Xy-Pic v3.8 is needed for PDF support
-\usepackage[pdf,color,curve,frame,line,poly]{xy}%
-  \UseCrayolaColors
-
-\newcommand{\corner}[3]{\ensuremath{\tensor[^{#2}]{#1}{^{#3}}}}
-\newcommand{\cornerjoin}{\to}
-% alternate:
-%\newcommand{\corner}[3]{\ensuremath{\stackrel{#2}{-}#1\stackrel{#3}{-}}}
-%\newcommand{\cornerjoin}{\kern-0.25ex\to\kern-0.25ex}
-
-\begin{document}
-""")
-        self._section_level = -1
+    def __init__(self, path, **kw):
+        self.data = tempita.bunch(
+            filename=path,
+            today=datetime.date.today(),
+            **kw
+            )
+        self._outfile = path
+        try:
+            template_txt = pkg_resources.resource_string('fatghol', 'template.tex')
+        except ImportError:
+            # try to open in current directory
+            if os.path.exists('template.tex') and os.path.isfile('template.tex'):
+                with open('template.tex', 'r') as template_file:
+                    template_txt = template_file.read()
+            else:
+                raise
+        self._template = tempita.Template(
+            template_txt,
+            delimeters=('<<', '>>'),
+            name='fatghol/template.tex',
+            namespace=self.data,
+            )
+        self._total_graphs = 0
+        self._total_marked_graphs = 0
 
 
-
-    def close(self, final_text=""):
-        self._close_pending_sections()
-        self.write(final_text)
-        self.write("\n")
-        self.write(r"""
-\end{document}
-""")
-        file.close(self)
+    def close(self, **kw):
+        output = open(self._outfile, 'w')
+        output.write(self._template.substitute(
+            total_num_graphs=self._total_graphs,
+            total_num_marked_graphs=self._total_marked_graphs,
+            **kw))
+        output.close()
 
 
-    _SECTIONING_COMMANDS = [
-        'section*',       # level=0
-        'subsection*',
-        'subsubsection*',
-        'paragraph',
-        'subparagraph',
-        ]
-
-    def section(self, title, level=0, intro=""):
+    def start_section(self, num_edges, num_vertices, intro=""):
         """
         Start a new section with the given title text.
 
         The `intro` text is printed between the title text and the
         ensuing list content.
         """
-        assert level in range(len(LaTeXFile._SECTIONING_COMMANDS)), \
-               ("Invalid value '%s' for `level`:"
-                " must be an integer in range 0 to %d"
-                % (level, len(LaTeXFile._SECTIONING_COMMANDS)))
-        self._close_pending_sections()
-        if level < 2:
-            self.write(r"\vspace{2em}")
-            self.write("\n")
-        self.write(r"""
+        if 'sections' not in self.data:
+            self.data.sections = list()
+        title = ("Fatgraphs with %(edges)s / %(vertices)s" % dict(
+            edges = ("%d edges" % num_edges) if num_edges > 1 else "1 edge",
+            vertices = ("%d vertices" % num_vertices) if num_vertices > 1 else "1 vertex",
+            ))
+        self._current_section = tempita.bunch(
+            title=title,
+            intro=intro,
+            graphs=list(),
+            )
+        self._section_graphs = 0
+        self._section_marked_graphs = 0
 
-\%(sectioncmd)s{%(title)s}%%
-%(intro)s%%
+    def end_section(self):
+        self._current_section.num_graphs = self._section_graphs
+        self._current_section.num_marked_graphs = self._section_marked_graphs
+        self.data.sections.append(self._current_section)
 
-""" % {
-                       'sectioncmd': LaTeXFile._SECTIONING_COMMANDS[level],
-                       'title':title,
-                       'intro':intro,
-                       })
-        self._section_level = level
 
-    def _close_pending_sections(self):
-        if self._section_level > -1:
-            # close the section/multicols
-            self.write(r"""
-""")
-        
-
-    def write_graph(self, graph, name):
+    def start_graph(self, graph, name):
         """
-        Output the given graph to this file.
+        Start constructing the section relative to the given graph in the output.
         """
-        self.write(r"""
+        self._current_graph = tempita.bunch(
+            name=name,
+            orientable=graph.is_oriented(),
+            latex_repr=LaTeXOutput.render_to_xypic(graph),
+            python_repr=LaTeXOutput.render_to_python(graph),
+            boundary_cycles=LaTeXOutput._fmt_boundary_cycles(graph.boundary_cycles)
+            )
 
-\vspace{-1em}
-\begin{tabular}{lr}
-  \begin{minipage}{0.5\textwidth}
-  {% left column: Xy-Pic diagram
-""")
-        self.write(LaTeXFile.render_to_xypic(graph))
-        self.write(r"""
-  }%
-  \end{minipage}
-  &% right column: Python code
-  \begin{minipage}{0.4\textwidth}
-""")
-        self.write_repr(graph)
-        self.write(r"""
-  \end{minipage}
-\end{tabular}
-\vspace{-3em}
-""")
+    def end_graph(self):
+        """
+        Output the last constructed graph.
+
+        Any call to `add_*` intervening before the next `start_graph`
+        will be discarded.
+        """
+        self._current_section.graphs.append(self._current_graph)
+        self._section_graphs += 1
+        self._total_graphs += 1
 
 
-    def write_automorphisms(self, automorphisms):
+    def add_automorphisms(self, automorphisms):
         """
         Output a table of graph automorphisms (if any).
         """
@@ -141,26 +112,27 @@ class LaTeXFile(file):
         vfmt = 'c' * graph.num_vertices
         efmt = 'c' * graph.num_edges
         bfmt = 'c' * graph.num_boundary_cycles
-        self.write(r"""
+        parts = [ ]
+        parts.append(r"""
 \begin{center}
   \newcommand\Reven{\rowcolor{MidnightBlue!5}}
   \newcommand\Rodd{\rowcolor{MidnightBlue!25}}
   \begin{longtable}{l|%s|%s|%s}
 """ % (vfmt, efmt, bfmt))
         # header
-        self.write(r"$A_0$")
-        self.write(" & ")
-        self.write(str.join("&", [(r"{\slshape %s}" % LaTeXFile._vertex_label(v))
+        parts.append(r"$A_0$")
+        parts.append(" & ")
+        parts.append(str.join("&", [(r"{%s}" % LaTeXOutput._vertex_label(v))
                                   for v in xrange(graph.num_vertices)]))
-        self.write(" & ")
-        self.write(str.join("&", [(r"{\slshape %s}" % str(graph.edge_numbering[e]))
+        parts.append(" & ")
+        parts.append(str.join("&", [(r"{%s}" % str(graph.edge_numbering[e]))
                                   for e in xrange(graph.num_edges)]))
-        self.write(" & ")
-        self.write(str.join("&", [(r"$%s$" % LaTeXFile._BOUNDARY_CYCLES_LABELS[b])
+        parts.append(" & ")
+        parts.append(str.join("&", [(r"$%s$" % LaTeXOutput._BOUNDARY_CYCLES_LABELS[b])
                                   for b in xrange(graph.num_boundary_cycles)]))
-        self.write(r"\\")
-        self.write("\n")
-        self.write(r"\hline")
+        parts.append(r"\\")
+        parts.append("\n")
+        parts.append(r"\hline")
         # one line per autormorphism
         nr = 0
         for a in automorphisms:
@@ -169,98 +141,47 @@ class LaTeXFile(file):
             nr += 1
             # mark rows with alternating colors
             if nr % 2 == 0:
-                self.write(r"\Reven")
+                parts.append(r"\Reven")
             else:
-                self.write(r"\Rodd")
+                parts.append(r"\Rodd")
             # automorphisms are named A_n
-            self.write(r"$A_{%d}$" % nr)
+            parts.append(r"$A_{%d}$" % nr)
             if a.is_orientation_reversing():
-                self.write(r"$\ast$")
+                parts.append(r"$\dag$")
             # write vertices permutation
-            self.write(" & ")
-            self.write(str.join("&", [(r"{%s}" % LaTeXFile._vertex_label(a.pv[v]))
+            parts.append(" & ")
+            parts.append(str.join("&", [(r"{%s}" % LaTeXOutput._vertex_label(a.pv[v]))
                                       for v in xrange(graph.num_vertices)]))
             # edges permutation
-            self.write(" & ")
-            self.write(str.join("&", [(r"{%s}" % graph.edge_numbering[a.pe[e]])
+            parts.append(" & ")
+            parts.append(str.join("&", [(r"{%s}" % graph.edge_numbering[a.pe[e]])
                                       for e in xrange(graph.num_edges)]))
             # boundary cycles permutation
-            self.write(" & ")
-            self.write(str.join("&", [
-                (r"$%s$" % LaTeXFile._BOUNDARY_CYCLES_LABELS[
+            parts.append(" & ")
+            parts.append(str.join("&", [
+                (r"$%s$" % LaTeXOutput._BOUNDARY_CYCLES_LABELS[
                     graph.boundary_cycles.index(
                         a.transform_boundary_cycle(bcy))])
                  for bcy in graph.boundary_cycles ]))
-            self.write(r"\\")
-            self.write("\n")
-        self.write(r"""
+            parts.append(r"\\")
+            parts.append("\n")
+        parts.append(r"""
   \end{longtable}
 \end{center}
 """)
+        # add it to the output
+        self._current_graph.automorphisms = str.join('', parts)
+        
 
-    _BOUNDARY_CYCLES_LABELS = [
-        r'\alpha',
-        r'\beta',
-        r'\gamma',
-        r'\delta',
-        r'\epsilon',
-        r'\zeta',
-        r'\eta',
-        r'\theta',
-        r'\iota',
-        r'\kappa',
-        r'\lambda',
-        r'\mu',
-        r'\nu',
-        r'\xi',
-        #r'$o$' # not visually distinct from 'o' or '0'
-        r'\pi',
-        r'\rho',
-        r'\sigma',
-        r'\tau',
-        r'\upsilon',
-        r'\phi',
-        r'\chi',
-        r'\psi',
-        r'\omega'
-        ]
-    
-    def write_boundary_cycles(self, bcys):
+    def add_differential_start(self, omit_null=True):
         """
-        Output a table of the given boundary cycles.
-        """
-        self.write(r"""
-\begin{align*}
-""")
-        for nr, bcy in enumerate(sorted(bcys, key=LaTeXFile._sort_bcy_marking)):
-            self.write(r"""%s &= (%s) \\ """ % (
-                LaTeXFile._BOUNDARY_CYCLES_LABELS[nr],
-                str.join(r'\cornerjoin',
-                         [(r"\corner{%s}{%d}{%d}"
-                           % (
-                               LaTeXFile._vertex_label(corner[0]),
-                               corner[1], # incoming
-                               corner[2]  # outgoing
-                               ))
-                          for corner in bcy]),
-                ))
-        self.write(r"""
-\end{align*}
-""")
-
-
-    def write_differential_start(self, title="Differentials", level=2, omit_null=True):
-        """
-        Open the "Differentials" section.
+        Start writing the "Differentials" section.
         """
         self._d_omit_null = omit_null
-        self._d_head = (r"""
-\%(sectioncmd)s{%(title)s}
-""") % dict(title=title, sectioncmd=LaTeXFile._SECTIONING_COMMANDS[level])
         self._d_parts = [ ]
         self._d_maxterms = 0
         
-    def write_differential(self, D, j, name, labelfn=None):
+    def add_differential(self, D, j, name, labelfn=None):
         """
         Output the expansion of the `j`-th column of differential
         operator `D` as a relation between graphs.
@@ -297,33 +218,35 @@ class LaTeXFile(file):
             self._d_parts.append(str.join("", parts))
             self._d_maxterms = max(cnt, self._d_maxterms)
 
-    def write_differential_end(self):
+    def add_differential_end(self):
         """
         Close the "Differentials" section.
         """
         if len(self._d_parts) > 0:
-            self.write(self._d_head)
+            parts = [ ]
             if self._d_maxterms < 4:
                 # use two-column layout
-                self.write(r"""
+                parts.append(r"""
 \begin{multicols}{2}
 """)
-                self.write(str.join("\n\n", self._d_parts))
-                self.write(r"""
+                parts.append(str.join("\n\n", self._d_parts))
+                parts.append(r"""
 \end{multicols}
 """)
             else:
                 # use 1-column layout
-                self.write(r"""
+                parts.append(r"""
 \begin{longtable}[c]{l}
 """)
-                self.write(str.join(r"\\", self._d_parts))
-                self.write(r"""
+                parts.append(str.join(r"\\", self._d_parts))
+                parts.append(r"""
 \end{longtable}
 """)
+            # add it to the current graph
+            self._current_graph.differentials = str.join('', parts)
 
 
-    def write_markings(self, name, markings, per_row=8):
+    def add_markings(self, name, markings, per_row=8):
         """
         Output a table showing how the different markings of the same
         underlying fatgraph do number the boundary components.
@@ -331,92 +254,156 @@ class LaTeXFile(file):
         graph = markings.graph
         n = graph.num_boundary_cycles
         N = len(markings.numberings)
-        W = 1 + (per_row if N>per_row else N)
-        cfmt = '|c' * (W-1)
+        self._total_marked_graphs += N
+        self._section_marked_graphs += N
+        if N == factorial(n):
+            self._current_graph.markings = (r"""
+Fatgraph $%(name)s$ only has the identity automorphism, so the
+marked fatgraphs $%(name)s^{(0)}$ to $%(name)s^{(%(num_markings)d)}$
+are formed by decorating boundary cycles of $%(name)s$ with
+all permutations of $(%(basetuple)s)$ in lexicographic order.
+""" % dict(name=name, num_markings=N,
+           basetuple=(str.join(',', [str(x) for x in xrange(n)]))))
+        else:
+            parts = [ ]
+            W = 1 + (per_row if N>per_row else N)
+            cfmt = '|c' * (W-1)
+            # make one table per each group of `per_row` markings
+            parts.append(r"""
+    \begin{center}
+      \newcommand\Rhead{\rowcolor{Tan!25}}
+      \newcommand\Reven{\rowcolor{Tan!10}}
+      \newcommand\Rodd{\rowcolor{white}}
+      \begin{longtable}{l%(cfmt)s}
+        \multicolumn{%(width)d}{l}{} \endfirsthead
+        \multicolumn{%(width)d}{l}{\em (continued.)} \endhead
+    """ % dict(cfmt=cfmt, width=W))
+            done = 0
+            for ms in iterators.chunks([per_row] * (N / per_row) + [N % per_row],
+                                       markings.numberings):
+                # if N % per_row == 0, we have an extra cycle; skip it
+                if len(ms) == 0:
+                    break
+                # table header lists graph/marking names
+                if done > 0:
+                    parts.append(r"""\pagebreak[0]""")
+                parts.append(r""" \Rhead""")
+                for j in xrange(done, done + len(ms)):
+                    parts.append(r""" & $%s^{(%d)}$""" % (name, j))
+                parts.append(r"""\\""")
+                parts.append(r"""\nopagebreak""")
+                parts.append('\n')
+                # each row lists the marking of a certain boundary cycle
+                for b in range(graph.num_boundary_cycles):
+                    if b == graph.num_boundary_cycles - 1:
+                        parts.append(r"""\nopagebreak""")
+                    if b % 2 == 0:
+                        parts.append(r"""\Reven""")
+                    else:
+                        parts.append(r"""\Rodd""")
+                    parts.append("$%s$" % LaTeXOutput._BOUNDARY_CYCLES_LABELS[b])
+                    parts.append(r""" & """)
+                    parts.append(str.join(" & ",
+                                        (str(ms[j][b]) for j in range(len(ms)))))
+                    parts.append(r""" \\""")
+                    parts.append('\n')
+                done += per_row
+            parts.append(r"""
+      \end{longtable}
+    \end{center}
+    """)
+            self._current_graph.markings = str.join('', parts)
 
-        # make one table per each group of `per_row` markings
-        self.write(r"""
-\begin{center}
-  \newcommand\Rhead{\rowcolor{Tan!25}}
-  \newcommand\Reven{\rowcolor{Tan!10}}
-  \newcommand\Rodd{\rowcolor{white}}
-  \begin{longtable}{l%(cfmt)s}
-    \multicolumn{%(width)d}{l}{} \endfirsthead
-    \multicolumn{%(width)d}{l}{\em (continued.)} \endhead
-""" % dict(cfmt=cfmt, width=W))
-        done = 0
-        for ms in iterators.chunks([per_row] * (N / per_row) + [N % per_row],
-                                   markings.numberings):
-            # if N % per_row == 0, we have an extra cycle; skip it
-            if len(ms) == 0:
-                break
-            # table header lists graph/marking names
-            if done > 0:
-                self.write(r"""\pagebreak[0]""")
-            self.write(r""" \Rhead""")
-            for j in xrange(done, done + len(ms)):
-                self.write(r""" & $%s^{(%d)}$""" % (name, j))
-            self.write(r"""\\""")
-            self.write(r"""\nopagebreak""")
-            self.write('\n')
-            # each row lists the marking of a certain boundary cycle
-            for b in range(graph.num_boundary_cycles):
-                if b == graph.num_boundary_cycles - 1:
-                    self.write(r"""\nopagebreak""")
-                if b % 2 == 0:
-                    self.write(r"""\Reven""")
-                else:
-                    self.write(r"""\Rodd""")
-                self.write("$%s$" % LaTeXFile._BOUNDARY_CYCLES_LABELS[b])
-                self.write(r""" & """)
-                self.write(str.join(" & ",
-                                    (str(ms[j][b]) for j in range(len(ms)))))
-                self.write(r""" \\""")
-                self.write('\n')
-            done += per_row
-        self.write(r"""
-  \end{longtable}
-\end{center}
-""")
 
+    ##
+    ## helper methods
+    ##
+    
+    _BOUNDARY_CYCLES_LABELS = [
+        r'\alpha',
+        r'\beta',
+        r'\gamma',
+        r'\delta',
+        r'\epsilon',
+        r'\zeta',
+        r'\eta',
+        r'\theta',
+        r'\iota',
+        r'\kappa',
+        r'\lambda',
+        r'\mu',
+        r'\nu',
+        r'\xi',
+        #r'$o$' # not visually distinct from 'o' or '0'
+        r'\pi',
+        r'\rho',
+        r'\sigma',
+        r'\tau',
+        r'\upsilon',
+        r'\phi',
+        r'\chi',
+        r'\psi',
+        r'\omega'
+        ]
 
-    def write_repr(self, graph):
+    @staticmethod
+    def _fmt_boundary_cycles(bcys):
         """
-        Pretty-print the representation of `graph`.
+        Output a table of the given boundary cycles.
         """
-        self.write(r"""
-\begin{verbatim}
+        parts = [ ]
+        parts.append(r"""
+\begin{align*}
 """)
+        for nr, bcy in enumerate(sorted(bcys, key=LaTeXOutput._sort_bcy_marking)):
+            parts.append(r"""%s &= (%s) \\ """ % (
+                LaTeXOutput._BOUNDARY_CYCLES_LABELS[nr],
+                str.join(r'\cornerjoin',
+                         [(r"\corner{%s}{%d}{%d}"
+                           % (
+                               LaTeXOutput._vertex_label(corner[0]),
+                               corner[1], # incoming
+                               corner[2]  # outgoing
+                               ))
+                          for corner in bcy]),
+                ))
+        parts.append(r"""
+\end{align*}
+""")
+        return str.join('', parts)
+
+
+    @staticmethod
+    def render_to_python(graph):
+        """
+        Return pretty-printed Python representation of `graph`.
+        """
         assert isinstance(graph, Fatgraph)
-        self.write("""Fatgraph([\n""")
         vertex_reprs = [ str(V) for V in graph.vertices ]
         m = max(len(vtxt) for vtxt in vertex_reprs)
-        self.write(
+        return str.join('', [
+            """Fatgraph([\n""",
             str.join("\n", [
                 str.join("", [
                     # initial indent
                     "  ",
                     # vertex representation
-                    vtxt,
+                    vtxt, ",",
                     # padding to align `#`'s
-                    (' ' * (m - len(vtxt) + 1)),
+                    (' ' * (m - len(vtxt))),
                     # vertex label
                     "# ",
-                    LaTeXFile._vertex_label(v),
+                    LaTeXOutput._vertex_label(v),
                     ])
-                for v,vtxt in enumerate(vertex_reprs) ]))
-        self.write("""\n])\n""")
-        self.write(r"""
-\end{verbatim}
-""")
-            
-    ##
-    ## helper methods
-    ##
+                for v,vtxt in enumerate(vertex_reprs) ]),
+            """\n])\n""",
+            ])
     
+            
     @staticmethod
     def render_to_xypic(graph, cross_out=True):
         """Return XY-Pic code snippet to render graph `graph`."""
+        assert isinstance(graph, Fatgraph)
 
         g = graph.genus
         n = graph.num_boundary_cycles
@@ -439,24 +426,24 @@ class LaTeXFile(file):
         for k in range(1,K+1):
             result.append(r'"v%d",{\xypolygon%d"v%dl"{~:{(1.20,0):}~={%d}~>{}}},'
                           % (k,
-                             LaTeXFile._ensure_large_odd(len(graph.vertices[k-1])),
+                             LaTeXOutput._ensure_large_odd(len(graph.vertices[k-1])),
                              k,
-                             LaTeXFile._rotation_angle(K,k)))
+                             LaTeXOutput._rotation_angle(K,k)))
 
         for l in xrange(graph.num_edges):
             ((v1, i1), (v2, i2)) = graph.edges[l].endpoints
             if v1 != v2:
                 result.append((r'"v%d"*+[o]\txt{{%s}}*\frm{o};"v%d"*+[o]\txt{{%s}}*\frm{o}**\crv{"v%dl%d"&"v%dl%d"}?(.75)*\txt{\colorbox{CadetBlue!25}{\scriptsize\bfseries %d}},'
-                               % (v1+1, LaTeXFile._vertex_label(v1),
-                                  v2+1, LaTeXFile._vertex_label(v2),
+                               % (v1+1, LaTeXOutput._vertex_label(v1),
+                                  v2+1, LaTeXOutput._vertex_label(v2),
                                   v1+1, 1+graph.vertices[v1].index(l),
                                   v2+1, 1+graph.vertices[v2].index(l),
                                   graph.edge_numbering[l])))
             else:
                 h = graph.vertices[v1].index(l)
                 result.append((r'"v%d"*+[o]\txt{{%s}}*\frm{o};"v%d"*+[o]\txt{{%s}}*\frm{o}**\crv{"v%dl%d"&"v%dl%d"}?(.75)*\txt{\colorbox{CadetBlue!25}{\scriptsize\bfseries %d}},'
-                               % (v1+1, LaTeXFile._vertex_label(v1),
-                                  v2+1, LaTeXFile._vertex_label(v2),
+                               % (v1+1, LaTeXOutput._vertex_label(v1),
+                                  v2+1, LaTeXOutput._vertex_label(v2),
                                   v1+1, h+1, v2+1, 1+graph.vertices[v1].index(l,h+1),
                                   graph.edge_numbering[l])))
 
