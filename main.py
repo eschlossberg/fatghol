@@ -497,21 +497,8 @@ elif "latex" == cmdline.action:
 
     ## read list files from checkpoint directory
     all_graphs = defaultdict(list)
-    listfiles = [ (entry, os.path.join(dir, entry))
-                  for entry in os.listdir(dir) if entry.endswith('.list') ]
-    for lstname, lstfile in listfiles:
-        if lstname.startswith('MgnTrivalentGraphsRecursiveGenerator%d,%d' % (g,n)):
-            logging.info("Loading trivalent graphs (%d edges) from file '%s' ...",
-                         max_num_edges, lstfile)
-            all_graphs[max_num_edges] = load(lstfile)
-        elif lstname.startswith('M%d,%d-MgnGraphsIterator' % (g,n)):
-            logging.info("Loading graphs from file '%s' ...", lstfile)
-            gs = load(lstfile)
-            if gs is None:
-                logging.error("Cannot load file '%s': aborting.", lstfile)
-            if len(gs) > 0:
-                num_edges = gs[0].num_edges
-                all_graphs[num_edges] = gs
+    for graph in MgnGraphsIterator(g,n):
+        all_graphs[graph.num_edges].append(graph)
 
     import output
     if runtime.options.outfile is not None:
