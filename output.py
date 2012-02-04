@@ -7,7 +7,6 @@ __docformat__ = 'reStructuredText'
 
 import datetime
 import os.path
-import pkg_resources
 import tempita
 
 from combinatorics import factorial
@@ -24,6 +23,7 @@ class LaTeXOutput(object):
             **kw
             )
         try:
+            import pkg_resources
             template_txt = pkg_resources.resource_string('fatghol', 'template.tex')
         except ImportError:
             # try to open in current directory
