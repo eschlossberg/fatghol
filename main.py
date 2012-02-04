@@ -436,7 +436,7 @@ runtime.n = n
 
 # ensure checkpoint path is defined and valid
 if runtime.options.checkpoint_dir is None:
-    runtime.options.checkpoint_dir = os.path.join(os.getcwd(), "M%d,%d.saved" % (g,n))
+    runtime.options.checkpoint_dir = os.path.join(os.getcwd(), "M%d,%d.data" % (g,n))
     if not os.path.isdir(runtime.options.checkpoint_dir):
         if os.path.exists(runtime.options.checkpoint_dir):
             logging.error("Checkpoint path '%s' exists but is not a directory. Aborting.",
