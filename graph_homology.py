@@ -627,7 +627,6 @@ class NumberedFatgraphPool(object):
         ## 2. compute map `phi1` induced by isomorphism map `f1` on
         ##    the boundary cycles of `g1` and `g2`.
         ##
-        f1 = Fatgraph.isomorphisms(g1,g2).next()
         phi1_inv = Permutation((i1,i0) for (i0,i1) in enumerate(
             g2.boundary_cycles.index(f1.transform_boundary_cycle(bc1))
             for bc1 in g1.boundary_cycles
