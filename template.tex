@@ -15,6 +15,10 @@
 \usepackage[boldsans]{ccfonts}
 
 \usepackage{ifpdf}
+\ifpdf
+  % maximum compression for PDF output
+  \pdfcompresslevel9
+\fi
 
 \usepackage{amsmath}
 \usepackage{amsfonts}
