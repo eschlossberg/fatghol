@@ -184,7 +184,7 @@ class DifferentialComplex(list):
                     if rs:
                         r = rs[0]
                         logging.info("  rank D[%d]=%d (loaded from file '%s')",
-                                     i+1, r, checkpoint)
+                                     i, r, checkpoint)
                 if rs is None: # `rs` was not loaded from checkpoint file
                     timing.start("rank D[%d]" % i)
                     r = A.rank()
@@ -193,10 +193,10 @@ class DifferentialComplex(list):
                     if checkpoint is not None:
                         save([r], checkpoint)
                     logging.info("  rank D[%d]=%d (computed in %.3fs)",
-                                 i+1, r, timing.get("rank D[%d]" % i))
+                                 i, r, timing.get("rank D[%d]" % i))
             else: # A is a 0xL matrix
                 r = 0
-                logging.info("  rank D[%d]=%d (immediate)", i+1, r)
+                logging.info("  rank D[%d]=%d (immediate)", i, r)
             ranks.append(r)
 
         ## compute homology group ranks from rank and nullity
