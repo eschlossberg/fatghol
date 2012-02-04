@@ -448,8 +448,8 @@ all permutations of $(%(basetuple)s)$ in lexicographic order.
 
         # cross-out graph, if not orientable
         if cross_out and not graph.is_oriented():
-            result.append(r"0,(-1.00,+1.00);(+1.00,-1.00)**[red][|(10)]@{..},")
-            result.append(r"0,(-1.00,-1.00);(+1.00,+1.00)**[red][|(10)]@{..},")
+            result.append(r"0,(-1.00,+1.00);(+1.00,-1.00)**[red]@{..},")
+            result.append(r"0,(-1.00,-1.00);(+1.00,+1.00)**[red]@{..},")
 
         result.append(r'\endxy')
 

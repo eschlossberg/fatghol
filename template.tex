@@ -32,8 +32,8 @@
 \else  
   % fall-back to (x)DVI \specials
   \usepackage[xdvi,color,curve,frame,line,poly]{xy}% 
+  \UseCrayolaColors
 \fi  
-\UseCrayolaColors
 
   
 \newcommand{\corner}[3]{\ensuremath{\tensor[^{#2}]{#1}{^{#3}}}}
@@ -57,7 +57,7 @@
   }
 \date{ <<today>> }
 \hypersetup{%%
-  pdftitle={Fatgraphs of $M_{<<g>>,<<n>>}$},%%
+  pdftitle={Fatgraphs of M<<g>>,<<n>>},%%
   pdfcreator={FatGHoL},%%
   pdfkeywords={{fatgraphs} {M<<g>>,<<n>>}
                {moduli space} {associative operad}},%%
@@ -134,13 +134,14 @@ originating <<section.num_marked_graphs>> marked fatgraphs.
   <<if not G.orientable>>{\em (non-orientable)}<<endif>>}
 \vspace{-1em}
 \begin{tabular}{lr}
-  \begin{minipage}{0.5\textwidth}
+  \begin{minipage}{0.45\textwidth}
   {% left column: Xy-Pic diagram
+\hspace{-3em}
 <<G.latex_repr>>
   }%
   \end{minipage}
   &% right column: Python code
-  \begin{minipage}{0.4\textwidth}
+  \begin{minipage}{0.45\textwidth}
 \begin{verbatim}
 <<G.python_repr>>
 \end{verbatim}
