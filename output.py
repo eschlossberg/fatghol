@@ -16,13 +16,13 @@ import iterators
 
 class LaTeXOutput(object):
 
-    def __init__(self, path, **kw):
+    def __init__(self, stream, **kw):
+        self._output = stream
         self.data = tempita.bunch(
-            filename=path,
+            filename=self._output.name,
             today=datetime.date.today(),
             **kw
             )
-        self._outfile = path
         try:
             template_txt = pkg_resources.resource_string('fatghol', 'template.tex')
         except ImportError:
@@ -43,12 +43,11 @@ class LaTeXOutput(object):
 
 
     def close(self, **kw):
-        output = open(self._outfile, 'w')
-        output.write(self._template.substitute(
+        self._output.write(self._template.substitute(
             total_num_graphs=self._total_graphs,
             total_num_marked_graphs=self._total_marked_graphs,
             **kw))
-        output.close()
+        self._output.close()
 
 
     def start_section(self, num_edges, num_vertices, intro=""):

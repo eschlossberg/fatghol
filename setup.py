@@ -1,4 +1,6 @@
 #! /usr/bin/env python
+#
+__version__ = '5.4.dev' # see: http://packages.python.org/distribute/setuptools.html
 
 # See http://packages.python.org/distribute/setuptools.html for details
 from distribute_setup import use_setuptools
@@ -62,7 +64,7 @@ def read_whole_file(path):
 
 setup (
     name = "fatghol",
-    version = "5.3", # see: http://packages.python.org/distribute/setuptools.html
+    version = __version__,
 
     # for building the package
     cmdclass = ext_commands,

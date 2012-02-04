@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 """Command-line front-end for `rg.py`.
 """
-__version__ = '5.3'
+__version__ = '5.4'
 __docformat__ = 'reStructuredText'
 
 
@@ -161,10 +161,9 @@ Actions:
   homology G N
     Print homology ranks of M_{g,n}.
 
-  latex G N
-    Read the listings of M_{g,n} fatgraphs and create
-    a pretty-print catalogue of the graphs as LaTeX documents.
-    Directory DIR should be a valid checkpoint directory.
+  latex G N [-s DIR] [-o FILE]
+    Read the listings of M_{g,n} fatgraphs (from directory DIR)
+    and output a pretty-print catalogue of the graphs as LaTeX documents.
   
   valences G N
     Print the vertex valences occurring in M_{g,n} graphs.
@@ -485,11 +484,9 @@ elif 'homology' == cmdline.action:
 elif "latex" == cmdline.action:
     if runtime.options.checkpoint_dir is not None:
         dir = runtime.options.checkpoint_dir
-    elif len(cmdline.args) > 2:
-        dir = cmdline.args[2]
     else:
         msg = ("Missing path to directory where graph list files are stored."
-               " Pass it either as third argument or using the `-s` option.")
+               " Set it using the `-s` option.")
         logging.error(msg)
         sys.stderr.write(msg + '\n')
         sys.exit(1)
@@ -517,7 +514,11 @@ elif "latex" == cmdline.action:
                 all_graphs[num_edges] = gs
 
     import output
-    outfile = output.LaTeXOutput(os.path.join(dir, ("M%d,%d.tex" % (g,n))),
+    if runtime.options.outfile is not None:
+        outfile = open(runtime.options.outfile, 'w')
+    else:
+        outfile = sys.stdout
+    outfile = output.LaTeXOutput(outfile,
                                  g=g, n=n, version=__version__,
                                  checkpoint_dir=runtime.options.checkpoint_dir)
 
