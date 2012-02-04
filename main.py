@@ -586,9 +586,9 @@ except:
 # print CPU time usage
 cputime_s = resource.getrusage(resource.RUSAGE_SELF)[0]
 seconds = cputime_s % 60
-minutes = int(cputime_s / 60)
-hours = int(minutes / 60)
-days = int(hours / 24)
+minutes = int(cputime_s / 60) % 60
+hours = int(cputime_s / 3600) % 24
+days = int(cputime_s / 86400)
 if days > 0:
     elapsed = "%d days, %d hours, %d minutes and %2.3f seconds" % (days, hours, minutes, seconds)
 elif hours > 0:
