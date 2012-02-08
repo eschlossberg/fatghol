@@ -16,10 +16,10 @@ import numbers
 
 ## application-local imports
 
-from loadsave import load, save
-from runtime import runtime
-from simplematrix import SimpleMatrix, is_null_product
-import timing
+from fatghol.loadsave import load, save
+from fatghol.runtime import runtime
+from fatghol.simplematrix import SimpleMatrix, is_null_product
+import fatghol.timing as timing
 
 
 ## main

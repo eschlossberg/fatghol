@@ -9,7 +9,7 @@ import datetime
 import os.path
 import tempita
 
-from combinatorics import factorial
+from fatghol.combinatorics import factorial
 import iterators
 
 

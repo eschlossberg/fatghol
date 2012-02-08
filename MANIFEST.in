@@ -1,1 +1,5 @@
-include template.tex
+include README.txt
+recursive-include fatghol *.py *.pxd
+include fatghol/simplematrix.i fatghol/simplematrix.hpp
+include fatghol/template.tex
+#recursive-include docs conf.py *.html *.txt *.js *.css *.png

@@ -18,7 +18,7 @@ import weakref
 
 ## local imports
 
-from iterators import Iterator
+from fatghol.iterators import Iterator
 
 
 ## auxiliary classes

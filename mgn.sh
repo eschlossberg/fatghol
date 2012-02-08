@@ -36,8 +36,8 @@ fi
 
 ## run the main program, with timing information
 if [ -n "$time_cmd" ]; then
-    exec $time_cmd --format='\nUSED: wctime=%e cputime.usr=%U cputime.sys=%S maxmem=%MkB cs.involuntary=%c cs.voluntary=%w majflt=%F minflt=%R' python "$basedir"/main.py "$@"
+    exec $time_cmd --format='\nUSED: wctime=%e cputime.usr=%U cputime.sys=%S maxmem=%MkB cs.involuntary=%c cs.voluntary=%w majflt=%F minflt=%R' python "$basedir"/fatghol/mgn.py "$@"
 else
-    exec  python "$basedir"/main.py "$@"
+    exec  python "$basedir"/fatghol/mgn.py "$@"
 fi
 

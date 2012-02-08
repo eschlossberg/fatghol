@@ -8,7 +8,7 @@ __docformat__ = 'reStructuredText'
 #import cython
 
 
-from combinatorics import PartitionIterator
+from fatghol.combinatorics import PartitionIterator
 
 
 #@cython.ccall

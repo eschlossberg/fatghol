@@ -6,14 +6,14 @@ __docformat__ = 'reStructuredText'
 
 #import cython
 
+from fractions import Fraction
 import itertools
+import operator
 
 
-from cache import (
+from fatghol.cache import (
     fcache,
     )
-import operator
-from fractions import Fraction
 
 
 def bernoulli(n):

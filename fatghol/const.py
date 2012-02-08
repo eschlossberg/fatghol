@@ -7,7 +7,7 @@ __docformat__ = 'reStructuredText'
 
 
 from fractions import Fraction
-from combinatorics import (
+from fatghol.combinatorics import (
     bernoulli,
     factorial,
     minus_one_exp,

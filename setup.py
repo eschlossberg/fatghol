@@ -16,7 +16,7 @@ from distutils.extension import Extension
 
 ext_commands = { }
 ext_modules = [
-    Extension("_simplematrix", ["simplematrix.i"],
+    Extension("fatghol._simplematrix", ["fatghol/simplematrix.i"],
               swig_opts=['-c++', '-modern'],
               include_dirs=[swdir+'/include'],
               libraries=['linbox', 'gmp', 'givaro', 'lapack', 'cblas'],
@@ -93,6 +93,12 @@ setup (
         "Topic :: Scientific/Engineering",
         ],
 
+    entry_points = {
+        'console_scripts': [
+            'mgn = fatghol.mgn:main',
+            ],
+       },
+
     # run-time dependencies
     install_requires = [
         # tempita -- simple templating
@@ -108,6 +114,7 @@ setup (
             ],
         },
 
-    # we're using a C extension module, which I guess is not at all zip-safe
+    # we're using a C extension module and a template file
+    # XXX: could still be "zip-safe", provided we list exceptions...
     zip_safe = False,
 )

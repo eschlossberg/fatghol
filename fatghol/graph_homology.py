@@ -8,6 +8,7 @@ __docformat__ = 'reStructuredText'
 
 ## stdlib imports
 
+from fractions import Fraction
 import itertools
 import logging
 import os
@@ -15,26 +16,25 @@ import types
 
 ## application-local imports
 
-from aggregate import AggregateList
-from combinatorics import (
+from fatghol.aggregate import AggregateList
+from fatghol.combinatorics import (
     bernoulli,
     factorial,
     minus_one_exp,
     Permutation,
     )
-from cache import (
+from fatghol.cache import (
     ocache_contract,
     ocache_isomorphisms,
     Caching,
     )
-from fractions import Fraction
-from homology import (
+from fatghol.homology import (
     ChainComplex,
     DifferentialComplex,
     NullMatrix,
     )
-from iterators import IndexedIterator
-from rg import (
+from fatghol.iterators import IndexedIterator
+from fatghol.rg import (
     Fatgraph,
     Isomorphism,
     MgnGraphsIterator,
@@ -42,9 +42,9 @@ from rg import (
     Vertex, 
     BoundaryCycle,
     )
-from runtime import runtime
-from simplematrix import SimpleMatrix
-import timing
+from fatghol.runtime import runtime
+from fatghol.simplematrix import SimpleMatrix
+import fatghol.timing as timing
 
 
 

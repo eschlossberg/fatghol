@@ -15,22 +15,23 @@ import os.path
 
 ## application-local imports
 
-from cache import (
+import fatghol
+from fatghol.cache import (
     Caching,
     ocache0,
     ocache_contract,
     ocache_eq,
     ocache_isomorphisms,
     )
-from combinatorics import Permutation
-from cyclicseq import CyclicList, CyclicTuple
-from iterators import (
+from fatghol.combinatorics import Permutation
+from fatghol.cyclicseq import CyclicList, CyclicTuple
+from fatghol.iterators import (
     BufferingIterator,
     )
-from loadsave import load, save
-from runtime import runtime
-import timing
-from utils import (
+from fatghol.loadsave import load, save
+from fatghol.runtime import runtime
+import fatghol.timing as timing
+from fatghol.utils import (
     concat,
     ltranslate,
     maybe,
