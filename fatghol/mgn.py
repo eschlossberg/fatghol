@@ -513,7 +513,7 @@ def main():
 
 
     # latex -- pretty-print graph lists
-    elif "latex" == cmdline.action:
+    elif 'latex' == cmdline.action:
         if runtime.options.checkpoint_dir is not None:
             dir = runtime.options.checkpoint_dir
         else:
@@ -574,12 +574,13 @@ def main():
             for j, G in enumerate(graphs):
                 pool = pools[j]
                 name = ("G_{%d,%d}" % (num_edges, j))
-                outfile.start_graph(G, name)
+                orientable = G.is_oriented()
+                outfile.start_graph(name, G, pool)
                 # print automorphisms
                 Aut = list(G.automorphisms())
                 if len(Aut) > 1:
                     outfile.add_automorphisms(Aut)
-                if G.is_oriented():
+                if pool[0].is_oriented():
                     # print markings
                     if n > 1:
                         outfile.add_markings(name, pool)

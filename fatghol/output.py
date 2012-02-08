@@ -57,10 +57,15 @@ class LaTeXOutput(object):
             )
         self._total_graphs = 0
         self._total_marked_graphs = 0
+        # document appendices
+        self._appendix_graph_markings = None
 
 
     def close(self, **kw):
+        are_there_appendices = (self._appendix_graph_markings is not None)
         self._output.write(self._template.substitute(
+            appendices=are_there_appendices,
+            appendix_graph_markings=self._appendix_graph_markings,
             total_num_graphs=self._total_graphs,
             total_num_marked_graphs=self._total_marked_graphs,
             **kw))
@@ -87,24 +92,39 @@ class LaTeXOutput(object):
             )
         self._section_graphs = 0
         self._section_marked_graphs = 0
+        self._section_orientable_marked_graphs = 0
 
     def end_section(self):
         self._current_section.num_graphs = self._section_graphs
         self._current_section.num_marked_graphs = self._section_marked_graphs
+        self._current_section.num_orientable_marked_graphs = self._section_orientable_marked_graphs
+        self._current_section.num_nonorientable_marked_graphs = self._section_marked_graphs - self._section_orientable_marked_graphs
         self.data.sections.append(self._current_section)
 
 
-    def start_graph(self, graph, name):
+    def start_graph(self, name, graph, pool):
         """
         Start constructing the section relative to the given graph in the output.
         """
-        self._current_graph = tempita.bunch(
+        assert num_orientable_markings >= 0
+        num_orientable_markings = sum((1 if NG.is_oriented() else 0) for NG in pool)
+        self._current_graph = graph
+        self._current_marked_graph = pool[0]
+        self._current_marked_graph_automorphisms = list(self._current_marked_graph.automorphisms())
+        self._total_graphs += 1
+        self._total_marked_graphs += len(pool)
+        self._section_graphs += 1
+        self._section_marked_graphs += len(pool)
+        self._section_orientable_marked_graphs += num_orientable_markings
+        self._current_graph_data = tempita.bunch(
             name=name,
             orientable=graph.is_oriented(),
-            latex_repr=LaTeXOutput.render_to_xypic(graph),
+            num_orientable_markings=num_orientable_markings,
+            latex_repr=LaTeXOutput.render_to_xypic(graph, cross_out=False),
             python_repr=LaTeXOutput.render_to_python(graph),
             boundary_cycles=LaTeXOutput._fmt_boundary_cycles(graph.boundary_cycles)
             )
+
 
     def end_graph(self):
         """
@@ -113,9 +133,7 @@ class LaTeXOutput(object):
         Any call to `add_*` intervening before the next `start_graph`
         will be discarded.
         """
-        self._current_section.graphs.append(self._current_graph)
-        self._section_graphs += 1
-        self._total_graphs += 1
+        self._current_section.graphs.append(self._current_graph_data)
 
 
     def add_automorphisms(self, automorphisms):
@@ -124,7 +142,8 @@ class LaTeXOutput(object):
         """
         if len(automorphisms) == 0:
             return
-        graph = automorphisms[0].source
+        assert self._current_graph == automorphisms[0].source
+        graph = self._current_graph
         vfmt = 'c' * graph.num_vertices
         efmt = 'c' * graph.num_edges
         bfmt = 'c' * graph.num_boundary_cycles
@@ -149,7 +168,7 @@ class LaTeXOutput(object):
         parts.append(r"\\")
         parts.append("\n")
         parts.append(r"\hline")
-        # one line per autormorphism
+        # one line per automorphism
         nr = 0
         for a in automorphisms:
             if a.is_identity():
@@ -163,7 +182,9 @@ class LaTeXOutput(object):
             # automorphisms are named A_n
             parts.append(r"$A_{%d}$" % nr)
             if a.is_orientation_reversing():
-                parts.append(r"$\dag$")
+                parts.append(r"${}^\dag$")
+            if a not in self._current_marked_graph_automorphisms:
+                parts.append(r"${}^\ddag$")
             # write vertices permutation
             parts.append(" & ")
             parts.append(str.join("&", [(r"{%s}" % LaTeXOutput._vertex_label(a.pv[v]))
@@ -186,7 +207,7 @@ class LaTeXOutput(object):
 \end{center}
 """)
         # add it to the output
-        self._current_graph.automorphisms = str.join('', parts)
+        self._current_graph_data.automorphisms = str.join('', parts)
         
 
     def add_differential_start(self, omit_null=True):
@@ -259,7 +280,7 @@ class LaTeXOutput(object):
 \end{longtable}
 """)
             # add it to the current graph
-            self._current_graph.differentials = str.join('', parts)
+            self._current_graph_data.differentials = str.join('', parts)
 
 
     def add_markings(self, name, markings, per_row=8):
@@ -270,65 +291,24 @@ class LaTeXOutput(object):
         graph = markings.graph
         n = graph.num_boundary_cycles
         N = len(markings.numberings)
-        self._total_marked_graphs += N
         self._section_marked_graphs += N
         if N == factorial(n):
-            self._current_graph.markings = (r"""
+            self._current_graph_data.markings = (r"""
 Fatgraph $%(name)s$ only has the identity automorphism, so the
 marked fatgraphs $%(name)s^{(0)}$ to $%(name)s^{(%(num_markings)d)}$
 are formed by decorating boundary cycles of $%(name)s$ with
 all permutations of $(%(basetuple)s)$ in lexicographic order.
+See Section ``Markings of fatgraphs with trivial automorphisms''
+for a complete table.
 """ % dict(name=name, num_markings=N,
            basetuple=(str.join(',', [str(x) for x in xrange(n)]))))
+            if self._appendix_graph_markings is None:
+                # only need to do this once per document
+                self._appendix_graph_markings = self._fmt_numberings(
+                        markings.numberings, 'G', n, per_row)
         else:
-            parts = [ ]
-            W = 1 + (per_row if N>per_row else N)
-            cfmt = '|c' * (W-1)
-            # make one table per each group of `per_row` markings
-            parts.append(r"""
-    \begin{center}
-      \newcommand\Rhead{\rowcolor{Tan!25}}
-      \newcommand\Reven{\rowcolor{Tan!10}}
-      \newcommand\Rodd{\rowcolor{white}}
-      \begin{longtable}{l%(cfmt)s}
-        \multicolumn{%(width)d}{l}{} \endfirsthead
-        \multicolumn{%(width)d}{l}{\em (continued.)} \endhead
-    """ % dict(cfmt=cfmt, width=W))
-            done = 0
-            for ms in iterators.chunks([per_row] * (N / per_row) + [N % per_row],
-                                       markings.numberings):
-                # if N % per_row == 0, we have an extra cycle; skip it
-                if len(ms) == 0:
-                    break
-                # table header lists graph/marking names
-                if done > 0:
-                    parts.append(r"""\pagebreak[0]""")
-                parts.append(r""" \Rhead""")
-                for j in xrange(done, done + len(ms)):
-                    parts.append(r""" & $%s^{(%d)}$""" % (name, j))
-                parts.append(r"""\\""")
-                parts.append(r"""\nopagebreak""")
-                parts.append('\n')
-                # each row lists the marking of a certain boundary cycle
-                for b in range(graph.num_boundary_cycles):
-                    if b == graph.num_boundary_cycles - 1:
-                        parts.append(r"""\nopagebreak""")
-                    if b % 2 == 0:
-                        parts.append(r"""\Reven""")
-                    else:
-                        parts.append(r"""\Rodd""")
-                    parts.append("$%s$" % LaTeXOutput._BOUNDARY_CYCLES_LABELS[b])
-                    parts.append(r""" & """)
-                    parts.append(str.join(" & ",
-                                        (str(ms[j][b]) for j in range(len(ms)))))
-                    parts.append(r""" \\""")
-                    parts.append('\n')
-                done += per_row
-            parts.append(r"""
-      \end{longtable}
-    \end{center}
-    """)
-            self._current_graph.markings = str.join('', parts)
+            self._current_graph_data.markings = self._fmt_numberings(
+                markings.numberings, name, n, per_row)
 
 
     ##
@@ -385,6 +365,58 @@ all permutations of $(%(basetuple)s)$ in lexicographic order.
                 ))
         parts.append(r"""
 \end{align*}
+""")
+        return str.join('', parts)
+
+
+    @staticmethod
+    def _fmt_numberings(numberings, name, num_boundary_cycles, per_row):
+        N = len(numberings)
+        W = 1 + (per_row if N>per_row else N)
+        cfmt = '|c' * (W-1)
+        parts = [ ]
+        # make one table per each group of `per_row` markings
+        parts.append(r"""
+\begin{center}
+  \newcommand\Rhead{\rowcolor{Tan!25}}
+  \newcommand\Reven{\rowcolor{Tan!10}}
+  \newcommand\Rodd{\rowcolor{white}}
+  \begin{longtable}{l%(cfmt)s}
+    \multicolumn{%(width)d}{l}{} \endfirsthead
+    \multicolumn{%(width)d}{l}{\em (continued.)} \endhead
+""" % dict(cfmt=cfmt, width=W))
+        done = 0
+        for ms in iterators.chunks([per_row] * (N / per_row) + [N % per_row], numberings):
+            # if N % per_row == 0, we have an extra cycle; skip it
+            if len(ms) == 0:
+                break
+            # table header lists graph/marking names
+            if done > 0:
+                parts.append(r"""\pagebreak[0]""")
+            parts.append(r""" \Rhead""")
+            for j in xrange(done, done + len(ms)):
+                parts.append(r""" & $%s^{(%d)}$""" % (name, j))
+            parts.append(r"""\\""")
+            parts.append(r"""\nopagebreak""")
+            parts.append('\n')
+            # each row lists the marking of a certain boundary cycle
+            for b in range(num_boundary_cycles):
+                if b == num_boundary_cycles - 1:
+                    parts.append(r"""\nopagebreak""")
+                if b % 2 == 0:
+                    parts.append(r"""\Reven""")
+                else:
+                    parts.append(r"""\Rodd""")
+                parts.append("$%s$" % LaTeXOutput._BOUNDARY_CYCLES_LABELS[b])
+                parts.append(r""" & """)
+                parts.append(str.join(" & ",
+                                    (str(ms[j][b]) for j in range(len(ms)))))
+                parts.append(r""" \\""")
+                parts.append('\n')
+            done += per_row
+        parts.append(r"""
+  \end{longtable}
+\end{center}
 """)
         return str.join('', parts)
 

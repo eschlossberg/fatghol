@@ -93,16 +93,16 @@ Fatgraph vertices are marked with lowercase latin letters
 numeral starting from ``1''; boundary cycles are denoted
 by lowercase greek letters ``$\alpha$'', ``$\beta$'', etc.
 
-Automorphisms are only listed if the automorphism group is
-non-trivial.  Automorphisms are specified by their action on the set
-of vertices, edges, and boundary cycles: for each automorphism $A_k$,
-a table line lists how it permutes vertices, edges and boundary cycles
-relative to the identity morphism $A_0$.
+Automorphisms are specified by their action on the set of vertices,
+edges, and boundary cycles: for each automorphism $A_k$, a table line
+lists how it permutes vertices, edges and boundary cycles relative to
+the identity morphism $A_0$.  The automorphism table is printed only
+if the automorphism group is non-trivial.
 
-If a fatgraph has automorphisms that reverse the orientation of the
-associated cell, then its picture is crossed out;
-orientation-reversing automorphisms are marked with a ``$\dag$''
-symbol in the automorphism table.
+Automorphisms that reverse the orientation of the unmarked fatgraph
+are indicated with a ``$\dag$'' symbol in the automorphism table;
+those that reverse the orientation of the marked fatgraphs are
+distinguished with a ``$\ddag$'' sign.
 
 If a fatgraph is orientable, a ``Markings'' section lists all the
 inequivalent ways of assigning distinct numbers $\{0, \ldots, n-1\}$
@@ -129,13 +129,50 @@ represented by the (single) corner~\corner{a}{0}{1}.
 \section{<<section.title>>}
 <<section.intro>>
 
-There are <<section.num_graphs>> undecorated fatgraphs in this section,
-originating <<section.num_marked_graphs>> marked fatgraphs.
+<<if section.num_graphs > 1>>%
+There are <<section.num_graphs>> unmarked fatgraphs in this section,
+<<else>>% only one graph
+There is 1 unmarked fatgraph in this section,
+<<endif>>%
+<<if section.num_marked_graphs > 1>>
+originating <<section.num_marked_graphs>> marked fatgraphs 
+(<<if section.num_orientable_marked_graphs > 0>>%
+  <<if section.num_orientable_marked_graphs == section.num_marked_graphs>>%
+    all of them
+  <<else>>%
+    <<section.num_orientable_marked_graphs>>
+  <<endif>> %
+  orientable%
+ <<endif>>%
+ <<if section.num_orientable_marked_graphs * section.num_nonorientable_marked_graphs != 0>>%
+ , and %
+ <<endif>>%
+ <<if section.num_nonorientable_marked_graphs > 0>>%
+   <<if section.num_nonorientable_marked_graphs == section.num_marked_graphs>>%
+   all of them
+   <<else>>%
+     <<section.num_nonorientable_marked_graphs>>
+   <<endif>> %
+   nonorientable%
+ <<endif>>).
+<<else>>% 1 marked counterpart as well
+  <<if section.num_orientable_marked_graphs > 0>>%
+    originating 1 orientable marked fatgraph.
+  <<else>>
+    originating 1 non-orientable marked fatgraph.
+  <<endif>>
+<<endif>>
 
 <<for G in section.graphs >>
 \vspace{2em}
-\subsection{The Fatgraph $<<G.name>>$%
-  <<if not G.orientable>>{\em (non-orientable)}<<endif>>}
+\subsection{The Fatgraph $<<G.name>>$ %
+  {\em (<<if not G.orientable>>non-orientable, <<endif>>%
+    <<if G.num_orientable_markings == 0>>%
+      no
+    <<else>>%
+      $<<G.num_orientable_markings>>$
+    <<endif>> %
+    orientable marking<<if G.num_orientable_markings != 1>>s<<endif>>)}}%
 \vspace{-1em}
 \begin{tabular}{lr}
   \begin{minipage}{0.45\textwidth}
@@ -151,7 +188,7 @@ originating <<section.num_marked_graphs>> marked fatgraphs.
 \end{verbatim}
   \end{minipage}
 \end{tabular}
-\vspace{-3em}
+\vspace{-2em}
 
 \subsubsection{Boundary cycles}
 <<G.boundary_cycles>>
@@ -177,7 +214,24 @@ originating <<section.num_marked_graphs>> marked fatgraphs.
 <<endfor>>%% end sections
 
 
+<<if appendices>>
+\appendix
+
+<<if appendix_graph_markings>>
+\section{Markings of fatgraphs with trivial automorphisms}
+\label{appendix:markings}
+
+This appendix shows the numbering of marked fatgraphs when the base
+unmarked fatgraph $G$ has only the trivial automorphism.
+
+<<appendix_graph_markings>>
+<<endif>>%% appendix graph markings
+
+<<endif>>%% end appendices
+
+
 \end{document}
+
 
 %%% Local Variables: 
 %%% mode: latex
