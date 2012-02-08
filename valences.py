@@ -5,15 +5,15 @@
 __docformat__ = 'reStructuredText'
 
 
-import cython
+#import cython
 
 
 from combinatorics import PartitionIterator
 
 
-@cython.ccall
-@cython.locals(g=cython.int, n=cython.int,
-               L=cython.int, V=cython.int, result=set)
+#@cython.ccall
+#@cython.locals(g=cython.int, n=cython.int,
+#               L=cython.int, V=cython.int, result=set)
 def vertex_valences_for_given_g_and_n(g,n):
     """Return all possible valences of fatgraphs appearing in the
     `(g,n)` complex.

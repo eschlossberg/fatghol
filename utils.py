@@ -7,7 +7,7 @@ These were mostly ripped out of `rg.py` for readability.
 __docformat__ = 'reStructuredText' 
 
 
-import cython
+#import cython
 
 ## stdlib imports
 
@@ -36,7 +36,7 @@ def concat(seqs):
     return reduce(operator.add, seqs)
 
 
-@cython.cclass
+#@cython.cclass
 class itranslate(Iterator):
     """Return items from a sequence, substituting them as specified.
 
@@ -125,7 +125,7 @@ def maybe(deco, default=False, cond=None):
 
 
 #@cython.ccall(int)
-@cython.locals(arg=str, result=cython.int)
+#@cython.locals(arg=str, result=cython.int)
 def positive_int(arg):
     """Convert a string or number to a positive integer, if possible.
     Behaves just like the built-in `int` (which see), and additionally
@@ -138,7 +138,7 @@ def positive_int(arg):
     return result
 
 
-@cython.locals(L=list, p=cython.int)
+#@cython.locals(L=list, p=cython.int)
 #@cython.ccall(list)
 def rotated(L, p):
     """
@@ -155,7 +155,7 @@ def rotated(L, p):
 
 
 #@cython.ccall(int)
-@cython.locals(x=cython.int)
+#@cython.locals(x=cython.int)
 def sign(x):
     """Return the sign of `x`: that is, 0 if `x` is zero, +1 iff it is
     positive, -1 iff it is negative.

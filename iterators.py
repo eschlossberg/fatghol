@@ -4,14 +4,14 @@
 """
 __docformat__ = 'reStructuredText'
 
-import cython
+#import cython
 
 from collections import Iterator
 
 
 ## main content
 
-@cython.cclass
+#@cython.cclass
 class BufferingIterator(Iterator):
     """Iterate over items stored in an internal buffer; when all items
     in the buffer have been handed out to caller, refill the buffer by
@@ -75,7 +75,7 @@ class BufferingIterator(Iterator):
         raise StopIteration
 
 
-@cython.cclass
+#@cython.cclass
 class chunks(Iterator):
     """Lump items from iterable into chunks of specified size.
 
@@ -116,7 +116,7 @@ class chunks(Iterator):
         self.sizes = sizes
         self.iterable = iter(iterable)
 
-    @cython.locals(x=cython.int)
+    #@cython.locals(x=cython.int)
     def next(self):
         """Return next chunk."""
         self.current_chunk += 1
@@ -126,7 +126,7 @@ class chunks(Iterator):
                    for x in xrange(self.sizes[self.current_chunk]) ]
 
 
-@cython.cclass
+#@cython.cclass
 class IndexedIterator(Iterator):
     """Return the items corresponding to indices `start`, `start+1`, etc.
     in the initialization sequence `lst`.

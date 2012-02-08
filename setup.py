@@ -95,10 +95,10 @@ setup (
 
     # run-time dependencies
     install_requires = [
-        # Cython (not really required)
-        'cython',
         # tempita -- simple templating
         'tempita',
+        # Cython (not really required for now)
+        #'cython',
         ],
 
     # additional non-Python files to be bundled in the package

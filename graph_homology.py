@@ -4,7 +4,7 @@
 """
 __docformat__ = 'reStructuredText'
 
-import cython
+#import cython
 
 ## stdlib imports
 
@@ -48,22 +48,22 @@ import timing
 
 
 
-@cython.cclass
+#@cython.cclass
 class MgnChainComplex(ChainComplex):
     """A specialized `ChainComplex`.
     """
-    @cython.locals(length=cython.int, i=cython.int)
+    #@cython.locals(length=cython.int, i=cython.int)
     def __init__(self, length):
         ChainComplex.__init__(self, length)
         for i in xrange(length):
             self.module[i] = AggregateList()
 
     #@cython.ccall(DifferentialComplex))
-    @cython.locals(m=list, D=DifferentialComplex,
-                   i=cython.int, p=cython.int, q=cython.int,
-                   j0=cython.int, k0=cython.int, s=cython.int,
-                   j=cython.int, k=cython.int, edgeno=cython.int)
-                   #pool1=NumberedFatgraphPool, pool2=NumberedFatgraphPool)
+    #@cython.locals(m=list, D=DifferentialComplex,
+    #               i=cython.int, p=cython.int, q=cython.int,
+    #               j0=cython.int, k0=cython.int, s=cython.int,
+    #               j=cython.int, k=cython.int, edgeno=cython.int)
+    #               #pool1=NumberedFatgraphPool, pool2=NumberedFatgraphPool)
     def compute_boundary_operators(self):
         #: Matrix form of boundary operators; the `i`-th differential
         #: `D[i]` is `dim C[i-1]` rows (range) by `dim C[i]` columns
@@ -121,7 +121,7 @@ class MgnChainComplex(ChainComplex):
 
 
 
-@cython.cclass
+#@cython.cclass
 class NumberedFatgraph(Fatgraph):
     """A `Fatgraph` decorated with a numbering of the boundary components.
 
@@ -303,10 +303,10 @@ class NumberedFatgraph(Fatgraph):
     
 
     @ocache_contract
-    @cython.locals(edgeno=cython.int,
-                   v1=cython.int, v2=cython.int,
-                   pos1=cython.int, pos2=cython.int,
-                   n=cython.int)
+    #@cython.locals(edgeno=cython.int,
+    #               v1=cython.int, v2=cython.int,
+    #               pos1=cython.int, pos2=cython.int,
+    #               n=cython.int)
     #@cython.cfunc(NumberedFatgraph)
     def contract(self, edgeno):
         """Return a new `NumberedFatgraph` instance, obtained by
@@ -361,7 +361,7 @@ class NumberedFatgraph(Fatgraph):
         
 
     #@ocache_isomorphisms
-    @cython.ccall
+    #@cython.ccall
     def isomorphisms(G1, G2):
         """Iterate over isomorphisms from `G1` to `G2`.
 
@@ -418,7 +418,7 @@ class NumberedFatgraph(Fatgraph):
 
 
 
-@cython.cclass
+#@cython.cclass
 class NumberedFatgraphPool(object):
     """An immutable virtual collection of `NumberedFatgraph`s.
     Items are all distinct (up to isomorphism) decorations of a
@@ -479,11 +479,11 @@ class NumberedFatgraphPool(object):
                                                  (0, 1, 2), (0, 0, 1), (0, 5, 0)]): 0,
                                   BoundaryCycle([(0, 4, 5)]): 1})
     """
-    @cython.locals(graph=Fatgraph,
-                   bc=dict, n=cython.int, orienbtable=cython.bint,
-                   P=list, P_=list, automorphisms=list,
-                   p=Permutation, src=cython.int, dst=cython.int, dst_cy=BoundaryCycle,
-                   numberings=list, candidate=list)
+    #@cython.locals(graph=Fatgraph,
+    #               bc=dict, n=cython.int, orienbtable=cython.bint,
+    #               P=list, P_=list, automorphisms=list,
+    #               p=Permutation, src=cython.int, dst=cython.int, dst_cy=BoundaryCycle,
+    #               numberings=list, candidate=list)
     def __init__(self, graph):
         bc = graph.boundary_cycles
         n = len(bc) # == graph.num_boundary_cycles
@@ -538,8 +538,8 @@ class NumberedFatgraphPool(object):
         self.num_automorphisms = len(automorphisms)
 
     @staticmethod
-    @cython.locals(candidate=list, P=list, already=list,
-                   p=Permutation)
+    #@cython.locals(candidate=list, P=list, already=list,
+    #               p=Permutation)
     def _unseen(candidate, P, already):
         """Return `False` iff any of the images of `candidate` by an
         element of group `P` is contained in set `already`.
@@ -550,7 +550,7 @@ class NumberedFatgraphPool(object):
         return True
 
 
-    @cython.locals(pos=cython.int)
+    #@cython.locals(pos=cython.int)
     def __getitem__(self, pos):
         return NumberedFatgraph(self.graph,
                                 zip(self.graph.boundary_cycles, self.numberings[pos]))
@@ -573,9 +573,9 @@ class NumberedFatgraphPool(object):
         return repr(self)
         
 
-    @cython.locals(edge=cython.int,
-                   #other=NumberedFatgraphPool,
-                   g0=Fatgraph, g1=Fatgraph, g2=Fatgraph)
+    #@cython.locals(edge=cython.int,
+    #               #other=NumberedFatgraphPool,
+    #               g0=Fatgraph, g1=Fatgraph, g2=Fatgraph)
     def facets(self, edge, other):
         """Iterate over facets obtained by contracting `edge` and
         projecting onto `other`.
@@ -670,8 +670,8 @@ class NumberedFatgraphPool(object):
             yield (j, k, s)
 
     #@cython.cfunc
-    @cython.locals(numbering=Permutation,
-                   i=cython.int, j=cython.int, p=Permutation)
+    #@cython.locals(numbering=Permutation,
+    #               i=cython.int, j=cython.int, p=Permutation)
     def _index(self, numbering):
         """
         Return pair `(j, p)` such that `j` is the index of `p * numbering`,
@@ -689,11 +689,11 @@ class NumberedFatgraphPool(object):
         
 
 
-@cython.locals(g=cython.int, n=cython.int,
-               min_edges=cython.int, top_dimension=cython.int,
-               C=MgnChainComplex,
-               #pool=NumberedFatgraphPool,
-               chi=Fraction, grade=cython.int, i=cython.int)
+#@cython.locals(g=cython.int, n=cython.int,
+#               min_edges=cython.int, top_dimension=cython.int,
+#               C=MgnChainComplex,
+#               #pool=NumberedFatgraphPool,
+#               chi=Fraction, grade=cython.int, i=cython.int)
 def FatgraphComplex(g, n):
     """Return the fatgraph complex for given genus `g` and number of
     boundary components `n`.

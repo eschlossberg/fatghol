@@ -5,7 +5,7 @@
 __docformat__ = 'reStructuredText'
 
 
-import cython
+#import cython
 
 ## stdlib imports
 
@@ -545,8 +545,8 @@ class Fatgraph(EqualIfIsomorphic):
         return self.isomorphisms(self)
 
 
-    @cython.locals(vertices=list, corners=list,
-                   v=cython.int, i=cython.int, corner=tuple)
+    #@cython.locals(vertices=list, corners=list,
+    #               v=cython.int, i=cython.int, corner=tuple)
     @staticmethod
     def _first_unused_corner(vertices, corners):
         # fast-forward to the first unused corner
@@ -1018,7 +1018,7 @@ class Fatgraph(EqualIfIsomorphic):
             orientation = new_edge_numbering,
             )
 
-    @cython.locals(L=list, p=cython.int)
+    #@cython.locals(L=list, p=cython.int)
     #@cython.cfunc(list)
     @staticmethod
     def _rotate_and_trim(V, p):

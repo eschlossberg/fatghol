@@ -14,7 +14,7 @@ import weakref
 
 ## additional imports
 
-import cython
+#import cython
 
 ## local imports
 
@@ -23,7 +23,7 @@ from iterators import Iterator
 
 ## auxiliary classes
 
-@cython.cclass
+#@cython.cclass
 class _IteratorRecorder(object):
     """Cache results from a given iterator.  Client classes provided
     by the `replay()` method will then replay the iterator history;
@@ -73,7 +73,7 @@ class _IteratorRecorder(object):
         return _IteratorReplayer(self)
     
 
-@cython.cclass
+#@cython.cclass
 class _IteratorReplayer(Iterator):
     """Replay values recorded into a given `_IteratorRecorder` class.
     Multiple players can replay from one recorded source
@@ -107,7 +107,7 @@ class _IteratorReplayer(Iterator):
             raise
 
 
-@cython.cclass
+#@cython.cclass
 class Caching(object):
     """Instances of this class provide an interface for use by caches
     based on a `dict` subclass.
@@ -127,7 +127,7 @@ class Caching(object):
 # store 
 _func_cache = defaultdict(dict)
 
-@cython.ccall
+#@cython.ccall
 def fcache(func):
     """Cache result of a generic function.
 
@@ -152,7 +152,7 @@ def fcache(func):
     return wrapper
 
 
-@cython.ccall
+#@cython.ccall
 def ocache0(func):
     """Cache result of a nullary object method.
     
@@ -176,7 +176,7 @@ def ocache0(func):
     return wrapper
 
 
-@cython.ccall
+#@cython.ccall
 def ocache_contract(func):
     """Cache result of the `Fatgraph.contract` method.
     
@@ -203,7 +203,7 @@ def ocache_contract(func):
     return wrapper
 
 
-@cython.ccall
+#@cython.ccall
 def ocache_eq(func):
     """Cache result of the 2-ary symmetric `Fatgraph.__eq__` method.
 
@@ -235,7 +235,7 @@ def ocache_eq(func):
     return wrapper
 
 
-@cython.ccall
+#@cython.ccall
 def ocache_isomorphisms(func):
     """Cache results of `isomorphisms(g1,g2)` methods, which return an
     iterator/generator.

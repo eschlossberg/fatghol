@@ -15,7 +15,12 @@ if sys.version < '2.6.0':
                      % (sys.argv[0], sys.version.split()[0]))
     sys.exit(1)
 
-import cython
+try:
+    import cython
+    cython_compiled = cython.compiled
+except ImportError:
+    # definitely we're not cython-compiled, then
+    cython_compiled = False
 
 from collections import defaultdict
 from fractions import Fraction
@@ -181,7 +186,7 @@ parser.add_argument('action', metavar='ACTION', default='help',
 parser.add_argument('args', metavar='ARG', nargs='*',
                     help="Arguments depend on the actual action, see above.")
 # option arguments
-if not cython.compiled:
+if not cython_compiled:
     parser.add_argument("-D", "--debug", nargs='?',
                         dest="debug", default=None, const='debug',
                         help="""Enable debug features:
@@ -241,7 +246,7 @@ if __debug__ and cmdline.debug is None:
                         % str.join(" ", [sys.executable, '-O'] + sys.argv))
 
 # enable optional features
-if not cython.compiled and cmdline.debug is not None:
+if not cython_compiled and cmdline.debug is not None:
     debug = cmdline.debug.split(",")
     if 'pydb' in debug:
         try:
@@ -277,7 +282,7 @@ else:
 
 # shell -- start interactive debugging shell
 if 'shell' == cmdline.action:
-    if cython.compiled:
+    if cython_compiled:
         logging.error("The 'shell' command is not available when compiled.")
         sys.exit(1)
     else:

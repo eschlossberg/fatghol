@@ -5,7 +5,7 @@
 __docformat__ = 'reStructuredText'
 
 
-import cython
+#import cython
 
 import logging
 import os
@@ -13,10 +13,10 @@ import os.path
 from zlib import adler32
 
 
-@cython.locals(filename=str,
-               checksum=cython.long, result=list,
-               checkpoint_file=object, checksum_file=object,
-               error=Exception)
+#@cython.locals(filename=str,
+#               checksum=cython.long, result=list,
+#               checkpoint_file=object, checksum_file=object,
+#               error=Exception)
 #@cython.cfunc(list)
 def load(filename):
     from rg import Fatgraph, Vertex, BoundaryCycle
@@ -46,10 +46,10 @@ def load(filename):
             raise error
         
 
-@cython.locals(items=list, filename=str,
-               checksum=cython.long,
-               checkpoint_file=object, checksum_file=object,
-               line=str, error=Exception)
+#@cython.locals(items=list, filename=str,
+#               checksum=cython.long,
+#               checkpoint_file=object, checksum_file=object,
+#               line=str, error=Exception)
 #@cython.cfunc
 def save(items, filename):
     checksum = 0

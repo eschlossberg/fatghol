@@ -4,7 +4,7 @@
 """
 __docformat__ = 'reStructuredText'
 
-import cython
+#import cython
 
 import itertools
 
@@ -210,7 +210,7 @@ class OrderedSetPartitionsIterator(object):
     def __iter__(self):
         return self
 
-    @cython.locals(index=cython.int, size=cython.int, x=cython.int)
+    #@cython.locals(index=cython.int, size=cython.int, x=cython.int)
     def next(self):
         if self.state is None:
             # initial partition arrangement is the most obvious one:
@@ -235,8 +235,8 @@ class OrderedSetPartitionsIterator(object):
     def __next__(self):
         return self.next()
 
-    @cython.locals(s=list, end=cython.int, off=cython.int,
-                   inc=cython.int, cur=cython.int, l=cython.int)
+    #@cython.locals(s=list, end=cython.int, off=cython.int,
+    #               inc=cython.int, cur=cython.int, l=cython.int)
     def _next_state(self):
         s = self.state
         end = len(s) - 1
@@ -307,7 +307,7 @@ class SetProductIterator_(object):
     def __iter__(self):
         return self
 
-    @cython.locals(result=tuple, i=cython.int)
+    #@cython.locals(result=tuple, i=cython.int)
     def next(self):
         if self.__closed:
             raise StopIteration
@@ -390,7 +390,7 @@ class Permutation(dict):
                 assert 0 <= src
                 assert 0 <= dst
 
-    @cython.locals(x=cython.int)
+    #@cython.locals(x=cython.int)
     def __iter__(self):
         """Iterate over values."""
         return iter([self[x] for x in xrange(len(self))])
@@ -420,7 +420,7 @@ class Permutation(dict):
                 return False
         return True
 
-    @cython.locals(x=cython.int)
+    #@cython.locals(x=cython.int)
     def rearranged(self, seq):
         """Return a new list containing the items in `seq`, rearranged
         according to this permutation.
@@ -439,7 +439,7 @@ class Permutation(dict):
                % (len(seq), len(self))
         return [ seq[self[x]] for x in xrange(len(self)) ]
 
-    @cython.locals(p=list, n=cython.int, s=cython.int, j=cython.int, q=cython.int)
+    #@cython.locals(p=list, n=cython.int, s=cython.int, j=cython.int, q=cython.int)
     def sign(self):
         """Return sign of this `Permutation`.
 
@@ -489,7 +489,7 @@ class Permutation(dict):
         return s
 
 
-    @cython.locals(i=cython.int)
+    #@cython.locals(i=cython.int)
     def translate(self, seq):
         """Alter `seq`, applying this permutation to the value of its items.
         Return modified sequence.
@@ -536,7 +536,7 @@ class Permutation(dict):
             yield self[item]
 
 
-    @cython.locals(result=list)
+    #@cython.locals(result=list)
     def ltranslate(self, iterable):
         """Retutn list of items from `iterable`, permuted according to
         this `Permutation` instance.
@@ -651,8 +651,8 @@ class PermutationList(object):
     def __contains__(self, item):
         return len(item) == self.__order and set(item) == self.__base_set
 
-    @cython.locals(r=cython.long, n=cython.long,
-                   x=cython.int, i=cython.int, j=cython.int, temp=cython.int)
+    #@cython.locals(r=cython.long, n=cython.long,
+    #               x=cython.int, i=cython.int, j=cython.int, temp=cython.int)
     def __getitem__(self, r):
         """Return permutation at `r`-th place."""
         n = self.__order
@@ -710,7 +710,7 @@ class PermutationIterator(object):
     def __iter__(self):
         return self
 
-    @cython.locals(i=cython.long, seq=list, j=cython.int)
+    #@cython.locals(i=cython.long, seq=list, j=cython.int)
     def next(self):
         """Return next permutation of initially given `sequence`."""
         i = self.rank
@@ -771,7 +771,7 @@ class InplacePermutationIterator(object):
     def __iter__(self):
         return self
 
-    @cython.locals(seq=list, end=cython.int, i=cython.int, j=cython.int, k=cython.int)
+    #@cython.locals(seq=list, end=cython.int, i=cython.int, j=cython.int, k=cython.int)
     def next(self):
         """Return next permutation of initially given `sequence`."""
         if self.enumeration_finished:
@@ -849,7 +849,7 @@ class FixedLengthPartitionIterator(object):
     def __iter__(self):
         return self
 
-    @cython.locals(i=cython.int, head=cython.long)
+    #@cython.locals(i=cython.int, head=cython.long)
     def next(self):
         if self.done:
             raise StopIteration
