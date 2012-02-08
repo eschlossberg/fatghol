@@ -498,7 +498,7 @@ class NumberedFatgraphPool(object):
     """
     #@cython.locals(graph=Fatgraph,
     #               bc=dict, n=cython.int, orienbtable=cython.bint,
-    #               P=list, P_=list, automorphisms=list,
+    #               P=list, A=list, automorphisms=list,
     #               p=Permutation, src=cython.int, dst=cython.int, dst_cy=BoundaryCycle,
     #               numberings=list, candidate=list)
     def __init__(self, graph):
@@ -509,7 +509,7 @@ class NumberedFatgraphPool(object):
         ## Find out which automorphisms permute the boundary cycles among
         ## themselves.
         P = []  #: permutation of boundary cycles induced by `a \in Aut(G)`
-        P_ = [] #: corresponding graph automorphisms: `P[i]` is induced by `P_[i]`
+        A = []  #: corresponding graph automorphisms: `P[i]` is induced by `A[i]`
         automorphisms = [] #: `NumberedFatgraph` automorphisms
         for a in graph.automorphisms():
             p = Permutation()
@@ -532,7 +532,7 @@ class NumberedFatgraphPool(object):
             if (p not in P):
                 # `a` induces permutation `p` on the set `bc`
                 P.append(p)
-                P_.append(a)
+                A.append(a)
         assert len(P) > 0 # XXX: should verify that `P` is a group!
 
         ## There will be as many distinct numberings as there are cosets
@@ -549,9 +549,9 @@ class NumberedFatgraphPool(object):
         # things to remember
         self.graph = graph
         self.is_orientable = orientable
-        self.P = P
-        self.P_ = P_
         self.numberings = numberings
+        self.P = P
+        self.A = A
         self.num_automorphisms = len(automorphisms)
 
     @staticmethod
@@ -698,7 +698,7 @@ class NumberedFatgraphPool(object):
             try:
                 j = self.numberings.index(p.rearranged(numbering))
                 # once a `p` has matched, there's no reason to try others
-                return (j, self.P_[i])
+                return (j, self.A[i])
             except ValueError:
                 pass
         assert False, \
