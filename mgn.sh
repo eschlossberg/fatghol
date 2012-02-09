@@ -1,8 +1,14 @@
+
 #! /bin/sh
 
-basedir="`dirname $0`"
-if [ "$basedir" = '.' ]; then
-  basedir="`pwd`"
+if [ -n "$JOB_ID" ]; then
+    # hard-code directory, as SGE runs this from the spool
+    basedir="$SGE_O_WORKDIR"
+else
+    basedir="`dirname $0`"
+    if [ "$basedir" = '.' ]; then
+        basedir="`pwd`"
+    fi
 fi
 
 ## set up Python module search path
@@ -17,7 +23,7 @@ arch="`uname -m`"
 v="`python -V 2>&1 | cut -d' ' -f2 | cut -d. -f1,2`"
 os="`uname -s | tr A-Z a-z`"
 
-PYTHONPATH="$basedir":"$basedir"/build/lib.${os}-${arch}-${v}:$PYTHONPATH; export PYTHONPATH
+PYTHONPATH="$basedir":"$basedir"/build/lib.${os}-${arch}-${v}:"$basedir"/sw/lib/python:$PYTHONPATH; export PYTHONPATH
 LD_LIBRARY_PATH="$basedir"/build/lib.${os}-${arch}-${v}:"$basedir"/sw/lib/python${v}:"$basedir"/sw/lib:"$basedir":$LD_LIBRARY_PATH; export LD_LIBRARY_PATH
 
 ## try to use GNU time
