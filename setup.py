@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 #
-__version__ = '5.4.dev' # see: http://packages.python.org/distribute/setuptools.html
+__version__ = '5.4' # see: http://packages.python.org/distribute/setuptools.html
 
 # See http://packages.python.org/distribute/setuptools.html for details
 from distribute_setup import use_setuptools
