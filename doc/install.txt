@@ -1,0 +1,271 @@
+.. This file follows reStructuredText markup syntax; see
+   http://docutils.sf.net/rst.html for more information
+
+
+--------------------------
+ Installation of FatGHoL
+--------------------------
+
+.. note::
+
+   Although it is *theoretically* possible to install FatGHoL in
+   Windows or MacOSX, I have never attempted that.
+
+   Therefore, **the following instructions are Linux-only.**
+
+These instructions show how to install FatGHoL from its `source
+repository`_ into a separate directory. This has the advantage that
+all code is confined in a single directory, and can thus be easily
+replaced/removed.  The instructions can be easily adapted to
+system-wide installation by anyone having a bit of familiarity with
+Linux system administration.
+
+Although FatGHoL is a pure-`Python`_ module, it depends on the LinBox_
+exact linear algebra library for computing the rank of homology
+matrices.  Unfortunately, this complicates the installation procedure:
+LinBox_ depends on several other libraries, which must be downloaded
+and compiled.  The sections below detail what should be installed in
+order to get a working FatGHoL installation.
+
+
+Initial installation
+====================
+
+0. The prerequisite of prerequisites: C++ compiler and SVN
+----------------------------------------------------------
+
+Before you install anything else, you need to have a working C and C++
+compiler on the system, and the SubVersion_ (SVN) source control system.
+This is generally not a problem on Linux systems, which come with the
+GCC_ compiler preinstalled, and SVN is available as an optional
+package.  To check if you have a C++ compiler installed, type the
+following commands at your shell prompt::
+
+  c++ --version; svn --version
+
+If you get output similar to the following (the version number and
+copyright may vary), then everything is OK::
+
+  c++ (Ubuntu/Linaro 4.6.1-9ubuntu3) 4.6.1
+  Copyright (C) 2011 Free Software Foundation, Inc.
+  This is free software; see the source for copying conditions.  There is NO
+  warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+  svn, version 1.6.12 (r955767)
+   compiled Aug  5 2011, 17:07:24
+
+  Copyright (C) 2000-2009 CollabNet.
+  Subversion is open source software, see http://subversion.tigris.org/
+  ...
+
+If you instead get a "command not found" error, then you need to
+install the C/C++ compiler and SVN:
+
+* On Debian_ and Ubuntu_, install packages ``subversion``, ``gcc`` and
+  ``g++``::
+
+    sudo apt-get install subversion gcc g++
+
+* On Fedora_, RHEL_, or CentOS_, install packages ``subversion``,
+  ``gcc`` and ``gcc-c++``::
+
+    # run this command as "root" user
+    yum install subversion gcc gcc-c++
+
+* On other Linux distributions, please refer to your distribution
+  website for instructions.
+
+
+1. Download the FatGHoL sources into the installation directory
+---------------------------------------------------------------
+
+Check-out the ``fatghol`` files into the installation directory::
+
+    svn checkout http://fatghol.googlecode.com/svn/trunk/ "$HOME/fatghol"
+    cd "$HOME/fatghol"
+
+In this step and in the following ones, the directory
+``$HOME/fatghol`` is be the installation folder of FatGHoL.  You can
+change this to another directory path; any directory that's
+writable by your Linux account will be OK.
+
+
+2. Install auxiliary libraries and software
+-------------------------------------------
+
+This is the crucial step: we're now going to install all the software
+required by FatGHoL and LinBox_ in one go.  
+
+On Debian_ and Ubuntu_, the required software is already available as
+optional system packages, so it can be installed with ease; an
+installation script is provided for other Linux systems, which
+should be able to install the required software without assistance.
+
+* On Debian_ and Ubuntu_ systems, the following command should install
+  all the required software::
+
+    sudo apt-get install python-dev swig liblinbox-dev 
+
+* On other systems, you may want to use the ``prereq.sh`` script that
+  you can find in the FatGHoL installation directory.  Invoking the
+  script like this::
+
+    cd $HOME/fatghol
+    ./prereq.sh
+
+  will download and install all necessary dependencies into a
+  directory ``sw`` (created inside the FatGHoL installation
+  directory). 
+
+  You can edit the initial section of the ``prereq.sh`` script to
+  select what software needs to be installed on your system.  The
+  default is to install all dependencies.
+
+  .. note::
+
+    The ``prereq.sh`` script may take a very long time to complete;
+    especially the compilation of the linear algebra library ATLAS can
+    take hours!
+
+    On the other hand, if you interrupt the script, just invoke it
+    again with ``./prereq.sh`` and it should be able to pick up from
+    whence it left.
+
+* If the script does not work, you may want to attempt installation
+  from source of the packages, according to the instructions given on
+  the respective websites.  These are the packages needed by
+  FatGHoL: 
+
+  - Python_, version (at least) 2.6
+  - SWIG_ (version 1.3.40 is known to work well with FatGHoL)
+  - LinBox_, at least version 1.1.6
+
+  Note that the ``./mgn.sh`` script for running graph homology
+  computations expects the libraries to be available in the ``sw``
+  directory withing the FatGHoL installation directory.
+
+
+3. Install FatGHoL
+------------------
+
+Last step: run the ``setup.py`` script to compile the glue code that
+links FatGHoL with LinBox_::
+
+  cd $HOME/fatghol
+  python setup.py develop
+
+.. note::
+
+   If you have installed Python with the installation script
+   ``prereq.py``, then you need to type the following command *before*
+   you run ``setup.py``, to be sure it is executed by the Python
+   interpreter installed in step 2.::
+
+     PATH=$HOME/fatghol/sw/bin:$PATH
+     export PATH
+
+
+4. Check your installation
+--------------------------
+
+Now you can check your FatGHoL installation; just type the command:: 
+
+    ./mgn.sh selftest
+
+and you should see the following output appear on your screen
+(elapsed times will of course be different)::
+
+    Module 'rg' OK, passed all doctests.
+    Module 'homology' OK, passed all doctests.
+    Module 'graph_homology' OK, passed all doctests.
+    Module 'combinatorics' OK, passed all doctests.
+    Module 'iterators' OK, passed all doctests.
+    Module 'cyclicseq' OK, passed all doctests.
+    Checking homology algorithm (no checkpointing)
+      Computation of M_{0,3} homology: OK (elapsed: 0.010s)
+      Computation of M_{0,4} homology: OK (elapsed: 0.110s)
+      Computation of M_{0,5} homology: OK (elapsed: 24.030s)
+      Computation of M_{1,1} homology: OK (elapsed: 0.010s)
+      Computation of M_{1,2} homology: OK (elapsed: 0.180s)
+      Computation of M_{2,1} homology: OK (elapsed: 6.050s)
+    Checking homology algorithm (checkpointing)
+      Computation of M_{0,3} homology: OK (elapsed: 0.000s)
+      Computation of M_{0,4} homology: OK (elapsed: 0.120s)
+      Computation of M_{0,5} homology: OK (elapsed: 24.520s)
+      Computation of M_{1,1} homology: OK (elapsed: 0.000s)
+      Computation of M_{1,2} homology: OK (elapsed: 0.120s)
+      Computation of M_{2,1} homology: OK (elapsed: 6.020s)
+    Checking homology algorithm (restoring from checkpointed state)
+      Computation of M_{0,3} homology: OK (elapsed: 0.000s)
+      Computation of M_{0,4} homology: OK (elapsed: 0.040s)
+      Computation of M_{0,5} homology: OK (elapsed: 0.350s)
+      Computation of M_{1,1} homology: OK (elapsed: 0.000s)
+      Computation of M_{1,2} homology: OK (elapsed: 0.020s)
+      Computation of M_{2,1} homology: OK (elapsed: 0.090s)
+
+If you get errors, do not despair!  Feel free to write `me
+<mailto:riccardo.murri@gmail.com>` and I will do my best to help.
+
+
+
+Upgrade
+=======
+
+These instructions show how to upgrade the FatGHoL scripts to the
+latest version found in the `source repository`_.
+
+1. `cd` to the directory containing the FatGHoL virtualenv;
+   assuming it's named ``fatghol`` as in the above installation
+   instructions, you can issue the commands::
+
+     cd $HOME/fatghol # use '/opt/fatghol' if root
+
+2. Upgrade the `fatghol` source and run the `setup.py` script again::
+
+     svn update
+     export PATH=$HOME/fatghol/sw/bin:$PATH
+     python setup.py develop
+
+
+
+HTML Documentation
+==================
+
+HTML documentation for the FatGHoL programming interface can be read
+online at:
+
+  http://fatghol.googlecode.com/svn/trunk/doc/html/index.html
+
+You can also generate a local copy from the sources::
+
+  cd $HOME/fatghol # use '/opt/fatghol' if root
+  cd doc
+  make html
+
+Note that you need the Python package `Sphinx <http://sphinx.pocoo.org>`
+in order to build the documentation locally.
+
+
+.. References
+
+.. _gcc: http://gcc.gnu.org/
+.. _linbox: http://linalg.org/
+.. _python: http://www.python.org/
+.. _`source repository`: http://code.google.com/p/fatghol/source/browse
+.. _subversion: http://subversion.apache.org/
+.. _sphinx: http://sphinx.pocoo.org/
+.. _swig: http://www.swig.org/
+.. _virtualenv: http://pypi.python.org/pypi/virtualenv/1.7
+
+.. _debian: http://www.debian.org/
+.. _ubuntu: http://www.ubuntu.com/
+.. _rhel:   http://www.redhat.com/products/enterprise-linux/
+.. _centos: http://www.centos.org/
+.. _fedora: http://www.fedoraproject.org/
+
+
+.. (for Emacs only)
+..
+  Local variables:
+  mode: rst
+  End:

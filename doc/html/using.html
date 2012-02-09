@@ -1,0 +1,245 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Using FatGHoL &mdash; FatGHoL v5.4 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '5.4',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="FatGHoL v5.4 documentation" href="index.html" />
+    <link rel="next" title="FatGHoL programming API" href="api.html" />
+    <link rel="prev" title="Installation of FatGHoL" href="install.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="api.html" title="FatGHoL programming API"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="install.html" title="Installation of FatGHoL"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">FatGHoL v5.4 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="using-fatghol">
+<h1>Using FatGHoL<a class="headerlink" href="#using-fatghol" title="Permalink to this headline">¶</a></h1>
+<p>FatGHoL comes with a front-end script to compute the (co)homology of
+the moduli space of marked smooth Riemann surfaces (using Kontsevich&#8217;
+&#8220;graph homology&#8221; complex).</p>
+<p>The front-end script is called <tt class="docutils literal"><span class="pre">mgn.sh</span></tt>; you can invoke it with the
+<tt class="docutils literal"><span class="pre">--help</span></tt> command line option to get a recap of its functionality:</p>
+<div class="highlight-python"><pre>$ ./mgn.sh --help
+usage: mgn [-h] [-D [DEBUG]] [-l LOGFILE] [-o OUTFILE] [-s CHECKPOINT_DIR]
+           [-u] [-v] [-V]
+           ACTION [ARG [ARG ...]]
+
+    Actions:
+
+      graphs G N
+        Generate the graphs occurring in M_{g,n}.
+
+      homology G N
+        Print homology ranks of M_{g,n}.
+
+      latex G N [-s DIR] [-o FILE]
+        Read the listings of M_{g,n} fatgraphs (from directory DIR)
+        and output a pretty-print catalogue of the graphs as LaTeX documents.
+
+      valences G N
+        Print the vertex valences occurring in M_{g,n} graphs.
+
+      shell
+        Start an interactive PyDB shell.
+
+      selftest
+        Run internal code tests and report failures.
+
+
+positional arguments:
+  ACTION                Action to perform, see above.
+  ARG                   Arguments depend on the actual action, see above.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -D [DEBUG], --debug [DEBUG]
+                        Enable debug features:
+                            * pydb -- run Python debugger if an error occurs
+                            * profile -- dump profiler statistics in a .pf file.
+                            Several features may be enabled by separating them
+                            with a comma, as in '-D pydb,profile'.
+  -l LOGFILE, --logfile LOGFILE
+                        Redirect log messages to the named file
+                            (by default log messages are output to STDERR).
+  -o OUTFILE, --output OUTFILE
+                        Save results into named file.
+  -s CHECKPOINT_DIR, --checkpoint CHECKPOINT_DIR
+                        Directory for saving computation state.
+  -u, --afresh          Do NOT restart computation from the saved state in checkpoint directory.
+  -v, --verbose         Print informational and status messages as the computation goes on.
+  -V, --version         show program's version number and exit</pre>
+</div>
+<p>That should be pretty much self-explanatory; however a bit more detail
+is given below.</p>
+<div class="section" id="the-graphs-action">
+<h2>The <tt class="docutils literal"><span class="pre">graphs</span></tt> action<a class="headerlink" href="#the-graphs-action" title="Permalink to this headline">¶</a></h2>
+<p>With <tt class="docutils literal"><span class="pre">./mgn.sh</span> <span class="pre">graphs</span> <span class="pre">0</span> <span class="pre">4</span></tt> (for example) you can print a list of
+all the fatgraphs having genus 0 and 4 boundary cycles.  If you want
+to save the list to a file, use the <tt class="docutils literal"><span class="pre">-o</span></tt> option, followed by the
+file name.</p>
+<p>The list of fatgraphs is also saved in directory <tt class="docutils literal"><span class="pre">M0,4.data/</span></tt> in several
+<tt class="docutils literal"><span class="pre">.list</span></tt> files, depending on the number of vertices.  For instance,
+the <tt class="docutils literal"><span class="pre">M0,4-MgnGraphsIterator3.list</span></tt> file is the one collecting
+fatgraphs with 3 vertices.</p>
+</div>
+<div class="section" id="the-homology-action">
+<h2>The <tt class="docutils literal"><span class="pre">homology</span></tt> action<a class="headerlink" href="#the-homology-action" title="Permalink to this headline">¶</a></h2>
+<p>With <tt class="docutils literal"><span class="pre">./mgn.sh</span> <span class="pre">homology</span> <span class="pre">0</span> <span class="pre">4</span></tt> (for example), you can print the Betti
+numbers of the moduli space of smooth marked Riemann surfaces having
+genus 0 and 4 marked points.  If you want to save the result to a
+file, use the <tt class="docutils literal"><span class="pre">-o</span></tt> option, followed by the file name.</p>
+<p>Internally, the <tt class="docutils literal"><span class="pre">homology</span></tt> function uses the <tt class="docutils literal"><span class="pre">graphs</span></tt> function, so
+it generates all by-products of that function.  In particular, graphs
+lists are generated and saved in the <a class="reference internal" href="#checkpoint-directory">checkpoint directory</a>
+(<tt class="docutils literal"><span class="pre">M0,4.data</span></tt> in this example).</p>
+<p>In addition to graph lists, the boundary operator matrices are
+computed and saved in the <a class="reference internal" href="#checkpoint-directory">checkpoint directory</a>.  After their ranks
+have been computed, they are saved as well, so invoking the
+<tt class="docutils literal"><span class="pre">homology</span></tt> action with a fully-populated <a class="reference internal" href="#checkpoint-directory">checkpoint directory</a> gives
+the result almost istantaneously.</p>
+</div>
+<div class="section" id="the-latex-action">
+<h2>The <tt class="docutils literal"><span class="pre">latex</span></tt> action<a class="headerlink" href="#the-latex-action" title="Permalink to this headline">¶</a></h2>
+<p>This reads the contents of an existing checkpoint directory and
+generates a LaTeX report on all the graphs: what graphs are there,
+their automorphisms and markings, etc.</p>
+<p>To save the report into a file, use the <tt class="docutils literal"><span class="pre">-o</span></tt> option followed by the
+file name, e.g.:</p>
+<div class="highlight-python"><pre>./mgn.sh latex 0 4 -o report.tex</pre>
+</div>
+<p>The name of the <a class="reference internal" href="#checkpoint-directory">checkpoint directory</a> is automatically generated
+from the parameters <em>G</em> and <em>N</em>; use the <tt class="docutils literal"><span class="pre">-s</span></tt> option to use a
+different directory.</p>
+</div>
+<div class="section" id="the-valence-action">
+<h2>The <tt class="docutils literal"><span class="pre">valence</span></tt> action<a class="headerlink" href="#the-valence-action" title="Permalink to this headline">¶</a></h2>
+<p>This prints the valences of vertices of fatgraphs with given genus and
+number of boundary cycles.</p>
+<p>As this is a very simple computation, nothing is saved to the
+<a class="reference internal" href="#checkpoint-directory">checkpoint directory</a>.</p>
+</div>
+<div class="section" id="checkpoint-directory">
+<h2>Checkpoint directory<a class="headerlink" href="#checkpoint-directory" title="Permalink to this headline">¶</a></h2>
+<p>This is a directory where FatGHoL saves result of
+computationally-expensive functions.  When FatGHoL is invoked again at
+a later time, it loads the results from the checkpoint directory
+instead of calculating them again; this results in a substantial
+speedup.  However, you can use the <tt class="docutils literal"><span class="pre">-u</span></tt> command-line option to tell
+FatGHoL to ignore the contents of a checkpoint directory.</p>
+<p>The name of the <a class="reference internal" href="#checkpoint-directory">checkpoint directory</a> is automatically generated
+from the parameters <em>G</em> and <em>N</em>; use the <tt class="docutils literal"><span class="pre">-s</span></tt> option to use a
+different directory.</p>
+<p>There is no way of avoiding that FatGHoL creates a checkpoint
+directory and populates it.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Using FatGHoL</a><ul>
+<li><a class="reference internal" href="#the-graphs-action">The <tt class="docutils literal"><span class="pre">graphs</span></tt> action</a></li>
+<li><a class="reference internal" href="#the-homology-action">The <tt class="docutils literal"><span class="pre">homology</span></tt> action</a></li>
+<li><a class="reference internal" href="#the-latex-action">The <tt class="docutils literal"><span class="pre">latex</span></tt> action</a></li>
+<li><a class="reference internal" href="#the-valence-action">The <tt class="docutils literal"><span class="pre">valence</span></tt> action</a></li>
+<li><a class="reference internal" href="#checkpoint-directory">Checkpoint directory</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="install.html"
+                        title="previous chapter">Installation of FatGHoL</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="api.html"
+                        title="next chapter">FatGHoL programming API</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/using.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="api.html" title="FatGHoL programming API"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="install.html" title="Installation of FatGHoL"
+             >previous</a> |</li>
+        <li><a href="index.html">FatGHoL v5.4 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Riccardo Murri.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+  </body>
+</html>

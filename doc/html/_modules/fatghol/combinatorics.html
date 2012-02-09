@@ -1,0 +1,1027 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>fatghol.combinatorics &mdash; FatGHoL v5.4 documentation</title>
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '5.4',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="FatGHoL v5.4 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">FatGHoL v5.4 documentation</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for fatghol.combinatorics</h1><div class="highlight"><pre>
+<span class="c">#! /usr/bin/env python</span>
+<span class="c">#</span>
+<span class="sd">&quot;&quot;&quot;Common combinatorics constructions.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c">#</span>
+<span class="c">#   Copyright (C) 2008-2012 Riccardo Murri &lt;riccardo.murri@gmail.com&gt;</span>
+<span class="c">#   All rights reserved.</span>
+<span class="c">#</span>
+<span class="c">#   This program is free software: you can redistribute it and/or modify</span>
+<span class="c">#   it under the terms of the GNU General Public License as published by</span>
+<span class="c">#   the Free Software Foundation, either version 3 of the License, or</span>
+<span class="c">#   (at your option) any later version.</span>
+<span class="c">#</span>
+<span class="c">#   This program is distributed in the hope that it will be useful,</span>
+<span class="c">#   but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="c">#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the</span>
+<span class="c">#   GNU General Public License for more details.</span>
+<span class="c">#</span>
+<span class="c">#   You should have received a copy of the GNU General Public License</span>
+<span class="c">#   along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
+<span class="c">#</span>
+<span class="n">__docformat__</span> <span class="o">=</span> <span class="s">&#39;reStructuredText&#39;</span>
+
+<span class="c">#import cython</span>
+
+<span class="kn">from</span> <span class="nn">fractions</span> <span class="kn">import</span> <span class="n">Fraction</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">import</span> <span class="nn">operator</span>
+
+
+<span class="kn">from</span> <span class="nn">fatghol.cache</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">fcache</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<div class="viewcode-block" id="bernoulli"><a class="viewcode-back" href="../../api.html#fatghol.combinatorics.bernoulli">[docs]</a><span class="k">def</span> <span class="nf">bernoulli</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return the `n`-th Bernoulli number.</span>
+
+<span class="sd">    The convention used here is that B(0)=1 and that B(n) is the n-th</span>
+<span class="sd">    term of the Taylor-McLaurin series of the generating function `x /</span>
+<span class="sd">    (exp x - 1)`.</span>
+
+<span class="sd">    Computation uses a recursive formula which is unsuitable for</span>
+<span class="sd">    anything but small values of `n`.</span>
+
+<span class="sd">    The returned object is a `fractions.Fraction`, even in the case of</span>
+<span class="sd">    integer Bernoulli numbers::</span>
+<span class="sd">    </span>
+<span class="sd">      &gt;&gt;&gt; bernoulli(0)</span>
+<span class="sd">      Fraction(1, 1)</span>
+<span class="sd">      &gt;&gt;&gt; bernoulli(1)</span>
+<span class="sd">      Fraction(-1, 2)</span>
+
+<span class="sd">    Examples::</span>
+
+<span class="sd">      &gt;&gt;&gt; for n in range(19): print bernoulli(n)</span>
+<span class="sd">      1</span>
+<span class="sd">      -1/2</span>
+<span class="sd">      1/6</span>
+<span class="sd">      0</span>
+<span class="sd">      -1/30</span>
+<span class="sd">      0</span>
+<span class="sd">      1/42</span>
+<span class="sd">      0</span>
+<span class="sd">      -1/30</span>
+<span class="sd">      0</span>
+<span class="sd">      5/66</span>
+<span class="sd">      0</span>
+<span class="sd">      -691/2730</span>
+<span class="sd">      0</span>
+<span class="sd">      7/6</span>
+<span class="sd">      0</span>
+<span class="sd">      -3617/510</span>
+<span class="sd">      0</span>
+<span class="sd">      43867/798</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="n">n</span> <span class="o">&gt;=</span><span class="mi">0</span>
+    <span class="c"># B(0) = 1</span>
+    <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Fraction</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="c"># B(n) = 0 for all odd n other than 1.</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">n</span> <span class="o">%</span> <span class="mi">2</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">n</span><span class="o">&gt;</span><span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mi">0</span>
+    <span class="c"># compute B(n) by the recursive formula:</span>
+    <span class="c">#   \sum_{k=0,...,m} \choose{m+1}{k} B(k) = 0</span>
+    <span class="k">return</span> <span class="n">Fraction</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">n</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="nb">reduce</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">add</span><span class="p">,</span>
+                                      <span class="p">[</span><span class="n">choose</span><span class="p">(</span><span class="n">n</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="n">k</span><span class="p">)</span><span class="o">*</span><span class="n">bernoulli</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">)])</span>
+
+
+</div>
+<span class="nd">@fcache</span>
+<div class="viewcode-block" id="choose"><a class="viewcode-back" href="../../api.html#fatghol.combinatorics.choose">[docs]</a><span class="k">def</span> <span class="nf">choose</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="n">k</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return `\choose{n}{k}`.</span>
+
+<span class="sd">    The returned object is a `fractions.Fraction`::</span>
+
+<span class="sd">      &gt;&gt;&gt; choose(2,0)</span>
+<span class="sd">      Fraction(1, 1)</span>
+<span class="sd">      &gt;&gt;&gt; choose(2,1)</span>
+<span class="sd">      Fraction(2, 1)</span>
+
+<span class="sd">    Examples::</span>
+<span class="sd">    </span>
+<span class="sd">      # Pascal&#39;s triangle</span>
+<span class="sd">      &gt;&gt;&gt; for n in range(5): </span>
+<span class="sd">      ...   print str.join(&quot; &quot;, [(&quot;%d&quot; % choose(n,k)) for k in range(n+1)])</span>
+<span class="sd">      1</span>
+<span class="sd">      1 1</span>
+<span class="sd">      1 2 1</span>
+<span class="sd">      1 3 3 1</span>
+<span class="sd">      1 4 6 4 1</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">Fraction</span><span class="p">(</span><span class="n">factorial</span><span class="p">(</span><span class="n">n</span><span class="p">),</span> <span class="n">factorial</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="o">*</span> <span class="n">factorial</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="n">k</span><span class="p">))</span>
+    
+
+</div>
+<span class="nd">@fcache</span>
+<div class="viewcode-block" id="factorial"><a class="viewcode-back" href="../../api.html#fatghol.combinatorics.factorial">[docs]</a><span class="k">def</span> <span class="nf">factorial</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return the factorial of `n`.</span>
+
+<span class="sd">    Examples::</span>
+
+<span class="sd">      &gt;&gt;&gt; for n in range(7): print factorial(n)</span>
+<span class="sd">      1</span>
+<span class="sd">      1</span>
+<span class="sd">      2</span>
+<span class="sd">      6</span>
+<span class="sd">      24</span>
+<span class="sd">      120</span>
+<span class="sd">      720</span>
+
+<span class="sd">    Argument `n` can also be a negative number::</span>
+
+<span class="sd">      &gt;&gt;&gt; factorial(-5)</span>
+<span class="sd">      -120</span>
+<span class="sd">      &gt;&gt;&gt; factorial(-2)</span>
+<span class="sd">      2</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">long</span><span class="p">)),</span> \
+           <span class="s">&quot;factorial(): argument `</span><span class="si">%s</span><span class="s">` is no `int` nor `long`&quot;</span> <span class="o">%</span> <span class="n">n</span>
+    <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">minus_one_exp</span><span class="p">(</span><span class="n">n</span><span class="p">)</span><span class="o">*</span><span class="n">factorial</span><span class="p">(</span><span class="o">-</span><span class="n">n</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mi">1</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">n</span><span class="o">*</span><span class="n">factorial</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+    
+</div>
+<div class="viewcode-block" id="minus_one_exp"><a class="viewcode-back" href="../../api.html#fatghol.combinatorics.minus_one_exp">[docs]</a><span class="k">def</span> <span class="nf">minus_one_exp</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return (-1) to the power `m`. &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">m</span> <span class="o">%</span> <span class="mi">2</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="o">+</span><span class="mi">1</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span>
+    
+
+</div>
+<div class="viewcode-block" id="OrderedSetPartitionsIterator"><a class="viewcode-back" href="../../api.html#fatghol.combinatorics.OrderedSetPartitionsIterator">[docs]</a><span class="k">class</span> <span class="nc">OrderedSetPartitionsIterator</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Iterate over all (ordered) partitions of a set with prescribed block sizes.</span>
+
+<span class="sd">    Instanciating an `OrderedSetPartitionsIterator` object requires</span>
+<span class="sd">    two arguments: second argument `set` is a list of items to be</span>
+<span class="sd">    partitioned into blocks, whose sizes are prescribed by first</span>
+<span class="sd">    argument `sizes`::</span>
+<span class="sd">    </span>
+<span class="sd">      &gt;&gt;&gt; tuple(OrderedSetPartitionsIterator([2,3], [&#39;a&#39;,&#39;b&#39;,&#39;c&#39;,&#39;d&#39;,&#39;e&#39;]))</span>
+<span class="sd">      ([[&#39;a&#39;, &#39;b&#39;], [&#39;c&#39;, &#39;d&#39;, &#39;e&#39;]],</span>
+<span class="sd">       [[&#39;a&#39;, &#39;c&#39;], [&#39;b&#39;, &#39;d&#39;, &#39;e&#39;]],</span>
+<span class="sd">       [[&#39;a&#39;, &#39;d&#39;], [&#39;b&#39;, &#39;c&#39;, &#39;e&#39;]],</span>
+<span class="sd">       [[&#39;a&#39;, &#39;e&#39;], [&#39;b&#39;, &#39;c&#39;, &#39;d&#39;]],</span>
+<span class="sd">       [[&#39;b&#39;, &#39;c&#39;], [&#39;a&#39;, &#39;d&#39;, &#39;e&#39;]],</span>
+<span class="sd">       [[&#39;b&#39;, &#39;d&#39;], [&#39;a&#39;, &#39;c&#39;, &#39;e&#39;]],</span>
+<span class="sd">       [[&#39;b&#39;, &#39;e&#39;], [&#39;a&#39;, &#39;c&#39;, &#39;d&#39;]],</span>
+<span class="sd">       [[&#39;c&#39;, &#39;d&#39;], [&#39;a&#39;, &#39;b&#39;, &#39;e&#39;]],</span>
+<span class="sd">       [[&#39;c&#39;, &#39;e&#39;], [&#39;a&#39;, &#39;b&#39;, &#39;d&#39;]],</span>
+<span class="sd">       [[&#39;d&#39;, &#39;e&#39;], [&#39;a&#39;, &#39;b&#39;, &#39;c&#39;]])</span>
+
+<span class="sd">    Each returned partition is a list whose items are -in turn- list</span>
+<span class="sd">    of the sizes prescribed in the `sizes` argument, in the order</span>
+<span class="sd">    given.</span>
+
+<span class="sd">    If the set to be partitioned is omitted, then the integer range</span>
+<span class="sd">    `[0, 1, ..., N=sum(sizes)]` is used::</span>
+<span class="sd">    </span>
+<span class="sd">      &gt;&gt;&gt; tuple(OrderedSetPartitionsIterator([2,1]))</span>
+<span class="sd">      ([[0, 1], [2]],</span>
+<span class="sd">       [[0, 2], [1]],</span>
+<span class="sd">       [[1, 2], [0]])</span>
+
+<span class="sd">    If the size of the given `set` does not match the total size of</span>
+<span class="sd">    the partition blocks, an exception is raised::</span>
+
+<span class="sd">      &gt;&gt;&gt; OrderedSetPartitionsIterator([2,2], [&#39;a&#39;,&#39;b&#39;,&#39;c&#39;])</span>
+<span class="sd">      Traceback (most recent call last):</span>
+<span class="sd">        ...</span>
+<span class="sd">      AssertionError: Sum of partition lengths is not equal to set size.</span>
+<span class="sd">      </span>
+<span class="sd">    **Note:** The order of parts *is* significant: thus, if the</span>
+<span class="sd">    `sizes` list prescribes two or more blocks of equal size, then,</span>
+<span class="sd">    for each partition, one gotten from it by permuting the same-size</span>
+<span class="sd">    blocks is returned as a distinct partition::</span>
+<span class="sd">    </span>
+<span class="sd">      &gt;&gt;&gt; tuple(OrderedSetPartitionsIterator([1,1]))</span>
+<span class="sd">      ([[0], [1]], [[1], [0]])</span>
+
+<span class="sd">    This is not what you would expect in a set-theoretical partition</span>
+<span class="sd">    enumerator.</span>
+
+<span class="sd">    This is a Python port of the David Landgren&#39;s `Set::Partition`</span>
+<span class="sd">    CPAN module, which see for an explanation of how the algorithm</span>
+<span class="sd">    works.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sizes</span><span class="p">,</span> <span class="n">items</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sizes</span> <span class="o">=</span> <span class="n">sizes</span>
+        <span class="k">if</span> <span class="n">items</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">items</span> <span class="o">=</span> <span class="n">items</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">items</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sizes</span><span class="p">))</span>
+        <span class="c"># XXX: should be an `assert`, but that breaks the &quot;selftest&quot; command</span>
+        <span class="c"># in main.py, which is executed with __debug__==False.</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">sizes</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">AssertionError</span><span class="p">(</span><span class="s">&quot;Sum of partition lengths is not equal to set size.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="bp">None</span>
+        
+    <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="c">#@cython.locals(index=cython.int, size=cython.int, x=cython.int)</span>
+    <span class="k">def</span> <span class="nf">next</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="c"># initial partition arrangement is the most obvious one:</span>
+            <span class="c"># ...</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">index</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">size</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sizes</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">size</span> <span class="o">*</span> <span class="p">[</span><span class="n">index</span><span class="p">])</span>
+                <span class="n">index</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c"># advance `self.state` to next partition arrangement;</span>
+            <span class="c"># raises `StopIteration` if current state is the last one</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_next_state</span><span class="p">()</span>
+            
+        <span class="c"># make blocks</span>
+        <span class="n">parts</span> <span class="o">=</span> <span class="p">[</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sizes</span><span class="p">))</span> <span class="p">]</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">)):</span>
+            <span class="n">parts</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">[</span><span class="n">x</span><span class="p">]]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">[</span><span class="n">x</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">parts</span>
+    
+    <span class="c"># XXX: Cython iterators must use `__next__()` not `next()`</span>
+    <span class="k">def</span> <span class="nf">__next__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+
+    <span class="c">#@cython.locals(s=list, end=cython.int, off=cython.int,</span>
+    <span class="c">#               inc=cython.int, cur=cython.int, l=cython.int)</span>
+    <span class="k">def</span> <span class="nf">_next_state</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span>
+        <span class="n">end</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">off</span> <span class="o">=</span> <span class="n">end</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">inc</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">while</span> <span class="n">off</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">cur</span> <span class="o">=</span> <span class="n">off</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="n">s</span><span class="p">[</span><span class="n">off</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">s</span><span class="p">[</span><span class="n">cur</span><span class="p">]:</span>
+                <span class="n">inc</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="n">s</span><span class="p">[</span><span class="n">off</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">s</span><span class="p">[</span><span class="n">cur</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">s</span><span class="p">[</span><span class="n">cur</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">s</span><span class="p">[</span><span class="n">off</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">:</span>
+                    <span class="c"># find smallest x in [cur .. end] such that s[x]&gt;s[off]</span>
+                    <span class="n">l</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+                    <span class="k">while</span> <span class="n">l</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">s</span><span class="p">[</span><span class="n">l</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">s</span><span class="p">[</span><span class="n">off</span><span class="p">]:</span>
+                            <span class="k">break</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">l</span> <span class="o">-=</span> <span class="mi">1</span>
+                    <span class="c"># swap s[off] and s[l]</span>
+                    <span class="n">s</span><span class="p">[</span><span class="n">off</span><span class="p">],</span> <span class="n">s</span><span class="p">[</span><span class="n">l</span><span class="p">]</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="n">l</span><span class="p">],</span> <span class="n">s</span><span class="p">[</span><span class="n">off</span><span class="p">]</span>
+                    <span class="c"># reverse s[cur] .. s[end]</span>
+                    <span class="k">if</span> <span class="n">cur</span> <span class="o">&lt;</span> <span class="n">end</span><span class="p">:</span>
+                        <span class="n">s</span><span class="p">[</span><span class="n">cur</span><span class="p">:]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="n">cur</span><span class="p">:]))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c"># just swap current and next element</span>
+                    <span class="n">s</span><span class="p">[</span><span class="n">off</span><span class="p">],</span> <span class="n">s</span><span class="p">[</span><span class="n">cur</span><span class="p">]</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="n">cur</span><span class="p">],</span> <span class="n">s</span><span class="p">[</span><span class="n">off</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">cur</span> <span class="o">&lt;</span> <span class="n">end</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">inc</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+                        <span class="n">s</span><span class="p">[</span><span class="n">cur</span><span class="p">:]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="n">cur</span><span class="p">:]))</span>
+                <span class="k">return</span>
+            <span class="n">off</span> <span class="o">-=</span> <span class="mi">1</span>
+        <span class="k">raise</span> <span class="ne">StopIteration</span>
+
+
+<span class="c"># use the `itertools` version...</span></div>
+<span class="n">SetProductIterator</span> <span class="o">=</span> <span class="n">itertools</span><span class="o">.</span><span class="n">product</span>
+
+<span class="c"># ...but keep our pure-Python version around until I can figure out which is faster</span>
+<div class="viewcode-block" id="SetProductIterator_"><a class="viewcode-back" href="../../api.html#fatghol.combinatorics.SetProductIterator_">[docs]</a><span class="k">class</span> <span class="nc">SetProductIterator_</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Iterate over all elements in a cartesian product.</span>
+
+<span class="sd">    Argument `factors` is a sequence, all whose items are sequences</span>
+<span class="sd">    themselves: the returned iterator will return -upon each</span>
+<span class="sd">    successive invocation- a tuple `(t_1, t_2, ..., t_n)` where `t_k`</span>
+<span class="sd">    is an item in the `k`-th sequence.</span>
+
+<span class="sd">    Examples::</span>
+<span class="sd">      &gt;&gt;&gt; list(SetProductIterator_())</span>
+<span class="sd">      [()]</span>
+<span class="sd">      &gt;&gt;&gt; list(SetProductIterator_([1]))</span>
+<span class="sd">      [(1,)]</span>
+<span class="sd">      &gt;&gt;&gt; list(SetProductIterator_([1],[1]))</span>
+<span class="sd">      [(1, 1)]</span>
+<span class="sd">      &gt;&gt;&gt; list(SetProductIterator_([1,2],[]))</span>
+<span class="sd">      [()]</span>
+<span class="sd">      &gt;&gt;&gt; list(SetProductIterator_([1,2],[1]))</span>
+<span class="sd">      [(1, 1), (2, 1)]</span>
+<span class="sd">      &gt;&gt;&gt; list(SetProductIterator_([1,2],[1,2]))</span>
+<span class="sd">      [(1, 1), (2, 1), (1, 2), (2, 2)]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">factors</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__closed</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__factors</span> <span class="o">=</span> <span class="n">factors</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__L</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">factors</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__M</span> <span class="o">=</span> <span class="p">[</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">factors</span> <span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__m</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">__L</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__i</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="c">#@cython.locals(result=tuple, i=cython.int)</span>
+    <span class="k">def</span> <span class="nf">next</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__closed</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">StopIteration</span>
+        <span class="k">if</span> <span class="p">(</span><span class="mi">0</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">__L</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__M</span><span class="p">):</span>
+            <span class="c"># there are no factors, or one of them has no elements</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__closed</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="k">return</span> <span class="nb">tuple</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__i</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">__L</span><span class="p">:</span>
+                <span class="c"># will return element corresponding to current multi-index</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">__m</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span> <span class="k">for</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="n">s</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__factors</span><span class="p">))</span>
+                <span class="c"># advance multi-index</span>
+                <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="k">while</span> <span class="p">(</span><span class="n">i</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">__L</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__m</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">__M</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">__m</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+                        <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">__m</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                        <span class="k">break</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__i</span> <span class="o">=</span> <span class="n">i</span>
+                <span class="c"># back to caller</span>
+                <span class="k">return</span> <span class="n">result</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c"># at end of iteration</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__closed</span> <span class="o">=</span> <span class="bp">True</span>
+                <span class="k">raise</span> <span class="ne">StopIteration</span>
+
+</div>
+<div class="viewcode-block" id="Permutation"><a class="viewcode-back" href="../../api.html#fatghol.combinatorics.Permutation">[docs]</a><span class="k">class</span> <span class="nc">Permutation</span><span class="p">(</span><span class="nb">dict</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A permutation of a finite set.</span>
+
+<span class="sd">    Provides methods to incrementally construct the map by extending</span>
+<span class="sd">    an existing map with new source-&gt;destination pairs; the extension</span>
+<span class="sd">    will fail if any new source-&gt;destination assignment contrasts with</span>
+<span class="sd">    what is already there.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="n">__slots__</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">initial</span><span class="o">=</span><span class="p">[]):</span>
+        <span class="sd">&quot;&quot;&quot;Constructor, with overloaded syntax.</span>
+
+<span class="sd">        Permutation()</span>
+<span class="sd">          New null permutation on 0 elements. Example::</span>
+
+<span class="sd">            &gt;&gt;&gt; p0 = Permutation()</span>
+<span class="sd">            &gt;&gt;&gt; len(p0)</span>
+<span class="sd">            0</span>
+
+<span class="sd">        Permutation(dict)</span>
+<span class="sd">          New permutation mapping keys of dict to their values.</span>
+<span class="sd">          Both should be non-negative integers::</span>
+
+<span class="sd">            &gt;&gt;&gt; p1 = Permutation({0:1, 1:0, 2:2})</span>
+
+<span class="sd">          Can be passed a `Permutation` instance, returning</span>
+<span class="sd">          a new instance, equal to the given one (that is,</span>
+<span class="sd">          acts as a &quot;copy constructor&quot;)::</span>
+
+<span class="sd">            &gt;&gt;&gt; p2 = Permutation(p1)</span>
+<span class="sd">            &gt;&gt;&gt; p2 == p1</span>
+<span class="sd">            True</span>
+<span class="sd">            &gt;&gt;&gt; p2 is p1</span>
+<span class="sd">            False</span>
+<span class="sd">            </span>
+<span class="sd">        To create a `Permutation` mapping element `x` to element</span>
+<span class="sd">        `seq[x]`, one can use the following incantation::</span>
+
+<span class="sd">            &gt;&gt;&gt; p3 = Permutation(enumerate([1,0,2]))</span>
+<span class="sd">            &gt;&gt;&gt; p3 == p1</span>
+<span class="sd">            True</span>
+<span class="sd">          </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">dict</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">initial</span><span class="p">)</span>
+        <span class="c"># XXX: this is stuff for DBC&#39;s invariants</span>
+        <span class="k">assert</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">==</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="k">if</span> <span class="n">__debug__</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">src</span><span class="p">,</span><span class="n">dst</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+                <span class="k">assert</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">src</span>
+                <span class="k">assert</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">dst</span>
+
+    <span class="c">#@cython.locals(x=cython.int)</span>
+    <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Iterate over values.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">iter</span><span class="p">([</span><span class="bp">self</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">))])</span>
+
+<div class="viewcode-block" id="Permutation.inverse"><a class="viewcode-back" href="../../api.html#fatghol.combinatorics.Permutation.inverse">[docs]</a>    <span class="k">def</span> <span class="nf">inverse</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Construct and return the inverse permutation.</span>
+
+<span class="sd">        Examples::</span>
+
+<span class="sd">          &gt;&gt;&gt; p = Permutation({0:1, 1:2, 2:0})</span>
+<span class="sd">          &gt;&gt;&gt; p.inverse()</span>
+<span class="sd">          {0: 2, 1: 0, 2: 1}</span>
+
+<span class="sd">          &gt;&gt;&gt; p = Permutation(enumerate([1, 0]))</span>
+<span class="sd">          &gt;&gt;&gt; p.inverse() == p</span>
+<span class="sd">          True</span>
+<span class="sd">          &gt;&gt;&gt; p.inverse() is p</span>
+<span class="sd">          False</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Permutation</span><span class="p">([</span> <span class="p">(</span><span class="n">dst</span><span class="p">,</span><span class="n">src</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">src</span><span class="p">,</span><span class="n">dst</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">iteritems</span><span class="p">()</span> <span class="p">])</span>
+</div>
+<div class="viewcode-block" id="Permutation.is_identity"><a class="viewcode-back" href="../../api.html#fatghol.combinatorics.Permutation.is_identity">[docs]</a>    <span class="k">def</span> <span class="nf">is_identity</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return `True` if permutation leaves all items fixed.&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">src</span> <span class="o">!=</span> <span class="n">dst</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">False</span>
+        <span class="k">return</span> <span class="bp">True</span>
+
+    <span class="c">#@cython.locals(x=cython.int)</span></div>
+<div class="viewcode-block" id="Permutation.rearranged"><a class="viewcode-back" href="../../api.html#fatghol.combinatorics.Permutation.rearranged">[docs]</a>    <span class="k">def</span> <span class="nf">rearranged</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">seq</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return a new list containing the items in `seq`, rearranged</span>
+<span class="sd">        according to this permutation.</span>
+
+<span class="sd">        Examples::</span>
+
+<span class="sd">          &gt;&gt;&gt; s = [&#39;a&#39;,&#39;b&#39;,&#39;c&#39;]</span>
+<span class="sd">          &gt;&gt;&gt; p = Permutation(enumerate([2,0,1]))</span>
+<span class="sd">          &gt;&gt;&gt; p.rearranged(s)</span>
+<span class="sd">          [&#39;c&#39;, &#39;a&#39;, &#39;b&#39;]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">seq</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> \
+               <span class="s">&quot;Permutation.rearrange: &quot;</span> \
+               <span class="s">&quot; cannot rearrange a sequence of length </span><span class="si">%d</span><span class="s">&quot;</span> \
+               <span class="s">&quot; using a permutation of a different length (</span><span class="si">%d</span><span class="s">)&quot;</span> \
+               <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">seq</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+        <span class="k">return</span> <span class="p">[</span> <span class="n">seq</span><span class="p">[</span><span class="bp">self</span><span class="p">[</span><span class="n">x</span><span class="p">]]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span> <span class="p">]</span>
+
+    <span class="c">#@cython.locals(p=list, n=cython.int, s=cython.int, j=cython.int, q=cython.int)</span></div>
+<div class="viewcode-block" id="Permutation.sign"><a class="viewcode-back" href="../../api.html#fatghol.combinatorics.Permutation.sign">[docs]</a>    <span class="k">def</span> <span class="nf">sign</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return sign of this `Permutation`.</span>
+
+<span class="sd">        Examples::</span>
+
+<span class="sd">          &gt;&gt;&gt; Permutation(enumerate([0,1,2])).sign()</span>
+<span class="sd">          1</span>
+<span class="sd">          &gt;&gt;&gt; Permutation(enumerate([0,2,1])).sign()</span>
+<span class="sd">          -1</span>
+<span class="sd">          &gt;&gt;&gt; Permutation(enumerate([2,0,1])).sign()</span>
+<span class="sd">          1</span>
+<span class="sd">          &gt;&gt;&gt; Permutation(enumerate([3, 2, 0, 1])).sign()</span>
+<span class="sd">          -1</span>
+
+<span class="sd">        The trivial permutations mapping a single element into</span>
+<span class="sd">        itself and the empty permutation are assigned sign +1::</span>
+
+<span class="sd">          &gt;&gt;&gt; Permutation(enumerate([0])).sign()</span>
+<span class="sd">          1</span>
+
+<span class="sd">          &gt;&gt;&gt; Permutation().sign()</span>
+<span class="sd">          1</span>
+
+<span class="sd">        This is an adaptation of the `perm_sign` code by John Burkardt</span>
+<span class="sd">        (see it among the collection at</span>
+<span class="sd">        http://orion.math.iastate.edu/burkardt/f_src/subset/subset.f90</span>
+<span class="sd">        or http://www.scs.fsu.edu/~burkardt/math2071/perm_sign.m ); it</span>
+<span class="sd">        computes the sign by counting the number of interchanges</span>
+<span class="sd">        required to change the given permutation into the identity</span>
+<span class="sd">        one.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># copy Permutation values into a linear list</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="o">+</span><span class="mi">1</span>
+        <span class="c"># get elements back in their home positions</span>
+        <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">while</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">:</span>
+            <span class="n">q</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">q</span> <span class="o">!=</span><span class="n">j</span> <span class="p">:</span>
+                <span class="n">p</span><span class="p">[</span><span class="n">j</span><span class="p">],</span><span class="n">p</span><span class="p">[</span><span class="n">q</span><span class="p">]</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="n">q</span><span class="p">],</span><span class="n">q</span> <span class="c"># interchange p[j] and p[p[j]]</span>
+                <span class="n">s</span> <span class="o">=</span> <span class="o">-</span><span class="n">s</span>             <span class="c"># and account for the interchange</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">j</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="c"># note that q is now in its home position</span>
+        <span class="c"># whether or not an interchange was required</span>
+        <span class="k">return</span> <span class="n">s</span>
+
+
+    <span class="c">#@cython.locals(i=cython.int)</span></div>
+<div class="viewcode-block" id="Permutation.translate"><a class="viewcode-back" href="../../api.html#fatghol.combinatorics.Permutation.translate">[docs]</a>    <span class="k">def</span> <span class="nf">translate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">seq</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Alter `seq`, applying this permutation to the value of its items.</span>
+<span class="sd">        Return modified sequence.</span>
+
+<span class="sd">        For this to work, items in `seq` must be integers in the range</span>
+<span class="sd">        from 0 up to (and excluding) the length of this permutation.</span>
+<span class="sd">        Otherwise a `KeyError` is raised.</span>
+
+<span class="sd">        Examples::</span>
+
+<span class="sd">          &gt;&gt;&gt; s = [1, 0, 2]</span>
+<span class="sd">          &gt;&gt;&gt; p = Permutation(enumerate([0, 2, 1])) # map 0-&gt;0, 1-&gt;2, 2-&gt;1</span>
+<span class="sd">          &gt;&gt;&gt; p.translate(s)</span>
+<span class="sd">          [2, 0, 1]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">seq</span><span class="p">)):</span>
+            <span class="k">assert</span> <span class="n">seq</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">,</span> \
+                   <span class="s">&quot;Permutation.translate(): &quot;</span> \
+                   <span class="s">&quot;Got item `</span><span class="si">%s</span><span class="s">` which is not in the permutation domain. &quot;</span> \
+                   <span class="o">%</span> <span class="p">(</span><span class="n">seq</span><span class="p">[</span><span class="n">i</span><span class="p">],)</span>
+            <span class="n">seq</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="n">seq</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span>
+        <span class="k">return</span> <span class="n">seq</span>
+    </div>
+<div class="viewcode-block" id="Permutation.itranslate"><a class="viewcode-back" href="../../api.html#fatghol.combinatorics.Permutation.itranslate">[docs]</a>    <span class="k">def</span> <span class="nf">itranslate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iterable</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create an iterator returning items from `iterable`,</span>
+<span class="sd">        permuted according to this `Permutation` instance.</span>
+
+<span class="sd">        For this to work, items in `iterable` must be integers in the</span>
+<span class="sd">        range from 0 up to (and excluding) the length of this</span>
+<span class="sd">        permutation.  Otherwise a `KeyError` is raised.</span>
+
+<span class="sd">        Examples::</span>
+
+<span class="sd">          &gt;&gt;&gt; s = [1, 0, 2]</span>
+<span class="sd">          &gt;&gt;&gt; p = Permutation(enumerate([0, 2, 1])) # map 0-&gt;0, 1-&gt;2, 2-&gt;1</span>
+<span class="sd">          &gt;&gt;&gt; list(p.itranslate(s))</span>
+<span class="sd">          [2, 0, 1]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">iter</span><span class="p">(</span><span class="n">iterable</span><span class="p">):</span>
+            <span class="k">assert</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">,</span> \
+                   <span class="s">&quot;Permutation.itranslate(): &quot;</span> \
+                   <span class="s">&quot;Got item `</span><span class="si">%s</span><span class="s">` which is not in the permutation domain `</span><span class="si">%s</span><span class="s">`. &quot;</span> \
+                   <span class="o">%</span> <span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+            <span class="k">yield</span> <span class="bp">self</span><span class="p">[</span><span class="n">item</span><span class="p">]</span>
+
+
+    <span class="c">#@cython.locals(result=list)</span></div>
+<div class="viewcode-block" id="Permutation.ltranslate"><a class="viewcode-back" href="../../api.html#fatghol.combinatorics.Permutation.ltranslate">[docs]</a>    <span class="k">def</span> <span class="nf">ltranslate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iterable</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Retutn list of items from `iterable`, permuted according to</span>
+<span class="sd">        this `Permutation` instance.</span>
+
+<span class="sd">        For this to work, items in `iterable` must be integers in the</span>
+<span class="sd">        range from 0 up to (and excluding) the length of this</span>
+<span class="sd">        permutation.  Otherwise a `KeyError` is raised.</span>
+
+<span class="sd">        Examples::</span>
+
+<span class="sd">          &gt;&gt;&gt; s = [1, 0, 2]</span>
+<span class="sd">          &gt;&gt;&gt; p = Permutation(enumerate([0, 2, 1])) # map 0-&gt;0, 1-&gt;2, 2-&gt;1</span>
+<span class="sd">          &gt;&gt;&gt; p.ltranslate(s)</span>
+<span class="sd">          [2, 0, 1]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">iter</span><span class="p">(</span><span class="n">iterable</span><span class="p">):</span>
+            <span class="k">assert</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">,</span> \
+                   <span class="s">&quot;Permutation.ltranslate(): &quot;</span> \
+                   <span class="s">&quot;Got item `</span><span class="si">%s</span><span class="s">` which is not in the permutation domain `</span><span class="si">%s</span><span class="s">`. &quot;</span> \
+                   <span class="o">%</span> <span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="n">item</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+    </div>
+<div class="viewcode-block" id="Permutation.extend"><a class="viewcode-back" href="../../api.html#fatghol.combinatorics.Permutation.extend">[docs]</a>    <span class="k">def</span> <span class="nf">extend</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">srcs</span><span class="p">,</span> <span class="n">dsts</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return `True` if the mapping can be extended by mapping</span>
+<span class="sd">        elements of `srcs` to corresponding elements of `dsts`.</span>
+<span class="sd">        Return `False` if any of the new mappings conflicts with an</span>
+<span class="sd">        already established one.</span>
+
+<span class="sd">        Examples::</span>
+<span class="sd">          &gt;&gt;&gt; m=Permutation()</span>
+<span class="sd">          &gt;&gt;&gt; m.extend([0, 1], [0, 1])</span>
+<span class="sd">          True</span>
+<span class="sd">          &gt;&gt;&gt; m.extend([1, 2], [0, 2])</span>
+<span class="sd">          False</span>
+<span class="sd">          &gt;&gt;&gt; m.extend([2], [2])</span>
+<span class="sd">          True</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">src</span><span class="p">,</span><span class="n">dst</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">izip</span><span class="p">(</span><span class="n">srcs</span><span class="p">,</span><span class="n">dsts</span><span class="p">):</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">src</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="n">src</span><span class="p">]</span> <span class="o">!=</span> <span class="n">dst</span><span class="p">):</span>
+                <span class="k">return</span> <span class="bp">False</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="p">[</span><span class="n">src</span><span class="p">]</span> <span class="o">=</span> <span class="n">dst</span>
+        <span class="k">return</span> <span class="bp">True</span>
+
+    </div>
+<div class="viewcode-block" id="Permutation.find"><a class="viewcode-back" href="../../api.html#fatghol.combinatorics.Permutation.find">[docs]</a>    <span class="k">def</span> <span class="nf">find</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the key that maps to `value`, or `None` if `value` is</span>
+<span class="sd">        not in this `Permutation` domain.</span>
+
+<span class="sd">        Examples::</span>
+
+<span class="sd">          &gt;&gt;&gt; m = Permutation({0:2, 1:0, 2:1})</span>
+<span class="sd">          &gt;&gt;&gt; m.find(0)</span>
+<span class="sd">          1</span>
+<span class="sd">          &gt;&gt;&gt; m.find(3) is None</span>
+<span class="sd">          True</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">v</span> <span class="o">==</span> <span class="n">value</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">k</span>
+        <span class="k">return</span> <span class="bp">None</span>
+
+</div>
+<div class="viewcode-block" id="Permutation.update"><a class="viewcode-back" href="../../api.html#fatghol.combinatorics.Permutation.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mappings</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return `True` if the mapping can be extended by mapping each</span>
+<span class="sd">        key of `mappings` to the corresponding value.  Return `False`</span>
+<span class="sd">        if any of the new mappings conflicts with an already</span>
+<span class="sd">        established one.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">src</span><span class="p">,</span><span class="n">dst</span> <span class="ow">in</span> <span class="n">mappings</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">src</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="n">src</span><span class="p">]</span> <span class="o">!=</span> <span class="n">dst</span><span class="p">):</span>
+                <span class="k">return</span> <span class="bp">False</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="p">[</span><span class="n">src</span><span class="p">]</span> <span class="o">=</span> <span class="n">dst</span>
+        <span class="k">return</span> <span class="bp">True</span>
+
+</div></div>
+<div class="viewcode-block" id="PermutationList"><a class="viewcode-back" href="../../api.html#fatghol.combinatorics.PermutationList">[docs]</a><span class="k">class</span> <span class="nc">PermutationList</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Simulate a (read-only) list of all permutations of a prescribed order.</span>
+
+<span class="sd">    The list is ordered lexicographically; at position `0` and `n!`</span>
+<span class="sd">    are the identity permutation and the order-reversal permutation,</span>
+<span class="sd">    respectively.</span>
+<span class="sd">    </span>
+<span class="sd">    The code is a port of the one described in Wikipedia at:</span>
+<span class="sd">      http://en.wikipedia.org/wiki/Permutation#Algorithm_to_generate_permutations</span>
+
+<span class="sd">    Examples::</span>
+<span class="sd">      &gt;&gt;&gt; ps = PermutationList(3)</span>
+<span class="sd">      &gt;&gt;&gt; ps[0]</span>
+<span class="sd">      (0, 1, 2)</span>
+<span class="sd">      &gt;&gt;&gt; ps[5]</span>
+<span class="sd">      (2, 1, 0)</span>
+
+<span class="sd">      &gt;&gt;&gt; for n in range(6):</span>
+<span class="sd">      ...   print len(set(tuple(x) for x in PermutationList(n+1)))</span>
+<span class="sd">      1</span>
+<span class="sd">      2</span>
+<span class="sd">      6</span>
+<span class="sd">      24</span>
+<span class="sd">      120</span>
+<span class="sd">      720</span>
+<span class="sd">      &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">order</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__order</span> <span class="o">=</span> <span class="n">order</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__base_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">order</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">__order</span> <span class="ow">and</span> <span class="nb">set</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">__base_set</span>
+
+    <span class="c">#@cython.locals(r=cython.long, n=cython.long,</span>
+    <span class="c">#               x=cython.int, i=cython.int, j=cython.int, temp=cython.int)</span>
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">r</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return permutation at `r`-th place.&quot;&quot;&quot;</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__order</span>
+        <span class="k">if</span> <span class="n">r</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">r</span> <span class="o">%=</span> <span class="n">n</span>
+        <span class="k">if</span> <span class="n">r</span> <span class="o">&gt;=</span> <span class="n">factorial</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">IndexError</span>
+        <span class="n">perm</span> <span class="o">=</span> <span class="p">[</span> <span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span> <span class="p">]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+            <span class="n">j</span> <span class="o">=</span> <span class="p">(</span><span class="n">r</span> <span class="o">/</span> <span class="n">factorial</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span> <span class="o">%</span> <span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="n">i</span><span class="p">)</span>
+            <span class="n">temp</span> <span class="o">=</span> <span class="n">perm</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="n">j</span><span class="p">]</span>
+            <span class="n">perm</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span> <span class="p">:</span> <span class="n">i</span><span class="o">+</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">perm</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span><span class="o">+</span><span class="n">j</span><span class="p">]</span>
+            <span class="n">perm</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">temp</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">perm</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">factorial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__order</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="PermutationIterator"><a class="viewcode-back" href="../../api.html#fatghol.combinatorics.PermutationIterator">[docs]</a><span class="k">class</span> <span class="nc">PermutationIterator</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Iterate over all permutations of a given sequence.</span>
+
+<span class="sd">    The code is a port of the one described in Wikipedia at:</span>
+<span class="sd">      http://en.wikipedia.org/wiki/Permutation#Algorithm_to_generate_permutations</span>
+
+<span class="sd">    The permutations are returned in no particular order::</span>
+<span class="sd">      &gt;&gt;&gt; p = PermutationIterator([1,2,3])</span>
+<span class="sd">      &gt;&gt;&gt; p.next()</span>
+<span class="sd">      (3, 1, 2)</span>
+<span class="sd">      &gt;&gt;&gt; p.next()</span>
+<span class="sd">      (3, 2, 1)</span>
+<span class="sd">      &gt;&gt;&gt; p.next()</span>
+<span class="sd">      (2, 3, 1)</span>
+<span class="sd">      &gt;&gt;&gt; p.next()</span>
+<span class="sd">      (1, 3, 2)</span>
+<span class="sd">      &gt;&gt;&gt; p.next()</span>
+<span class="sd">      (2, 1, 3)</span>
+<span class="sd">      &gt;&gt;&gt; p.next()</span>
+<span class="sd">      (1, 2, 3)</span>
+
+<span class="sd">      &gt;&gt;&gt; for n in range(6):</span>
+<span class="sd">      ...   print len(set(tuple(x) for x in PermutationIterator(range(n+1))))</span>
+<span class="sd">      1</span>
+<span class="sd">      2</span>
+<span class="sd">      6</span>
+<span class="sd">      24</span>
+<span class="sd">      120</span>
+<span class="sd">      720</span>
+<span class="sd">      &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">seq</span><span class="p">,</span> <span class="n">initial</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">seq</span> <span class="o">=</span> <span class="n">seq</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rank</span> <span class="o">=</span> <span class="n">initial</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">order</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">seq</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="c">#@cython.locals(i=cython.long, seq=list, j=cython.int)</span>
+<div class="viewcode-block" id="PermutationIterator.next"><a class="viewcode-back" href="../../api.html#fatghol.combinatorics.PermutationIterator.next">[docs]</a>    <span class="k">def</span> <span class="nf">next</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return next permutation of initially given `sequence`.&quot;&quot;&quot;</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;=</span> <span class="n">factorial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">StopIteration</span>
+        <span class="n">seq</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">seq</span><span class="p">[:]</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+            <span class="n">i</span> <span class="o">/=</span> <span class="n">j</span> <span class="o">-</span> <span class="mi">1</span>
+            <span class="n">seq</span><span class="p">[</span><span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">seq</span><span class="p">[</span><span class="n">i</span> <span class="o">%</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">seq</span><span class="p">[</span><span class="n">i</span> <span class="o">%</span> <span class="n">j</span><span class="p">],</span> <span class="n">seq</span><span class="p">[</span><span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rank</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">seq</span><span class="p">)</span>
+    <span class="c"># XXX: Cython requires `__next__()` instead of `next()`</span></div>
+    <span class="k">def</span> <span class="nf">__next__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="InplacePermutationIterator"><a class="viewcode-back" href="../../api.html#fatghol.combinatorics.InplacePermutationIterator">[docs]</a><span class="k">class</span> <span class="nc">InplacePermutationIterator</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Iterate (destructively) over all permutations of a given sequence.</span>
+
+<span class="sd">    The given sequence `seq` is altered as new permutations are</span>
+<span class="sd">    requested through the `next()` method.  In order to use the</span>
+<span class="sd">    returned value after subsequent calls to</span>
+<span class="sd">    `InplacePermutationIterator.next()`, you must make a copy of it.</span>
+
+<span class="sd">    The code is a port of the C++ STL one, explained in:</span>
+<span class="sd">      http://marknelson.us/2002/03/01/next-permutation</span>
+
+<span class="sd">    The number of permutations of a list of length `n` equals `n!`::</span>
+
+<span class="sd">      &gt;&gt;&gt; for n in range(6):</span>
+<span class="sd">      ...   print len(list(InplacePermutationIterator(range(n+1))))</span>
+<span class="sd">      1</span>
+<span class="sd">      2</span>
+<span class="sd">      6</span>
+<span class="sd">      24</span>
+<span class="sd">      120</span>
+<span class="sd">      720</span>
+
+<span class="sd">    Examples::</span>
+<span class="sd">      &gt;&gt;&gt; [ x[:] for x in InplacePermutationIterator([0]) ]</span>
+<span class="sd">      [[0]]</span>
+<span class="sd">      &gt;&gt;&gt; [ x[:] for x in InplacePermutationIterator([0,1]) ]</span>
+<span class="sd">      [[1, 0], [0, 1]]</span>
+<span class="sd">      &gt;&gt;&gt; [ x[:] for x in InplacePermutationIterator([0,1,2])]</span>
+<span class="sd">      [[0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0], [0, 1, 2]]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">seq</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">seq</span> <span class="o">=</span> <span class="n">seq</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">start</span> <span class="o">=</span> <span class="n">start</span>
+        <span class="k">if</span> <span class="n">end</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">end</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">seq</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">end</span> <span class="o">=</span> <span class="n">end</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">start</span> <span class="o">==</span> <span class="n">end</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">enumeration_finished</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">enumeration_finished</span> <span class="o">=</span> <span class="bp">False</span>
+            
+    <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="c">#@cython.locals(seq=list, end=cython.int, i=cython.int, j=cython.int, k=cython.int)</span>
+<div class="viewcode-block" id="InplacePermutationIterator.next"><a class="viewcode-back" href="../../api.html#fatghol.combinatorics.InplacePermutationIterator.next">[docs]</a>    <span class="k">def</span> <span class="nf">next</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return next permutation of initially given `sequence`.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">enumeration_finished</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">StopIteration</span>
+        <span class="n">seq</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">seq</span> <span class="c"># micro-optimization</span>
+        <span class="n">end</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">end</span> <span class="c"># micro-optimization</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="n">end</span><span class="o">-</span><span class="mi">1</span>
+        <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">i</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="p">):</span>
+                <span class="n">seq</span><span class="o">.</span><span class="n">reverse</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">enumeration_finished</span> <span class="o">=</span> <span class="bp">True</span>
+                <span class="k">return</span> <span class="n">seq</span>
+            <span class="n">j</span> <span class="o">=</span> <span class="n">i</span>
+            <span class="n">i</span> <span class="o">-=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="n">seq</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">seq</span><span class="p">[</span><span class="n">j</span><span class="p">]:</span>
+                <span class="n">k</span> <span class="o">=</span> <span class="n">end</span><span class="o">-</span><span class="mi">1</span>
+                <span class="k">while</span> <span class="n">seq</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">seq</span><span class="p">[</span><span class="n">k</span><span class="p">]:</span>
+                    <span class="n">k</span> <span class="o">-=</span> <span class="mi">1</span>
+                <span class="c"># swap seq[i] and seq[k]</span>
+                <span class="n">seq</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="n">seq</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">seq</span><span class="p">[</span><span class="n">k</span><span class="p">],</span><span class="n">seq</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="c"># reverse slice seq[j:] *in-place*</span>
+                <span class="n">seq</span><span class="p">[</span><span class="n">j</span><span class="p">:]</span> <span class="o">=</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">seq</span><span class="p">[</span><span class="n">j</span><span class="p">:])</span>
+                <span class="k">return</span> <span class="n">seq</span>
+            
+    <span class="c"># XXX: Cython iterators must use `__next__()` instead of `next()`</span></div>
+    <span class="k">def</span> <span class="nf">__next__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="FixedLengthPartitionIterator"><a class="viewcode-back" href="../../api.html#fatghol.combinatorics.FixedLengthPartitionIterator">[docs]</a><span class="k">class</span> <span class="nc">FixedLengthPartitionIterator</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Iterate over partitions of integer `N` into *exactly* `K`</span>
+<span class="sd">    positive integers.</span>
+
+<span class="sd">    Each returned partition is a list of positive integers in</span>
+<span class="sd">    descending order, such that their sum is `N`.</span>
+
+<span class="sd">    Arguments `min_` and `max_` bound the values in each partition.</span>
+
+<span class="sd">    Examples::</span>
+<span class="sd">      &gt;&gt;&gt; list(FixedLengthPartitionIterator(3,1))</span>
+<span class="sd">      [(3,)]</span>
+<span class="sd">      &gt;&gt;&gt; list(FixedLengthPartitionIterator(3,2))</span>
+<span class="sd">      [(2, 1)]</span>
+<span class="sd">      &gt;&gt;&gt; list(FixedLengthPartitionIterator(3,3))</span>
+<span class="sd">      [(1, 1, 1)]</span>
+<span class="sd">      &gt;&gt;&gt; list(FixedLengthPartitionIterator(6,2))</span>
+<span class="sd">      [(5, 1), (4, 2), (3, 3)]</span>
+<span class="sd">      &gt;&gt;&gt; list(FixedLengthPartitionIterator(8,3))</span>
+<span class="sd">      [(6, 1, 1), (5, 2, 1), (4, 3, 1), (4, 2, 2), (3, 3, 2)]</span>
+<span class="sd">      &gt;&gt;&gt; list(FixedLengthPartitionIterator(8,4,2))</span>
+<span class="sd">      [(2, 2, 2, 2)]</span>
+<span class="sd">      &gt;&gt;&gt; list(FixedLengthPartitionIterator(8,3,2))</span>
+<span class="sd">      [(4, 2, 2), (3, 3, 2)]</span>
+<span class="sd">      &gt;&gt;&gt; list(FixedLengthPartitionIterator(8,3,2,3))</span>
+<span class="sd">      [(3, 3, 2)]      </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">N</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="n">min_</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="c"># `max_` really defaults to N</span>
+        <span class="k">if</span> <span class="n">max_</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">max_</span> <span class="o">=</span> <span class="n">N</span>
+
+        <span class="c"># rule out trivial cases</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">K</span><span class="o">*</span><span class="n">min_</span> <span class="o">&gt;</span> <span class="n">N</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">K</span><span class="o">*</span><span class="n">max_</span> <span class="o">&lt;</span> <span class="n">N</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">done</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="k">return</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_N</span> <span class="o">=</span> <span class="n">N</span>  <span class="c">#: integer to be partitioned</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_K</span> <span class="o">=</span> <span class="n">K</span>  <span class="c">#: maximum number of nonzero parts</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_k</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c">#: current number of nonzero parts</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_min</span> <span class="o">=</span> <span class="n">min_</span>  <span class="c">#: minimum value of each part</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_max</span> <span class="o">=</span> <span class="n">max_</span>  <span class="c">#: maximum value of each part</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_p</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">K</span> <span class="c">#: current partition</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">done</span> <span class="o">=</span> <span class="bp">False</span> <span class="c">#: when `True`, enumeration is over</span>
+
+    <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="c">#@cython.locals(i=cython.int, head=cython.long)</span>
+    <span class="k">def</span> <span class="nf">next</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">done</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">StopIteration</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_N</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">_K</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_min</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">done</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="k">return</span> <span class="nb">tuple</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">_min</span><span class="p">]</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_K</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">_k</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_K</span><span class="p">:</span>
+                <span class="n">i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_k</span> <span class="o">-</span> <span class="mi">1</span>
+                <span class="k">while</span> <span class="n">i</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_p</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_p</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> \
+                           <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_p</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_min</span><span class="p">)</span> \
+                           <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_p</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_max</span><span class="p">):</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_p</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-=</span> <span class="mi">1</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_p</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_p</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">i</span> <span class="o">-=</span> <span class="mi">1</span>
+                <span class="c"># only change the first `k` parts</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_k</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">head</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_N</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_k</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_min</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_K</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_min</span> <span class="o">+</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">head</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_min</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">head</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_max</span><span class="p">)</span> \
+                       <span class="ow">or</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_k</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_K</span><span class="p">):</span>
+                    <span class="k">continue</span>
+                <span class="c"># advance to next partition:</span>
+                <span class="c"># [N-2*(k-1)-(K-k), 2, ..., 2, (k-1 times) 1, ..., 1 (K-k times)]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_p</span> <span class="o">=</span> <span class="p">[</span><span class="n">head</span><span class="p">]</span> \
+                          <span class="o">+</span> <span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">_min</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_k</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span> \
+                          <span class="o">+</span> <span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">_min</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_K</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_k</span><span class="p">))</span>
+                <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_p</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">StopIteration</span>
+    <span class="c"># XXX: Cython requires `__next__()` instead of `next()`</span>
+    <span class="k">def</span> <span class="nf">__next__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="PartitionIterator"><a class="viewcode-back" href="../../api.html#fatghol.combinatorics.PartitionIterator">[docs]</a><span class="k">def</span> <span class="nf">PartitionIterator</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="n">min_</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Iterate over partitions of integer `N` into *at most* `K`</span>
+<span class="sd">    positive integers.</span>
+
+<span class="sd">    Each returned partition is a list of positive integers in</span>
+<span class="sd">    descending order, such that their sum is `N`.</span>
+
+<span class="sd">    Optional arguments `min_` and `max_` bound the values in each</span>
+<span class="sd">    partition.</span>
+
+<span class="sd">    Examples::</span>
+<span class="sd">      &gt;&gt;&gt; list(PartitionIterator(2,1))</span>
+<span class="sd">      [(2,)]</span>
+<span class="sd">      &gt;&gt;&gt; list(PartitionIterator(3,3))</span>
+<span class="sd">      [(3,), (2, 1), (1, 1, 1)]</span>
+<span class="sd">      &gt;&gt;&gt; list(PartitionIterator(8,3,2))</span>
+<span class="sd">      [(8,), (6, 2), (5, 3), (4, 4), (4, 2, 2), (3, 3, 2)]</span>
+<span class="sd">      &gt;&gt;&gt; list(PartitionIterator(8,3,2,3))</span>
+<span class="sd">      [(3, 3, 2)]      </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">itertools</span><span class="o">.</span><span class="n">chain</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="n">FixedLengthPartitionIterator</span><span class="p">(</span><span class="n">N</span><span class="p">,</span><span class="n">k</span><span class="p">,</span><span class="n">min_</span><span class="p">,</span><span class="n">max_</span><span class="p">)</span>
+                             <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">K</span><span class="o">+</span><span class="mi">1</span><span class="p">)])</span>
+
+
+
+
+<span class="c">## main: run tests</span>
+</div>
+<span class="k">if</span> <span class="s">&quot;__main__&quot;</span> <span class="o">==</span> <span class="n">__name__</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">doctest</span>
+    <span class="n">doctest</span><span class="o">.</span><span class="n">testmod</span><span class="p">(</span><span class="n">optionflags</span><span class="o">=</span><span class="n">doctest</span><span class="o">.</span><span class="n">NORMALIZE_WHITESPACE</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">FatGHoL v5.4 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Riccardo Murri.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+  </body>
+</html>

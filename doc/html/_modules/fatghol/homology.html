@@ -1,0 +1,493 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>fatghol.homology &mdash; FatGHoL v5.4 documentation</title>
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '5.4',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="FatGHoL v5.4 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">FatGHoL v5.4 documentation</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for fatghol.homology</h1><div class="highlight"><pre>
+<span class="c">#! /usr/bin/env python</span>
+<span class="c">#</span>
+<span class="sd">&quot;&quot;&quot;Generic classes for homological algebra.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c">#</span>
+<span class="c">#   Copyright (C) 2008-2012 Riccardo Murri &lt;riccardo.murri@gmail.com&gt;</span>
+<span class="c">#   All rights reserved.</span>
+<span class="c">#</span>
+<span class="c">#   This program is free software: you can redistribute it and/or modify</span>
+<span class="c">#   it under the terms of the GNU General Public License as published by</span>
+<span class="c">#   the Free Software Foundation, either version 3 of the License, or</span>
+<span class="c">#   (at your option) any later version.</span>
+<span class="c">#</span>
+<span class="c">#   This program is distributed in the hope that it will be useful,</span>
+<span class="c">#   but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="c">#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the</span>
+<span class="c">#   GNU General Public License for more details.</span>
+<span class="c">#</span>
+<span class="c">#   You should have received a copy of the GNU General Public License</span>
+<span class="c">#   along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
+<span class="c">#</span>
+<span class="n">__docformat__</span> <span class="o">=</span> <span class="s">&#39;reStructuredText&#39;</span>
+
+
+<span class="c">#import cython</span>
+
+<span class="c">## stdlib imports</span>
+
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">os.path</span>
+<span class="kn">import</span> <span class="nn">numbers</span>
+
+<span class="c">## application-local imports</span>
+
+<span class="kn">from</span> <span class="nn">fatghol.loadsave</span> <span class="kn">import</span> <span class="n">load</span><span class="p">,</span> <span class="n">save</span>
+<span class="kn">from</span> <span class="nn">fatghol.runtime</span> <span class="kn">import</span> <span class="n">runtime</span>
+<span class="kn">from</span> <span class="nn">fatghol.simplematrix</span> <span class="kn">import</span> <span class="n">SimpleMatrix</span><span class="p">,</span> <span class="n">is_null_product</span>
+<span class="kn">import</span> <span class="nn">fatghol.timing</span> <span class="kn">as</span> <span class="nn">timing</span>
+
+
+<span class="c">## main</span>
+
+<span class="n">NullMatrix</span> <span class="o">=</span> <span class="n">SimpleMatrix</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
+
+
+<span class="c">#@cython.cclass</span>
+<div class="viewcode-block" id="VectorSpace"><a class="viewcode-back" href="../../api.html#fatghol.homology.VectorSpace">[docs]</a><span class="k">class</span> <span class="nc">VectorSpace</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Represent the vector space generated by the given `base` vectors.</span>
+
+<span class="sd">    After construction, you can retrieve the base vectors set and the</span>
+<span class="sd">    dimension from instance attributes `base` and `dimension`.</span>
+<span class="sd">    </span>
+<span class="sd">    The `base` elements are assumed to be *linearly independent*, so</span>
+<span class="sd">    the `dimension` of the generated vector space equals the number of</span>
+<span class="sd">    elements in the base set.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">base</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Constructor, taking list of base vectors.</span>
+
+<span class="sd">        First argument `base` is a sequence of base vectors.  No</span>
+<span class="sd">        requirement is placed on the Python type of base vectors.  The</span>
+<span class="sd">        `base` object should support:</span>
+<span class="sd">          - the `len` operator;</span>
+<span class="sd">          - the `index` operator (with the same semantics of the `list` one)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">base</span> <span class="o">=</span> <span class="n">base</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dimension</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">base</span><span class="p">)</span>
+
+    
+    <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Iterate over basis vectors.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base</span><span class="p">)</span>
+
+    
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="s">&quot;VectorSpace(</span><span class="si">%s</span><span class="s">)&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">base</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="s">&quot;&lt;Vector space with base </span><span class="si">%s</span><span class="s">&gt;&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">base</span><span class="p">)</span>
+    
+    
+    <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base</span><span class="p">)</span>
+    
+    
+    <span class="c">#@cython.locals(combo=list,</span>
+    <span class="c">#               coefficient=cython.long, vector=object)</span>
+    <span class="c">#@cython.ccall(dict)</span>
+<div class="viewcode-block" id="VectorSpace.coordinates"><a class="viewcode-back" href="../../api.html#fatghol.homology.VectorSpace.coordinates">[docs]</a>    <span class="k">def</span> <span class="nf">coordinates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">combo</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the (sparse) coordinate vector of `combo`.</span>
+
+<span class="sd">        Argument `combo` represents a linear combination as a list</span>
+<span class="sd">        of pairs `(vector, coefficient)`, where `vector` is an item in</span>
+<span class="sd">        the `base` (specified when constructing this object).</span>
+
+<span class="sd">        Return value is a `dict` instance, mapping each `i` to the</span>
+<span class="sd">        component of `combo` w.r.t. to the `i`-th basis vector.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">coordinates</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span> 
+        <span class="k">for</span> <span class="p">(</span><span class="n">vector</span><span class="p">,</span> <span class="n">coefficient</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">iter</span><span class="p">(</span><span class="n">combo</span><span class="p">):</span>
+            <span class="n">coordinates</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">vector</span><span class="p">)]</span> <span class="o">+=</span> <span class="n">coefficient</span>
+        <span class="k">return</span> <span class="n">coordinates</span>
+
+
+
+<span class="c">#@cython.cclass</span></div></div>
+<div class="viewcode-block" id="DifferentialComplex"><a class="viewcode-back" href="../../api.html#fatghol.homology.DifferentialComplex">[docs]</a><span class="k">class</span> <span class="nc">DifferentialComplex</span><span class="p">(</span><span class="nb">list</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A finite-length complex of differential operators.</span>
+
+<span class="sd">    A `DifferentialComplex` is an ordered sequence of differential</span>
+<span class="sd">    operators `D[i]`; each `D[i]` maps `C[i]` into `C[i+1]`.  The</span>
+<span class="sd">    differential operators *must* be instances of the `SimpleMatrix`</span>
+<span class="sd">    class; matrices are assumed to operate on column vectors, so that</span>
+<span class="sd">    the number of rows equals the dimension of the domain vector</span>
+<span class="sd">    space.</span>
+<span class="sd">    </span>
+<span class="sd">    Indices of the operators `D[i]` run from 0 to `len(D)-1`</span>
+<span class="sd">    (inclusive).  The Python `len` operator returns the total length</span>
+<span class="sd">    of the complex::</span>
+<span class="sd">      </span>
+<span class="sd">      | &gt;&gt;&gt; len(D)</span>
+<span class="sd">      | 2</span>
+
+<span class="sd">    At present, the only supported operation on differential complexes</span>
+<span class="sd">    is computing the rank of homology groups::</span>
+
+<span class="sd">      | &gt;&gt;&gt; D.compute_homology_ranks()</span>
+<span class="sd">      | [1, 0]</span>
+
+<span class="sd">    An assertion is thrown if the matrix product of</span>
+<span class="sd">    `D[i]` and `D[i+1]` is not null.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">len_or_bds</span><span class="o">=</span><span class="p">[]):</span>
+        <span class="sd">&quot;&quot;&quot;Create a differential complex of specified length.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">len_or_bds</span><span class="p">,</span> <span class="n">numbers</span><span class="o">.</span><span class="n">Integral</span><span class="p">):</span>
+            <span class="nb">list</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">[</span><span class="bp">None</span><span class="p">]</span><span class="o">*</span><span class="n">len_or_bds</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">__debug__</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">elt</span> <span class="ow">in</span> <span class="n">len_or_bds</span><span class="p">:</span>
+                    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">elt</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span>
+                    <span class="n">A</span><span class="p">,</span> <span class="n">dom</span><span class="p">,</span> <span class="n">codom</span> <span class="o">=</span> <span class="n">elt</span>
+                    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">SimpleMatrix</span><span class="p">)</span>
+                    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dom</span><span class="p">,</span> <span class="n">numbers</span><span class="o">.</span><span class="n">Integral</span><span class="p">)</span>
+                    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">codom</span><span class="p">,</span> <span class="n">numbers</span><span class="o">.</span><span class="n">Integral</span><span class="p">)</span>
+            <span class="nb">list</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">len_or_bds</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&quot;DifferentialComplex(</span><span class="si">%s</span><span class="s">)&quot;</span> <span class="o">%</span> <span class="nb">list</span><span class="o">.</span><span class="n">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+    
+
+    <span class="c">#@cython.locals(#bd=SimpleMatrix,</span>
+    <span class="c">#    ddim=cython.int, cdim=cython.int)</span>
+    <span class="c">#@cython.ccall</span>
+    <span class="k">def</span> <span class="nf">append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bd</span><span class="p">,</span> <span class="n">ddim</span><span class="p">,</span> <span class="n">cdim</span><span class="p">):</span>
+        <span class="nb">list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">(</span><span class="n">bd</span><span class="p">,</span> <span class="n">ddim</span><span class="p">,</span> <span class="n">cdim</span><span class="p">))</span>
+    
+
+    <span class="c">#@cython.locals(ranks=list, i=cython.int,</span>
+    <span class="c">#               A=SimpleMatrix, ddim=cython.int, cdim=cython.int,</span>
+    <span class="c">#               r=cython.int, rs=list, domain_dim=list)</span>
+    <span class="c">#@cython.ccall</span>
+<div class="viewcode-block" id="DifferentialComplex.compute_homology_ranks"><a class="viewcode-back" href="../../api.html#fatghol.homology.DifferentialComplex.compute_homology_ranks">[docs]</a>    <span class="k">def</span> <span class="nf">compute_homology_ranks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Compute and return (list of) homology group ranks.</span>
+
+<span class="sd">        Returns a list of integers: item at index `n` is the rank of</span>
+<span class="sd">        the `n`-th homology group of this differential complex.  Since</span>
+<span class="sd">        the differential complex has finite length, homology group</span>
+<span class="sd">        indices can only run from 0 to the length of the complex (all</span>
+<span class="sd">        other groups being, trivially, null).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># check that the differentials form a complex</span>
+        <span class="c"># if __debug__:</span>
+        <span class="c">#     for i in xrange(1, len(self)-1):</span>
+        <span class="c">#         assert is_null_product(self[i-1][0], self[i][0]), \</span>
+        <span class="c">#                &quot;DifferentialComplex.compute_homology_ranks:&quot; \</span>
+        <span class="c">#                &quot; Product of boundary operator matrices D[%d] and D[%d]&quot; \</span>
+        <span class="c">#                &quot; is not null!&quot; \</span>
+        <span class="c">#                % (i-1, i)</span>
+        
+        <span class="c">#: ranks of `D[n]` matrices, for 0 &lt;= n &lt; len(self); the differential</span>
+        <span class="c">#: `D[0]` is the null map.</span>
+        <span class="n">ranks</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="c"># only compute those ranks that were not saved</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">ddim</span><span class="p">,</span> <span class="n">cdim</span><span class="p">))</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">checkpoint</span> <span class="o">=</span> <span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">runtime</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">checkpoint_dir</span><span class="p">,</span>
+                                           <span class="s">&quot;M</span><span class="si">%d</span><span class="s">,</span><span class="si">%d</span><span class="s">-rkD</span><span class="si">%d</span><span class="s">.txt&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">runtime</span><span class="o">.</span><span class="n">g</span><span class="p">,</span> <span class="n">runtime</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="n">i</span><span class="p">)))</span>
+            <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+                <span class="c"># running tests, so no `runtime.options`</span>
+                <span class="n">checkpoint</span> <span class="o">=</span> <span class="bp">None</span>
+            <span class="c"># XXX: LinBox segfaults if asked to compute the rank of a 0xL matrix</span>
+            <span class="k">if</span> <span class="n">A</span><span class="o">.</span><span class="n">num_rows</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">A</span><span class="o">.</span><span class="n">num_columns</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">rs</span> <span class="o">=</span> <span class="bp">None</span>
+                <span class="k">if</span> <span class="n">checkpoint</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">runtime</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">restart</span><span class="p">:</span>
+                    <span class="n">rs</span> <span class="o">=</span> <span class="n">load</span><span class="p">(</span><span class="n">checkpoint</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">rs</span><span class="p">:</span>
+                        <span class="n">r</span> <span class="o">=</span> <span class="n">rs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;  rank D[</span><span class="si">%d</span><span class="s">]=</span><span class="si">%d</span><span class="s"> (loaded from file &#39;</span><span class="si">%s</span><span class="s">&#39;)&quot;</span><span class="p">,</span>
+                                     <span class="n">i</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">checkpoint</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">rs</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="c"># `rs` was not loaded from checkpoint file</span>
+                    <span class="n">timing</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="s">&quot;rank D[</span><span class="si">%d</span><span class="s">]&quot;</span> <span class="o">%</span> <span class="n">i</span><span class="p">)</span>
+                    <span class="n">r</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">rank</span><span class="p">()</span>
+                    <span class="n">timing</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="s">&quot;rank D[</span><span class="si">%d</span><span class="s">]&quot;</span> <span class="o">%</span> <span class="n">i</span><span class="p">)</span>
+                    <span class="c"># checkpoint the computation so far</span>
+                    <span class="k">if</span> <span class="n">checkpoint</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                        <span class="n">save</span><span class="p">([</span><span class="n">r</span><span class="p">],</span> <span class="n">checkpoint</span><span class="p">)</span>
+                    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;  rank D[</span><span class="si">%d</span><span class="s">]=</span><span class="si">%d</span><span class="s"> (computed in </span><span class="si">%.3f</span><span class="s">s)&quot;</span><span class="p">,</span>
+                                 <span class="n">i</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">timing</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;rank D[</span><span class="si">%d</span><span class="s">]&quot;</span> <span class="o">%</span> <span class="n">i</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span> <span class="c"># A is a 0xL matrix</span>
+                <span class="n">r</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;  rank D[</span><span class="si">%d</span><span class="s">]=</span><span class="si">%d</span><span class="s"> (immediate)&quot;</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span>
+            <span class="n">ranks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+
+        <span class="c">## compute homology group ranks from rank and nullity</span>
+        <span class="c">## of boundary operators.</span>
+        <span class="c">##</span>
+        <span class="c">## By the rank-nullity theorem, if A:V--&gt;W is a linear map,</span>
+        <span class="c">## then null(A) =  dim(V) - rk(A), hence:</span>
+        <span class="c">##   dim(Z_i) = null(D_i) = dim(C_i) - rk(D_i)</span>
+        <span class="c">##   dim(B_i) = rk(D_{i+1})</span>
+        <span class="c">## Therefore:</span>
+        <span class="c">##   h_i = dim(H_i) = dim(Z_i / B_i) = dim(Z_i) - dim(B_i)</span>
+        <span class="c">##       = dim(C_i) - rk(D_i) - rk(D_{i+1})</span>
+        <span class="c">## where D_i:C_i--&gt;C_{i+1}</span>
+        <span class="c">##</span>
+        <span class="n">domain_dim</span> <span class="o">=</span> <span class="p">[</span> <span class="n">ddim</span> <span class="k">for</span> <span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">ddim</span><span class="p">,</span> <span class="n">cdim</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span> <span class="p">]</span>
+        <span class="n">domain_dim</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">2</span><span class="p">])</span> <span class="c"># add dimension of last vector space</span>
+        <span class="n">ranks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="c"># augment complex with the null map.</span>
+        <span class="c"># note: `domain_dim` indices are offset by 1 w.r.t. to `ranks` indices</span>
+        <span class="k">return</span> <span class="p">[</span> <span class="p">(</span><span class="n">domain_dim</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">ranks</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">ranks</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">])</span>
+                 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span> <span class="p">]</span>
+
+
+
+<span class="c">#@cython.cclass</span></div></div>
+<div class="viewcode-block" id="ChainComplex"><a class="viewcode-back" href="../../api.html#fatghol.homology.ChainComplex">[docs]</a><span class="k">class</span> <span class="nc">ChainComplex</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Represents a (finite-length) chain (homology) complex.</span>
+
+<span class="sd">    A `ChainComplex` `C` of length `l` comprises vector spaces `C[i]`</span>
+<span class="sd">    and differentials `C.differential[i]`; each `C[i]` represents the</span>
+<span class="sd">    part of the graded vector space `C` having degree `i`.  The map</span>
+<span class="sd">    `C.differential[i]` sends (linear combinations of) elements in</span>
+<span class="sd">    vector space `C[i]` to linear combinations of vectors in `C[i-1]`;</span>
+<span class="sd">    the `coordinates` method of `C[i-1]` will be used to obtain a</span>
+<span class="sd">    numerical representation of the differentiated element.</span>
+<span class="sd">    </span>
+<span class="sd">    A `ChainComplex` instance must be initialized by assigning</span>
+<span class="sd">    `VectorSpace` instances into each `C[i]` (for 0 &lt;= `i` &lt;</span>
+<span class="sd">    `len(C)`), and appropriate maps into `C.differential[i]` (for 1 &lt;=</span>
+<span class="sd">    `i` &lt; `len(C)`)::</span>
+
+<span class="sd">      &gt;&gt;&gt; # chain homology of a segment</span>
+<span class="sd">      &gt;&gt;&gt; C = ChainComplex(2)</span>
+<span class="sd">      &gt;&gt;&gt; C[1] = VectorSpace([&#39;a&#39;])</span>
+<span class="sd">      &gt;&gt;&gt; C[0] = VectorSpace([&#39;b0&#39;, &#39;b1&#39;])</span>
+<span class="sd">      &gt;&gt;&gt; C.differential[1] = lambda _: [(&#39;b0&#39;,1), (&#39;b1&#39;, -1)]</span>
+
+<span class="sd">    Indices of the slices `C[i]` run from 0 to `len(C)-1` (inclusive).</span>
+<span class="sd">    The Python `len` operator returns the total length of the</span>
+<span class="sd">    complex::</span>
+<span class="sd">      </span>
+<span class="sd">      &gt;&gt;&gt; len(C)</span>
+<span class="sd">      2</span>
+
+<span class="sd">    At present, the only supported operation on chain complexes is</span>
+<span class="sd">    computing the rank of homology groups::</span>
+
+<span class="sd">      &gt;&gt;&gt; C.compute_homology_ranks()</span>
+<span class="sd">      [1, 0]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">length</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create a chain complex of specified length.&quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="n">length</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="p">(</span>
+            <span class="s">&quot;ChainComplex.__init__:&quot;</span>
+            <span class="s">&quot; argument `length` must be a positive integer,&quot;</span> 
+            <span class="s">&quot; but got `</span><span class="si">%s</span><span class="s">` instead.&quot;</span> <span class="o">%</span> <span class="n">length</span><span class="p">)</span>
+        <span class="c">#: Total length of the complex.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">=</span> <span class="n">length</span>
+        <span class="c">#: The vectotr spaces supporting the differential complex</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">module</span> <span class="o">=</span> <span class="p">[</span> <span class="n">VectorSpace</span><span class="p">([])</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="n">length</span><span class="p">)</span> <span class="p">]</span>
+        <span class="c">#: Boundary operators; `differentials[i]` sends elements in</span>
+        <span class="c">#  `C[i]` to elements in `C[i+1]`.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">differential</span> <span class="o">=</span> <span class="p">[</span> <span class="n">ChainComplex</span><span class="o">.</span><span class="n">null_differential</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="n">length</span><span class="p">)</span> <span class="p">]</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">null_differential</span><span class="p">(</span><span class="n">vector</span><span class="p">):</span>
+      <span class="k">return</span> <span class="p">[</span> <span class="p">]</span> <span class="c"># null linear combination</span>
+
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&quot;ChainComplex(</span><span class="si">%d</span><span class="s">, modules=</span><span class="si">%s</span><span class="s">, differentials=</span><span class="si">%s</span><span class="s">)&quot;</span> \
+               <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">differential</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+
+    <span class="c">## list-like interface: support C[i] and len(C) syntax</span>
+    <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span>
+
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the `i`-th pair (module, boundary operator).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">differential</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the `i`-th support module and, optionally, boundary operator.</span>
+
+<span class="sd">        ::</span>
+<span class="sd">          C[i] = (module, differential)  # set `i`-th module and boundary op.</span>
+<span class="sd">          C[i] = module                  # only set module</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">,</span> \
+                   <span class="s">&quot;ChainComplex.__setitem__:&quot;</span> \
+                   <span class="s">&quot; Need a 2-tuple (module, differential), but got `</span><span class="si">%s</span><span class="s">`&quot;</span> <span class="o">%</span> <span class="n">val</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">differential</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">=</span> <span class="n">val</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+
+
+    <span class="c">#@cython.locals(D=DifferentialComplex, d=SimpleMatrix,</span>
+    <span class="c">#               i=cython.int, j=cython.int, k=cython.int, c=cython.int)</span>
+    <span class="c">#@cython.ccall(DifferentialComplex)</span>
+<div class="viewcode-block" id="ChainComplex.compute_boundary_operators"><a class="viewcode-back" href="../../api.html#fatghol.homology.ChainComplex.compute_boundary_operators">[docs]</a>    <span class="k">def</span> <span class="nf">compute_boundary_operators</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Compute and return matrix form of boundary operators.</span>
+
+<span class="sd">        Return list of sparse `SimpleMatrix` instances.</span>
+
+<span class="sd">        Matrix form of boundary operators operates on column vectors:</span>
+<span class="sd">        the `i`-th differential `D[i]` is `dim C[i-1]` rows (range) by</span>
+<span class="sd">        `dim C[i]` columns (domain).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">D</span> <span class="o">=</span> <span class="n">DifferentialComplex</span><span class="p">()</span>
+        <span class="n">D</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">NullMatrix</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">dimension</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="p">):</span>
+            <span class="n">d</span> <span class="o">=</span> <span class="n">SimpleMatrix</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">dimension</span><span class="p">,</span>
+                             <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">dimension</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">dimension</span><span class="p">):</span>
+                <span class="k">for</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">coordinates</span><span class="p">(</span>
+                                   <span class="bp">self</span><span class="o">.</span><span class="n">differential</span><span class="p">[</span><span class="n">i</span><span class="p">](</span>
+                                        <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">base</span><span class="p">[</span><span class="n">j</span><span class="p">]))</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+                    <span class="n">d</span><span class="o">.</span><span class="n">addToEntry</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>
+            <span class="n">D</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">dimension</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">dimension</span><span class="p">)</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;  Computed </span><span class="si">%d</span><span class="s">x</span><span class="si">%d</span><span class="s"> matrix D[</span><span class="si">%d</span><span class="s">]&quot;</span><span class="p">,</span>
+                         <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">base</span><span class="p">),</span>
+                         <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">base</span><span class="p">),</span>
+                         <span class="n">i</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">D</span>
+
+
+    <span class="c">#@cython.ccall</span></div>
+<div class="viewcode-block" id="ChainComplex.compute_homology_ranks"><a class="viewcode-back" href="../../api.html#fatghol.homology.ChainComplex.compute_homology_ranks">[docs]</a>    <span class="k">def</span> <span class="nf">compute_homology_ranks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Compute and return (list of) homology group ranks.</span>
+
+<span class="sd">        Returns a list of integers: item at index `n` is the rank of</span>
+<span class="sd">        the `n`-th homology group of this chain complex.  Since the</span>
+<span class="sd">        chain complex has finite length, homology group indices can</span>
+<span class="sd">        only run from 0 to the length of the complex (all other groups</span>
+<span class="sd">        being, trivially, null).</span>
+
+<span class="sd">        Examples::</span>
+<span class="sd">        </span>
+<span class="sd">          &gt;&gt;&gt; # chain homology of a point</span>
+<span class="sd">          &gt;&gt;&gt; C_point = ChainComplex(1)</span>
+<span class="sd">          &gt;&gt;&gt; C_point[0] = VectorSpace([&#39;a&#39;])</span>
+<span class="sd">          &gt;&gt;&gt; C_point.compute_homology_ranks()</span>
+<span class="sd">          [1]</span>
+<span class="sd">          </span>
+<span class="sd">          &gt;&gt;&gt; # chain homology of a segment</span>
+<span class="sd">          &gt;&gt;&gt; C_segment = ChainComplex(2)</span>
+<span class="sd">          &gt;&gt;&gt; C_segment[1] = VectorSpace([&#39;a&#39;])</span>
+<span class="sd">          &gt;&gt;&gt; C_segment[0] = VectorSpace([&#39;b0&#39;, &#39;b1&#39;])</span>
+<span class="sd">          &gt;&gt;&gt; C_segment.differential[1] = lambda _: [(&#39;b0&#39;,1), (&#39;b1&#39;, -1)]</span>
+<span class="sd">          &gt;&gt;&gt; C_segment.compute_homology_ranks()</span>
+<span class="sd">          [1, 0]</span>
+<span class="sd">          </span>
+<span class="sd">          &gt;&gt;&gt; # chain homology of a circle</span>
+<span class="sd">          &gt;&gt;&gt; C_circle = ChainComplex(2)</span>
+<span class="sd">          &gt;&gt;&gt; C_circle[1] = VectorSpace([&#39;a&#39;])</span>
+<span class="sd">          &gt;&gt;&gt; C_circle[0] = VectorSpace([&#39;b&#39;])</span>
+<span class="sd">          &gt;&gt;&gt; C_circle.differential[1] = lambda _: []</span>
+<span class="sd">          &gt;&gt;&gt; C_circle.compute_homology_ranks()</span>
+<span class="sd">          [1, 1]</span>
+<span class="sd">          </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_boundary_operators</span><span class="p">()</span><span class="o">.</span><span class="n">compute_homology_ranks</span><span class="p">()</span>
+
+
+
+<span class="c">## main: run tests</span>
+</div></div>
+<span class="k">if</span> <span class="s">&quot;__main__&quot;</span> <span class="o">==</span> <span class="n">__name__</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">doctest</span>
+    <span class="n">doctest</span><span class="o">.</span><span class="n">testmod</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&quot;homology&quot;</span><span class="p">,</span>
+                    <span class="n">optionflags</span><span class="o">=</span><span class="n">doctest</span><span class="o">.</span><span class="n">NORMALIZE_WHITESPACE</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">FatGHoL v5.4 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Riccardo Murri.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+  </body>
+</html>

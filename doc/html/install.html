@@ -1,0 +1,348 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Installation of FatGHoL &mdash; FatGHoL v5.4 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '5.4',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="FatGHoL v5.4 documentation" href="index.html" />
+    <link rel="next" title="Using FatGHoL" href="using.html" />
+    <link rel="prev" title="FatGHoL documentation" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="using.html" title="Using FatGHoL"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="FatGHoL documentation"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">FatGHoL v5.4 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="installation-of-fatghol">
+<h1>Installation of FatGHoL<a class="headerlink" href="#installation-of-fatghol" title="Permalink to this headline">¶</a></h1>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>Although it is <em>theoretically</em> possible to install FatGHoL in
+Windows or MacOSX, I have never attempted that.</p>
+<p class="last">Therefore, <strong>the following instructions are Linux-only.</strong></p>
+</div>
+<p>These instructions show how to install FatGHoL from its <a class="reference external" href="http://code.google.com/p/fatghol/source/browse">source
+repository</a> into a separate directory. This has the advantage that
+all code is confined in a single directory, and can thus be easily
+replaced/removed.  The instructions can be easily adapted to
+system-wide installation by anyone having a bit of familiarity with
+Linux system administration.</p>
+<p>Although FatGHoL is a pure-<a class="reference external" href="http://www.python.org/">Python</a> module, it depends on the <a class="reference external" href="http://linalg.org/">LinBox</a>
+exact linear algebra library for computing the rank of homology
+matrices.  Unfortunately, this complicates the installation procedure:
+<a class="reference external" href="http://linalg.org/">LinBox</a> depends on several other libraries, which must be downloaded
+and compiled.  The sections below detail what should be installed in
+order to get a working FatGHoL installation.</p>
+<div class="section" id="initial-installation">
+<h2>Initial installation<a class="headerlink" href="#initial-installation" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="the-prerequisite-of-prerequisites-c-compiler-and-svn">
+<h3>0. The prerequisite of prerequisites: C++ compiler and SVN<a class="headerlink" href="#the-prerequisite-of-prerequisites-c-compiler-and-svn" title="Permalink to this headline">¶</a></h3>
+<p>Before you install anything else, you need to have a working C and C++
+compiler on the system, and the <a class="reference external" href="http://subversion.apache.org/">SubVersion</a> (SVN) source control system.
+This is generally not a problem on Linux systems, which come with the
+<a class="reference external" href="http://gcc.gnu.org/">GCC</a> compiler preinstalled, and SVN is available as an optional
+package.  To check if you have a C++ compiler installed, type the
+following commands at your shell prompt:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">c</span><span class="o">++</span> <span class="o">--</span><span class="n">version</span><span class="p">;</span> <span class="n">svn</span> <span class="o">--</span><span class="n">version</span>
+</pre></div>
+</div>
+<p>If you get output similar to the following (the version number and
+copyright may vary), then everything is OK:</p>
+<div class="highlight-python"><pre>c++ (Ubuntu/Linaro 4.6.1-9ubuntu3) 4.6.1
+Copyright (C) 2011 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+svn, version 1.6.12 (r955767)
+ compiled Aug  5 2011, 17:07:24
+
+Copyright (C) 2000-2009 CollabNet.
+Subversion is open source software, see http://subversion.tigris.org/
+...</pre>
+</div>
+<p>If you instead get a &#8220;command not found&#8221; error, then you need to
+install the C/C++ compiler and SVN:</p>
+<ul>
+<li><p class="first">On <a class="reference external" href="http://www.debian.org/">Debian</a> and <a class="reference external" href="http://www.ubuntu.com/">Ubuntu</a>, install packages <tt class="docutils literal"><span class="pre">subversion</span></tt>, <tt class="docutils literal"><span class="pre">gcc</span></tt> and
+<tt class="docutils literal"><span class="pre">g++</span></tt>:</p>
+<div class="highlight-python"><pre>sudo apt-get install subversion gcc g++</pre>
+</div>
+</li>
+<li><p class="first">On <a class="reference external" href="http://www.fedoraproject.org/">Fedora</a>, <a class="reference external" href="http://www.redhat.com/products/enterprise-linux/">RHEL</a>, or <a class="reference external" href="http://www.centos.org/">CentOS</a>, install packages <tt class="docutils literal"><span class="pre">subversion</span></tt>,
+<tt class="docutils literal"><span class="pre">gcc</span></tt> and <tt class="docutils literal"><span class="pre">gcc-c++</span></tt>:</p>
+<div class="highlight-python"><pre># run this command as "root" user
+yum install subversion gcc gcc-c++</pre>
+</div>
+</li>
+<li><p class="first">On other Linux distributions, please refer to your distribution
+website for instructions.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="download-the-fatghol-sources-into-the-installation-directory">
+<h3>1. Download the FatGHoL sources into the installation directory<a class="headerlink" href="#download-the-fatghol-sources-into-the-installation-directory" title="Permalink to this headline">¶</a></h3>
+<p>Check-out the <tt class="docutils literal"><span class="pre">fatghol</span></tt> files into the installation directory:</p>
+<div class="highlight-python"><pre>svn checkout http://fatghol.googlecode.com/svn/trunk/ "$HOME/fatghol"
+cd "$HOME/fatghol"</pre>
+</div>
+<p>In this step and in the following ones, the directory
+<tt class="docutils literal"><span class="pre">$HOME/fatghol</span></tt> is be the installation folder of FatGHoL.  You can
+change this to another directory path; any directory that&#8217;s
+writable by your Linux account will be OK.</p>
+</div>
+<div class="section" id="install-auxiliary-libraries-and-software">
+<h3>2. Install auxiliary libraries and software<a class="headerlink" href="#install-auxiliary-libraries-and-software" title="Permalink to this headline">¶</a></h3>
+<p>This is the crucial step: we&#8217;re now going to install all the software
+required by FatGHoL and <a class="reference external" href="http://linalg.org/">LinBox</a> in one go.</p>
+<p>On <a class="reference external" href="http://www.debian.org/">Debian</a> and <a class="reference external" href="http://www.ubuntu.com/">Ubuntu</a>, the required software is already available as
+optional system packages, so it can be installed with ease; an
+installation script is provided for other Linux systems, which
+should be able to install the required software without assistance.</p>
+<ul>
+<li><p class="first">On <a class="reference external" href="http://www.debian.org/">Debian</a> and <a class="reference external" href="http://www.ubuntu.com/">Ubuntu</a> systems, the following command should install
+all the required software:</p>
+<div class="highlight-python"><pre>sudo apt-get install python-dev swig liblinbox-dev</pre>
+</div>
+</li>
+<li><p class="first">On other systems, you may want to use the <tt class="docutils literal"><span class="pre">prereq.sh</span></tt> script that
+you can find in the FatGHoL installation directory.  Invoking the
+script like this:</p>
+<div class="highlight-python"><pre>cd $HOME/fatghol
+./prereq.sh</pre>
+</div>
+<p>will download and install all necessary dependencies into a
+directory <tt class="docutils literal"><span class="pre">sw</span></tt> (created inside the FatGHoL installation
+directory).</p>
+<p>You can edit the initial section of the <tt class="docutils literal"><span class="pre">prereq.sh</span></tt> script to
+select what software needs to be installed on your system.  The
+default is to install all dependencies.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>The <tt class="docutils literal"><span class="pre">prereq.sh</span></tt> script may take a very long time to complete;
+especially the compilation of the linear algebra library ATLAS can
+take hours!</p>
+<p class="last">On the other hand, if you interrupt the script, just invoke it
+again with <tt class="docutils literal"><span class="pre">./prereq.sh</span></tt> and it should be able to pick up from
+whence it left.</p>
+</div>
+</li>
+<li><p class="first">If the script does not work, you may want to attempt installation
+from source of the packages, according to the instructions given on
+the respective websites.  These are the packages needed by
+FatGHoL:</p>
+<ul class="simple">
+<li><a class="reference external" href="http://www.python.org/">Python</a>, version (at least) 2.6</li>
+<li><a class="reference external" href="http://www.swig.org/">SWIG</a> (version 1.3.40 is known to work well with FatGHoL)</li>
+<li><a class="reference external" href="http://linalg.org/">LinBox</a>, at least version 1.1.6</li>
+</ul>
+<p>Note that the <tt class="docutils literal"><span class="pre">./mgn.sh</span></tt> script for running graph homology
+computations expects the libraries to be available in the <tt class="docutils literal"><span class="pre">sw</span></tt>
+directory withing the FatGHoL installation directory.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="install-fatghol">
+<h3>3. Install FatGHoL<a class="headerlink" href="#install-fatghol" title="Permalink to this headline">¶</a></h3>
+<p>Last step: run the <tt class="docutils literal"><span class="pre">setup.py</span></tt> script to compile the glue code that
+links FatGHoL with <a class="reference external" href="http://linalg.org/">LinBox</a>:</p>
+<div class="highlight-python"><pre>cd $HOME/fatghol
+python setup.py develop</pre>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>If you have installed Python with the installation script
+<tt class="docutils literal"><span class="pre">prereq.py</span></tt>, then you need to type the following command <em>before</em>
+you run <tt class="docutils literal"><span class="pre">setup.py</span></tt>, to be sure it is executed by the Python
+interpreter installed in step 2.:</p>
+<div class="last highlight-python"><pre>PATH=$HOME/fatghol/sw/bin:$PATH
+export PATH</pre>
+</div>
+</div>
+</div>
+<div class="section" id="check-your-installation">
+<h3>4. Check your installation<a class="headerlink" href="#check-your-installation" title="Permalink to this headline">¶</a></h3>
+<p>Now you can check your FatGHoL installation; just type the command:</p>
+<div class="highlight-python"><pre>./mgn.sh selftest</pre>
+</div>
+<p>and you should see the following output appear on your screen
+(elapsed times will of course be different):</p>
+<div class="highlight-python"><pre>Module 'rg' OK, passed all doctests.
+Module 'homology' OK, passed all doctests.
+Module 'graph_homology' OK, passed all doctests.
+Module 'combinatorics' OK, passed all doctests.
+Module 'iterators' OK, passed all doctests.
+Module 'cyclicseq' OK, passed all doctests.
+Checking homology algorithm (no checkpointing)
+  Computation of M_{0,3} homology: OK (elapsed: 0.010s)
+  Computation of M_{0,4} homology: OK (elapsed: 0.110s)
+  Computation of M_{0,5} homology: OK (elapsed: 24.030s)
+  Computation of M_{1,1} homology: OK (elapsed: 0.010s)
+  Computation of M_{1,2} homology: OK (elapsed: 0.180s)
+  Computation of M_{2,1} homology: OK (elapsed: 6.050s)
+Checking homology algorithm (checkpointing)
+  Computation of M_{0,3} homology: OK (elapsed: 0.000s)
+  Computation of M_{0,4} homology: OK (elapsed: 0.120s)
+  Computation of M_{0,5} homology: OK (elapsed: 24.520s)
+  Computation of M_{1,1} homology: OK (elapsed: 0.000s)
+  Computation of M_{1,2} homology: OK (elapsed: 0.120s)
+  Computation of M_{2,1} homology: OK (elapsed: 6.020s)
+Checking homology algorithm (restoring from checkpointed state)
+  Computation of M_{0,3} homology: OK (elapsed: 0.000s)
+  Computation of M_{0,4} homology: OK (elapsed: 0.040s)
+  Computation of M_{0,5} homology: OK (elapsed: 0.350s)
+  Computation of M_{1,1} homology: OK (elapsed: 0.000s)
+  Computation of M_{1,2} homology: OK (elapsed: 0.020s)
+  Computation of M_{2,1} homology: OK (elapsed: 0.090s)</pre>
+</div>
+<p>If you get errors, do not despair!  Feel free to write <cite>me
+&lt;mailto:riccardo.murri&#64;gmail.com&gt;</cite> and I will do my best to help.</p>
+</div>
+</div>
+<div class="section" id="upgrade">
+<h2>Upgrade<a class="headerlink" href="#upgrade" title="Permalink to this headline">¶</a></h2>
+<p>These instructions show how to upgrade the FatGHoL scripts to the
+latest version found in the <a class="reference external" href="http://code.google.com/p/fatghol/source/browse">source repository</a>.</p>
+<ol class="arabic">
+<li><p class="first"><cite>cd</cite> to the directory containing the FatGHoL virtualenv;
+assuming it&#8217;s named <tt class="docutils literal"><span class="pre">fatghol</span></tt> as in the above installation
+instructions, you can issue the commands:</p>
+<div class="highlight-python"><pre>cd $HOME/fatghol # use '/opt/fatghol' if root</pre>
+</div>
+</li>
+<li><p class="first">Upgrade the <cite>fatghol</cite> source and run the <cite>setup.py</cite> script again:</p>
+<div class="highlight-python"><pre>svn update
+export PATH=$HOME/fatghol/sw/bin:$PATH
+python setup.py develop</pre>
+</div>
+</li>
+</ol>
+</div>
+<div class="section" id="html-documentation">
+<h2>HTML Documentation<a class="headerlink" href="#html-documentation" title="Permalink to this headline">¶</a></h2>
+<p>HTML documentation for the FatGHoL programming interface can be read
+online at:</p>
+<blockquote>
+<div><a class="reference external" href="http://fatghol.googlecode.com/svn/trunk/doc/html/index.html">http://fatghol.googlecode.com/svn/trunk/doc/html/index.html</a></div></blockquote>
+<p>You can also generate a local copy from the sources:</p>
+<div class="highlight-python"><pre>cd $HOME/fatghol # use '/opt/fatghol' if root
+cd doc
+make html</pre>
+</div>
+<p>Note that you need the Python package <cite>Sphinx &lt;http://sphinx.pocoo.org&gt;</cite>
+in order to build the documentation locally.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Installation of FatGHoL</a><ul>
+<li><a class="reference internal" href="#initial-installation">Initial installation</a><ul>
+<li><a class="reference internal" href="#the-prerequisite-of-prerequisites-c-compiler-and-svn">0. The prerequisite of prerequisites: C++ compiler and SVN</a></li>
+<li><a class="reference internal" href="#download-the-fatghol-sources-into-the-installation-directory">1. Download the FatGHoL sources into the installation directory</a></li>
+<li><a class="reference internal" href="#install-auxiliary-libraries-and-software">2. Install auxiliary libraries and software</a></li>
+<li><a class="reference internal" href="#install-fatghol">3. Install FatGHoL</a></li>
+<li><a class="reference internal" href="#check-your-installation">4. Check your installation</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#upgrade">Upgrade</a></li>
+<li><a class="reference internal" href="#html-documentation">HTML Documentation</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">FatGHoL documentation</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="using.html"
+                        title="next chapter">Using FatGHoL</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/install.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="using.html" title="Using FatGHoL"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="FatGHoL documentation"
+             >previous</a> |</li>
+        <li><a href="index.html">FatGHoL v5.4 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Riccardo Murri.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+  </body>
+</html>

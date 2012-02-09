@@ -1,0 +1,272 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>fatghol.iterators &mdash; FatGHoL v5.4 documentation</title>
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '5.4',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="FatGHoL v5.4 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">FatGHoL v5.4 documentation</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for fatghol.iterators</h1><div class="highlight"><pre>
+<span class="c">#! /usr/bin/env python</span>
+<span class="c">#</span>
+<span class="sd">&quot;&quot;&quot;Iterator classes and utility functions.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c">#</span>
+<span class="c">#   Copyright (C) 2008-2012 Riccardo Murri &lt;riccardo.murri@gmail.com&gt;</span>
+<span class="c">#   All rights reserved.</span>
+<span class="c">#</span>
+<span class="c">#   This program is free software: you can redistribute it and/or modify</span>
+<span class="c">#   it under the terms of the GNU General Public License as published by</span>
+<span class="c">#   the Free Software Foundation, either version 3 of the License, or</span>
+<span class="c">#   (at your option) any later version.</span>
+<span class="c">#</span>
+<span class="c">#   This program is distributed in the hope that it will be useful,</span>
+<span class="c">#   but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="c">#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the</span>
+<span class="c">#   GNU General Public License for more details.</span>
+<span class="c">#</span>
+<span class="c">#   You should have received a copy of the GNU General Public License</span>
+<span class="c">#   along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
+<span class="c">#</span>
+<span class="n">__docformat__</span> <span class="o">=</span> <span class="s">&#39;reStructuredText&#39;</span>
+
+<span class="c">#import cython</span>
+
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">Iterator</span>
+
+
+<span class="c">## main content</span>
+
+<span class="c">#@cython.cclass</span>
+<div class="viewcode-block" id="BufferingIterator"><a class="viewcode-back" href="../../api.html#fatghol.iterators.BufferingIterator">[docs]</a><span class="k">class</span> <span class="nc">BufferingIterator</span><span class="p">(</span><span class="n">Iterator</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Iterate over items stored in an internal buffer; when all items</span>
+<span class="sd">    in the buffer have been handed out to caller, refill the buffer by</span>
+<span class="sd">    calling `self.refill()` and start over again.</span>
+
+<span class="sd">    This is intended as a base class for iterators that can generate</span>
+<span class="sd">    more than one value per invocation; still, by the iterator</span>
+<span class="sd">    protocol, they should return only one value to caller.  Subclasses</span>
+<span class="sd">    of `BufferingIterator` should only need to define the `refill()`</span>
+<span class="sd">    method, returning a list (or other iterable) with items that</span>
+<span class="sd">    should be inserted in the buffer.</span>
+
+<span class="sd">    The base class implementation just returns the items passed in the</span>
+<span class="sd">    `initial` constructor argument and then raise `StopIteration`::</span>
+
+<span class="sd">      &gt;&gt;&gt; b = BufferingIterator([1,2,3])</span>
+<span class="sd">      &gt;&gt;&gt; for x in b: print x</span>
+<span class="sd">      1</span>
+<span class="sd">      2</span>
+<span class="sd">      3</span>
+
+<span class="sd">      &gt;&gt;&gt; list(BufferingIterator())</span>
+<span class="sd">      []</span>
+<span class="sd">      </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="n">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;__buffer&#39;</span><span class="p">,)</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">initial</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create a `BufferingIterator` instance and fill the internal</span>
+<span class="sd">        buffer with items from `initial` (if supplied).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">initial</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__buffer</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__buffer</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">initial</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="BufferingIterator.next"><a class="viewcode-back" href="../../api.html#fatghol.iterators.BufferingIterator.next">[docs]</a>    <span class="k">def</span> <span class="nf">next</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return next item from queue, refilling queue if empty.&quot;&quot;&quot;</span>
+        <span class="c"># try to refill buffer if empty</span>
+        <span class="k">if</span> <span class="mi">0</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__buffer</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__buffer</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">refill</span><span class="p">())</span>
+
+        <span class="c"># if still empty after refill, then iteration has ended</span>
+        <span class="k">if</span> <span class="mi">0</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__buffer</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">StopIteration</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__buffer</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="BufferingIterator.refill"><a class="viewcode-back" href="../../api.html#fatghol.iterators.BufferingIterator.refill">[docs]</a>    <span class="k">def</span> <span class="nf">refill</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return new items to store in the buffer.</span>
+
+<span class="sd">        At end of iteration, `refill` may either raise</span>
+<span class="sd">        `StopIteration`, or just return an empty list.</span>
+
+<span class="sd">        Sub-classes should override this method: the default</span>
+<span class="sd">        implementation just signals `StopIteration`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">StopIteration</span>
+
+
+<span class="c">#@cython.cclass</span></div></div>
+<div class="viewcode-block" id="chunks"><a class="viewcode-back" href="../../api.html#fatghol.iterators.chunks">[docs]</a><span class="k">class</span> <span class="nc">chunks</span><span class="p">(</span><span class="n">Iterator</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Lump items from iterable into chunks of specified size.</span>
+
+<span class="sd">    Instanciate the iterator passing a sequence of chunk sizes in</span>
+<span class="sd">    argument 1 and an iterable to consume in argument 2::</span>
+
+<span class="sd">      &gt;&gt;&gt; for c in chunks([1,1,1], xrange(3)): print c</span>
+<span class="sd">      [0]</span>
+<span class="sd">      [1]</span>
+<span class="sd">      [2]</span>
+
+<span class="sd">    The list of chunk sizes may be any kind of sequence, for instance</span>
+<span class="sd">    a tuple or even a (possibly infinite) iterable::</span>
+<span class="sd">    </span>
+<span class="sd">      &gt;&gt;&gt; list(chunks((1,2,3), range(6)))</span>
+<span class="sd">      [[0], [1, 2], [3, 4, 5]]</span>
+
+<span class="sd">    The total size of the chunks may be less than the size of the</span>
+<span class="sd">    iterator: remaining items in the iterator are not consumed::</span>
+
+<span class="sd">      &gt;&gt;&gt; for c in chunks([1,2], range(6)): print c</span>
+<span class="sd">      [0]</span>
+<span class="sd">      [1, 2]</span>
+
+<span class="sd">    As a special case, if a chunk has size 0, then an empty list is</span>
+<span class="sd">    returned in its place and no item from iterable is consumed::</span>
+<span class="sd">    </span>
+<span class="sd">      &gt;&gt;&gt; for c in chunks([2,0,2], range(4)): print c</span>
+<span class="sd">      [0, 1]</span>
+<span class="sd">      []</span>
+<span class="sd">      [2, 3]</span>
+<span class="sd">      </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sizes</span><span class="p">,</span> <span class="n">iterable</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Constructor, taking sequence of chunk sizes and iterable to</span>
+<span class="sd">        consume.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_chunk</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sizes</span> <span class="o">=</span> <span class="n">sizes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">iterable</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">iterable</span><span class="p">)</span>
+
+    <span class="c">#@cython.locals(x=cython.int)</span>
+<div class="viewcode-block" id="chunks.next"><a class="viewcode-back" href="../../api.html#fatghol.iterators.chunks.next">[docs]</a>    <span class="k">def</span> <span class="nf">next</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return next chunk.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_chunk</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_chunk</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sizes</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">StopIteration</span>
+        <span class="k">return</span> <span class="p">[</span> <span class="bp">self</span><span class="o">.</span><span class="n">iterable</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+                   <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sizes</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">current_chunk</span><span class="p">])</span> <span class="p">]</span>
+
+
+<span class="c">#@cython.cclass</span></div></div>
+<div class="viewcode-block" id="IndexedIterator"><a class="viewcode-back" href="../../api.html#fatghol.iterators.IndexedIterator">[docs]</a><span class="k">class</span> <span class="nc">IndexedIterator</span><span class="p">(</span><span class="n">Iterator</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return the items corresponding to indices `start`, `start+1`, etc.</span>
+<span class="sd">    in the initialization sequence `lst`.</span>
+
+<span class="sd">    Iteration stops as soon as an `IndexError` (indicating</span>
+<span class="sd">    out-of-bounds) is returned.</span>
+
+<span class="sd">    Examples::</span>
+
+<span class="sd">      &gt;&gt;&gt; lst = [0, 1, 2, 3]</span>
+<span class="sd">      &gt;&gt;&gt; for x in IndexedIterator(lst): print x,</span>
+<span class="sd">      0 1 2 3</span>
+<span class="sd">      &gt;&gt;&gt; for y in IndexedIterator(lst, 2): print y,</span>
+<span class="sd">      2 3</span>
+<span class="sd">      </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lst</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__lst</span> <span class="o">=</span> <span class="n">lst</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__cur</span> <span class="o">=</span> <span class="n">start</span><span class="o">-</span><span class="mi">1</span>
+
+    <span class="k">def</span> <span class="nf">next</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__cur</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__lst</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">__cur</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">StopIteration</span>
+
+
+
+<span class="c">## main: run tests</span>
+</div>
+<span class="k">if</span> <span class="s">&quot;__main__&quot;</span> <span class="o">==</span> <span class="n">__name__</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">doctest</span>
+    <span class="n">doctest</span><span class="o">.</span><span class="n">testmod</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&quot;iterators&quot;</span><span class="p">,</span>
+                    <span class="n">optionflags</span><span class="o">=</span><span class="n">doctest</span><span class="o">.</span><span class="n">NORMALIZE_WHITESPACE</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">FatGHoL v5.4 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Riccardo Murri.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+  </body>
+</html>

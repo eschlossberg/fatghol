@@ -1,0 +1,383 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>fatghol.cache &mdash; FatGHoL v5.4 documentation</title>
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '5.4',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="FatGHoL v5.4 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">FatGHoL v5.4 documentation</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for fatghol.cache</h1><div class="highlight"><pre>
+<span class="c">#! /usr/bin/env python</span>
+<span class="c">#</span>
+<span class="sd">&quot;&quot;&quot;Utilities for caching computation results.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c">#</span>
+<span class="c">#   Copyright (C) 2008-2012 Riccardo Murri &lt;riccardo.murri@gmail.com&gt;</span>
+<span class="c">#   All rights reserved.</span>
+<span class="c">#</span>
+<span class="c">#   This program is free software: you can redistribute it and/or modify</span>
+<span class="c">#   it under the terms of the GNU General Public License as published by</span>
+<span class="c">#   the Free Software Foundation, either version 3 of the License, or</span>
+<span class="c">#   (at your option) any later version.</span>
+<span class="c">#</span>
+<span class="c">#   This program is distributed in the hope that it will be useful,</span>
+<span class="c">#   but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="c">#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the</span>
+<span class="c">#   GNU General Public License for more details.</span>
+<span class="c">#</span>
+<span class="c">#   You should have received a copy of the GNU General Public License</span>
+<span class="c">#   along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
+<span class="c">#</span>
+<span class="n">__docformat__</span> <span class="o">=</span> <span class="s">&#39;reStructuredText&#39;</span>
+
+
+<span class="c">## stdlib imports</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">import</span> <span class="nn">functools</span>
+<span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">time</span>
+<span class="kn">import</span> <span class="nn">weakref</span>
+
+
+<span class="c">## additional imports</span>
+
+<span class="c">#import cython</span>
+
+<span class="c">## local imports</span>
+
+<span class="kn">from</span> <span class="nn">fatghol.iterators</span> <span class="kn">import</span> <span class="n">Iterator</span>
+
+
+<span class="c">## auxiliary classes</span>
+
+<span class="c">#@cython.cclass</span>
+<span class="k">class</span> <span class="nc">_IteratorRecorder</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Cache results from a given iterator.  Client classes provided</span>
+<span class="sd">    by the `replay()` method will then replay the iterator history;</span>
+<span class="sd">    multiple players can replay from one recorded source</span>
+<span class="sd">    independently.</span>
+
+<span class="sd">    Example::</span>
+
+<span class="sd">      &gt;&gt;&gt; L = [1,2,3]</span>
+<span class="sd">      &gt;&gt;&gt; R = _IteratorRecorder(iter(L))</span>
+<span class="sd">      &gt;&gt;&gt; for x in R: print x</span>
+<span class="sd">      1</span>
+<span class="sd">      2</span>
+<span class="sd">      3</span>
+<span class="sd">      &gt;&gt;&gt; for x in R.replay(): print x</span>
+<span class="sd">      1</span>
+<span class="sd">      2</span>
+<span class="sd">      3</span>
+<span class="sd">      </span>
+<span class="sd">    **WARNING:** This is not thread-safe!</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">__slots__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;done&#39;</span><span class="p">,</span> <span class="s">&#39;iterable&#39;</span><span class="p">,</span> <span class="s">&#39;history&#39;</span><span class="p">,</span> <span class="s">&#39;__weakref__&#39;</span><span class="p">]</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iterable</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">iterable</span> <span class="o">=</span> <span class="n">iterable</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">history</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">done</span> <span class="o">=</span> <span class="bp">False</span>
+
+    <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">replay</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">advance</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Record next item from the source iterator.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">done</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">StopIteration</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">iterable</span><span class="o">.</span><span class="n">next</span><span class="p">())</span>
+            <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">done</span> <span class="o">=</span> <span class="bp">True</span>
+                <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">iterable</span>
+                <span class="k">raise</span>
+
+    <span class="k">def</span> <span class="nf">replay</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return a new player.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_IteratorReplayer</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+    
+
+<span class="c">#@cython.cclass</span>
+<span class="k">class</span> <span class="nc">_IteratorReplayer</span><span class="p">(</span><span class="n">Iterator</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Replay values recorded into a given `_IteratorRecorder` class.</span>
+<span class="sd">    Multiple players can replay from one recorded source</span>
+<span class="sd">    independently.</span>
+
+<span class="sd">    Instances of `_IteratorReplayer`:class: are only produced as a</span>
+<span class="sd">    result of the `_IteratorRecorder.replay` method.  See</span>
+<span class="sd">    `_IteratorRecorder`:class: for examples.</span>
+
+<span class="sd">    **WARNING:** This is not thread-safe!</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">__slots__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;done&#39;</span><span class="p">,</span> <span class="s">&#39;master&#39;</span><span class="p">,</span> <span class="s">&#39;pos&#39;</span><span class="p">]</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">master</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">master</span> <span class="o">=</span> <span class="n">master</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pos</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">done</span> <span class="o">=</span> <span class="bp">False</span>
+
+    <span class="k">def</span> <span class="nf">next</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">done</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">StopIteration</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pos</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">master</span><span class="o">.</span><span class="n">history</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">master</span><span class="o">.</span><span class="n">advance</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pos</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">master</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">pos</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">done</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">master</span>
+            <span class="k">raise</span>
+
+
+<span class="c">#@cython.cclass</span>
+<div class="viewcode-block" id="Caching"><a class="viewcode-back" href="../../api.html#fatghol.cache.Caching">[docs]</a><span class="k">class</span> <span class="nc">Caching</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Instances of this class provide an interface for use by caches</span>
+<span class="sd">    based on a `dict` subclass.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">__slots__</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s">&#39;_cache0&#39;</span><span class="p">,</span>             <span class="c"># cache for nullary methods</span>
+        <span class="s">&#39;_cache_contract&#39;</span><span class="p">,</span>     <span class="c"># cache `Fatgraph.contract` results</span>
+        <span class="s">&#39;_cache_eq&#39;</span><span class="p">,</span>           <span class="c"># cache `Fatgraph.__eq__` results</span>
+        <span class="s">&#39;_cache_isomorphisms&#39;</span><span class="p">,</span> <span class="c"># cache `Fatgraph.isomorphisms` results</span>
+        <span class="p">]</span>
+
+
+
+<span class="c">## caching functions</span>
+
+<span class="c"># store </span></div>
+<span class="n">_func_cache</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">dict</span><span class="p">)</span>
+
+<span class="c">#@cython.ccall</span>
+<div class="viewcode-block" id="fcache"><a class="viewcode-back" href="../../api.html#fatghol.cache.fcache">[docs]</a><span class="k">def</span> <span class="nf">fcache</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Cache result of a generic function.</span>
+
+<span class="sd">    This decorator can cache results of calls `func(*args)`.</span>
+
+<span class="sd">    CAVEATS:</span>
+
+<span class="sd">    1. The whole argument tuple is cached, so any object referenced</span>
+<span class="sd">      there will *not* be garbage collected!</span>
+<span class="sd">    2. No keyword arguments are allowed in the cached function.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nd">@functools.wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">wrapper</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="n">cache</span> <span class="o">=</span> <span class="n">_func_cache</span><span class="p">[</span><span class="nb">id</span><span class="p">(</span><span class="n">func</span><span class="p">)]</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="n">args</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">cache</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+            <span class="n">cache</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span>
+            <span class="k">return</span> <span class="n">result</span>
+    <span class="k">return</span> <span class="n">wrapper</span>
+
+
+<span class="c">#@cython.ccall</span></div>
+<div class="viewcode-block" id="ocache0"><a class="viewcode-back" href="../../api.html#fatghol.cache.ocache0">[docs]</a><span class="k">def</span> <span class="nf">ocache0</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Cache result of a nullary object method.</span>
+<span class="sd">    </span>
+<span class="sd">    This decorator can cache results of calls `obj.method()`. The</span>
+<span class="sd">    result cache is held in the object itself; therefore, to cache</span>
+<span class="sd">    result from methods of objects using a &#39;__slots__&#39; declaration, a</span>
+<span class="sd">    &#39;_cache&#39; slot must be present and writable.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nd">@functools.wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">wrapper</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">cache</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">_cache0</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="n">obj</span><span class="o">.</span><span class="n">_cache0</span> <span class="o">=</span> <span class="n">cache</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">cache</span><span class="p">[</span><span class="n">func</span><span class="o">.</span><span class="n">func_name</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+            <span class="n">cache</span><span class="p">[</span><span class="n">func</span><span class="o">.</span><span class="n">func_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span>
+            <span class="k">return</span> <span class="n">result</span>
+    <span class="k">return</span> <span class="n">wrapper</span>
+
+
+<span class="c">#@cython.ccall</span></div>
+<div class="viewcode-block" id="ocache_contract"><a class="viewcode-back" href="../../api.html#fatghol.cache.ocache_contract">[docs]</a><span class="k">def</span> <span class="nf">ocache_contract</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Cache result of the `Fatgraph.contract` method.</span>
+<span class="sd">    </span>
+<span class="sd">    Only a weak reference to the method&#39;s result is held, so the cache</span>
+<span class="sd">    entry is automatically freed when the result Fatgraph goes out of</span>
+<span class="sd">    scope.</span>
+
+<span class="sd">    Results of calls are cached in the `Fatgraph` instance on which</span>
+<span class="sd">    the method is called, so they are automatically dropped when that</span>
+<span class="sd">    object is collected.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nd">@functools.wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">wrapper</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">edgeno</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">cache</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">_cache_contract</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="n">obj</span><span class="o">.</span><span class="n">_cache_contract</span> <span class="o">=</span> <span class="n">cache</span> <span class="o">=</span> <span class="n">weakref</span><span class="o">.</span><span class="n">WeakValueDictionary</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">cache</span><span class="p">[</span><span class="n">edgeno</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">edgeno</span><span class="p">)</span>
+            <span class="n">cache</span><span class="p">[</span><span class="n">edgeno</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span>
+            <span class="k">return</span> <span class="n">result</span>
+    <span class="k">return</span> <span class="n">wrapper</span>
+
+
+<span class="c">#@cython.ccall</span></div>
+<div class="viewcode-block" id="ocache_eq"><a class="viewcode-back" href="../../api.html#fatghol.cache.ocache_eq">[docs]</a><span class="k">def</span> <span class="nf">ocache_eq</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Cache result of the 2-ary symmetric `Fatgraph.__eq__` method.</span>
+
+<span class="sd">    Results of calls are cached in the `Fatgraph` instance on which</span>
+<span class="sd">    the method is called, *and* (simmetrically) in the `Fatgraph` to</span>
+<span class="sd">    which that is compared to.</span>
+<span class="sd">    </span>
+<span class="sd">    Only a weak reference to the compared-to graph is held, so the</span>
+<span class="sd">    cache entry is automatically freed when the compared-to Fatgraph</span>
+<span class="sd">    goes out of scope.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nd">@functools.wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">wrapper</span><span class="p">(</span><span class="n">o1</span><span class="p">,</span> <span class="n">o2</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">cache1</span> <span class="o">=</span> <span class="n">o1</span><span class="o">.</span><span class="n">_cache_eq</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="n">o1</span><span class="o">.</span><span class="n">_cache_eq</span> <span class="o">=</span> <span class="n">cache1</span> <span class="o">=</span> <span class="n">weakref</span><span class="o">.</span><span class="n">WeakKeyDictionary</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">cache2</span> <span class="o">=</span> <span class="n">o2</span><span class="o">.</span><span class="n">_cache</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="n">o2</span><span class="o">.</span><span class="n">_cache_eq</span> <span class="o">=</span> <span class="n">cache2</span> <span class="o">=</span> <span class="n">weakref</span><span class="o">.</span><span class="n">WeakKeyDictionary</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">cache1</span><span class="p">[</span><span class="n">o2</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">o1</span><span class="p">,</span> <span class="n">o2</span><span class="p">)</span>
+            <span class="n">cache1</span><span class="p">[</span><span class="n">o2</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span>
+            <span class="n">cache2</span><span class="p">[</span><span class="n">o1</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span>
+            <span class="k">return</span> <span class="n">result</span>
+    <span class="k">return</span> <span class="n">wrapper</span>
+
+
+<span class="c">#@cython.ccall</span></div>
+<div class="viewcode-block" id="ocache_isomorphisms"><a class="viewcode-back" href="../../api.html#fatghol.cache.ocache_isomorphisms">[docs]</a><span class="k">def</span> <span class="nf">ocache_isomorphisms</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Cache results of `isomorphisms(g1,g2)` methods, which return an</span>
+<span class="sd">    iterator/generator.</span>
+
+<span class="sd">    Iterator results cannot be cached like any other object, because</span>
+<span class="sd">    they need to return the same set of values each time the</span>
+<span class="sd">    generating function is invoked.</span>
+
+<span class="sd">    Results of calls are cached in the `Fatgraph` instance on which</span>
+<span class="sd">    the method is called, so they are automatically dropped when that</span>
+<span class="sd">    object is collected.</span>
+
+<span class="sd">    Only a weak reference to the target Fatgraph is held, so the cache</span>
+<span class="sd">    entry is automatically freed when it goes out of scope.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nd">@functools.wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">wrapper</span><span class="p">(</span><span class="n">o1</span><span class="p">,</span> <span class="n">o2</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">cache</span> <span class="o">=</span> <span class="n">o1</span><span class="o">.</span><span class="n">_cache_isomorphisms</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="n">cache</span> <span class="o">=</span> <span class="n">o1</span><span class="o">.</span><span class="n">_cache_isomorphisms</span> <span class="o">=</span> <span class="n">weakref</span><span class="o">.</span><span class="n">WeakKeyDictionary</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">cache</span><span class="p">[</span><span class="n">o2</span><span class="p">]</span><span class="o">.</span><span class="n">replay</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">_IteratorRecorder</span><span class="p">(</span><span class="n">func</span><span class="p">(</span><span class="n">o1</span><span class="p">,</span> <span class="n">o2</span><span class="p">))</span>
+            <span class="n">cache</span><span class="p">[</span><span class="n">o2</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span>
+            <span class="k">return</span> <span class="n">result</span><span class="o">.</span><span class="n">replay</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">wrapper</span>
+
+
+
+<span class="c">## main: run tests</span>
+</div>
+<span class="k">if</span> <span class="s">&quot;__main__&quot;</span> <span class="o">==</span> <span class="n">__name__</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">doctest</span>
+    <span class="n">doctest</span><span class="o">.</span><span class="n">testmod</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&quot;cache&quot;</span><span class="p">,</span>
+                    <span class="n">optionflags</span><span class="o">=</span><span class="n">doctest</span><span class="o">.</span><span class="n">NORMALIZE_WHITESPACE</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">FatGHoL v5.4 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Riccardo Murri.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+  </body>
+</html>

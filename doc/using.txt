@@ -1,0 +1,147 @@
+.. This file follows reStructuredText markup syntax; see
+   http://docutils.sf.net/rst.html for more information
+
+
+---------------
+ Using FatGHoL
+---------------
+
+FatGHoL comes with a front-end script to compute the (co)homology of
+the moduli space of marked smooth Riemann surfaces (using Kontsevich'
+"graph homology" complex).
+
+The front-end script is called ``mgn.sh``; you can invoke it with the
+``--help`` command line option to get a recap of its functionality::
+
+  $ ./mgn.sh --help
+  usage: mgn [-h] [-D [DEBUG]] [-l LOGFILE] [-o OUTFILE] [-s CHECKPOINT_DIR]
+             [-u] [-v] [-V]
+             ACTION [ARG [ARG ...]]
+
+      Actions:
+
+        graphs G N
+          Generate the graphs occurring in M_{g,n}.
+
+        homology G N
+          Print homology ranks of M_{g,n}.
+
+        latex G N [-s DIR] [-o FILE]
+          Read the listings of M_{g,n} fatgraphs (from directory DIR)
+          and output a pretty-print catalogue of the graphs as LaTeX documents.
+
+        valences G N
+          Print the vertex valences occurring in M_{g,n} graphs.
+
+        shell
+          Start an interactive PyDB shell.
+
+        selftest
+          Run internal code tests and report failures.
+
+
+  positional arguments:
+    ACTION                Action to perform, see above.
+    ARG                   Arguments depend on the actual action, see above.
+
+  optional arguments:
+    -h, --help            show this help message and exit
+    -D [DEBUG], --debug [DEBUG]
+                          Enable debug features:
+                              * pydb -- run Python debugger if an error occurs
+                              * profile -- dump profiler statistics in a .pf file.
+                              Several features may be enabled by separating them
+                              with a comma, as in '-D pydb,profile'.
+    -l LOGFILE, --logfile LOGFILE
+                          Redirect log messages to the named file
+                              (by default log messages are output to STDERR).
+    -o OUTFILE, --output OUTFILE
+                          Save results into named file.
+    -s CHECKPOINT_DIR, --checkpoint CHECKPOINT_DIR
+                          Directory for saving computation state.
+    -u, --afresh          Do NOT restart computation from the saved state in checkpoint directory.
+    -v, --verbose         Print informational and status messages as the computation goes on.
+    -V, --version         show program's version number and exit
+
+
+That should be pretty much self-explanatory; however a bit more detail
+is given below.
+
+The ``graphs`` action
+---------------------
+
+With ``./mgn.sh graphs 0 4`` (for example) you can print a list of
+all the fatgraphs having genus 0 and 4 boundary cycles.  If you want
+to save the list to a file, use the ``-o`` option, followed by the
+file name.
+
+The list of fatgraphs is also saved in directory ``M0,4.data/`` in several
+``.list`` files, depending on the number of vertices.  For instance,
+the ``M0,4-MgnGraphsIterator3.list`` file is the one collecting
+fatgraphs with 3 vertices.
+
+
+The ``homology`` action
+-----------------------
+
+With ``./mgn.sh homology 0 4`` (for example), you can print the Betti
+numbers of the moduli space of smooth marked Riemann surfaces having
+genus 0 and 4 marked points.  If you want to save the result to a
+file, use the ``-o`` option, followed by the file name.
+
+Internally, the ``homology`` function uses the ``graphs`` function, so
+it generates all by-products of that function.  In particular, graphs
+lists are generated and saved in the `checkpoint directory`_
+(``M0,4.data`` in this example).
+
+In addition to graph lists, the boundary operator matrices are
+computed and saved in the `checkpoint directory`_.  After their ranks
+have been computed, they are saved as well, so invoking the
+``homology`` action with a fully-populated `checkpoint directory`_ gives
+the result almost istantaneously.
+
+
+The ``latex`` action
+--------------------
+
+This reads the contents of an existing checkpoint directory and
+generates a LaTeX report on all the graphs: what graphs are there,
+their automorphisms and markings, etc.
+
+To save the report into a file, use the ``-o`` option followed by the
+file name, e.g.::
+
+  ./mgn.sh latex 0 4 -o report.tex
+
+The name of the `checkpoint directory`_ is automatically generated
+from the parameters *G* and *N*; use the ``-s`` option to use a
+different directory.
+
+
+The ``valence`` action
+----------------------
+
+This prints the valences of vertices of fatgraphs with given genus and
+number of boundary cycles.
+
+As this is a very simple computation, nothing is saved to the
+`checkpoint directory`_.
+
+
+Checkpoint directory
+--------------------
+
+This is a directory where FatGHoL saves result of
+computationally-expensive functions.  When FatGHoL is invoked again at
+a later time, it loads the results from the checkpoint directory
+instead of calculating them again; this results in a substantial
+speedup.  However, you can use the ``-u`` command-line option to tell
+FatGHoL to ignore the contents of a checkpoint directory.
+
+The name of the `checkpoint directory`_ is automatically generated
+from the parameters *G* and *N*; use the ``-s`` option to use a
+different directory.
+
+There is no way of avoiding that FatGHoL creates a checkpoint
+directory and populates it.
+
