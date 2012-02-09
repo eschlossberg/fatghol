@@ -7,7 +7,7 @@
 # standard PATH/LD_LIBRARY_PATH
 #
 PYTHON=2.7.2 # http://www.python.org/ftp/python/2.7.2/Python-2.7.2.tar.bz2
-CYTHON=0.15.1
+#CYTHON=0.15.1
 SWIG=1.3.40
 
 # LinBox requires GMP, Givaro and ATLAS
@@ -17,7 +17,7 @@ GIVARO=3.3.3 # later versions in the 3.3.x series give incorrect results
 ATLAS=3.8.3 # 3.8.4 does not compile on Ubuntu 11.04 w/ GCC 4.5.2
 
 # this is really optional
-TCMALLOC=1.8.3 # http://google-perftools.googlecode.com/files/google-perftools-1.8.3.tar.gz
+#TCMALLOC=1.8.3 # http://google-perftools.googlecode.com/files/google-perftools-1.8.3.tar.gz
 
 
 ## No customization should be necessary further down here
