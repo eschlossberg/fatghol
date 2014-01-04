@@ -11,7 +11,7 @@
  */
 /*
  *
- *   Copyright (C) 2008-2012 Riccardo Murri <riccardo.murri@gmail.com>
+ *   Copyright (C) 2008-2014 Riccardo Murri <riccardo.murri@gmail.com>
  *   All rights reserved.
  *
  *   This program is free software: you can redistribute it and/or modify
@@ -86,7 +86,7 @@ private:
   _simplerows m;
 #else
   typedef LinBox::PID_integer _CoefficientRingType;
-  typedef LinBox::SparseMatrix<_CoefficientRingType> _MatrixType;
+  typedef LinBox::SparseMatrix<_CoefficientRingType, LinBox::Vector<_CoefficientRingType>::SparseSeq> _MatrixType;
   _CoefficientRingType ZZ;
   _MatrixType m;
 #endif
