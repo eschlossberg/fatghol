@@ -52,10 +52,10 @@
 class SimpleMatrix {
 public:
   /** Default ctor: make null sparse matrix. */
-  SimpleMatrix(int const m, int const n);  
+  SimpleMatrix(int const m, int const n);
 
   /** Add an entry. */
-  void addToEntry(int const i, int const j, 
+  void addToEntry(int const i, int const j,
                   int const value);
 
   /** Return the value of entry at row @a i and column @j */
@@ -68,7 +68,7 @@ public:
   const int num_columns;
 
   /** Return `true` if product of given matrices is null */
-  friend bool is_null_product(const SimpleMatrix &M1, 
+  friend bool is_null_product(const SimpleMatrix &M1,
                               const SimpleMatrix &M2);
 
   /** Dump entries to named file */
@@ -97,7 +97,7 @@ private:
 
 inline
 SimpleMatrix::SimpleMatrix(int const m, int const n):
-  num_rows(m), num_columns(n), 
+  num_rows(m), num_columns(n),
 #ifdef FATGHOL_USE_RHEINFALL
 #  error Rheinfall support not yet implemented.  Please define FATGHOL_USE_LINBOX_ELIMINATION_PIVOT_LINEAR.
 #else
@@ -108,7 +108,7 @@ SimpleMatrix::SimpleMatrix(int const m, int const n):
 }
 
 
-inline 
+inline
 void
 SimpleMatrix::addToEntry(int const i, int const j,
                       int const value)
@@ -125,11 +125,11 @@ SimpleMatrix::addToEntry(int const i, int const j,
   _CoefficientRingType::Element a;
   ZZ.init(a, value);
   m.refEntry(i, j) += a;
-#endif 
+#endif
 }
 
 
-inline 
+inline
 int
 SimpleMatrix::getEntry(int const i, int const j) const
 {
@@ -180,7 +180,7 @@ SimpleMatrix::rank()
 # ifndef SWIG
 #  error Rheinfall support not yet implemented.  Please define FATGHOL_USE_LINBOX_ELIMINATION_PIVOT_LINEAR.
 # endif
-#endif  
+#endif
     return r;
 }
 
@@ -194,7 +194,7 @@ is_null_product(const SimpleMatrix &A, const SimpleMatrix &B)
   for(int i=0; i<A.num_rows; i++) {
     for (int j=0; j<B.num_columns; j++) {
       long x = 0;
-      for (int k=0; k<A.num_columns; k++) 
+      for (int k=0; k<A.num_columns; k++)
         x += A.m.getEntry(i,k) * B.m.getEntry(k,j);
       if (not (x == 0))
         return false;
@@ -207,7 +207,7 @@ is_null_product(const SimpleMatrix &A, const SimpleMatrix &B)
     for (int j=0; j<B.m.coldim(); j++) {
       SimpleMatrix::_CoefficientRingType::Element x;
       ZZ.init(x, 0);
-      for (int k=0; k<A.m.coldim(); k++) 
+      for (int k=0; k<A.m.coldim(); k++)
         x += A.m.getEntry(i,k) * B.m.getEntry(k,j);
       if (not (x == 0))
         return false;
@@ -223,12 +223,12 @@ bool
 SimpleMatrix::load(const char *const filename)
 {
   std::ifstream input(filename);
-  if ((not input.is_open()) or input.bad()) 
+  if ((not input.is_open()) or input.bad())
     return false;
 
 #ifdef FATGHOL_USE_RHEINFALL
   // XXX: this is basically ripped off Rheinfall's "rank.hpp"
-  int nrows, ncols; 
+  int nrows, ncols;
   char M;
   input >> nrows >> ncols >> M;
   if (input.fail() or 'M' != M)
@@ -249,8 +249,8 @@ SimpleMatrix::load(const char *const filename)
     --i;
     --j;
     // ignore zero entries in matrix -- they shouldn't be here in the first place
-    if (0 == value) 
-      continue; 
+    if (0 == value)
+      continue;
     m[i][j] = value;
   }; // while(not eof)
 #else // use LinBox
