@@ -72,7 +72,7 @@ setup (
 
     # metadata for upload to PyPI
     description = "A Python library and simple command-line frontend for computing with Penner's Fat Graphs",
-    long_description = read_whole_file('README.txt'),
+    long_description = read_whole_file('README.rst'),
     author = "Riccardo Murri",
     author_email = "riccardo.murri@gmail.com",
     license = "LGPL",
