@@ -50,7 +50,7 @@ class VectorSpace(object):
 
     After construction, you can retrieve the base vectors set and the
     dimension from instance attributes `base` and `dimension`.
-    
+
     The `base` elements are assumed to be *linearly independent*, so
     the `dimension` of the generated vector space equals the number of
     elements in the base set.
@@ -67,23 +67,23 @@ class VectorSpace(object):
         self.base = base
         self.dimension = len(base)
 
-    
+
     def __iter__(self):
         """Iterate over basis vectors."""
         return iter(self.base)
 
-    
+
     def __repr__(self):
         return ("VectorSpace(%s)" % self.base)
 
     def __str__(self):
         return ("<Vector space with base %s>" % self.base)
-    
-    
+
+
     def __len__(self):
         return len(self.base)
-    
-    
+
+
     #@cython.locals(combo=list,
     #               coefficient=cython.long, vector=object)
     #@cython.ccall(dict)
@@ -97,7 +97,7 @@ class VectorSpace(object):
         Return value is a `dict` instance, mapping each `i` to the
         component of `combo` w.r.t. to the `i`-th basis vector.
         """
-        coordinates = defaultdict(int) 
+        coordinates = defaultdict(int)
         for (vector, coefficient) in iter(combo):
             coordinates[self.base.index(vector)] += coefficient
         return coordinates
@@ -114,11 +114,11 @@ class DifferentialComplex(list):
     class; matrices are assumed to operate on column vectors, so that
     the number of rows equals the dimension of the domain vector
     space.
-    
+
     Indices of the operators `D[i]` run from 0 to `len(D)-1`
     (inclusive).  The Python `len` operator returns the total length
     of the complex::
-      
+
       | >>> len(D)
       | 2
 
@@ -131,7 +131,7 @@ class DifferentialComplex(list):
     An assertion is thrown if the matrix product of
     `D[i]` and `D[i+1]` is not null.
     """
-    
+
     def __init__(self, len_or_bds=[]):
         """Create a differential complex of specified length."""
         if isinstance(len_or_bds, numbers.Integral):
@@ -148,17 +148,17 @@ class DifferentialComplex(list):
 
     def __repr__(self):
         return "DifferentialComplex(%s)" % list.__str__(self)
-    
+
     def __str__(self):
         return repr(self)
-    
+
 
     #@cython.locals(#bd=SimpleMatrix,
     #    ddim=cython.int, cdim=cython.int)
     #@cython.ccall
     def append(self, bd, ddim, cdim):
         list.append(self, (bd, ddim, cdim))
-    
+
 
     #@cython.locals(ranks=list, i=cython.int,
     #               A=SimpleMatrix, ddim=cython.int, cdim=cython.int,
@@ -181,7 +181,7 @@ class DifferentialComplex(list):
         #                " Product of boundary operator matrices D[%d] and D[%d]" \
         #                " is not null!" \
         #                % (i-1, i)
-        
+
         #: ranks of `D[n]` matrices, for 0 <= n < len(self); the differential
         #: `D[0]` is the null map.
         ranks = list()
@@ -225,7 +225,8 @@ class DifferentialComplex(list):
         ##   dim(B_i) = rk(D_{i+1})
         ## Therefore:
         ##   h_i = dim(H_i) = dim(Z_i / B_i) = dim(Z_i) - dim(B_i)
-        ##       = dim(C_i) - rk(D_i) - rk(D_{i+1})
+        ##       = (dim(C_i) - rk(D_i)) - rk(D_{i+1})
+        ##       = dim(C_i) - (rk(D_i) + rk(D_{i+1}))
         ## where D_i:C_i-->C_{i+1}
         ##
         domain_dim = [ ddim for (A, ddim, cdim) in self ]
@@ -248,7 +249,7 @@ class ChainComplex(object):
     vector space `C[i]` to linear combinations of vectors in `C[i-1]`;
     the `coordinates` method of `C[i-1]` will be used to obtain a
     numerical representation of the differentiated element.
-    
+
     A `ChainComplex` instance must be initialized by assigning
     `VectorSpace` instances into each `C[i]` (for 0 <= `i` <
     `len(C)`), and appropriate maps into `C.differential[i]` (for 1 <=
@@ -263,7 +264,7 @@ class ChainComplex(object):
     Indices of the slices `C[i]` run from 0 to `len(C)-1` (inclusive).
     The Python `len` operator returns the total length of the
     complex::
-      
+
       >>> len(C)
       2
 
@@ -273,12 +274,12 @@ class ChainComplex(object):
       >>> C.compute_homology_ranks()
       [1, 0]
     """
-    
+
     def __init__(self, length):
         """Create a chain complex of specified length."""
         assert length > 0, (
             "ChainComplex.__init__:"
-            " argument `length` must be a positive integer," 
+            " argument `length` must be a positive integer,"
             " but got `%s` instead." % length)
         #: Total length of the complex.
         self.length = length
@@ -366,13 +367,13 @@ class ChainComplex(object):
         being, trivially, null).
 
         Examples::
-        
+
           >>> # chain homology of a point
           >>> C_point = ChainComplex(1)
           >>> C_point[0] = VectorSpace(['a'])
           >>> C_point.compute_homology_ranks()
           [1]
-          
+
           >>> # chain homology of a segment
           >>> C_segment = ChainComplex(2)
           >>> C_segment[1] = VectorSpace(['a'])
@@ -380,7 +381,7 @@ class ChainComplex(object):
           >>> C_segment.differential[1] = lambda _: [('b0',1), ('b1', -1)]
           >>> C_segment.compute_homology_ranks()
           [1, 0]
-          
+
           >>> # chain homology of a circle
           >>> C_circle = ChainComplex(2)
           >>> C_circle[1] = VectorSpace(['a'])
@@ -388,7 +389,7 @@ class ChainComplex(object):
           >>> C_circle.differential[1] = lambda _: []
           >>> C_circle.compute_homology_ranks()
           [1, 1]
-          
+
         """
         return self.compute_boundary_operators().compute_homology_ranks()
 
