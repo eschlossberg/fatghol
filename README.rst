@@ -12,5 +12,5 @@ The algorithms used in FatGHoL are described in the `arXiv pre-print
 
 .. _`arxiv pre-print 1202.1820`: http://arxiv.org/abs/1202.1820
 .. _documentation: http://fatghol.readthedocs.org/en/latest/
-.. _downloads: http://code.google.com/p/fatghol/downloads/list
+.. _downloads: https://code.google.com/archive/p/fatghol/downloads
 .. _me: mailto:riccardo.murri@gmail.com
