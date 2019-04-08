@@ -1,0 +1,4 @@
+distribute-*
+distribute_setup.pyc
+build/*
+fatghol.egg-info
