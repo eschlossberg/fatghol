@@ -1,0 +1,211 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>fatghol.const &mdash; FatGHoL v5.4 documentation</title>
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '5.4',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="FatGHoL v5.4 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" />
+ 
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-23673826-1']);
+  _gaq.push(['_trackPageview']);
+</script>
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">FatGHoL v5.4 documentation</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for fatghol.const</h1><div class="highlight"><pre>
+<span class="c">#! /usr/bin/env python</span>
+<span class="c">#</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Compute well-known invariants of `M_{g,n}`.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c">#</span>
+<span class="c">#   Copyright (C) 2008-2012 Riccardo Murri &lt;riccardo.murri@gmail.com&gt;</span>
+<span class="c">#   All rights reserved.</span>
+<span class="c">#</span>
+<span class="c">#   This program is free software: you can redistribute it and/or modify</span>
+<span class="c">#   it under the terms of the GNU General Public License as published by</span>
+<span class="c">#   the Free Software Foundation, either version 3 of the License, or</span>
+<span class="c">#   (at your option) any later version.</span>
+<span class="c">#</span>
+<span class="c">#   This program is distributed in the hope that it will be useful,</span>
+<span class="c">#   but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="c">#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the</span>
+<span class="c">#   GNU General Public License for more details.</span>
+<span class="c">#</span>
+<span class="c">#   You should have received a copy of the GNU General Public License</span>
+<span class="c">#   along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
+<span class="c">#</span>
+<span class="n">__docformat__</span> <span class="o">=</span> <span class="s">&#39;reStructuredText&#39;</span>
+
+
+<span class="kn">from</span> <span class="nn">fractions</span> <span class="kn">import</span> <span class="n">Fraction</span>
+<span class="kn">from</span> <span class="nn">fatghol.combinatorics</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">bernoulli</span><span class="p">,</span>
+    <span class="n">factorial</span><span class="p">,</span>
+    <span class="n">minus_one_exp</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<div class="viewcode-block" id="orbifold_euler_characteristics"><a class="viewcode-back" href="../../api.html#fatghol.const.orbifold_euler_characteristics">[docs]</a><span class="k">def</span> <span class="nf">orbifold_euler_characteristics</span><span class="p">(</span><span class="n">g</span><span class="p">,</span><span class="n">n</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return the orbifold/virtual Euler characteristics of `M_{g,n}`,</span>
+<span class="sd">    computed according to Harer-Zagier.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">g</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">factorial</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">3</span><span class="p">)</span> <span class="o">*</span> <span class="n">minus_one_exp</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">3</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">g</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Fraction</span><span class="p">(</span><span class="n">minus_one_exp</span><span class="p">(</span><span class="n">n</span><span class="p">),</span> <span class="mi">12</span><span class="p">)</span> <span class="o">*</span> <span class="n">factorial</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span> <span class="c"># g &gt; 1</span>
+        <span class="k">return</span> <span class="n">bernoulli</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">g</span><span class="p">)</span> <span class="o">*</span> <span class="n">factorial</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">g</span><span class="o">+</span><span class="n">n</span><span class="o">-</span><span class="mi">3</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">factorial</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">g</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span><span class="o">*</span><span class="n">g</span><span class="p">)</span> <span class="o">*</span> <span class="n">minus_one_exp</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="euler_characteristics"><a class="viewcode-back" href="../../api.html#fatghol.const.euler_characteristics">[docs]</a><span class="k">def</span> <span class="nf">euler_characteristics</span><span class="p">(</span><span class="n">g</span><span class="p">,</span><span class="n">n</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return Euler characteristics of `M_{g,n}`.</span>
+
+<span class="sd">    The Euler characteristics is computed according to formulas and</span>
+<span class="sd">    tables found in:</span>
+<span class="sd">    * Bini-Gaiffi-Polito, arXiv:math/9806048, p.3</span>
+<span class="sd">    * Bini-Harer, arXiv:math/0506083, p. 10</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">g</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+        <span class="c"># according to Bini-Gaiffi-Polito arXiv:math/9806048, p.3</span>
+        <span class="k">return</span> <span class="n">factorial</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">3</span><span class="p">)</span><span class="o">*</span><span class="n">minus_one_exp</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">3</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">g</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span>
+        <span class="c"># according to Bini-Gaiffi-Polito, p. 15</span>
+        <span class="k">if</span> <span class="n">n</span><span class="o">&gt;</span><span class="mi">4</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">factorial</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">Fraction</span><span class="p">(</span><span class="n">minus_one_exp</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span><span class="mi">12</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">es</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">es</span><span class="p">[</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="c"># no n==0 computed in [BGP]</span>
+    <span class="k">elif</span> <span class="n">g</span><span class="o">==</span><span class="mi">2</span><span class="p">:</span>
+        <span class="c"># according to Bini-Gaiffi-Polito, p. 14</span>
+        <span class="k">if</span> <span class="n">n</span><span class="o">&gt;</span><span class="mi">6</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">factorial</span><span class="p">(</span><span class="n">n</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">Fraction</span><span class="p">(</span><span class="n">minus_one_exp</span><span class="p">(</span><span class="n">n</span><span class="o">+</span><span class="mi">1</span><span class="p">),</span><span class="mi">240</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">es</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="o">-</span><span class="mi">4</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="o">-</span><span class="mi">24</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">es</span><span class="p">[</span><span class="n">n</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="n">g</span><span class="o">&gt;</span><span class="mi">2</span><span class="p">:</span>
+        <span class="c"># according to Bini-Harer arXiv:math/0506083, p. 10</span>
+        <span class="n">es</span> <span class="o">=</span> <span class="p">[</span><span class="c"># n==1  n==2     n==3     n==4        n==5        n==6          n==7          n==8</span>
+              <span class="p">[</span>    <span class="mi">8</span><span class="p">,</span>    <span class="mi">6</span><span class="p">,</span>       <span class="mi">4</span><span class="p">,</span>     <span class="o">-</span><span class="mi">10</span><span class="p">,</span>         <span class="mi">30</span><span class="p">,</span>       <span class="o">-</span><span class="mi">660</span><span class="p">,</span>         <span class="mi">6540</span><span class="p">,</span>        <span class="mi">79200</span><span class="p">],</span> <span class="c"># g==3</span>
+              <span class="p">[</span>   <span class="o">-</span><span class="mi">2</span><span class="p">,</span>  <span class="o">-</span><span class="mi">10</span><span class="p">,</span>     <span class="o">-</span><span class="mi">24</span><span class="p">,</span>     <span class="o">-</span><span class="mi">24</span><span class="p">,</span>       <span class="o">-</span><span class="mi">360</span><span class="p">,</span>       <span class="mi">2352</span><span class="p">,</span>       <span class="o">-</span><span class="mi">37296</span><span class="p">,</span>       <span class="mi">501984</span><span class="p">],</span> <span class="c"># g==4</span>
+              <span class="p">[</span>   <span class="mi">12</span><span class="p">,</span>   <span class="mi">26</span><span class="p">,</span>      <span class="mi">92</span><span class="p">,</span>     <span class="mi">182</span><span class="p">,</span>       <span class="mi">1674</span><span class="p">,</span>     <span class="o">-</span><span class="mi">16716</span><span class="p">,</span>       <span class="mi">238980</span><span class="p">,</span>     <span class="o">-</span><span class="mi">3961440</span><span class="p">],</span> <span class="c"># g==5</span>
+              <span class="p">[</span>    <span class="mi">0</span><span class="p">,</span>  <span class="o">-</span><span class="mi">46</span><span class="p">,</span>    <span class="o">-</span><span class="mi">206</span><span class="p">,</span>     <span class="mi">188</span><span class="p">,</span>      <span class="o">-</span><span class="mi">7512</span><span class="p">,</span>     <span class="mi">124296</span><span class="p">,</span>     <span class="o">-</span><span class="mi">2068392</span><span class="p">,</span>     <span class="mi">37108656</span><span class="p">],</span> <span class="c"># g==6</span>
+              <span class="p">[</span>   <span class="mi">38</span><span class="p">,</span>  <span class="mi">120</span><span class="p">,</span>     <span class="mi">676</span><span class="p">,</span>   <span class="o">-</span><span class="mi">1862</span><span class="p">,</span>      <span class="mi">71866</span><span class="p">,</span>   <span class="o">-</span><span class="mi">1058676</span><span class="p">,</span>     <span class="mi">21391644</span><span class="p">,</span>   <span class="o">-</span><span class="mi">422727360</span><span class="p">],</span> <span class="c"># g==7</span>
+              <span class="p">[</span> <span class="o">-</span><span class="mi">166</span><span class="p">,</span> <span class="o">-</span><span class="mi">630</span><span class="p">,</span>   <span class="o">-</span><span class="mi">5362</span><span class="p">,</span>   <span class="mi">16108</span><span class="p">,</span>    <span class="o">-</span><span class="mi">680616</span><span class="p">,</span>   <span class="mi">12234600</span><span class="p">,</span>   <span class="o">-</span><span class="mi">259464240</span><span class="p">,</span>   <span class="mi">5719946400</span><span class="p">],</span> <span class="c"># g==8</span>
+              <span class="p">[</span>  <span class="mi">748</span><span class="p">,</span> <span class="mi">2132</span><span class="p">,</span>   <span class="mi">29632</span><span class="p">,</span> <span class="o">-</span><span class="mi">323546</span><span class="p">,</span>    <span class="mi">7462326</span><span class="p">,</span> <span class="o">-</span><span class="mi">164522628</span><span class="p">,</span>   <span class="mi">3771668220</span><span class="p">,</span> <span class="o">-</span><span class="mi">90553767840</span><span class="p">],</span> <span class="c"># g==9</span>
+              <span class="p">[</span><span class="o">-</span><span class="mi">1994</span><span class="p">,</span> <span class="mi">6078</span><span class="p">,</span> <span class="o">-</span><span class="mi">213066</span><span class="p">,</span> <span class="mi">4673496</span><span class="p">,</span> <span class="o">-</span><span class="mi">106844744</span><span class="p">,</span> <span class="mi">2559934440</span><span class="p">,</span> <span class="o">-</span><span class="mi">64133209320</span><span class="p">,</span>    <span class="mf">1.664e+12</span><span class="p">],</span> <span class="c"># g==10</span>
+              <span class="p">]</span>
+        <span class="c"># g=0,1,2 already done above</span>
+        <span class="k">return</span> <span class="n">es</span><span class="p">[</span><span class="n">g</span><span class="o">-</span><span class="mi">3</span><span class="p">][</span><span class="n">n</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;No Euler characteristics known for M_{g,n},&quot;</span>
+                         <span class="s">&quot; where g=</span><span class="si">%s</span><span class="s"> and n=</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">g</span><span class="p">,</span><span class="n">n</span><span class="p">))</span>
+
+
+
+<span class="c">## main: run tests</span>
+</div>
+<span class="k">if</span> <span class="s">&quot;__main__&quot;</span> <span class="o">==</span> <span class="n">__name__</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">doctest</span>
+    <span class="n">doctest</span><span class="o">.</span><span class="n">testmod</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&quot;const&quot;</span><span class="p">,</span>
+                    <span class="n">optionflags</span><span class="o">=</span><span class="n">doctest</span><span class="o">.</span><span class="n">NORMALIZE_WHITESPACE</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">FatGHoL v5.4 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+
+    <div class="footer">
+        &copy; Copyright 2012, Riccardo Murri.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+<div class="footer">This page uses <a href="http://analytics.google.com/">
+Google Analytics</a> to collect statistics. You can disable it by blocking
+the JavaScript coming from www.google-analytics.com.
+<script type="text/javascript">
+  (function() {
+    var ga = document.createElement('script');
+    ga.src = ('https:' == document.location.protocol ?
+              'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    ga.setAttribute('async', 'true');
+    document.documentElement.firstChild.appendChild(ga);
+  })();
+</script>
+</div>
+
+  </body>
+</html>

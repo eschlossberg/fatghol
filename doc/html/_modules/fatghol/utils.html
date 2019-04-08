@@ -1,0 +1,315 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>fatghol.utils &mdash; FatGHoL v5.4 documentation</title>
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '5.4',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="FatGHoL v5.4 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" />
+ 
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-23673826-1']);
+  _gaq.push(['_trackPageview']);
+</script>
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">FatGHoL v5.4 documentation</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for fatghol.utils</h1><div class="highlight"><pre>
+<span class="c">#! /usr/bin/env python</span>
+<span class="c">#</span>
+<span class="sd">&quot;&quot;&quot;A collection of small utility functions.</span>
+
+<span class="sd">These were mostly ripped out of `rg.py` for readability.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c">#</span>
+<span class="c">#   Copyright (C) 2008-2012 Riccardo Murri &lt;riccardo.murri@gmail.com&gt;</span>
+<span class="c">#   All rights reserved.</span>
+<span class="c">#</span>
+<span class="c">#   This program is free software: you can redistribute it and/or modify</span>
+<span class="c">#   it under the terms of the GNU General Public License as published by</span>
+<span class="c">#   the Free Software Foundation, either version 3 of the License, or</span>
+<span class="c">#   (at your option) any later version.</span>
+<span class="c">#</span>
+<span class="c">#   This program is distributed in the hope that it will be useful,</span>
+<span class="c">#   but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="c">#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the</span>
+<span class="c">#   GNU General Public License for more details.</span>
+<span class="c">#</span>
+<span class="c">#   You should have received a copy of the GNU General Public License</span>
+<span class="c">#   along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
+<span class="c">#</span>
+<span class="n">__docformat__</span> <span class="o">=</span> <span class="s">&#39;reStructuredText&#39;</span> 
+
+
+<span class="c">#import cython</span>
+
+<span class="c">## stdlib imports</span>
+
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">Iterator</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">import</span> <span class="nn">operator</span>
+<span class="kn">import</span> <span class="nn">types</span>
+
+
+<span class="c">## main content</span>
+
+<div class="viewcode-block" id="concat"><a class="viewcode-back" href="../../api.html#fatghol.utils.concat">[docs]</a><span class="k">def</span> <span class="nf">concat</span><span class="p">(</span><span class="n">seqs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return concatenation of all sequences in `seqs`.</span>
+
+<span class="sd">    Examples::</span>
+<span class="sd">    </span>
+<span class="sd">      &gt;&gt;&gt; concat([[0]])</span>
+<span class="sd">      [0]</span>
+
+<span class="sd">      &gt;&gt;&gt; concat([[0],[1]])</span>
+<span class="sd">      [0, 1]</span>
+
+<span class="sd">      &gt;&gt;&gt; concat([&#39;ab&#39;,&#39;c&#39;])</span>
+<span class="sd">      &#39;abc&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">reduce</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">add</span><span class="p">,</span> <span class="n">seqs</span><span class="p">)</span>
+
+
+<span class="c">#@cython.cclass</span></div>
+<div class="viewcode-block" id="itranslate"><a class="viewcode-back" href="../../api.html#fatghol.utils.itranslate">[docs]</a><span class="k">class</span> <span class="nc">itranslate</span><span class="p">(</span><span class="n">Iterator</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return items from a sequence, substituting them as specified.</span>
+
+<span class="sd">    First argument `subst` is a dictionary, specifying substitutions</span>
+<span class="sd">    to be applied.  If an item matches a key of the `subst`</span>
+<span class="sd">    dictionary, the associated dictionary value is returned instead;</span>
+<span class="sd">    unless the value is `None`, in which case the item is skipped</span>
+<span class="sd">    altogether.</span>
+
+<span class="sd">    *Note:* you should use an appropriate `dict`-subclass if you want</span>
+<span class="sd">     to translate items which are not immutable.</span>
+<span class="sd">    </span>
+<span class="sd">    Examples::</span>
+<span class="sd">      &gt;&gt;&gt; list(itranslate({0:None, 3:2}, [2,1,0,0,1,3]))</span>
+<span class="sd">      [2, 1, 1, 2]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;mappings&#39;</span><span class="p">,</span> <span class="s">&#39;iterable&#39;</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subst</span><span class="p">,</span> <span class="n">iterable</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mappings</span> <span class="o">=</span> <span class="n">subst</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">iterable</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">iterable</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">next</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="nb">next</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">iterable</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+            <span class="k">if</span> <span class="nb">next</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">mappings</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">next</span>
+            <span class="n">translated</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mappings</span><span class="p">[</span><span class="nb">next</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">translated</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="c"># skip this item</span>
+                <span class="k">continue</span>
+            <span class="k">return</span> <span class="n">translated</span>
+
+
+<span class="c">#@cython.ccall(list)</span></div>
+<div class="viewcode-block" id="lconcat"><a class="viewcode-back" href="../../api.html#fatghol.utils.lconcat">[docs]</a><span class="k">def</span> <span class="nf">lconcat</span><span class="p">(</span><span class="n">seqs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return list concatenation of all sequences in `seqs`.</span>
+
+<span class="sd">    Examples::</span>
+<span class="sd">    </span>
+<span class="sd">      &gt;&gt;&gt; lconcat([[0]])</span>
+<span class="sd">      [0]</span>
+
+<span class="sd">      &gt;&gt;&gt; lconcat([[0],[1]])</span>
+<span class="sd">      [0, 1]</span>
+
+<span class="sd">      &gt;&gt;&gt; lconcat([&#39;ab&#39;,&#39;c&#39;])</span>
+<span class="sd">      [&#39;a&#39;, &#39;b&#39;, &#39;c&#39;]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">itertools</span><span class="o">.</span><span class="n">chain</span><span class="p">(</span><span class="o">*</span><span class="n">seqs</span><span class="p">))</span>
+
+
+<span class="c">#@cython.ccall(list)</span></div>
+<div class="viewcode-block" id="ltranslate"><a class="viewcode-back" href="../../api.html#fatghol.utils.ltranslate">[docs]</a><span class="k">def</span> <span class="nf">ltranslate</span><span class="p">(</span><span class="n">subst</span><span class="p">,</span> <span class="n">iterable</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return list of items from a sequence, substituting them as specified.</span>
+
+<span class="sd">    First argument `subst` is a dictionary, specifying substitutions</span>
+<span class="sd">    to be applied.  If an item matches a key of the `subst`</span>
+<span class="sd">    dictionary, the associated dictionary value is returned instead;</span>
+<span class="sd">    unless the value is `None`, in which case the item is skipped</span>
+<span class="sd">    altogether.</span>
+
+<span class="sd">    *Note:* you should use an appropriate `dict`-subclass if you want</span>
+<span class="sd">     to translate items which are not immutable.</span>
+<span class="sd">    </span>
+<span class="sd">    Examples::</span>
+<span class="sd">      &gt;&gt;&gt; ltranslate({0:None, 3:2}, [2,1,0,0,1,3])</span>
+<span class="sd">      [2, 1, 1, 2]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">[</span> <span class="p">(</span><span class="n">subst</span><span class="p">[</span><span class="n">item</span><span class="p">]</span> <span class="k">if</span> <span class="p">(</span><span class="n">item</span> <span class="ow">in</span> <span class="n">subst</span><span class="p">)</span> <span class="k">else</span> <span class="n">item</span><span class="p">)</span>
+             <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">iterable</span>
+             <span class="k">if</span> <span class="p">(</span><span class="n">item</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">subst</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">subst</span><span class="p">[</span><span class="n">item</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">)</span> <span class="p">]</span>
+
+
+<span class="c">## conditional application of decorators</span></div>
+<span class="k">def</span> <span class="nf">maybe</span><span class="p">(</span><span class="n">deco</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">cond</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">cond</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">cond</span> <span class="o">=</span> <span class="n">deco</span><span class="o">.</span><span class="n">enabled</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="n">cond</span> <span class="o">=</span> <span class="n">default</span>
+    <span class="k">if</span> <span class="n">cond</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">deco</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">fn</span><span class="p">:</span> <span class="n">fn</span><span class="p">)</span>
+
+
+<span class="c">#@cython.ccall(int)</span>
+<span class="c">#@cython.locals(arg=str, result=cython.int)</span>
+<div class="viewcode-block" id="positive_int"><a class="viewcode-back" href="../../api.html#fatghol.utils.positive_int">[docs]</a><span class="k">def</span> <span class="nf">positive_int</span><span class="p">(</span><span class="n">arg</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Convert a string or number to a positive integer, if possible.</span>
+<span class="sd">    Behaves just like the built-in `int` (which see), and additionally</span>
+<span class="sd">    raises `ValueError` if the converted integer is less-then or equal</span>
+<span class="sd">    to 0.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">result</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;non-positive integer literal: </span><span class="si">%d</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">result</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">result</span>
+
+
+<span class="c">#@cython.locals(L=list, p=cython.int)</span>
+<span class="c">#@cython.ccall(list)</span></div>
+<div class="viewcode-block" id="rotated"><a class="viewcode-back" href="../../api.html#fatghol.utils.rotated">[docs]</a><span class="k">def</span> <span class="nf">rotated</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return a copy of the given list `L`, with items rotated `p`</span>
+<span class="sd">    positions leftwards.</span>
+
+<span class="sd">    Examples::</span>
+
+<span class="sd">      &gt;&gt;&gt; rotated([1,2,3,4,5], 2)</span>
+<span class="sd">      [3, 4, 5, 1, 2]</span>
+<span class="sd">      </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">L</span><span class="p">[</span><span class="n">p</span><span class="p">:]</span> <span class="o">+</span> <span class="n">L</span><span class="p">[:</span><span class="n">p</span><span class="p">]</span>
+
+
+<span class="c">#@cython.ccall(int)</span>
+<span class="c">#@cython.locals(x=cython.int)</span></div>
+<div class="viewcode-block" id="sign"><a class="viewcode-back" href="../../api.html#fatghol.utils.sign">[docs]</a><span class="k">def</span> <span class="nf">sign</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return the sign of `x`: that is, 0 if `x` is zero, +1 iff it is</span>
+<span class="sd">    positive, -1 iff it is negative.</span>
+
+<span class="sd">    Examples::</span>
+
+<span class="sd">      &gt;&gt;&gt; sign(0)</span>
+<span class="sd">      0</span>
+<span class="sd">      &gt;&gt;&gt; sign(3)</span>
+<span class="sd">      1</span>
+<span class="sd">      &gt;&gt;&gt; sign(-5)</span>
+<span class="sd">      -1</span>
+<span class="sd">      </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">x</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mi">0</span>
+    <span class="k">elif</span> <span class="n">x</span> <span class="o">==</span> <span class="nb">abs</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+        <span class="k">return</span> <span class="o">+</span><span class="mi">1</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span>
+
+
+<span class="c">## main: run tests</span>
+</div>
+<span class="k">if</span> <span class="s">&quot;__main__&quot;</span> <span class="o">==</span> <span class="n">__name__</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">doctest</span>
+    <span class="n">doctest</span><span class="o">.</span><span class="n">testmod</span><span class="p">(</span><span class="n">optionflags</span><span class="o">=</span><span class="n">doctest</span><span class="o">.</span><span class="n">NORMALIZE_WHITESPACE</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">FatGHoL v5.4 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+
+    <div class="footer">
+        &copy; Copyright 2012, Riccardo Murri.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+<div class="footer">This page uses <a href="http://analytics.google.com/">
+Google Analytics</a> to collect statistics. You can disable it by blocking
+the JavaScript coming from www.google-analytics.com.
+<script type="text/javascript">
+  (function() {
+    var ga = document.createElement('script');
+    ga.src = ('https:' == document.location.protocol ?
+              'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    ga.setAttribute('async', 'true');
+    document.documentElement.firstChild.appendChild(ga);
+  })();
+</script>
+</div>
+
+  </body>
+</html>

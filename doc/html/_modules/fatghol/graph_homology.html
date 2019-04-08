@@ -1,0 +1,877 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>fatghol.graph_homology &mdash; FatGHoL v5.4 documentation</title>
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '5.4',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="FatGHoL v5.4 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" />
+ 
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-23673826-1']);
+  _gaq.push(['_trackPageview']);
+</script>
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">FatGHoL v5.4 documentation</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for fatghol.graph_homology</h1><div class="highlight"><pre>
+<span class="c">#! /usr/bin/env python</span>
+<span class="c">#</span>
+<span class="sd">&quot;&quot;&quot;Classes for computing graph homology.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c">#</span>
+<span class="c">#   Copyright (C) 2008-2012 Riccardo Murri &lt;riccardo.murri@gmail.com&gt;</span>
+<span class="c">#   All rights reserved.</span>
+<span class="c">#</span>
+<span class="c">#   This program is free software: you can redistribute it and/or modify</span>
+<span class="c">#   it under the terms of the GNU General Public License as published by</span>
+<span class="c">#   the Free Software Foundation, either version 3 of the License, or</span>
+<span class="c">#   (at your option) any later version.</span>
+<span class="c">#</span>
+<span class="c">#   This program is distributed in the hope that it will be useful,</span>
+<span class="c">#   but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="c">#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the</span>
+<span class="c">#   GNU General Public License for more details.</span>
+<span class="c">#</span>
+<span class="c">#   You should have received a copy of the GNU General Public License</span>
+<span class="c">#   along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
+<span class="c">#</span>
+<span class="n">__docformat__</span> <span class="o">=</span> <span class="s">&#39;reStructuredText&#39;</span>
+
+<span class="c">#import cython</span>
+
+<span class="c">## stdlib imports</span>
+
+<span class="kn">from</span> <span class="nn">fractions</span> <span class="kn">import</span> <span class="n">Fraction</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">types</span>
+
+<span class="c">## application-local imports</span>
+
+<span class="kn">from</span> <span class="nn">fatghol.aggregate</span> <span class="kn">import</span> <span class="n">AggregateList</span>
+<span class="kn">from</span> <span class="nn">fatghol.combinatorics</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">bernoulli</span><span class="p">,</span>
+    <span class="n">factorial</span><span class="p">,</span>
+    <span class="n">minus_one_exp</span><span class="p">,</span>
+    <span class="n">Permutation</span><span class="p">,</span>
+    <span class="p">)</span>
+<span class="kn">from</span> <span class="nn">fatghol.cache</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ocache_contract</span><span class="p">,</span>
+    <span class="n">ocache_isomorphisms</span><span class="p">,</span>
+    <span class="n">Caching</span><span class="p">,</span>
+    <span class="p">)</span>
+<span class="kn">from</span> <span class="nn">fatghol.homology</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ChainComplex</span><span class="p">,</span>
+    <span class="n">DifferentialComplex</span><span class="p">,</span>
+    <span class="n">NullMatrix</span><span class="p">,</span>
+    <span class="p">)</span>
+<span class="kn">from</span> <span class="nn">fatghol.iterators</span> <span class="kn">import</span> <span class="n">IndexedIterator</span>
+<span class="kn">from</span> <span class="nn">fatghol.rg</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Fatgraph</span><span class="p">,</span>
+    <span class="n">Isomorphism</span><span class="p">,</span>
+    <span class="n">MgnGraphsIterator</span><span class="p">,</span>
+    <span class="c"># for the doctests:</span>
+    <span class="n">Vertex</span><span class="p">,</span> 
+    <span class="n">BoundaryCycle</span><span class="p">,</span>
+    <span class="p">)</span>
+<span class="kn">from</span> <span class="nn">fatghol.runtime</span> <span class="kn">import</span> <span class="n">runtime</span>
+<span class="kn">from</span> <span class="nn">fatghol.simplematrix</span> <span class="kn">import</span> <span class="n">SimpleMatrix</span>
+<span class="kn">import</span> <span class="nn">fatghol.timing</span> <span class="kn">as</span> <span class="nn">timing</span>
+
+
+
+<span class="c">#@cython.cclass</span>
+<div class="viewcode-block" id="MgnChainComplex"><a class="viewcode-back" href="../../api.html#fatghol.graph_homology.MgnChainComplex">[docs]</a><span class="k">class</span> <span class="nc">MgnChainComplex</span><span class="p">(</span><span class="n">ChainComplex</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A specialized `ChainComplex`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c">#@cython.locals(length=cython.int, i=cython.int)</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">length</span><span class="p">):</span>
+        <span class="n">ChainComplex</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">length</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="n">length</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">AggregateList</span><span class="p">()</span>
+
+    <span class="c">#@cython.ccall(DifferentialComplex))</span>
+    <span class="c">#@cython.locals(m=list, D=DifferentialComplex,</span>
+    <span class="c">#               i=cython.int, p=cython.int, q=cython.int,</span>
+    <span class="c">#               j0=cython.int, k0=cython.int, s=cython.int,</span>
+    <span class="c">#               j=cython.int, k=cython.int, edgeno=cython.int)</span>
+    <span class="c">#               #pool1=NumberedFatgraphPool, pool2=NumberedFatgraphPool)</span>
+    <span class="k">def</span> <span class="nf">compute_boundary_operators</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c">#: Matrix form of boundary operators; the `i`-th differential</span>
+        <span class="c">#: `D[i]` is `dim C[i-1]` rows (range) by `dim C[i]` columns</span>
+        <span class="c">#: (domain).</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">module</span> <span class="c"># micro-optimization</span>
+        <span class="n">D</span> <span class="o">=</span> <span class="n">DifferentialComplex</span><span class="p">()</span>
+        <span class="n">D</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">NullMatrix</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">m</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)):</span>
+            <span class="n">timing</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="s">&quot;D[</span><span class="si">%d</span><span class="s">]&quot;</span> <span class="o">%</span> <span class="n">i</span><span class="p">)</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">m</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="c"># == dim C[i-1]</span>
+            <span class="n">q</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">m</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>   <span class="c"># == dim C[i]</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">checkpoint</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">runtime</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">checkpoint_dir</span><span class="p">,</span>
+                                          <span class="p">(</span><span class="s">&#39;M</span><span class="si">%d</span><span class="s">,</span><span class="si">%d</span><span class="s">-D</span><span class="si">%d</span><span class="s">.sms&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">runtime</span><span class="o">.</span><span class="n">g</span><span class="p">,</span> <span class="n">runtime</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="n">i</span><span class="p">)))</span>
+            <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+                <span class="n">checkpoint</span> <span class="o">=</span> <span class="bp">None</span>
+            <span class="c"># maybe load `D[i]` from persistent storage</span>
+            <span class="k">if</span> <span class="n">checkpoint</span> <span class="ow">and</span> <span class="n">p</span><span class="o">&gt;</span><span class="mi">0</span> <span class="ow">and</span> <span class="n">q</span><span class="o">&gt;</span><span class="mi">0</span> <span class="ow">and</span> <span class="n">runtime</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">restart</span><span class="p">:</span>
+                <span class="n">d</span> <span class="o">=</span> <span class="n">SimpleMatrix</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">q</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">d</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">checkpoint</span><span class="p">):</span>
+                    <span class="n">D</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">q</span><span class="p">)</span>
+                    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;  Loaded </span><span class="si">%d</span><span class="s">x</span><span class="si">%d</span><span class="s"> matrix D[</span><span class="si">%d</span><span class="s">] from file &#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span><span class="p">,</span>
+                                 <span class="n">p</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">checkpoint</span><span class="p">)</span>
+                    <span class="k">continue</span> <span class="c"># with next `i`</span>
+            <span class="c"># compute `D[i]`</span>
+            <span class="n">d</span> <span class="o">=</span> <span class="n">SimpleMatrix</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">q</span><span class="p">)</span>
+            <span class="n">j0</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">pool1</span> <span class="ow">in</span> <span class="n">m</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">iterblocks</span><span class="p">():</span>
+                <span class="n">k0</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="k">for</span> <span class="n">pool2</span> <span class="ow">in</span> <span class="n">m</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">iterblocks</span><span class="p">():</span>
+                    <span class="k">for</span> <span class="n">edgeno</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="n">pool1</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">num_edges</span><span class="p">):</span>
+                        <span class="k">if</span> <span class="n">pool1</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">is_loop</span><span class="p">(</span><span class="n">edgeno</span><span class="p">):</span>
+                            <span class="k">continue</span> <span class="c"># with next `edgeno`</span>
+                        <span class="k">for</span> <span class="p">(</span><span class="n">j</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span> <span class="ow">in</span> <span class="n">NumberedFatgraphPool</span><span class="o">.</span><span class="n">facets</span><span class="p">(</span><span class="n">pool1</span><span class="p">,</span> <span class="n">edgeno</span><span class="p">,</span> <span class="n">pool2</span><span class="p">):</span>
+                            <span class="k">assert</span> <span class="n">k</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">pool2</span><span class="p">)</span>
+                            <span class="k">assert</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">pool1</span><span class="p">)</span>
+                            <span class="k">assert</span> <span class="n">k</span><span class="o">+</span><span class="n">k0</span> <span class="o">&lt;</span> <span class="n">p</span>
+                            <span class="k">assert</span> <span class="n">j</span><span class="o">+</span><span class="n">j0</span> <span class="o">&lt;</span> <span class="n">q</span>
+                            <span class="n">d</span><span class="o">.</span><span class="n">addToEntry</span><span class="p">(</span><span class="n">k</span><span class="o">+</span><span class="n">k0</span><span class="p">,</span> <span class="n">j</span><span class="o">+</span><span class="n">j0</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span>
+                    <span class="n">k0</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">pool2</span><span class="p">)</span>
+                    <span class="c"># # `pool2` will never be used again, so clear it from the cache.</span>
+                    <span class="c"># # XXX: using implementation detail!</span>
+                    <span class="c"># pool2.graph._cache_isomorphisms.clear()</span>
+                <span class="n">j0</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">pool1</span><span class="p">)</span>
+                <span class="c"># `pool1` will never be used again, so clear it from the cache.</span>
+                <span class="c"># XXX: using implementation detail!</span>
+                <span class="n">pool1</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">_cache_isomorphisms</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+            <span class="n">timing</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="s">&quot;D[</span><span class="si">%d</span><span class="s">]&quot;</span> <span class="o">%</span> <span class="n">i</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">checkpoint</span><span class="p">:</span>
+                <span class="n">d</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">checkpoint</span><span class="p">)</span>
+            <span class="n">D</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">q</span><span class="p">)</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;  Computed </span><span class="si">%d</span><span class="s">x</span><span class="si">%d</span><span class="s"> matrix D[</span><span class="si">%d</span><span class="s">] (elapsed: </span><span class="si">%.3f</span><span class="s">s)&quot;</span><span class="p">,</span> 
+                         <span class="n">p</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">timing</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;D[</span><span class="si">%d</span><span class="s">]&quot;</span> <span class="o">%</span> <span class="n">i</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">D</span>
+
+
+
+<span class="c">#@cython.cclass</span></div>
+<div class="viewcode-block" id="NumberedFatgraph"><a class="viewcode-back" href="../../api.html#fatghol.graph_homology.NumberedFatgraph">[docs]</a><span class="k">class</span> <span class="nc">NumberedFatgraph</span><span class="p">(</span><span class="n">Fatgraph</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A `Fatgraph` decorated with a numbering of the boundary components.</span>
+
+<span class="sd">    A numbered fatgraph is constructed from a `Fatgraph` instance</span>
+<span class="sd">    (called the *underlying graph*) and a numbering (that is, a</span>
+<span class="sd">    bijective map assigning an integer to each boundary components of</span>
+<span class="sd">    the underlying graph).</span>
+
+<span class="sd">    Examples::</span>
+
+<span class="sd">      &gt;&gt;&gt; ug = Fatgraph([Vertex([1, 0, 1, 0])])  # underlying graph</span>
+<span class="sd">      &gt;&gt;&gt; ng = NumberedFatgraph(ug, \</span>
+<span class="sd">                 numbering=[(BoundaryCycle([(0,3,0), (0,2,3), (0,1,2), (0,0,1)]), 0)])</span>
+
+<span class="sd">    The `numbering` attribute is set to a dictionary mapping the</span>
+<span class="sd">    boundary cycle `bcy` to the integer `n`; for this, a valid `dict`</span>
+<span class="sd">    initializer is needed, which can be:</span>
+<span class="sd">        - either a sequence of tuples `(bcy, n)`, where each `n` is</span>
+<span class="sd">          a non-negative integer, and each `bcy` is a</span>
+<span class="sd">          `BoundaryCycle` instance,</span>
+<span class="sd">        - or a `dict` instance mapping `BoundaryCycle` instances to</span>
+<span class="sd">          `int`s.</span>
+
+<span class="sd">    In either case, an assertion is raised if:</span>
+<span class="sd">        - the number of pairs in the initializer does not match</span>
+<span class="sd">          the number of boundary cycles;</span>
+<span class="sd">        - the set of integer keys is not `[0 .. n]`;</span>
+<span class="sd">        - there are duplicate boundary cycles or integers</span>
+<span class="sd">          in the initializer;</span>
+
+<span class="sd">    Examples::</span>
+<span class="sd">      &gt;&gt;&gt; ug0 = Fatgraph([Vertex([1,2,0]), Vertex([1,0,2])])</span>
+<span class="sd">      &gt;&gt;&gt; bc = ug0.boundary_cycles  # three b.c.&#39;s</span>
+<span class="sd">      &gt;&gt;&gt; ng0 = NumberedFatgraph(ug0, [ (bcy,n) for (n,bcy) in enumerate(bc)])</span>
+<span class="sd">      &gt;&gt;&gt; ng0.numbering == {</span>
+<span class="sd">      ...    BoundaryCycle([(0,0,1), (1,2,0)]): 0, </span>
+<span class="sd">      ...    BoundaryCycle([(0,1,2), (1,1,2)]): 1, </span>
+<span class="sd">      ...    BoundaryCycle([(0,2,0), (1,0,1)]): 2,</span>
+<span class="sd">      ... }</span>
+<span class="sd">      True</span>
+
+<span class="sd">    Since `NumberedFatgraphs` are just decorated `Fatgraphs`, they</span>
+<span class="sd">    only differ in the way two `NumberedFatgraph` instances are deemed</span>
+<span class="sd">    isomorphic:</span>
+<span class="sd">      - they must have isomorphic underlying graphs;</span>
+<span class="sd">      - the numberings must match under the isomorphism map.</span>
+<span class="sd">    For example::</span>
+<span class="sd">    </span>
+<span class="sd">      &gt;&gt;&gt; ug = Fatgraph([Vertex([1, 1, 0, 0])])</span>
+<span class="sd">      &gt;&gt;&gt; ng1 = NumberedFatgraph(ug, numbering=[(BoundaryCycle([(0,3,0), (0,1,2)]), 0), \</span>
+<span class="sd">                                                (BoundaryCycle([(0,0,1)]), 1),          \</span>
+<span class="sd">                                                (BoundaryCycle([(0,2,3)]), 2)])</span>
+<span class="sd">      &gt;&gt;&gt; ng2 = NumberedFatgraph(ug, numbering=[(BoundaryCycle([(0,3,0), (0,1,2)]), 1), \</span>
+<span class="sd">                                                (BoundaryCycle([(0,0,1)]), 0),          \</span>
+<span class="sd">                                                (BoundaryCycle([(0,2,3)]), 2)])</span>
+<span class="sd">      &gt;&gt;&gt; ng1 == ng2</span>
+<span class="sd">      False</span>
+
+<span class="sd">    Fatgraph instances equipped with a numbering are compared as</span>
+<span class="sd">    numbered graphs (that is, the isomorphism should transform the</span>
+<span class="sd">    numbering on the source graph onto the numbering of the</span>
+<span class="sd">    destination)::</span>
+
+<span class="sd">        &gt;&gt;&gt; NumberedFatgraph.__eq__(</span>
+<span class="sd">        ...     NumberedFatgraph(Fatgraph([Vertex([2,0,1]), Vertex([2,1,0])]), </span>
+<span class="sd">        ...                      numbering=[(BoundaryCycle([(0,2,0), (1,0,1)]), 0), </span>
+<span class="sd">        ...                                 (BoundaryCycle([(0,0,1), (1,2,0)]), 1), </span>
+<span class="sd">        ...                                 (BoundaryCycle([(0,1,2), (1,1,2)]), 2) ] ),</span>
+<span class="sd">        ...     NumberedFatgraph(Fatgraph([Vertex([2,0,1]), Vertex([2,1,0])]), </span>
+<span class="sd">        ...                      numbering=[(BoundaryCycle([(0,2,0), (1,0,1)]), 0), </span>
+<span class="sd">        ...                                 (BoundaryCycle([(0,0,1), (1,2,0)]), 2), </span>
+<span class="sd">        ...                                 (BoundaryCycle([(0,1,2), (1,1,2)]), 1) ] ) )</span>
+<span class="sd">        True</span>
+
+<span class="sd">        &gt;&gt;&gt; NumberedFatgraph.__eq__(</span>
+<span class="sd">        ...     NumberedFatgraph(Fatgraph([Vertex([1, 0, 0, 2, 2, 1])]), </span>
+<span class="sd">        ...                      numbering=[(BoundaryCycle([(0,5,0)]), 0), </span>
+<span class="sd">        ...                                 (BoundaryCycle([(0,0,1), (0,2,3), (0,4,5)]), 1), </span>
+<span class="sd">        ...                                 (BoundaryCycle([(0,1,2)]), 3), </span>
+<span class="sd">        ...                                 (BoundaryCycle([(0,3,4)]), 2) ]),</span>
+<span class="sd">        ...     NumberedFatgraph( </span>
+<span class="sd">        ...                      Fatgraph([Vertex([2, 2, 1, 1, 0, 0])]), </span>
+<span class="sd">        ...                      numbering=[(BoundaryCycle([(0,2,3)]), 0), </span>
+<span class="sd">        ...                                 (BoundaryCycle([(0,3,4), (0,5,0), (0,1,2)]), 3), </span>
+<span class="sd">        ...                                 (BoundaryCycle([(0,4,5)]), 1), </span>
+<span class="sd">        ...                                 (BoundaryCycle([(0,0,1)]), 2) ]) )</span>
+<span class="sd">        False</span>
+
+<span class="sd">        &gt;&gt;&gt; NumberedFatgraph.__eq__(</span>
+<span class="sd">        ...     NumberedFatgraph(Fatgraph([Vertex([1, 0, 0, 2, 2, 1])]), </span>
+<span class="sd">        ...                      numbering=[(BoundaryCycle([(0,5,0)]), 0), </span>
+<span class="sd">        ...                                 (BoundaryCycle([(0,0,1), (0,2,3), (0,4,5)]), 1),</span>
+<span class="sd">        ...                                 (BoundaryCycle([(0,1,2)]), 3), </span>
+<span class="sd">        ...                                 (BoundaryCycle([(0,3,4)]), 2) ]),</span>
+<span class="sd">        ...     NumberedFatgraph(Fatgraph([Vertex([2, 2, 1, 1, 0, 0])]), </span>
+<span class="sd">        ...                      numbering=[(BoundaryCycle([(0,2,3)]), 3), </span>
+<span class="sd">        ...                                 (BoundaryCycle([(0,3,4), (0,5,0), (0,1,2)]), 2), </span>
+<span class="sd">        ...                                 (BoundaryCycle([(0,4,5)]), 0), </span>
+<span class="sd">        ...                                 (BoundaryCycle([(0,0,1)]), 1) ]) )</span>
+<span class="sd">        False</span>
+
+<span class="sd">        &gt;&gt;&gt; NumberedFatgraph.__eq__(</span>
+<span class="sd">        ...     NumberedFatgraph(Fatgraph([Vertex([3, 2, 2, 0, 1]), Vertex([3, 1, 0])]), </span>
+<span class="sd">        ...                      numbering=[(BoundaryCycle([(0,4,0), (1,0,1)]), 0),</span>
+<span class="sd">        ...                                 (BoundaryCycle([(0,0,1), (0,2,3), (1,2,0)]), 1),</span>
+<span class="sd">        ...                                 (BoundaryCycle([(0,1,2)]), 2),</span>
+<span class="sd">        ...                                 (BoundaryCycle([(0,3,4), (1,1,2)]), 3) ]),</span>
+<span class="sd">        ...     NumberedFatgraph(Fatgraph([Vertex([2, 3, 1]), Vertex([2, 1, 3, 0, 0])]), </span>
+<span class="sd">        ...                      numbering=[(BoundaryCycle([(0,2,0), (1,0,1)]), 3),</span>
+<span class="sd">        ...                                 (BoundaryCycle([(0,0,1), (1,2,3), (1,4,0)]), 1),</span>
+<span class="sd">        ...                                 (BoundaryCycle([(0,1,2), (1,1,2)]), 0) ,</span>
+<span class="sd">        ...                                 (BoundaryCycle([(1,3,4)]), 2) ]) )</span>
+<span class="sd">        True</span>
+
+<span class="sd">        &gt;&gt;&gt; NumberedFatgraph.__eq__(</span>
+<span class="sd">        ...     NumberedFatgraph(Fatgraph([Vertex([0, 1, 2, 0, 2, 1])]),</span>
+<span class="sd">        ...                      numbering=[(BoundaryCycle([(0,1,2), (0,4,5)]), 0),</span>
+<span class="sd">        ...                                 (BoundaryCycle([(0,5,0), (0,3,4), (0,2,3), (0,0,1)]), 1)]),</span>
+<span class="sd">        ...     NumberedFatgraph(Fatgraph([Vertex([0, 1, 2, 0, 2, 1])]),</span>
+<span class="sd">        ...                      numbering=[(BoundaryCycle([(0,1,2), (0,4,5)]), 1),</span>
+<span class="sd">        ...                                 (BoundaryCycle([(0,5,0), (0,3,4), (0,2,3), (0,0,1)]), 0)]) )</span>
+<span class="sd">        False</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">__slots__</span> <span class="o">=</span> <span class="p">[</span> <span class="s">&#39;underlying&#39;</span><span class="p">,</span> <span class="s">&#39;numbering&#39;</span> <span class="p">]</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">underlying</span><span class="p">,</span> <span class="n">numbering</span><span class="p">):</span>
+        <span class="n">Fatgraph</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">underlying</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">underlying</span> <span class="o">=</span> <span class="n">underlying</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">numbering</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_boundary_cycles</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">numbering</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">numbering</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">__debug__</span><span class="p">:</span>
+            <span class="n">count</span> <span class="o">=</span> <span class="p">[</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_boundary_cycles</span><span class="p">)</span> <span class="p">]</span>
+            <span class="k">for</span> <span class="p">(</span><span class="n">bcy</span><span class="p">,</span><span class="n">n</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">numbering</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+                <span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="ow">is</span> <span class="n">types</span><span class="o">.</span><span class="n">IntType</span><span class="p">,</span> \
+                       <span class="s">&quot;NumberedFatgraph.__init__: 2nd argument has wrong type:&quot;</span> \
+                       <span class="s">&quot; expecting (BoundaryCycle, Int) pair, got `(</span><span class="si">%s</span><span class="s">, </span><span class="si">%s</span><span class="s">)`.&quot;</span> \
+                       <span class="s">&quot; Reversed-order arguments?&quot;</span> \
+                       <span class="o">%</span> <span class="p">(</span><span class="n">bcy</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+                <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">bcy</span><span class="p">,</span> <span class="n">BoundaryCycle</span><span class="p">),</span> \
+                       <span class="s">&quot;NumberedFatgraph.__init__: 1st argument has wrong type:&quot;</span> \
+                       <span class="s">&quot; expecting (BoundaryCycle, Int) pair, got `(</span><span class="si">%s</span><span class="s">, </span><span class="si">%s</span><span class="s">)`.&quot;</span> \
+                       <span class="s">&quot; Reversed-order arguments?&quot;</span> \
+                       <span class="o">%</span> <span class="p">(</span><span class="n">bcy</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+                <span class="k">assert</span> <span class="n">bcy</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">boundary_cycles</span><span class="p">,</span> \
+                       <span class="s">&quot;NumberedFatgraph.__init__():&quot;</span> \
+                       <span class="s">&quot; Cycle `</span><span class="si">%s</span><span class="s">` is no boundary cycle of graph `</span><span class="si">%s</span><span class="s">` &quot;</span> \
+                       <span class="o">%</span> <span class="p">(</span><span class="n">bcy</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">underlying</span><span class="p">)</span>
+                <span class="n">count</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="n">count</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">AssertionError</span><span class="p">(</span><span class="s">&quot;NumberedFatgraph.__init__():&quot;</span> \
+                                         <span class="s">&quot; Duplicate key </span><span class="si">%d</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">n</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="nb">sum</span><span class="p">(</span><span class="n">count</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_boundary_cycles</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> \
+                   <span class="s">&quot;NumberedFatgraph.__init__():&quot;</span> \
+                   <span class="s">&quot; Initializer does not exhaust range `0..</span><span class="si">%d</span><span class="s">`: </span><span class="si">%s</span><span class="s">&quot;</span> \
+                   <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_boundary_cycles</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">numbering</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Output a printed representation, such that `eval(repr(x)) == x`.</span>
+
+<span class="sd">        The `numbering` attribute of the `NumberedFatgraph` differs from</span>
+<span class="sd">        the standard Python printing of dictionaries, in that its printed</span>
+<span class="sd">        form is sorted by values (i.e., by boundary component index)</span>
+<span class="sd">        to make doctests more stable.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span><span class="s">&quot;NumberedFatgraph(</span><span class="si">%s</span><span class="s">, numbering=</span><span class="si">%s</span><span class="s">)&quot;</span>
+                <span class="o">%</span> <span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">underlying</span><span class="p">),</span>
+                   <span class="c"># print the `numbering` dictionary,</span>
+                   <span class="c"># sorting the output by values</span>
+                   <span class="nb">str</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="p">[</span>
+                       <span class="s">&quot;{&quot;</span><span class="p">,</span>
+                       <span class="nb">str</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s">&quot;, &quot;</span><span class="p">,</span> <span class="p">[</span>
+                           <span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">k</span><span class="p">),</span> <span class="nb">repr</span><span class="p">(</span><span class="n">v</span><span class="p">)))</span>
+                           <span class="k">for</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">numbering</span><span class="o">.</span><span class="n">iteritems</span><span class="p">(),</span>
+                                                <span class="n">key</span><span class="o">=</span><span class="p">(</span><span class="k">lambda</span> <span class="n">item</span><span class="p">:</span> <span class="n">item</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span> <span class="p">]),</span>
+                        <span class="s">&quot;}&quot;</span>
+                       <span class="p">])))</span>
+    
+
+    <span class="nd">@ocache_contract</span>
+    <span class="c">#@cython.locals(edgeno=cython.int,</span>
+    <span class="c">#               v1=cython.int, v2=cython.int,</span>
+    <span class="c">#               pos1=cython.int, pos2=cython.int,</span>
+    <span class="c">#               n=cython.int)</span>
+    <span class="c">#@cython.cfunc(NumberedFatgraph)</span>
+<div class="viewcode-block" id="NumberedFatgraph.contract"><a class="viewcode-back" href="../../api.html#fatghol.graph_homology.NumberedFatgraph.contract">[docs]</a>    <span class="k">def</span> <span class="nf">contract</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">edgeno</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return a new `NumberedFatgraph` instance, obtained by</span>
+<span class="sd">        contracting the specified edge.</span>
+
+<span class="sd">        Examples::</span>
+
+<span class="sd">          &gt;&gt;&gt; g0 = NumberedFatgraph(Fatgraph([Vertex([1, 2, 1]), Vertex([2, 0, 0])]),</span>
+<span class="sd">          ...                       numbering={BoundaryCycle([(0, 1, 2), (1, 2, 0),</span>
+<span class="sd">          ...                                                 (0, 0, 1), (1, 0, 1)]): 0,</span>
+<span class="sd">          ...                                  BoundaryCycle([(1, 1, 2)]): 1,</span>
+<span class="sd">          ...                                  BoundaryCycle([(0, 2, 0)]): 2})</span>
+<span class="sd">          &gt;&gt;&gt; g0.contract(2)</span>
+<span class="sd">          NumberedFatgraph(Fatgraph([Vertex([1, 1, 0, 0])]),</span>
+<span class="sd">                           numbering={BoundaryCycle([(0, 3, 0), (0, 1, 2)]): 0,</span>
+<span class="sd">                                      BoundaryCycle([(0, 2, 3)]): 1,</span>
+<span class="sd">                                      BoundaryCycle([(0, 0, 1)]): 2})</span>
+
+<span class="sd">          &gt;&gt;&gt; g1 = NumberedFatgraph(Fatgraph([Vertex([1, 0, 2]), Vertex([2, 1, 5]),</span>
+<span class="sd">          ...                                 Vertex([0, 4, 3]), Vertex([4, 5, 3])]),</span>
+<span class="sd">          ...                       numbering={BoundaryCycle([(0, 2, 0), (0, 1, 2), (0, 0, 1),</span>
+<span class="sd">          ...                                                 (1, 1, 2), (2, 0, 1), (3, 0, 1),</span>
+<span class="sd">          ...                                                 (1, 2, 0), (2, 2, 0), (1, 0, 1),</span>
+<span class="sd">          ...                                                                       (3, 1, 2)]): 0,</span>
+<span class="sd">          ...                                  BoundaryCycle([(3, 2, 0), (2, 1, 2)]): 1})</span>
+<span class="sd">          &gt;&gt;&gt; g1.contract(0)</span>
+<span class="sd">          NumberedFatgraph(Fatgraph([Vertex([1, 0, 3, 2]), Vertex([1, 0, 4]), Vertex([3, 4, 2])]),</span>
+<span class="sd">                           numbering={BoundaryCycle([(2, 1, 2), (0, 1, 2), (0, 0, 1), (1, 1, 2),</span>
+<span class="sd">                                                     (0, 3, 0), (2, 0, 1), (1, 2, 0), (1, 0, 1)]): 0,</span>
+<span class="sd">                                      BoundaryCycle([(0, 2, 3), (2, 2, 0)]): 1})</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># check that we are not contracting a loop or an external edge</span>
+        <span class="k">assert</span> <span class="p">(</span><span class="n">edgeno</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">edgeno</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_edges</span><span class="p">),</span> \
+               <span class="s">&quot;NumberedFatgraph.contract: invalid edge number (</span><span class="si">%d</span><span class="s">):&quot;</span>\
+               <span class="s">&quot; must be in range 0..</span><span class="si">%d</span><span class="s">&quot;</span> \
+               <span class="o">%</span> <span class="p">(</span><span class="n">edgeno</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_edges</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">edges</span><span class="p">[</span><span class="n">edgeno</span><span class="p">]</span><span class="o">.</span><span class="n">is_loop</span><span class="p">(),</span> \
+               <span class="s">&quot;NumberedFatgraph.contract: cannot contract a loop.&quot;</span>
+
+        <span class="c"># store endpoints of the edge-to-be-contracted</span>
+        <span class="p">((</span><span class="n">v1</span><span class="p">,</span> <span class="n">pos1</span><span class="p">),</span> <span class="p">(</span><span class="n">v2</span><span class="p">,</span> <span class="n">pos2</span><span class="p">))</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">edges</span><span class="p">[</span><span class="n">edgeno</span><span class="p">]</span><span class="o">.</span><span class="n">endpoints</span>
+        <span class="c"># transform corners according to contraction; see</span>
+        <span class="c"># `Fatgraph.contract()` for an explanation of how the</span>
+        <span class="c"># underlying graph is altered during contraction.</span>
+        <span class="n">contracted</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">underlying</span><span class="o">.</span><span class="n">contract</span><span class="p">(</span><span class="n">edgeno</span><span class="p">)</span>
+        <span class="n">new_numbering</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">bcy</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">numbering</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+            <span class="n">new_cy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">contract_boundary_cycle</span><span class="p">(</span><span class="n">bcy</span><span class="p">,</span> <span class="p">(</span><span class="n">v1</span><span class="p">,</span><span class="n">pos1</span><span class="p">),</span> <span class="p">(</span><span class="n">v2</span><span class="p">,</span><span class="n">pos2</span><span class="p">))</span>
+            <span class="n">new_numbering</span><span class="p">[</span><span class="n">new_cy</span><span class="p">]</span> <span class="o">=</span> <span class="n">n</span>
+        <span class="k">return</span> <span class="n">NumberedFatgraph</span><span class="p">(</span><span class="n">contracted</span><span class="p">,</span> <span class="n">numbering</span><span class="o">=</span><span class="n">new_numbering</span><span class="p">)</span>
+        
+
+    <span class="c">#@ocache_isomorphisms</span>
+    <span class="c">#@cython.ccall</span></div>
+<div class="viewcode-block" id="NumberedFatgraph.isomorphisms"><a class="viewcode-back" href="../../api.html#fatghol.graph_homology.NumberedFatgraph.isomorphisms">[docs]</a>    <span class="k">def</span> <span class="nf">isomorphisms</span><span class="p">(</span><span class="n">G1</span><span class="p">,</span> <span class="n">G2</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Iterate over isomorphisms from `G1` to `G2`.</span>
+
+<span class="sd">        See `Fatgraph.isomrphisms` for a discussion of the</span>
+<span class="sd">        representation of isomorphisms and example usage.</span>
+
+<span class="sd">        A concrete example taken from `M_{1,4}`:latex: ::</span>
+
+<span class="sd">          &gt;&gt;&gt; g1 = NumberedFatgraph(</span>
+<span class="sd">          ...         Fatgraph([Vertex([1, 0, 2]), Vertex([2, 1, 5]), Vertex([0, 4, 3]), Vertex([8, 5, 6]), Vertex([3, 6, 7, 7]), Vertex([8, 4, 9, 9])]),</span>
+<span class="sd">          ...         numbering={</span>
+<span class="sd">          ...             BoundaryCycle([(0, 0, 1), (0, 1, 2), (0, 2, 0), (1, 0, 1), (1, 1, 2), (1, 2, 0), (2, 0, 1), (2, 2, 0), (3, 0, 1), (3, 1, 2), (4, 1, 2), (4, 3, 0), (5, 1, 2), (5, 3, 0)]):0,</span>
+<span class="sd">          ...             BoundaryCycle([(2, 1, 2), (3, 2, 0), (4, 0, 1), (5, 0, 1)]):1,</span>
+<span class="sd">          ...             BoundaryCycle([(4, 2, 3)]):2,</span>
+<span class="sd">          ...             BoundaryCycle([(5, 2, 3)]):3,</span>
+<span class="sd">          ...       })</span>
+<span class="sd">          &gt;&gt;&gt; g2 = NumberedFatgraph(</span>
+<span class="sd">          ...         Fatgraph([Vertex([1, 0, 5, 6]), Vertex([1, 0, 2]), Vertex([5, 2, 3]), Vertex([8, 4, 3]), Vertex([7, 7, 6]), Vertex([4, 8, 9, 9])]),</span>
+<span class="sd">          ...         numbering={</span>
+<span class="sd">          ...             BoundaryCycle([(0, 0, 1), (0, 1, 2), (0, 2, 3), (0, 3, 0), (1, 0, 1), (1, 1, 2), (1, 2, 0), (2, 0, 1), (2, 1, 2), (2, 2, 0), (3, 1, 2), (3, 2, 0), (4, 1, 2), (4, 2, 0), (5, 1, 2), (5, 3, 0)]):0,</span>
+<span class="sd">          ...             BoundaryCycle([(3, 0, 1), (5, 0, 1)]):1,</span>
+<span class="sd">          ...             BoundaryCycle([(4, 0, 1)]):2,</span>
+<span class="sd">          ...             BoundaryCycle([(5, 2, 3)]):3,</span>
+<span class="sd">          ...      })</span>
+<span class="sd">          &gt;&gt;&gt; len(list(NumberedFatgraph.isomorphisms(g1, g2)))</span>
+<span class="sd">          0</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">iso</span> <span class="ow">in</span> <span class="n">Fatgraph</span><span class="o">.</span><span class="n">isomorphisms</span><span class="p">(</span><span class="n">G1</span><span class="o">.</span><span class="n">underlying</span><span class="p">,</span> <span class="n">G2</span><span class="o">.</span><span class="n">underlying</span><span class="p">):</span>
+            <span class="n">pe_does_not_preserve_bc</span> <span class="o">=</span> <span class="bp">False</span>
+            <span class="k">for</span> <span class="n">bc1</span> <span class="ow">in</span> <span class="n">G1</span><span class="o">.</span><span class="n">underlying</span><span class="o">.</span><span class="n">boundary_cycles</span><span class="p">:</span>
+                <span class="n">bc2</span> <span class="o">=</span> <span class="n">iso</span><span class="o">.</span><span class="n">transform_boundary_cycle</span><span class="p">(</span><span class="n">bc1</span><span class="p">)</span>
+                <span class="c"># there are cases (see examples in the</span>
+                <span class="c"># `Fatgraph.__eq__` docstring, in which the above</span>
+                <span class="c"># algorithm may find a valid mapping, changing from</span>
+                <span class="c"># `g1` to an *alternate* representation of `g2` -</span>
+                <span class="c"># these should fail as they don&#39;t preserve the</span>
+                <span class="c"># boundary cycles, so we catch them here.</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">bc2</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">G2</span><span class="o">.</span><span class="n">numbering</span><span class="p">)</span> \
+                       <span class="ow">or</span> <span class="p">(</span><span class="n">G1</span><span class="o">.</span><span class="n">numbering</span><span class="p">[</span><span class="n">bc1</span><span class="p">]</span> <span class="o">!=</span> <span class="n">G2</span><span class="o">.</span><span class="n">numbering</span><span class="p">[</span><span class="n">bc2</span><span class="p">]):</span>
+                    <span class="n">pe_does_not_preserve_bc</span> <span class="o">=</span> <span class="bp">True</span>
+                    <span class="c"># if bc2 not in G2.numbering:</span>
+                    <span class="c">#     print (&quot;DEBUG: Rejecting isomorphism %r between marked fatgraphs %r and %r:&quot;</span>
+                    <span class="c">#            &quot; %r not in destination boundary cycles&quot;</span>
+                    <span class="c">#            % (iso, G1, G2, bc2))</span>
+                    <span class="c"># else:</span>
+                    <span class="c">#     print (&quot;DEBUG: Rejecting isomorphism %r between marked fatgraphs %r and %r:&quot;</span>
+                    <span class="c">#            &quot; boundary cycle %r has number %d in G1 and %d in G2&quot;</span>
+                    <span class="c">#            % (iso, G1, G2, bc2, G1.numbering[bc1], G2.numbering[bc2]))</span>
+                    <span class="k">break</span>
+            <span class="k">if</span> <span class="n">pe_does_not_preserve_bc</span><span class="p">:</span>
+                <span class="k">continue</span> <span class="c"># to next underlying graph isomorphism</span>
+            <span class="k">yield</span> <span class="n">iso</span>
+
+
+
+<span class="c">#@cython.cclass</span></div></div>
+<div class="viewcode-block" id="NumberedFatgraphPool"><a class="viewcode-back" href="../../api.html#fatghol.graph_homology.NumberedFatgraphPool">[docs]</a><span class="k">class</span> <span class="nc">NumberedFatgraphPool</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;An immutable virtual collection of `NumberedFatgraph`s.</span>
+<span class="sd">    Items are all distinct (up to isomorphism) decorations of a</span>
+<span class="sd">    `Fatgraph` instance `graph` with a numbering of the boundary</span>
+<span class="sd">    cycles.</span>
+
+<span class="sd">    Implements object lookup by index and iteration over the whole list.</span>
+
+<span class="sd">    Examples::</span>
+<span class="sd">    </span>
+<span class="sd">      &gt;&gt;&gt; ug1 = Fatgraph([Vertex([2,0,0]), Vertex([2,1,1])])</span>
+<span class="sd">      &gt;&gt;&gt; p = NumberedFatgraphPool(ug1)</span>
+<span class="sd">      &gt;&gt;&gt; len(p)</span>
+<span class="sd">      3</span>
+<span class="sd">      &gt;&gt;&gt; for g in p: print g</span>
+<span class="sd">      NumberedFatgraph(Fatgraph([Vertex([2, 0, 0]), Vertex([2, 1, 1])]),</span>
+<span class="sd">                       numbering={BoundaryCycle([(0, 2, 0), (1, 2, 0), (0, 0, 1), (1, 0, 1)]): 0,</span>
+<span class="sd">                                  BoundaryCycle([(0, 1, 2)]): 1,</span>
+<span class="sd">                                  BoundaryCycle([(1, 1, 2)]): 2})</span>
+<span class="sd">      NumberedFatgraph(Fatgraph([Vertex([2, 0, 0]), Vertex([2, 1, 1])]),</span>
+<span class="sd">                       numbering={BoundaryCycle([(0, 1, 2)]): 0,</span>
+<span class="sd">                                  BoundaryCycle([(0, 2, 0), (1, 2, 0), (0, 0, 1), (1, 0, 1)]): 1,</span>
+<span class="sd">                                  BoundaryCycle([(1, 1, 2)]): 2})</span>
+<span class="sd">      NumberedFatgraph(Fatgraph([Vertex([2, 0, 0]), Vertex([2, 1, 1])]),</span>
+<span class="sd">                       numbering={BoundaryCycle([(0, 1, 2)]): 0,</span>
+<span class="sd">                                  BoundaryCycle([(1, 1, 2)]): 1,</span>
+<span class="sd">                                  BoundaryCycle([(0, 2, 0), (1, 2, 0), (0, 0, 1), (1, 0, 1)]): 2})</span>
+<span class="sd">       </span>
+<span class="sd">    Note that, when only one numbering out of many possible ones is</span>
+<span class="sd">    returned because of isomorphism, the returned numbering may not be</span>
+<span class="sd">    the trivial one (it is infact the first permutation of 0..n</span>
+<span class="sd">    returned by `InplacePermutationIterator`)::</span>
+<span class="sd">      </span>
+<span class="sd">      &gt;&gt;&gt; ug2 = Fatgraph([Vertex([2,1,0]), Vertex([2,0,1])])</span>
+<span class="sd">      &gt;&gt;&gt; for g in NumberedFatgraphPool(ug2): print g</span>
+<span class="sd">      NumberedFatgraph(Fatgraph([Vertex([2, 1, 0]), Vertex([2, 0, 1])]),</span>
+<span class="sd">                        numbering={BoundaryCycle([(1, 2, 0), (0, 0, 1)]): 0,</span>
+<span class="sd">                                   BoundaryCycle([(0, 1, 2), (1, 1, 2)]): 1,</span>
+<span class="sd">                                   BoundaryCycle([(0, 2, 0), (1, 0, 1)]): 2})</span>
+
+<span class="sd">    When the graph has only one boundary component, there is only one</span>
+<span class="sd">    possible numbering, which is actually returned::</span>
+<span class="sd">    </span>
+<span class="sd">      &gt;&gt;&gt; ug3 = Fatgraph([Vertex([1,0,1,0])])</span>
+<span class="sd">      &gt;&gt;&gt; for g in NumberedFatgraphPool(ug3): print g</span>
+<span class="sd">      NumberedFatgraph(Fatgraph([Vertex([1, 0, 1, 0])]),</span>
+<span class="sd">                        numbering={BoundaryCycle([(0, 3, 0), (0, 2, 3),</span>
+<span class="sd">                                                  (0, 1, 2), (0, 0, 1)]): 0})</span>
+
+<span class="sd">    Index lookup returns a `NumberedFatgraph` instance, produced</span>
+<span class="sd">    on-the-fly::</span>
+
+<span class="sd">      &gt;&gt;&gt; ug4 = Fatgraph([Vertex([0, 1, 0, 1, 2, 2])])</span>
+<span class="sd">      &gt;&gt;&gt; pool = NumberedFatgraphPool(ug4)</span>
+<span class="sd">      &gt;&gt;&gt; pool[0]</span>
+<span class="sd">      NumberedFatgraph(Fatgraph([Vertex([0, 1, 0, 1, 2, 2])]),</span>
+<span class="sd">                       numbering={BoundaryCycle([(0, 2, 3), (0, 3, 4),</span>
+<span class="sd">                                                 (0, 1, 2), (0, 0, 1), (0, 5, 0)]): 0,</span>
+<span class="sd">                                  BoundaryCycle([(0, 4, 5)]): 1})</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c">#@cython.locals(graph=Fatgraph,</span>
+    <span class="c">#               bc=dict, n=cython.int, orienbtable=cython.bint,</span>
+    <span class="c">#               P=list, A=list, automorphisms=list,</span>
+    <span class="c">#               p=Permutation, src=cython.int, dst=cython.int, dst_cy=BoundaryCycle,</span>
+    <span class="c">#               numberings=list, candidate=list)</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">graph</span><span class="p">):</span>
+        <span class="n">bc</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">boundary_cycles</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">bc</span><span class="p">)</span> <span class="c"># == graph.num_boundary_cycles</span>
+        <span class="n">orientable</span> <span class="o">=</span> <span class="bp">True</span>
+
+        <span class="c">## Find out which automorphisms permute the boundary cycles among</span>
+        <span class="c">## themselves.</span>
+        <span class="n">P</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c">#: permutation of boundary cycles induced by `a \in Aut(G)`</span>
+        <span class="n">A</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c">#: corresponding graph automorphisms: `P[i]` is induced by `A[i]`</span>
+        <span class="n">automorphisms</span> <span class="o">=</span> <span class="p">[]</span> <span class="c">#: `NumberedFatgraph` automorphisms</span>
+        <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">graph</span><span class="o">.</span><span class="n">automorphisms</span><span class="p">():</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="n">Permutation</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">src</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+                <span class="n">dst_cy</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">transform_boundary_cycle</span><span class="p">(</span><span class="n">bc</span><span class="p">[</span><span class="n">src</span><span class="p">])</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">dst</span> <span class="o">=</span> <span class="n">bc</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">dst_cy</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                    <span class="c"># `dst_cy` not in `bc`</span>
+                    <span class="k">break</span> <span class="c"># continue with next `a`</span>
+                <span class="n">p</span><span class="p">[</span><span class="n">src</span><span class="p">]</span> <span class="o">=</span> <span class="n">dst</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="o">!=</span> <span class="n">n</span><span class="p">:</span> <span class="c"># not all `src` were mapped to a `dst`</span>
+                <span class="k">continue</span> <span class="c"># with next `a`</span>
+            <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">is_identity</span><span class="p">():</span>
+                <span class="c"># `a` preserves the boundary cycles pointwise,</span>
+                <span class="c"># so it induces an automorphism of the numbered graph</span>
+                <span class="n">automorphisms</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">compare_orientations</span><span class="p">()</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                    <span class="n">orientable</span> <span class="o">=</span> <span class="bp">False</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">p</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">P</span><span class="p">):</span>
+                <span class="c"># `a` induces permutation `p` on the set `bc`</span>
+                <span class="n">P</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+                <span class="n">A</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="c"># XXX: should verify that `P` is a group!</span>
+
+        <span class="c">## There will be as many distinct numberings as there are cosets</span>
+        <span class="c">## of `P` in `Sym(n)`.</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">numberings</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">candidate</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">permutations</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">)):</span>
+                <span class="k">if</span> <span class="n">NumberedFatgraphPool</span><span class="o">.</span><span class="n">_unseen</span><span class="p">(</span><span class="n">candidate</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">numberings</span><span class="p">):</span>
+                    <span class="n">numberings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">candidate</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c"># if `P` is the one-element group, then all orbits are trivial</span>
+            <span class="n">numberings</span> <span class="o">=</span> <span class="p">[</span> <span class="nb">list</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">permutations</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">))</span> <span class="p">]</span>
+
+        <span class="c"># things to remember</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">graph</span> <span class="o">=</span> <span class="n">graph</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_orientable</span> <span class="o">=</span> <span class="n">orientable</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">numberings</span> <span class="o">=</span> <span class="n">numberings</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">P</span> <span class="o">=</span> <span class="n">P</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">A</span> <span class="o">=</span> <span class="n">A</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_automorphisms</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">automorphisms</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="c">#@cython.locals(candidate=list, P=list, already=list,</span>
+    <span class="c">#               p=Permutation)</span>
+    <span class="k">def</span> <span class="nf">_unseen</span><span class="p">(</span><span class="n">candidate</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">already</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return `False` iff any of the images of `candidate` by an</span>
+<span class="sd">        element of group `P` is contained in set `already`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">P</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">rearranged</span><span class="p">(</span><span class="n">candidate</span><span class="p">)</span> <span class="ow">in</span> <span class="n">already</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">False</span>
+        <span class="k">return</span> <span class="bp">True</span>
+
+
+    <span class="c">#@cython.locals(pos=cython.int)</span>
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pos</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">NumberedFatgraph</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="p">,</span>
+                                <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">boundary_cycles</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">numberings</span><span class="p">[</span><span class="n">pos</span><span class="p">]))</span>
+
+
+    <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">IndexedIterator</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        
+
+    <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">numberings</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s">&#39;graph&#39;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="s">&quot;NumberedFatgraphPool(</span><span class="si">%s</span><span class="s">)&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">object</span><span class="o">.</span><span class="n">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        
+
+    <span class="c">#@cython.locals(edge=cython.int,</span>
+    <span class="c">#               #other=NumberedFatgraphPool,</span>
+    <span class="c">#               g0=Fatgraph, g1=Fatgraph, g2=Fatgraph)</span>
+<div class="viewcode-block" id="NumberedFatgraphPool.facets"><a class="viewcode-back" href="../../api.html#fatghol.graph_homology.NumberedFatgraphPool.facets">[docs]</a>    <span class="k">def</span> <span class="nf">facets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">edge</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Iterate over facets obtained by contracting `edge` and</span>
+<span class="sd">        projecting onto `other`.</span>
+
+<span class="sd">        Each returned item is a triple `(j, k, s)`, where:</span>
+<span class="sd">          - `j` is the index of a `NumberedFatgraph` in `self`;</span>
+<span class="sd">          - `k` is the index of a `NumberedFatgraph` in `other`;</span>
+<span class="sd">          - `s` is the sign by which `self[j].contract(edge)` projects onto `other[k]`.</span>
+<span class="sd">        Only triples for which `s != 0` are returned.</span>
+
+<span class="sd">        Examples::</span>
+<span class="sd">        </span>
+<span class="sd">          &gt;&gt;&gt; p0 = NumberedFatgraphPool(Fatgraph([Vertex([1, 2, 0, 1, 0]), Vertex([3, 3, 2])]))</span>
+<span class="sd">          &gt;&gt;&gt; p1 = NumberedFatgraphPool(Fatgraph([Vertex([0, 1, 0, 1, 2, 2])]))</span>
+<span class="sd">          &gt;&gt;&gt; list(NumberedFatgraphPool.facets(p0, 2, p1))</span>
+<span class="sd">          [(0, 0, 1), (1, 1, 1)]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">is_loop</span><span class="p">(</span><span class="n">edge</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_orientable</span>
+        <span class="k">assert</span> <span class="n">other</span><span class="o">.</span><span class="n">is_orientable</span>
+        
+        <span class="n">g0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph</span>
+        <span class="n">g1</span> <span class="o">=</span> <span class="n">g0</span><span class="o">.</span><span class="n">contract</span><span class="p">(</span><span class="n">edge</span><span class="p">)</span>
+        <span class="n">g2</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">graph</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">g1</span><span class="o">.</span><span class="n">boundary_cycles</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">g2</span><span class="o">.</span><span class="n">boundary_cycles</span><span class="p">)</span>
+
+        <span class="c"># compute isomorphism map `f1` from `g1` to `g2`: if there is</span>
+        <span class="c"># no such isomorphisms, then stop iteration (do this first so</span>
+        <span class="c"># then we do not waste time on computing if we need to abort</span>
+        <span class="c"># anyway)</span>
+        <span class="n">f1</span> <span class="o">=</span> <span class="n">Fatgraph</span><span class="o">.</span><span class="n">isomorphisms</span><span class="p">(</span><span class="n">g1</span><span class="p">,</span><span class="n">g2</span><span class="p">)</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+        
+        <span class="c">## 1. compute map `phi0` induced on `g0.boundary_cycles` from the</span>
+        <span class="c">##    graph map `f0` which contracts `edge`.</span>
+        <span class="c">##</span>
+        <span class="p">(</span><span class="n">e1</span><span class="p">,</span> <span class="n">e2</span><span class="p">)</span> <span class="o">=</span> <span class="n">g0</span><span class="o">.</span><span class="n">endpoints</span><span class="p">(</span><span class="n">edge</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">set</span><span class="p">(</span><span class="n">g1</span><span class="o">.</span><span class="n">boundary_cycles</span><span class="p">)</span> <span class="o">==</span> <span class="nb">set</span><span class="p">([</span> <span class="n">g0</span><span class="o">.</span><span class="n">contract_boundary_cycle</span><span class="p">(</span><span class="n">bcy</span><span class="p">,</span> <span class="n">e1</span><span class="p">,</span> <span class="n">e2</span><span class="p">)</span>
+                                                <span class="k">for</span> <span class="n">bcy</span> <span class="ow">in</span> <span class="n">g0</span><span class="o">.</span><span class="n">boundary_cycles</span> <span class="p">]),</span> \
+               <span class="s">&quot;NumberedFatgraphPool.facets():&quot;</span> \
+               <span class="s">&quot; Boundary cycles of contracted graph are not the same&quot;</span> \
+               <span class="s">&quot; as contracted boundary cycles of parent graph:&quot;</span> \
+               <span class="s">&quot; `</span><span class="si">%s</span><span class="s">` vs `</span><span class="si">%s</span><span class="s">`&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">g1</span><span class="o">.</span><span class="n">boundary_cycles</span><span class="p">,</span>
+                                  <span class="p">[</span> <span class="n">g0</span><span class="o">.</span><span class="n">contract_boundary_cycle</span><span class="p">(</span><span class="n">bcy</span><span class="p">,</span> <span class="n">e1</span><span class="p">,</span> <span class="n">e2</span><span class="p">)</span>
+                                    <span class="k">for</span> <span class="n">bcy</span> <span class="ow">in</span> <span class="n">g0</span><span class="o">.</span><span class="n">boundary_cycles</span> <span class="p">])</span>
+        <span class="n">phi0_inv</span> <span class="o">=</span> <span class="n">Permutation</span><span class="p">((</span><span class="n">i1</span><span class="p">,</span><span class="n">i0</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">i0</span><span class="p">,</span><span class="n">i1</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span>
+            <span class="n">g1</span><span class="o">.</span><span class="n">boundary_cycles</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">g0</span><span class="o">.</span><span class="n">contract_boundary_cycle</span><span class="p">(</span><span class="n">bc0</span><span class="p">,</span> <span class="n">e1</span><span class="p">,</span> <span class="n">e2</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">bc0</span> <span class="ow">in</span> <span class="n">g0</span><span class="o">.</span><span class="n">boundary_cycles</span>
+            <span class="p">))</span>
+        <span class="c">## 2. compute map `phi1` induced by isomorphism map `f1` on</span>
+        <span class="c">##    the boundary cycles of `g1` and `g2`.</span>
+        <span class="c">##</span>
+        <span class="n">phi1_inv</span> <span class="o">=</span> <span class="n">Permutation</span><span class="p">((</span><span class="n">i1</span><span class="p">,</span><span class="n">i0</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">i0</span><span class="p">,</span><span class="n">i1</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span>
+            <span class="n">g2</span><span class="o">.</span><span class="n">boundary_cycles</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">f1</span><span class="o">.</span><span class="n">transform_boundary_cycle</span><span class="p">(</span><span class="n">bc1</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">bc1</span> <span class="ow">in</span> <span class="n">g1</span><span class="o">.</span><span class="n">boundary_cycles</span>
+            <span class="p">))</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">phi1_inv</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">g1</span><span class="o">.</span><span class="n">boundary_cycles</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">phi1_inv</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">g2</span><span class="o">.</span><span class="n">boundary_cycles</span><span class="p">)</span>
+        <span class="c">## 3. Compute the composite map `f1^(-1) * f0`.</span>
+        <span class="c">##</span>
+
+        <span class="c">## For every numbering `nb` on `g0`, compute the (index of)</span>
+        <span class="c">## corresponding numbering on `g2` (under the composition map</span>
+        <span class="c">## `f1^(-1) * f0`) and return a triple `(index of nb, index of</span>
+        <span class="c">## push-forward, sign)`.</span>
+        <span class="c">##</span>
+        <span class="c">## In the following:</span>
+        <span class="c">##</span>
+        <span class="c">## - `j` is the index of a numbering `nb` in `self.numberings`;</span>
+        <span class="c">## - `k` is the index of the corresponding numbering in `other.numberings`,</span>
+        <span class="c">##   under the composition map `f1^(-1) * f0`;</span>
+        <span class="c">## - `a` is the the unique automorphism `a` of `other.graph` such that::</span>
+        <span class="c">##</span>
+        <span class="c">##       self.numberings[j] = pull_back(&lt;permutation induced by `a` applied to&gt; other.numberings[k])</span>
+        <span class="c">##</span>
+        <span class="c">## - `s` is the pull-back sign (see below).</span>
+        <span class="c">##</span>
+        <span class="c">## The pair `k`,`a` is computed using the</span>
+        <span class="c">## `NumberedFatgraphPool._index` (which see), applied to each</span>
+        <span class="c">## of `self.numberings`, rearranged according to the</span>
+        <span class="c">## permutation of boundary cycles induced by `f1^(-1) * f0`.</span>
+        <span class="c">##</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">j</span><span class="p">,</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">a</span><span class="p">))</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">_index</span><span class="p">(</span><span class="n">phi1_inv</span><span class="o">.</span><span class="n">rearranged</span><span class="p">(</span><span class="n">phi0_inv</span><span class="o">.</span><span class="n">rearranged</span><span class="p">(</span><span class="n">nb</span><span class="p">)))</span>
+                                     <span class="k">for</span> <span class="n">nb</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">numberings</span><span class="p">):</span>
+            <span class="c">## there are three components to the sign `s`:</span>
+            <span class="c">##   - the sign given by the ismorphism `f1`</span>
+            <span class="c">##   - the sign of the automorphism of `g2` that transforms the</span>
+            <span class="c">##     push-forward numbering into the chosen representative in the same orbit</span>
+            <span class="c">##   - the alternating sign from the homology differential</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="n">f1</span><span class="o">.</span><span class="n">compare_orientations</span><span class="p">()</span> \
+                <span class="o">*</span> <span class="n">a</span><span class="o">.</span><span class="n">compare_orientations</span><span class="p">()</span> \
+                <span class="o">*</span> <span class="n">minus_one_exp</span><span class="p">(</span><span class="n">g0</span><span class="o">.</span><span class="n">edge_numbering</span><span class="p">[</span><span class="n">edge</span><span class="p">])</span>
+            <span class="k">yield</span> <span class="p">(</span><span class="n">j</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span>
+
+    <span class="c">#@cython.cfunc</span>
+    <span class="c">#@cython.locals(numbering=Permutation,</span>
+    <span class="c">#               i=cython.int, j=cython.int, p=Permutation)</span></div>
+    <span class="k">def</span> <span class="nf">_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">numbering</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return pair `(j, p)` such that `j` is the index of `p * numbering`,</span>
+<span class="sd">        and `p` belongs in `self.P`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">numberings</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">rearranged</span><span class="p">(</span><span class="n">numbering</span><span class="p">))</span>
+                <span class="c"># once a `p` has matched, there&#39;s no reason to try others</span>
+                <span class="k">return</span> <span class="p">(</span><span class="n">j</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">A</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                <span class="k">pass</span>
+        <span class="k">assert</span> <span class="bp">False</span><span class="p">,</span> \
+               <span class="s">&quot;</span><span class="si">%s</span><span class="s">._index(</span><span class="si">%s</span><span class="s">): No match found.&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">numbering</span><span class="p">)</span>
+        
+
+
+<span class="c">#@cython.locals(g=cython.int, n=cython.int,</span>
+<span class="c">#               min_edges=cython.int, top_dimension=cython.int,</span>
+<span class="c">#               C=MgnChainComplex,</span>
+<span class="c">#               #pool=NumberedFatgraphPool,</span>
+<span class="c">#               chi=Fraction, grade=cython.int, i=cython.int)</span></div>
+<div class="viewcode-block" id="FatgraphComplex"><a class="viewcode-back" href="../../api.html#fatghol.graph_homology.FatgraphComplex">[docs]</a><span class="k">def</span> <span class="nf">FatgraphComplex</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return the fatgraph complex for given genus `g` and number of</span>
+<span class="sd">    boundary components `n`.</span>
+
+<span class="sd">    This is a factory method returning a `homology.ChainComplex`</span>
+<span class="sd">    instance, populated with the correct vector spaces and</span>
+<span class="sd">    differentials to compute the graph homology of the space</span>
+<span class="sd">    `M_{g,n}`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c">## Minimum number of edges is attained when there&#39;s only one</span>
+    <span class="c">## vertex; so, by Euler&#39;s formula `V - E + n = 2 - 2*g`, we get:</span>
+    <span class="c">## `E = 2*g + n - 1`.</span>
+    <span class="n">min_edges</span> <span class="o">=</span> <span class="mi">2</span><span class="o">*</span><span class="n">g</span> <span class="o">+</span> <span class="n">n</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;  Minimum number of edges: </span><span class="si">%d</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">min_edges</span><span class="p">)</span>
+    
+    <span class="c">## Maximum number of edges is reached in graphs with all vertices</span>
+    <span class="c">## tri-valent, so, combining Euler&#39;s formula with `3*V = 2*E`, we</span>
+    <span class="c">## get: `E = 6*g + 3*n - 6`.  These are also graphs corresponding</span>
+    <span class="c">## to top-dimensional cells.</span>
+    <span class="n">top_dimension</span> <span class="o">=</span> <span class="mi">6</span><span class="o">*</span><span class="n">g</span> <span class="o">+</span> <span class="mi">3</span><span class="o">*</span><span class="n">n</span> <span class="o">-</span> <span class="mi">6</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;  Maximum number of edges: </span><span class="si">%d</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">top_dimension</span><span class="p">)</span>
+
+    <span class="c">#: list of primitive graphs, graded by number of edges</span>
+    <span class="c">#generators = [ AggregateList() for dummy in xrange(top_dimension) ]</span>
+    <span class="n">C</span> <span class="o">=</span> <span class="n">MgnChainComplex</span><span class="p">(</span><span class="n">top_dimension</span><span class="p">)</span>
+
+    <span class="c"># gather graphs</span>
+    <span class="n">chi</span> <span class="o">=</span> <span class="n">Fraction</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">graph</span> <span class="ow">in</span> <span class="n">MgnGraphsIterator</span><span class="p">(</span><span class="n">g</span><span class="p">,</span><span class="n">n</span><span class="p">):</span>
+        <span class="n">grade</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">num_edges</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">pool</span> <span class="o">=</span> <span class="n">NumberedFatgraphPool</span><span class="p">(</span><span class="n">graph</span><span class="p">)</span>
+        <span class="c"># compute orbifold Euler characteristics (needs to include *all* graphs)</span>
+        <span class="n">chi</span> <span class="o">+=</span> <span class="n">Fraction</span><span class="p">(</span><span class="n">minus_one_exp</span><span class="p">(</span><span class="n">grade</span><span class="o">-</span><span class="n">min_edges</span><span class="p">)</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">pool</span><span class="p">),</span> <span class="n">pool</span><span class="o">.</span><span class="n">num_automorphisms</span><span class="p">)</span>
+        <span class="c"># discard non-orientable graphs</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">pool</span><span class="o">.</span><span class="n">is_orientable</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">C</span><span class="o">.</span><span class="n">module</span><span class="p">[</span><span class="n">grade</span><span class="p">]</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">pool</span><span class="p">)</span>
+    <span class="n">C</span><span class="o">.</span><span class="n">orbifold_euler_characteristics</span> <span class="o">=</span> <span class="n">chi</span>
+        
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="n">top_dimension</span><span class="p">):</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;  Initialized grade </span><span class="si">%d</span><span class="s"> chain module (dimension </span><span class="si">%d</span><span class="s">)&quot;</span><span class="p">,</span>
+                      <span class="n">i</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">C</span><span class="o">.</span><span class="n">module</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
+        
+    <span class="k">return</span> <span class="n">C</span>
+
+
+<span class="c">## main: run tests</span>
+</div>
+<span class="k">if</span> <span class="s">&quot;__main__&quot;</span> <span class="o">==</span> <span class="n">__name__</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">doctest</span>
+    <span class="n">doctest</span><span class="o">.</span><span class="n">testmod</span><span class="p">(</span><span class="n">optionflags</span><span class="o">=</span><span class="n">doctest</span><span class="o">.</span><span class="n">NORMALIZE_WHITESPACE</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">FatGHoL v5.4 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+
+    <div class="footer">
+        &copy; Copyright 2012, Riccardo Murri.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+<div class="footer">This page uses <a href="http://analytics.google.com/">
+Google Analytics</a> to collect statistics. You can disable it by blocking
+the JavaScript coming from www.google-analytics.com.
+<script type="text/javascript">
+  (function() {
+    var ga = document.createElement('script');
+    ga.src = ('https:' == document.location.protocol ?
+              'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    ga.setAttribute('async', 'true');
+    document.documentElement.firstChild.appendChild(ga);
+  })();
+</script>
+</div>
+
+  </body>
+</html>

@@ -1,0 +1,184 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>fatghol.valences &mdash; FatGHoL v5.4 documentation</title>
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '5.4',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="FatGHoL v5.4 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" />
+ 
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-23673826-1']);
+  _gaq.push(['_trackPageview']);
+</script>
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">FatGHoL v5.4 documentation</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for fatghol.valences</h1><div class="highlight"><pre>
+<span class="c">#! /usr/bin/env python</span>
+<span class="c">#</span>
+<span class="sd">&quot;&quot;&quot;Functions related to valences of ribbon graphs.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c">#</span>
+<span class="c">#   Copyright (C) 2008-2012 Riccardo Murri &lt;riccardo.murri@gmail.com&gt;</span>
+<span class="c">#   All rights reserved.</span>
+<span class="c">#</span>
+<span class="c">#   This program is free software: you can redistribute it and/or modify</span>
+<span class="c">#   it under the terms of the GNU General Public License as published by</span>
+<span class="c">#   the Free Software Foundation, either version 3 of the License, or</span>
+<span class="c">#   (at your option) any later version.</span>
+<span class="c">#</span>
+<span class="c">#   This program is distributed in the hope that it will be useful,</span>
+<span class="c">#   but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="c">#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the</span>
+<span class="c">#   GNU General Public License for more details.</span>
+<span class="c">#</span>
+<span class="c">#   You should have received a copy of the GNU General Public License</span>
+<span class="c">#   along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
+<span class="c">#</span>
+<span class="n">__docformat__</span> <span class="o">=</span> <span class="s">&#39;reStructuredText&#39;</span>
+
+
+<span class="c">#import cython</span>
+
+
+<span class="kn">from</span> <span class="nn">fatghol.combinatorics</span> <span class="kn">import</span> <span class="n">PartitionIterator</span>
+
+
+<span class="c">#@cython.ccall</span>
+<span class="c">#@cython.locals(g=cython.int, n=cython.int,</span>
+<span class="c">#               L=cython.int, V=cython.int, result=set)</span>
+<div class="viewcode-block" id="vertex_valences_for_given_g_and_n"><a class="viewcode-back" href="../../api.html#fatghol.valences.vertex_valences_for_given_g_and_n">[docs]</a><span class="k">def</span> <span class="nf">vertex_valences_for_given_g_and_n</span><span class="p">(</span><span class="n">g</span><span class="p">,</span><span class="n">n</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return all possible valences of fatgraphs appearing in the</span>
+<span class="sd">    `(g,n)` complex.</span>
+
+<span class="sd">    The returned partitions are sorted in ascending order.</span>
+
+<span class="sd">    Examples::</span>
+<span class="sd">      &gt;&gt;&gt; vertex_valences_for_given_g_and_n(0,3)</span>
+<span class="sd">      [(3, 3), (4,)]</span>
+<span class="sd">      &gt;&gt;&gt; vertex_valences_for_given_g_and_n(1,1)</span>
+<span class="sd">      [(3, 3), (4,)]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c"># with 1 vertex only, there are this many edges:</span>
+    <span class="n">L</span> <span class="o">=</span> <span class="mi">2</span><span class="o">*</span><span class="n">g</span> <span class="o">+</span> <span class="n">n</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="n">V</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">PartitionIterator</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">L</span><span class="p">,</span> <span class="n">V</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+    <span class="k">while</span> <span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">L</span> <span class="o">&gt;=</span> <span class="mi">3</span><span class="o">*</span><span class="n">V</span><span class="p">):</span>
+        <span class="n">V</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">L</span> <span class="o">=</span> <span class="mi">2</span><span class="o">*</span><span class="n">g</span> <span class="o">+</span> <span class="n">n</span> <span class="o">+</span> <span class="n">V</span> <span class="o">-</span> <span class="mi">2</span> <span class="c"># by Euler&#39;s formula</span>
+        <span class="c">## Each edge has *two* vertex endpoints (possibly the same vertex),</span>
+        <span class="c">## so the set of vertex valences is a partition of `2*L`, where `L`</span>
+        <span class="c">## is the number of edges, with some further constraints:</span>
+        <span class="c">##   - each vertex has valence at least 3;</span>
+        <span class="c">##   - thus, no vertex can have valence greater than `2*L-3*(V-1)`,</span>
+        <span class="c">##     that is, supposing all vertices except one are 3-valent,</span>
+        <span class="c">##     the highest-valent vertex must have valence `2L - 3(V-1)`.</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">PartitionIterator</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">L</span><span class="p">,</span> <span class="n">V</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="n">L</span><span class="o">-</span><span class="mi">3</span><span class="o">*</span><span class="p">(</span><span class="n">V</span><span class="o">-</span><span class="mi">1</span><span class="p">))))</span>
+    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+
+
+
+
+
+<span class="c">## main: run tests</span>
+</div>
+<span class="k">if</span> <span class="s">&quot;__main__&quot;</span> <span class="o">==</span> <span class="n">__name__</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">doctest</span>
+    <span class="n">doctest</span><span class="o">.</span><span class="n">testmod</span><span class="p">(</span><span class="n">optionflags</span><span class="o">=</span><span class="n">doctest</span><span class="o">.</span><span class="n">NORMALIZE_WHITESPACE</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">FatGHoL v5.4 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+
+    <div class="footer">
+        &copy; Copyright 2012, Riccardo Murri.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+<div class="footer">This page uses <a href="http://analytics.google.com/">
+Google Analytics</a> to collect statistics. You can disable it by blocking
+the JavaScript coming from www.google-analytics.com.
+<script type="text/javascript">
+  (function() {
+    var ga = document.createElement('script');
+    ga.src = ('https:' == document.location.protocol ?
+              'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    ga.setAttribute('async', 'true');
+    document.documentElement.firstChild.appendChild(ga);
+  })();
+</script>
+</div>
+
+  </body>
+</html>

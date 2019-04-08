@@ -1,0 +1,753 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>fatghol.mgn &mdash; FatGHoL v5.4 documentation</title>
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '5.4',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="FatGHoL v5.4 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" />
+ 
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-23673826-1']);
+  _gaq.push(['_trackPageview']);
+</script>
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">FatGHoL v5.4 documentation</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for fatghol.mgn</h1><div class="highlight"><pre>
+<span class="c">#! /usr/bin/env python</span>
+<span class="sd">&quot;&quot;&quot;Command-line front-end for `rg.py`.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c">#</span>
+<span class="c">#   Copyright (C) 2008-2012 Riccardo Murri &lt;riccardo.murri@gmail.com&gt;</span>
+<span class="c">#   All rights reserved.</span>
+<span class="c">#</span>
+<span class="c">#   This program is free software: you can redistribute it and/or modify</span>
+<span class="c">#   it under the terms of the GNU General Public License as published by</span>
+<span class="c">#   the Free Software Foundation, either version 3 of the License, or</span>
+<span class="c">#   (at your option) any later version.</span>
+<span class="c">#</span>
+<span class="c">#   This program is distributed in the hope that it will be useful,</span>
+<span class="c">#   but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="c">#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the</span>
+<span class="c">#   GNU General Public License for more details.</span>
+<span class="c">#</span>
+<span class="c">#   You should have received a copy of the GNU General Public License</span>
+<span class="c">#   along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
+<span class="c">#</span>
+<span class="n">__version__</span> <span class="o">=</span> <span class="s">&#39;5.4&#39;</span>
+<span class="n">__docformat__</span> <span class="o">=</span> <span class="s">&#39;reStructuredText&#39;</span>
+
+
+
+<span class="c">## stdlib imports</span>
+
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="c"># require Python 2.6 (for the &quot;fractions&quot; module)</span>
+<span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version</span> <span class="o">&lt;</span> <span class="s">&#39;2.6.0&#39;</span><span class="p">:</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;Program </span><span class="si">%s</span><span class="s"> requires Python at least version 2.6,&quot;</span>
+                     <span class="s">&quot; but this Python interpreter is version </span><span class="si">%s</span><span class="s">. Aborting.&quot;</span>
+                     <span class="o">%</span> <span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">sys</span><span class="o">.</span><span class="n">version</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">0</span><span class="p">]))</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">cython</span>
+    <span class="n">cython_compiled</span> <span class="o">=</span> <span class="n">cython</span><span class="o">.</span><span class="n">compiled</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="c"># definitely we&#39;re not cython-compiled, then</span>
+    <span class="n">cython_compiled</span> <span class="o">=</span> <span class="bp">False</span>
+
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span> <span class="nn">fractions</span> <span class="kn">import</span> <span class="n">Fraction</span>
+<span class="kn">import</span> <span class="nn">gc</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">os.path</span>
+<span class="kn">import</span> <span class="nn">resource</span>
+<span class="kn">import</span> <span class="nn">tempfile</span>
+
+
+<span class="c">## application-local imports</span>
+<span class="kn">import</span> <span class="nn">fatghol</span>
+<span class="kn">from</span> <span class="nn">fatghol.const</span> <span class="kn">import</span> <span class="n">euler_characteristics</span><span class="p">,</span> <span class="n">orbifold_euler_characteristics</span>
+<span class="kn">from</span> <span class="nn">fatghol.combinatorics</span> <span class="kn">import</span> <span class="n">minus_one_exp</span>
+<span class="kn">from</span> <span class="nn">fatghol.graph_homology</span> <span class="kn">import</span> <span class="n">FatgraphComplex</span><span class="p">,</span> <span class="n">NumberedFatgraphPool</span>
+<span class="kn">from</span> <span class="nn">fatghol.loadsave</span> <span class="kn">import</span> <span class="n">load</span>
+<span class="kn">from</span> <span class="nn">fatghol.rg</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Fatgraph</span><span class="p">,</span>
+    <span class="n">MgnGraphsIterator</span><span class="p">,</span>
+    <span class="p">)</span>
+<span class="kn">from</span> <span class="nn">fatghol.runtime</span> <span class="kn">import</span> <span class="n">runtime</span>
+<span class="kn">from</span> <span class="nn">fatghol.simplematrix</span> <span class="kn">import</span> <span class="n">SimpleMatrix</span>
+<span class="kn">import</span> <span class="nn">fatghol.timing</span> <span class="kn">as</span> <span class="nn">timing</span>
+<span class="kn">from</span> <span class="nn">fatghol.utils</span> <span class="kn">import</span> <span class="n">concat</span><span class="p">,</span> <span class="n">positive_int</span>
+<span class="kn">from</span> <span class="nn">fatghol.valences</span> <span class="kn">import</span> <span class="n">vertex_valences_for_given_g_and_n</span>
+
+
+
+<span class="c">## actions</span>
+
+<div class="viewcode-block" id="compute_graphs"><a class="viewcode-back" href="../../api.html#fatghol.mgn.compute_graphs">[docs]</a><span class="k">def</span> <span class="nf">compute_graphs</span><span class="p">(</span><span class="n">g</span><span class="p">,</span><span class="n">n</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute Fatgraphs occurring in `M_{g,n}`.</span>
+
+<span class="sd">    Return a pair `(graphs, D)`, where `graphs` is the list of</span>
+<span class="sd">    `(g,n)`-graphs, and `D` is a list, the `k`-th element of which is</span>
+<span class="sd">    the list of differentials of graphs with `k` edges.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">timing</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="s">&quot;compute_graphs(</span><span class="si">%d</span><span class="s">,</span><span class="si">%d</span><span class="s">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">g</span><span class="p">,</span><span class="n">n</span><span class="p">))</span>
+
+    <span class="n">runtime</span><span class="o">.</span><span class="n">g</span> <span class="o">=</span> <span class="n">g</span>
+    <span class="n">runtime</span><span class="o">.</span><span class="n">n</span> <span class="o">=</span> <span class="n">n</span>
+    
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Stage I:&quot;</span>
+                 <span class="s">&quot; Computing fat graphs for g=</span><span class="si">%d</span><span class="s">, n=</span><span class="si">%d</span><span class="s"> ...&quot;</span><span class="p">,</span>
+                 <span class="n">g</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+    <span class="n">G</span> <span class="o">=</span> <span class="n">FatgraphComplex</span><span class="p">(</span><span class="n">g</span><span class="p">,</span><span class="n">n</span><span class="p">)</span>
+    
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Stage II:&quot;</span>
+                 <span class="s">&quot; Computing matrix form of boundary operators D[1],...,D[</span><span class="si">%d</span><span class="s">] ...&quot;</span><span class="p">,</span>
+                 <span class="n">G</span><span class="o">.</span><span class="n">length</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">D</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">compute_boundary_operators</span><span class="p">()</span>
+
+    <span class="n">timing</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="s">&quot;compute_graphs(</span><span class="si">%d</span><span class="s">,</span><span class="si">%d</span><span class="s">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">g</span><span class="p">,</span><span class="n">n</span><span class="p">))</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">D</span><span class="p">)</span>
+
+    </div>
+<div class="viewcode-block" id="compute_homology"><a class="viewcode-back" href="../../api.html#fatghol.mgn.compute_homology">[docs]</a><span class="k">def</span> <span class="nf">compute_homology</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute homology ranks of the graph complex of `M_{g,n}`.</span>
+
+<span class="sd">    Return array of homology ranks.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">timing</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="s">&quot;compute_homology(</span><span class="si">%d</span><span class="s">,</span><span class="si">%d</span><span class="s">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">g</span><span class="p">,</span><span class="n">n</span><span class="p">))</span>
+
+    <span class="n">runtime</span><span class="o">.</span><span class="n">g</span> <span class="o">=</span> <span class="n">g</span>
+    <span class="n">runtime</span><span class="o">.</span><span class="n">n</span> <span class="o">=</span> <span class="n">n</span>
+
+    <span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">D</span><span class="p">)</span> <span class="o">=</span> <span class="n">compute_graphs</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Stage III: Computing rank of homology modules ...&quot;</span><span class="p">)</span>
+    <span class="n">hs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="n">D</span><span class="o">.</span><span class="n">compute_homology_ranks</span><span class="p">()))</span>
+
+    <span class="n">timing</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="s">&quot;compute_homology(</span><span class="si">%d</span><span class="s">,</span><span class="si">%d</span><span class="s">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">g</span><span class="p">,</span><span class="n">n</span><span class="p">))</span>
+
+    <span class="c"># compare orbifold Euler characteristics</span>
+    <span class="n">computed_chi</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">orbifold_euler_characteristics</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Computed orbifold Euler characteristics: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">computed_chi</span><span class="p">)</span>
+    <span class="n">expected_chi</span> <span class="o">=</span> <span class="n">orbifold_euler_characteristics</span><span class="p">(</span><span class="n">g</span><span class="p">,</span><span class="n">n</span><span class="p">)</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;  Expected orbifold Euler characteristics (according to Harer): </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span>
+                 <span class="n">expected_chi</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">computed_chi</span> <span class="o">!=</span> <span class="n">expected_chi</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&quot;Expected and computed orbifold Euler characteristics do not match!&quot;</span>
+                      <span class="s">&quot; (computed: </span><span class="si">%s</span><span class="s">, expected: </span><span class="si">%s</span><span class="s">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">computed_chi</span><span class="p">,</span> <span class="n">expected_chi</span><span class="p">))</span>
+
+    <span class="c"># compare Euler characteristics</span>
+    <span class="n">computed_e</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">hs</span><span class="p">)):</span>
+        <span class="n">computed_e</span> <span class="o">+=</span> <span class="n">minus_one_exp</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">*</span><span class="n">hs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+    <span class="n">expected_e</span> <span class="o">=</span> <span class="n">euler_characteristics</span><span class="p">(</span><span class="n">g</span><span class="p">,</span><span class="n">n</span><span class="p">)</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Computed Euler characteristics: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">computed_e</span><span class="p">)</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;  Expected Euler characteristics: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">expected_e</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">computed_e</span> <span class="o">!=</span> <span class="n">expected_e</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&quot;Computed and expected Euler characteristics do not match:&quot;</span>
+                      <span class="s">&quot; </span><span class="si">%s</span><span class="s"> vs </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">computed_e</span><span class="p">,</span> <span class="n">expected_e</span><span class="p">))</span>
+
+    <span class="c"># verify result against other known theorems</span>
+    <span class="k">if</span> <span class="n">g</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">:</span>
+        <span class="c"># from Harer&#39;s SLN1337, Theorem 7.1</span>
+        <span class="k">if</span> <span class="n">hs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&quot;Harer&#39;s Theorem 7.1 requires h_1=0 when g&gt;0&quot;</span><span class="p">)</span>
+        <span class="c">## DISABLED 2009-03-27: Harer&#39;s statement seems to be incorrect,</span>
+        <span class="c">## at least for low genus...</span>
+        <span class="c">## # From Harer&#39;s SLN1337, Theorem 7.2 </span>
+        <span class="c">## if g==1 or g==2:</span>
+        <span class="c">##     if hs[2] != n:</span>
+        <span class="c">##         logging.error(&quot;Harer&#39;s Theorem 7.2 requires h_2=%d when g=1 or g=2&quot; % n)</span>
+        <span class="c">## elif g&gt;2:</span>
+        <span class="c">##     if hs[2] != n+1:</span>
+        <span class="c">##         logging.error(&quot;Harer&#39;s Theorem 7.2 requires h_2=%d when g&gt;2&quot; % n+1)</span>
+
+    <span class="k">return</span> <span class="n">hs</span>
+
+</div>
+<div class="viewcode-block" id="compute_valences"><a class="viewcode-back" href="../../api.html#fatghol.mgn.compute_valences">[docs]</a><span class="k">def</span> <span class="nf">compute_valences</span><span class="p">(</span><span class="n">g</span><span class="p">,</span><span class="n">n</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute vertex valences occurring in g,n Fatgraphs.</span>
+
+<span class="sd">    Return list of valences.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">runtime</span><span class="o">.</span><span class="n">g</span> <span class="o">=</span> <span class="n">g</span>
+    <span class="n">runtime</span><span class="o">.</span><span class="n">n</span> <span class="o">=</span> <span class="n">n</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Computing vertex valences occurring in g=</span><span class="si">%d</span><span class="s">,n=</span><span class="si">%d</span><span class="s"> fatgraphs ...&quot;</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">vertex_valences_for_given_g_and_n</span><span class="p">(</span><span class="n">g</span><span class="p">,</span><span class="n">n</span><span class="p">)</span>
+
+
+
+<span class="c">## main</span>
+</div>
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="c"># XXX: I cannot figure out why I have to re-import `os`</span>
+    <span class="c"># here; it has already been imported at the start of the</span>
+    <span class="c"># file ...</span>
+    <span class="kn">import</span> <span class="nn">os</span>
+
+    <span class="c"># disable core dumps</span>
+    <span class="n">resource</span><span class="o">.</span><span class="n">setrlimit</span><span class="p">(</span><span class="n">resource</span><span class="o">.</span><span class="n">RLIMIT_CORE</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">))</span>
+
+    <span class="c"># parse command-line options</span>
+    <span class="kn">import</span> <span class="nn">argparse</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">    Actions:</span>
+
+<span class="s">      graphs G N</span>
+<span class="s">        Generate the graphs occurring in M_{g,n}.</span>
+
+<span class="s">      homology G N</span>
+<span class="s">        Print homology ranks of M_{g,n}.</span>
+
+<span class="s">      latex G N [-s DIR] [-o FILE]</span>
+<span class="s">        Read the listings of M_{g,n} fatgraphs (from directory DIR)</span>
+<span class="s">        and output a pretty-print catalogue of the graphs as LaTeX documents.</span>
+
+<span class="s">      valences G N</span>
+<span class="s">        Print the vertex valences occurring in M_{g,n} graphs.</span>
+
+<span class="s">      shell</span>
+<span class="s">        Start an interactive PyDB shell.</span>
+
+<span class="s">      selftest</span>
+<span class="s">        Run internal code tests and report failures.</span>
+<span class="s">        &quot;&quot;&quot;</span><span class="p">,</span>
+        <span class="n">formatter_class</span><span class="o">=</span><span class="n">argparse</span><span class="o">.</span><span class="n">RawTextHelpFormatter</span><span class="p">)</span>
+    <span class="c"># positional arguments</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s">&#39;action&#39;</span><span class="p">,</span> <span class="n">metavar</span><span class="o">=</span><span class="s">&#39;ACTION&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s">&#39;help&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s">&quot;Action to perform, see above.&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s">&#39;args&#39;</span><span class="p">,</span> <span class="n">metavar</span><span class="o">=</span><span class="s">&#39;ARG&#39;</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s">&#39;*&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s">&quot;Arguments depend on the actual action, see above.&quot;</span><span class="p">)</span>
+    <span class="c"># option arguments</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">cython_compiled</span><span class="p">:</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s">&quot;-D&quot;</span><span class="p">,</span> <span class="s">&quot;--debug&quot;</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s">&#39;?&#39;</span><span class="p">,</span>
+                            <span class="n">dest</span><span class="o">=</span><span class="s">&quot;debug&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">const</span><span class="o">=</span><span class="s">&#39;debug&#39;</span><span class="p">,</span>
+                            <span class="n">help</span><span class="o">=</span><span class="s">&quot;&quot;&quot;Enable debug features:</span>
+<span class="s">    * pydb -- run Python debugger if an error occurs</span>
+<span class="s">    * profile -- dump profiler statistics in a .pf file.</span>
+<span class="s">    Several features may be enabled by separating them</span>
+<span class="s">    with a comma, as in &#39;-D pydb,profile&#39;.&quot;&quot;&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s">&quot;-l&quot;</span><span class="p">,</span> <span class="s">&quot;--logfile&quot;</span><span class="p">,</span>
+                        <span class="n">action</span><span class="o">=</span><span class="s">&#39;store&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s">&#39;logfile&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s">&quot;&quot;&quot;Redirect log messages to the named file</span>
+<span class="s">    (by default log messages are output to STDERR).&quot;&quot;&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s">&quot;-o&quot;</span><span class="p">,</span> <span class="s">&quot;--output&quot;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s">&quot;outfile&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s">&quot;Save results into named file.&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s">&quot;-s&quot;</span><span class="p">,</span> <span class="s">&quot;--checkpoint&quot;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s">&quot;checkpoint_dir&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s">&quot;Directory for saving computation state.&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s">&quot;-u&quot;</span><span class="p">,</span> <span class="s">&quot;--afresh&quot;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s">&quot;restart&quot;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s">&quot;store_false&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s">&quot;Do NOT restart computation from the saved state in checkpoint directory.&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s">&quot;-v&quot;</span><span class="p">,</span> <span class="s">&quot;--verbose&quot;</span><span class="p">,</span>
+                        <span class="n">action</span><span class="o">=</span><span class="s">&quot;count&quot;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s">&quot;verbose&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s">&quot;Print informational and status messages as the computation goes on.&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s">&#39;-V&#39;</span><span class="p">,</span> <span class="s">&#39;--version&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s">&#39;version&#39;</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="n">__version__</span><span class="p">)</span>
+    <span class="n">cmdline</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+
+    <span class="c"># make options available to loaded modules</span>
+    <span class="n">runtime</span><span class="o">.</span><span class="n">options</span> <span class="o">=</span> <span class="n">cmdline</span>
+
+    <span class="c"># print usage message if no args given</span>
+    <span class="k">if</span> <span class="s">&#39;help&#39;</span> <span class="o">==</span> <span class="n">cmdline</span><span class="o">.</span><span class="n">action</span><span class="p">:</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">print_help</span><span class="p">()</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="c"># configure logging</span>
+    <span class="k">if</span> <span class="n">cmdline</span><span class="o">.</span><span class="n">logfile</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">log_output</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">log_output</span> <span class="o">=</span> <span class="nb">file</span><span class="p">(</span><span class="n">cmdline</span><span class="o">.</span><span class="n">logfile</span><span class="p">,</span> <span class="s">&#39;a&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">cmdline</span><span class="o">.</span><span class="n">verbose</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">log_level</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">ERROR</span>
+    <span class="k">elif</span> <span class="n">cmdline</span><span class="o">.</span><span class="n">verbose</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">log_level</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">INFO</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">log_level</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span>
+
+    <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">log_level</span><span class="p">,</span>
+                        <span class="n">stream</span><span class="o">=</span><span class="n">log_output</span><span class="p">,</span>
+                        <span class="n">format</span><span class="o">=</span><span class="s">&quot;</span><span class="si">%(asctime)s</span><span class="s"> [</span><span class="si">%(levelname)s</span><span class="s">] </span><span class="si">%(message)s</span><span class="s">&quot;</span><span class="p">,</span>
+                        <span class="n">datefmt</span><span class="o">=</span><span class="s">&quot;%H:%M:%S&quot;</span><span class="p">)</span>
+
+    <span class="c"># ensure the proper optimization level is selected</span>
+    <span class="k">if</span> <span class="n">__debug__</span> <span class="ow">and</span> <span class="n">cmdline</span><span class="o">.</span><span class="n">debug</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">execl</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">executable</span><span class="p">,</span> <span class="o">*</span><span class="p">([</span><span class="n">sys</span><span class="o">.</span><span class="n">executable</span><span class="p">,</span> <span class="s">&#39;-O&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">))</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&quot;Could not execute &#39;</span><span class="si">%s</span><span class="s">&#39;, ignoring &#39;-O&#39; option.&quot;</span> 
+                            <span class="o">%</span> <span class="nb">str</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s">&quot; &quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">sys</span><span class="o">.</span><span class="n">executable</span><span class="p">,</span> <span class="s">&#39;-O&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">))</span>
+
+    <span class="c"># enable optional features</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">cython_compiled</span> <span class="ow">and</span> <span class="n">cmdline</span><span class="o">.</span><span class="n">debug</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">debug</span> <span class="o">=</span> <span class="n">cmdline</span><span class="o">.</span><span class="n">debug</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&quot;,&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s">&#39;pydb&#39;</span> <span class="ow">in</span> <span class="n">debug</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="kn">import</span> <span class="nn">pydb</span>
+                <span class="n">sys</span><span class="o">.</span><span class="n">excepthook</span> <span class="o">=</span> <span class="n">pydb</span><span class="o">.</span><span class="n">exception_hook</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;PyDB enabled: exceptions will start a debugging session.&quot;</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&quot;Could not import &#39;pydb&#39; module - PyDB not enabled.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s">&#39;profile&#39;</span> <span class="ow">in</span> <span class="n">debug</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="kn">import</span> <span class="nn">hotshot</span>
+                <span class="n">pf</span> <span class="o">=</span> <span class="n">hotshot</span><span class="o">.</span><span class="n">Profile</span><span class="p">(</span><span class="n">__name__</span> <span class="o">+</span> <span class="s">&#39;.pf&#39;</span><span class="p">)</span>
+                <span class="n">pf</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Started call profiling with &#39;hotshot&#39; module.&quot;</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&quot;Could not import &#39;hotshot&#39; - call profiling *not* enabled.&quot;</span><span class="p">)</span>
+
+
+    <span class="c"># hack to allow &#39;N1,N2,...&#39; or &#39;N1 N2 ...&#39; syntaxes</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">arg</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">cmdline</span><span class="o">.</span><span class="n">args</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">arg</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&quot;,&quot;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">arg</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;M&#39;</span><span class="p">):</span>
+                <span class="n">cmdline</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">arg</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&quot;,&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">cmdline</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">arg</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&quot;,&quot;</span><span class="p">)</span>
+
+    <span class="c"># open output file</span>
+    <span class="k">if</span> <span class="n">cmdline</span><span class="o">.</span><span class="n">outfile</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">outfile</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">outfile</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">cmdline</span><span class="o">.</span><span class="n">outfile</span><span class="p">,</span> <span class="s">&#39;w&#39;</span><span class="p">)</span>
+
+
+    <span class="c"># shell -- start interactive debugging shell</span>
+    <span class="k">if</span> <span class="s">&#39;shell&#39;</span> <span class="o">==</span> <span class="n">cmdline</span><span class="o">.</span><span class="n">action</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">cython_compiled</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&quot;The &#39;shell&#39; command is not available when compiled.&quot;</span><span class="p">)</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="kn">import</span> <span class="nn">pydb</span>
+            <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+                <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;ERROR: Could not import &#39;pydb&#39; module - Aborting.</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">)</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&quot;Could not import &#39;pydb&#39; module - Aborting.&quot;</span><span class="p">)</span>
+                <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+            <span class="k">print</span> <span class="p">(</span><span class="s">&quot;&quot;&quot;Starting interactive session (with PyDB </span><span class="si">%s</span><span class="s">).</span>
+
+<span class="s">            Any Python expression may be evaluated at the prompt.</span>
+<span class="s">            All symbols from modules `rg`, `homology`, `graph_homology`</span>
+<span class="s">            have already been imported into the main namespace.</span>
+
+<span class="s">            &quot;&quot;&quot;</span> <span class="o">%</span> <span class="n">pydb</span><span class="o">.</span><span class="n">__version__</span><span class="p">)</span>
+            <span class="n">pydb</span><span class="o">.</span><span class="n">debugger</span><span class="p">([</span>
+                <span class="s">&quot;from homology import *&quot;</span><span class="p">,</span>
+                <span class="s">&quot;from graph_homology import *&quot;</span><span class="p">,</span>
+                <span class="s">&quot;from rg import *&quot;</span><span class="p">,</span>
+                <span class="p">])</span>
+
+    <span class="c"># selftest -- run doctests and acceptance tests on simple cases</span>
+    <span class="k">elif</span> <span class="s">&#39;selftest&#39;</span> <span class="o">==</span> <span class="n">cmdline</span><span class="o">.</span><span class="n">action</span><span class="p">:</span>
+        <span class="n">failures</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="kn">import</span> <span class="nn">doctest</span>
+        <span class="kn">import</span> <span class="nn">imp</span>
+        <span class="k">for</span> <span class="n">module</span> <span class="ow">in</span> <span class="p">[</span> <span class="s">&#39;rg&#39;</span><span class="p">,</span>
+                        <span class="s">&#39;homology&#39;</span><span class="p">,</span>
+                        <span class="s">&#39;graph_homology&#39;</span><span class="p">,</span>
+                        <span class="s">&#39;combinatorics&#39;</span><span class="p">,</span>
+                        <span class="s">&#39;iterators&#39;</span><span class="p">,</span>
+                        <span class="s">&#39;cyclicseq&#39;</span><span class="p">,</span>
+                        <span class="p">]:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">module_file</span><span class="p">,</span> <span class="n">pathname</span><span class="p">,</span> <span class="n">description</span> <span class="o">=</span> <span class="n">imp</span><span class="o">.</span><span class="n">find_module</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">fatghol</span><span class="o">.</span><span class="n">__path__</span><span class="p">)</span>
+                <span class="n">m</span> <span class="o">=</span> <span class="n">imp</span><span class="o">.</span><span class="n">load_module</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">module_file</span><span class="p">,</span> <span class="n">pathname</span><span class="p">,</span> <span class="n">description</span><span class="p">)</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Running Python doctest on &#39;</span><span class="si">%s</span><span class="s">&#39; module...&quot;</span> <span class="o">%</span> <span class="n">module</span><span class="p">)</span>
+                <span class="c"># temporarily turn off logging to avoid cluttering the output</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">()</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">ERROR</span><span class="p">)</span>
+                <span class="c"># run doctests</span>
+                <span class="p">(</span><span class="n">failed</span><span class="p">,</span> <span class="n">tested</span><span class="p">)</span> <span class="o">=</span> <span class="n">doctest</span><span class="o">.</span><span class="n">testmod</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">module</span><span class="p">,</span> <span class="n">optionflags</span><span class="o">=</span><span class="n">doctest</span><span class="o">.</span><span class="n">NORMALIZE_WHITESPACE</span><span class="p">)</span>
+                <span class="c"># restore normal logging level</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">()</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">log_level</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">failed</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">:</span>
+                    <span class="n">failures</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&quot;  module &#39;</span><span class="si">%s</span><span class="s">&#39; FAILED </span><span class="si">%d</span><span class="s"> tests out of </span><span class="si">%d</span><span class="s">.&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">failed</span><span class="p">,</span> <span class="n">tested</span><span class="p">))</span>
+                    <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;Module &#39;</span><span class="si">%s</span><span class="s">&#39; FAILED </span><span class="si">%d</span><span class="s"> tests out of </span><span class="si">%d</span><span class="s">.</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">failed</span><span class="p">,</span> <span class="n">tested</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">tested</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">:</span>
+                        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;  OK - module &#39;</span><span class="si">%s</span><span class="s">&#39; passed all doctests.&quot;</span> <span class="o">%</span> <span class="n">module</span><span class="p">)</span>
+                        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;Module &#39;</span><span class="si">%s</span><span class="s">&#39; OK, passed all doctests.</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">module</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&quot;  module &#39;</span><span class="si">%s</span><span class="s">&#39; had no doctests.&quot;</span> <span class="o">%</span> <span class="n">module</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">,</span> <span class="n">ex</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">module_file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+                <span class="k">except</span><span class="p">:</span>
+                    <span class="k">pass</span>
+                <span class="k">raise</span> <span class="n">ex</span>
+
+        <span class="k">def</span> <span class="nf">run_homology_selftest</span><span class="p">(</span><span class="n">output</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">):</span>
+            <span class="n">ok</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="c"># second, try known cases and inspect results</span>
+            <span class="k">for</span> <span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">ok</span><span class="p">)</span> <span class="ow">in</span> <span class="p">[</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]),</span>
+                                <span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]),</span>
+                                <span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]),</span>
+                                <span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]),</span>
+                                <span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]),</span>
+                                <span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]),</span>
+                                <span class="p">]:</span>
+                <span class="n">output</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;  Computation of M_{</span><span class="si">%d</span><span class="s">,</span><span class="si">%d</span><span class="s">} homology: &quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">g</span><span class="p">,</span><span class="n">n</span><span class="p">))</span>
+                <span class="c"># compute homology of M_{g,n}</span>
+                <span class="n">timing</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="s">&quot;homology M</span><span class="si">%d</span><span class="s">,</span><span class="si">%d</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">g</span><span class="p">,</span><span class="n">n</span><span class="p">))</span>
+                <span class="n">hs</span> <span class="o">=</span> <span class="n">compute_homology</span><span class="p">(</span><span class="n">g</span><span class="p">,</span><span class="n">n</span><span class="p">)</span>
+                <span class="n">timing</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="s">&quot;homology M</span><span class="si">%d</span><span class="s">,</span><span class="si">%d</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">g</span><span class="p">,</span><span class="n">n</span><span class="p">))</span>
+                <span class="c"># check result</span>
+                <span class="k">if</span> <span class="n">hs</span> <span class="o">==</span> <span class="n">ok</span><span class="p">:</span>
+                    <span class="n">output</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;OK (elapsed: </span><span class="si">%0.3f</span><span class="s">s)</span><span class="se">\n</span><span class="s">&quot;</span>
+                                 <span class="o">%</span> <span class="n">timing</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;homology M</span><span class="si">%d</span><span class="s">,</span><span class="si">%d</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">g</span><span class="p">,</span><span class="n">n</span><span class="p">)))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&quot;Computation of M_{</span><span class="si">%d</span><span class="s">,</span><span class="si">%d</span><span class="s">} homology: FAILED, got </span><span class="si">%s</span><span class="s"> expected </span><span class="si">%s</span><span class="s">&quot;</span>
+                                  <span class="o">%</span> <span class="p">(</span><span class="n">g</span><span class="p">,</span><span class="n">n</span><span class="p">,</span><span class="n">hs</span><span class="p">,</span><span class="n">ok</span><span class="p">))</span>
+                    <span class="n">output</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;FAILED, got </span><span class="si">%s</span><span class="s"> expected </span><span class="si">%s</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">hs</span><span class="p">,</span><span class="n">ok</span><span class="p">))</span>
+                    <span class="n">ok</span> <span class="o">=</span> <span class="bp">False</span>
+            <span class="k">return</span> <span class="n">ok</span>
+
+        <span class="c">## run the self-test suite 3 times:</span>
+        <span class="c">##</span>
+
+        <span class="c">## 1. without any persistence stuff enabled, so we can test the</span>
+        <span class="c">## real results of the algorithm and the performance</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;Checking homology algorithm (no checkpointing)</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">del</span> <span class="n">runtime</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">checkpoint_dir</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+        <span class="n">ok</span> <span class="o">=</span> <span class="n">run_homology_selftest</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">ok</span><span class="p">:</span>
+            <span class="n">failures</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="c">## 2. run with a temporary checkpoint directory, to test saving of state</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;Checking homology algorithm (checkpointing)</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">)</span>
+
+        <span class="n">runtime</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">checkpoint_dir</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mkdtemp</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="s">&quot;mgn.selftest.&quot;</span><span class="p">)</span>
+
+        <span class="n">ok</span> <span class="o">=</span> <span class="n">run_homology_selftest</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">ok</span><span class="p">:</span>
+            <span class="n">failures</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="c">## 3. run with the same temporary directory, to test that</span>
+        <span class="c">## persistence picks up results of rpevious runs correctly</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;Checking homology algorithm (restoring from checkpointed state)</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">)</span>
+
+        <span class="n">ok</span> <span class="o">=</span> <span class="n">run_homology_selftest</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">ok</span><span class="p">:</span>
+            <span class="n">failures</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="c"># remove anything in the temporary directory</span>
+        <span class="k">if</span> <span class="n">failures</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">runtime</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">checkpoint_dir</span><span class="p">):</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">runtime</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">checkpoint_dir</span><span class="p">,</span> <span class="n">entry</span><span class="p">))</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">rmdir</span><span class="p">(</span><span class="n">runtime</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">checkpoint_dir</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;Persisted files left in directory &#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span>
+                             <span class="o">%</span> <span class="n">runtime</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">checkpoint_dir</span><span class="p">)</span>
+
+        <span class="c"># exit code &gt;0 is number of failures</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="n">failures</span><span class="p">)</span>
+
+
+    <span class="c"># common code for invocations of `graphs`, `homology` and `valences`</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cmdline</span><span class="o">.</span><span class="n">args</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">print_help</span><span class="p">()</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">cmdline</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">g</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;Invalid value &#39;</span><span class="si">%s</span><span class="s">&#39; for argument G: &quot;</span> \
+                         <span class="s">&quot;should be positive integer.</span><span class="se">\n</span><span class="s">&quot;</span> \
+                         <span class="o">%</span> <span class="p">(</span><span class="n">cmdline</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">],))</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">positive_int</span><span class="p">(</span><span class="n">cmdline</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="n">msg</span><span class="p">:</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;Invalid value &#39;</span><span class="si">%s</span><span class="s">&#39; for argument N: &quot;</span> \
+                         <span class="s">&quot;should be non-negative integer.</span><span class="se">\n</span><span class="s">&quot;</span> \
+                         <span class="o">%</span> <span class="p">(</span><span class="n">cmdline</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">],))</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c"># make g,n available to loaded modules</span>
+    <span class="n">runtime</span><span class="o">.</span><span class="n">g</span> <span class="o">=</span> <span class="n">g</span>
+    <span class="n">runtime</span><span class="o">.</span><span class="n">n</span> <span class="o">=</span> <span class="n">n</span>
+
+    <span class="c"># ensure checkpoint path is defined and valid</span>
+    <span class="k">if</span> <span class="n">runtime</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">checkpoint_dir</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">runtime</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">checkpoint_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">(),</span> <span class="s">&quot;M</span><span class="si">%d</span><span class="s">,</span><span class="si">%d</span><span class="s">.data&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">g</span><span class="p">,</span><span class="n">n</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">runtime</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">checkpoint_dir</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">runtime</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">checkpoint_dir</span><span class="p">):</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&quot;Checkpoint path &#39;</span><span class="si">%s</span><span class="s">&#39; exists but is not a directory. Aborting.&quot;</span><span class="p">,</span>
+                              <span class="n">runtime</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">checkpoint_dir</span><span class="p">)</span>
+                <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">runtime</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">checkpoint_dir</span><span class="p">)</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Saving computation state to directory &#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span><span class="p">,</span> <span class="n">runtime</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">checkpoint_dir</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">runtime</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">restart</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&quot;NOT restarting: will ignore any saved state in checkpoint directory &#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span><span class="p">)</span>
+
+
+    <span class="c"># valences -- show vertex valences for given g,n</span>
+    <span class="k">elif</span> <span class="s">&#39;valences&#39;</span> <span class="o">==</span> <span class="n">cmdline</span><span class="o">.</span><span class="n">action</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Computing vertex valences occurring in g=</span><span class="si">%d</span><span class="s">,n=</span><span class="si">%d</span><span class="s"> fatgraphs ...&quot;</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+        <span class="n">vvs</span> <span class="o">=</span> <span class="n">compute_valences</span><span class="p">(</span><span class="n">g</span><span class="p">,</span><span class="n">n</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">vv</span> <span class="ow">in</span> <span class="n">vvs</span><span class="p">:</span>
+            <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">vv</span><span class="p">))</span>
+
+
+    <span class="c"># graphs -- create graphs from given g,n but do not compute homology</span>
+    <span class="k">elif</span> <span class="s">&quot;graphs&quot;</span> <span class="o">==</span> <span class="n">cmdline</span><span class="o">.</span><span class="n">action</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Will save graph list files into directory &#39;</span><span class="si">%s</span><span class="s">&#39;.&quot;</span><span class="p">,</span>
+                     <span class="n">runtime</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">checkpoint_dir</span><span class="p">)</span>
+        <span class="n">graphs</span><span class="p">,</span> <span class="n">D</span> <span class="o">=</span> <span class="n">compute_graphs</span><span class="p">(</span><span class="n">g</span><span class="p">,</span><span class="n">n</span><span class="p">)</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Graph family computation took </span><span class="si">%.3f</span><span class="s">s.&quot;</span><span class="p">,</span>
+                     <span class="n">timing</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;compute_graphs(</span><span class="si">%d</span><span class="s">,</span><span class="si">%d</span><span class="s">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">g</span><span class="p">,</span><span class="n">n</span><span class="p">)))</span>
+
+
+    <span class="c"># homology -- compute homology ranks</span>
+    <span class="k">elif</span> <span class="s">&#39;homology&#39;</span> <span class="o">==</span> <span class="n">cmdline</span><span class="o">.</span><span class="n">action</span><span class="p">:</span>
+        <span class="c"># compute graph complex and its homology ranks</span>
+        <span class="n">hs</span> <span class="o">=</span> <span class="n">compute_homology</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Homology computation took </span><span class="si">%.3f</span><span class="s">s.&quot;</span><span class="p">,</span>
+                     <span class="n">timing</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;compute_homology(</span><span class="si">%d</span><span class="s">,</span><span class="si">%d</span><span class="s">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">g</span><span class="p">,</span><span class="n">n</span><span class="p">)))</span>
+
+        <span class="c"># print results</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">hs</span><span class="p">):</span>
+            <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;h_</span><span class="si">%d</span><span class="s">(M_{</span><span class="si">%d</span><span class="s">,</span><span class="si">%d</span><span class="s">}) = </span><span class="si">%d</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">h</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">cmdline</span><span class="o">.</span><span class="n">outfile</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Results written to file &#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span> <span class="n">cmdline</span><span class="o">.</span><span class="n">outfile</span><span class="p">)</span>
+
+
+    <span class="c"># latex -- pretty-print graph lists</span>
+    <span class="k">elif</span> <span class="s">&#39;latex&#39;</span> <span class="o">==</span> <span class="n">cmdline</span><span class="o">.</span><span class="n">action</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">runtime</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">checkpoint_dir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="nb">dir</span> <span class="o">=</span> <span class="n">runtime</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">checkpoint_dir</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;Missing path to directory where graph list files are stored.&quot;</span>
+                   <span class="s">&quot; Set it using the `-s` option.&quot;</span><span class="p">)</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">msg</span> <span class="o">+</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">)</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">max_num_edges</span> <span class="o">=</span> <span class="mi">6</span><span class="o">*</span><span class="n">g</span> <span class="o">+</span> <span class="mi">3</span><span class="o">*</span><span class="n">n</span> <span class="o">-</span> <span class="mi">6</span>
+        <span class="n">min_num_edges</span> <span class="o">=</span> <span class="mi">2</span><span class="o">*</span><span class="n">g</span> <span class="o">+</span> <span class="n">n</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">max_num_vertices</span> <span class="o">=</span> <span class="mi">4</span><span class="o">*</span><span class="n">g</span> <span class="o">+</span> <span class="mi">2</span><span class="o">*</span><span class="n">n</span> <span class="o">-</span> <span class="mi">4</span>
+
+        <span class="c">## read list files from checkpoint directory</span>
+        <span class="n">all_graphs</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">graph</span> <span class="ow">in</span> <span class="n">MgnGraphsIterator</span><span class="p">(</span><span class="n">g</span><span class="p">,</span><span class="n">n</span><span class="p">):</span>
+            <span class="n">all_graphs</span><span class="p">[</span><span class="n">graph</span><span class="o">.</span><span class="n">num_edges</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">graph</span><span class="p">)</span>
+
+        <span class="kn">import</span> <span class="nn">output</span>
+        <span class="k">if</span> <span class="n">runtime</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">outfile</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">outfile</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">runtime</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">outfile</span><span class="p">,</span> <span class="s">&#39;w&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">outfile</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span>
+        <span class="n">outfile</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="n">LaTeXOutput</span><span class="p">(</span><span class="n">outfile</span><span class="p">,</span>
+                                     <span class="n">g</span><span class="o">=</span><span class="n">g</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="n">__version__</span><span class="p">,</span>
+                                     <span class="n">checkpoint_dir</span><span class="o">=</span><span class="n">runtime</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">checkpoint_dir</span><span class="p">)</span>
+
+        <span class="n">pools</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">for</span> <span class="n">num_edges</span><span class="p">,</span> <span class="n">graphs</span> <span class="ow">in</span> <span class="n">all_graphs</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+            <span class="n">outfile</span><span class="o">.</span><span class="n">start_section</span><span class="p">(</span><span class="n">num_edges</span><span class="p">,</span> <span class="n">max_num_vertices</span><span class="o">-</span><span class="p">(</span><span class="n">max_num_edges</span><span class="o">-</span><span class="n">num_edges</span><span class="p">))</span>
+            <span class="n">pools_prev</span> <span class="o">=</span> <span class="n">pools</span>
+            <span class="n">pools</span> <span class="o">=</span> <span class="p">[</span> <span class="n">NumberedFatgraphPool</span><span class="p">(</span><span class="n">G</span><span class="p">)</span> <span class="k">for</span> <span class="n">G</span> <span class="ow">in</span> <span class="n">graphs</span> <span class="p">]</span>
+            <span class="c"># make list of partial sums for mapping matrix indices to graph numbers</span>
+            <span class="n">thresholds</span> <span class="o">=</span> <span class="p">[</span> <span class="mi">0</span> <span class="p">]</span>
+            <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="p">(</span><span class="n">pools_prev</span> <span class="ow">or</span> <span class="p">[]):</span>
+                <span class="n">thresholds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="o">+</span> <span class="n">thresholds</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+            <span class="k">def</span> <span class="nf">matrix_index_to_G</span><span class="p">(</span><span class="n">i</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+                <span class="n">i0</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="k">while</span> <span class="n">thresholds</span><span class="p">[</span><span class="n">i0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">i</span><span class="p">:</span>
+                    <span class="n">i0</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">i0</span> <span class="o">-=</span> <span class="mi">1</span>
+                <span class="k">return</span> <span class="p">(</span><span class="n">i0</span><span class="p">,</span> <span class="n">i</span><span class="o">-</span><span class="n">i0</span><span class="p">)</span>
+            <span class="k">def</span> <span class="nf">labelfn</span><span class="p">(</span><span class="n">D</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
+                <span class="n">i0</span><span class="p">,</span> <span class="n">i1</span> <span class="o">=</span> <span class="n">matrix_index_to_G</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+                <span class="k">return</span> <span class="p">(</span><span class="s">&quot;G_{</span><span class="si">%d</span><span class="s">,</span><span class="si">%d</span><span class="s">}^{(</span><span class="si">%d</span><span class="s">)}&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">num_edges</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">i0</span><span class="p">,</span> <span class="n">i</span><span class="p">))</span>
+
+            <span class="n">p</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">all_graphs</span><span class="p">[</span><span class="n">num_edges</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="k">if</span> <span class="p">(</span><span class="n">num_edges</span><span class="o">-</span><span class="mi">1</span> <span class="ow">in</span> <span class="n">all_graphs</span><span class="p">)</span> <span class="k">else</span> <span class="mi">0</span>
+            <span class="n">q</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">all_graphs</span><span class="p">[</span><span class="n">num_edges</span><span class="p">])</span> <span class="k">if</span> <span class="p">(</span><span class="n">num_edges</span> <span class="ow">in</span> <span class="n">all_graphs</span><span class="p">)</span> <span class="k">else</span> <span class="mi">0</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">num_edges</span> <span class="o">-</span> <span class="n">min_num_edges</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="n">matrix_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">dir</span><span class="p">,</span> <span class="p">(</span><span class="s">&quot;M</span><span class="si">%d</span><span class="s">,</span><span class="si">%d</span><span class="s">-D</span><span class="si">%d</span><span class="s">.sms&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">g</span><span class="p">,</span><span class="n">n</span><span class="p">,</span><span class="n">r</span><span class="p">)))</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">matrix_file</span><span class="p">):</span>
+                <span class="n">d</span> <span class="o">=</span> <span class="n">SimpleMatrix</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">q</span><span class="p">)</span>
+                <span class="n">d</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">matrix_file</span><span class="p">)</span>
+
+            <span class="n">k0</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">G</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">graphs</span><span class="p">):</span>
+                <span class="n">pool</span> <span class="o">=</span> <span class="n">pools</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;G_{</span><span class="si">%d</span><span class="s">,</span><span class="si">%d</span><span class="s">}&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">num_edges</span><span class="p">,</span> <span class="n">j</span><span class="p">))</span>
+                <span class="n">orientable</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">is_oriented</span><span class="p">()</span>
+                <span class="n">outfile</span><span class="o">.</span><span class="n">start_graph</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">G</span><span class="p">,</span> <span class="n">pool</span><span class="p">)</span>
+                <span class="c"># print automorphisms</span>
+                <span class="n">Aut</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">G</span><span class="o">.</span><span class="n">automorphisms</span><span class="p">())</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">Aut</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">outfile</span><span class="o">.</span><span class="n">add_automorphisms</span><span class="p">(</span><span class="n">Aut</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">pool</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">is_oriented</span><span class="p">():</span>
+                    <span class="c"># print markings</span>
+                    <span class="k">if</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                        <span class="n">outfile</span><span class="o">.</span><span class="n">add_markings</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">pool</span><span class="p">)</span>
+                    <span class="c"># print differential</span>
+                    <span class="k">if</span> <span class="n">d</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">d</span><span class="o">.</span><span class="n">num_rows</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">d</span><span class="o">.</span><span class="n">num_columns</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">outfile</span><span class="o">.</span><span class="n">add_differential_start</span><span class="p">()</span>
+                        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pool</span><span class="p">)):</span>
+                            <span class="n">name_k</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">^{(</span><span class="si">%d</span><span class="s">)}&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">k</span><span class="p">))</span>
+                            <span class="n">outfile</span><span class="o">.</span><span class="n">add_differential</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">k0</span> <span class="o">+</span> <span class="n">k</span><span class="p">,</span> <span class="n">name_k</span><span class="p">,</span> <span class="n">labelfn</span><span class="o">=</span><span class="n">labelfn</span><span class="p">)</span>
+                        <span class="n">outfile</span><span class="o">.</span><span class="n">add_differential_end</span><span class="p">()</span>
+                    <span class="n">k0</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">pool</span><span class="p">)</span>
+                <span class="n">outfile</span><span class="o">.</span><span class="n">end_graph</span><span class="p">()</span>
+            <span class="n">outfile</span><span class="o">.</span><span class="n">end_section</span><span class="p">()</span>
+        <span class="n">outfile</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;Unknown action `</span><span class="si">%s</span><span class="s">`, aborting.</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">cmdline</span><span class="o">.</span><span class="n">action</span><span class="p">)</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+
+    <span class="c"># try to print profiling information, but ignore failures</span>
+    <span class="c"># (profiling might not have been requested, in the first place...)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">pf</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Stopped call profiling, now dumping stats.&quot;</span><span class="p">)</span>
+        <span class="n">pf</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="kn">import</span> <span class="nn">hotshot.stats</span>
+        <span class="n">stats</span> <span class="o">=</span> <span class="n">hotshot</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">__name__</span> <span class="o">+</span> <span class="s">&#39;.pf&#39;</span><span class="p">)</span>
+        <span class="n">stats</span><span class="o">.</span><span class="n">strip_dirs</span><span class="p">()</span>
+        <span class="n">stats</span><span class="o">.</span><span class="n">sort_stats</span><span class="p">(</span><span class="s">&#39;cumulative&#39;</span><span class="p">,</span> <span class="s">&#39;calls&#39;</span><span class="p">)</span>
+        <span class="n">stats</span><span class="o">.</span><span class="n">print_stats</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+    <span class="c"># print CPU time usage</span>
+    <span class="n">cputime_s</span> <span class="o">=</span> <span class="n">resource</span><span class="o">.</span><span class="n">getrusage</span><span class="p">(</span><span class="n">resource</span><span class="o">.</span><span class="n">RUSAGE_SELF</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">seconds</span> <span class="o">=</span> <span class="n">cputime_s</span> <span class="o">%</span> <span class="mi">60</span>
+    <span class="n">minutes</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">cputime_s</span> <span class="o">/</span> <span class="mi">60</span><span class="p">)</span> <span class="o">%</span> <span class="mi">60</span>
+    <span class="n">hours</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">cputime_s</span> <span class="o">/</span> <span class="mi">3600</span><span class="p">)</span> <span class="o">%</span> <span class="mi">24</span>
+    <span class="n">days</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">cputime_s</span> <span class="o">/</span> <span class="mi">86400</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">days</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">elapsed</span> <span class="o">=</span> <span class="s">&quot;</span><span class="si">%d</span><span class="s"> days, </span><span class="si">%d</span><span class="s"> hours, </span><span class="si">%d</span><span class="s"> minutes and </span><span class="si">%2.3f</span><span class="s"> seconds&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">days</span><span class="p">,</span> <span class="n">hours</span><span class="p">,</span> <span class="n">minutes</span><span class="p">,</span> <span class="n">seconds</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">hours</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">elapsed</span> <span class="o">=</span> <span class="s">&quot;</span><span class="si">%d</span><span class="s"> hours, </span><span class="si">%d</span><span class="s"> minutes and </span><span class="si">%2.3f</span><span class="s"> seconds&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">hours</span><span class="p">,</span> <span class="n">minutes</span><span class="p">,</span> <span class="n">seconds</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">minutes</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">elapsed</span> <span class="o">=</span> <span class="s">&quot;</span><span class="si">%d</span><span class="s"> minutes and </span><span class="si">%2.3f</span><span class="s"> seconds&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">minutes</span><span class="p">,</span> <span class="n">seconds</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">elapsed</span> <span class="o">=</span> <span class="s">&quot;</span><span class="si">%2.3f</span><span class="s"> seconds&quot;</span> <span class="o">%</span> <span class="n">seconds</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Total CPU time used: &quot;</span> <span class="o">+</span> <span class="n">elapsed</span><span class="p">)</span>
+
+    <span class="c"># That&#39;s all folks!</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Done: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="nb">str</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s">&quot; &quot;</span><span class="p">,</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">))</span>
+
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">FatGHoL v5.4 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+
+    <div class="footer">
+        &copy; Copyright 2012, Riccardo Murri.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+<div class="footer">This page uses <a href="http://analytics.google.com/">
+Google Analytics</a> to collect statistics. You can disable it by blocking
+the JavaScript coming from www.google-analytics.com.
+<script type="text/javascript">
+  (function() {
+    var ga = document.createElement('script');
+    ga.src = ('https:' == document.location.protocol ?
+              'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    ga.setAttribute('async', 'true');
+    document.documentElement.firstChild.appendChild(ga);
+  })();
+</script>
+</div>
+
+  </body>
+</html>

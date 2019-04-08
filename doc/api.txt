@@ -1,0 +1,122 @@
+.. This file is included by `index.txt`.
+
+
+-------------------------
+ FatGHoL programming API
+-------------------------
+
+This is the documentation of the functions and classes available in
+the ``fatghol`` Python module, for use in your own programs.
+
+
+Fatgraph-related modules
+========================
+
+This is the core of FatGHOL: the Python modules that implement an
+interface for generating fatgraphs and computing their homology
+complex. 
+
+`fatghol.rg`
+------------
+.. automodule:: fatghol.rg
+   :members:
+
+
+`fatghol.homology`
+------------------
+.. automodule:: fatghol.homology
+   :members:
+
+
+`fatghol.graph_homology`
+------------------------
+.. automodule:: fatghol.graph_homology
+   :members:
+
+
+`fatghol.valences`
+------------------
+.. automodule:: fatghol.valences
+   :members:
+
+
+Utility modules
+===============
+
+These are support modules, used by the core FatGHoL modules.  They are
+more general in nature and most code from these modules could be
+packaged separately and re-used in other projects.
+
+
+`fatghol.aggregate`
+-------------------
+.. automodule:: fatghol.aggregate
+   :members:
+
+
+`fatghol.cache`
+---------------
+.. automodule:: fatghol.cache
+   :members:
+
+
+`fatghol.combinatorics`
+-----------------------
+.. automodule:: fatghol.combinatorics
+   :members:
+
+
+`fatghol.const`
+---------------
+.. automodule:: fatghol.const
+   :members:
+
+
+`fatghol.cyclicseq`
+-------------------
+.. automodule:: fatghol.cyclicseq
+   :members:
+
+
+`fatghol.iterators`
+-------------------
+.. automodule:: fatghol.iterators
+   :members:
+
+
+`fatghol.loadsave`
+------------------
+.. automodule:: fatghol.loadsave
+   :members:
+
+
+`fatghol.output`
+----------------
+.. automodule:: fatghol.output
+   :members:
+
+
+`fatghol.runtime`
+-----------------
+.. automodule:: fatghol.runtime
+   :members:
+
+
+`fatghol.timing`
+----------------
+.. automodule:: fatghol.timing
+   :members:
+
+
+`fatghol.utils`
+---------------
+.. automodule:: fatghol.utils
+   :members:
+
+
+
+.. (for Emacs only)
+..
+  Local variables:
+  mode: rst
+  End:
