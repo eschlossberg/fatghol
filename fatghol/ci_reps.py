@@ -84,3 +84,6 @@ def ci_char_test():
             C = FatgraphComplex(g, n)
             for i in range(len(C)):
                 print(ci_char(C[i], n))
+
+if __name__=="__main__":
+    ci_char_test()
