@@ -3,3 +3,4 @@ distribute_setup.pyc
 build/*
 fatghol.egg-info
 venv/*
+.idea/*
