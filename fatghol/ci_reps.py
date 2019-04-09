@@ -64,6 +64,7 @@ def ci_char(ci, n):
 
         # iterate over the basis fatgraphs
         for i in range(len(ci)):
+            print(type(ci[i]))
             for fg in ci[i]:
 
                 # create a copy of the fatgraph and permute its numbering
