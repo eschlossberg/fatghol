@@ -23,8 +23,10 @@ __docformat__ = 'reStructuredText'
 
 # import cython
 
+
 from fatghol.graph_homology import (
     NumberedFatgraph,
+    FatgraphComplex
 )
 
 from combinatorics import (
@@ -73,3 +75,12 @@ def ci_char(ci, n):
             if len(isoms) > 0:
                 print(len(isoms))
                 char[partition] += isoms[0].compare_orientations()*perm.sign()
+
+
+# Verify the computations of the characters of S_n on M_g,n for small g,n
+def ci_char_test():
+    for g in range(0,2):
+        for n in range(3,4):
+            C = FatgraphComplex(g, n)
+            for i in range(len(C)):
+                print(ci_char(C[i], n))
