@@ -263,7 +263,7 @@ class NumberedFatgraph(Fatgraph):
         False
     """
 
-    __slots__ = [ 'underlying', 'numbering' ]
+    __slots__ = [ 'underlying', 'numbering']
     
     def __init__(self, underlying, numbering):
         Fatgraph.__init__(self, underlying)
@@ -432,7 +432,6 @@ class NumberedFatgraph(Fatgraph):
             if pe_does_not_preserve_bc:
                 continue # to next underlying graph isomorphism
             yield iso
-
 
 
 #@cython.cclass

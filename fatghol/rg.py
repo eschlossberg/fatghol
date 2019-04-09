@@ -21,8 +21,7 @@
 #
 __docformat__ = 'reStructuredText'
 
-
-#import cython
+# import cython
 
 ## stdlib imports
 
@@ -39,12 +38,12 @@ from fatghol.cache import (
     ocache_contract,
     ocache_eq,
     ocache_isomorphisms,
-    )
+)
 from fatghol.combinatorics import Permutation
 from fatghol.cyclicseq import CyclicList, CyclicTuple
 from fatghol.iterators import (
     BufferingIterator,
-    )
+)
 from fatghol.loadsave import load, save
 from fatghol.runtime import runtime
 import fatghol.timing as timing
@@ -53,7 +52,7 @@ from fatghol.utils import (
     ltranslate,
     maybe,
     sign,
-    )
+)
 
 
 ## main
@@ -98,7 +97,7 @@ class Vertex(CyclicList):
     """
     # FIXME: reimplement `Vertex` as a `tuple`/`CyclicTuple` subclass.
 
-    __slots__ = ( 'num_loops' )
+    __slots__ = ('num_loops')
 
     def __init__(self, seq):
         CyclicList.__init__(self, seq)
@@ -106,7 +105,6 @@ class Vertex(CyclicList):
 
     def __str__(self):
         return repr(self)
-
 
 
 class Edge(object):
@@ -132,8 +130,8 @@ class Edge(object):
     operations.
     """
 
-    __slots__ = ( 'endpoints' )
-    
+    __slots__ = ('endpoints')
+
     def __init__(self, va1, va2):
         if va1[0] < va2[0]:
             self.endpoints = (va1, va2)
@@ -151,7 +149,7 @@ class Edge(object):
           False
         """
         return self.endpoints[0][0] == self.endpoints[1][0]
-        
+
     def meets(self, v):
         """Return `True` if vertex `v` is one of the endpoints.
 
@@ -194,8 +192,8 @@ class Isomorphism(object):
         'rot',
         'source',
         'target',
-        )
-    
+    )
+
     def __init__(self, source, target, pv, rot, pe):
         # sanity checks
         assert len(pv) == source.num_vertices
@@ -204,9 +202,9 @@ class Isomorphism(object):
         assert len(pe) == target.num_edges
         assert set(pv.keys()) == set(range(source.num_vertices))
         assert set(pv.values()) == set(range(target.num_vertices)), \
-               ("Got pv.values=%r but target.num_vertices=%r"
-                " (and target=%r): number of elements do not match!"
-                % (pv.values(), target.num_vertices, target))
+            ("Got pv.values=%r but target.num_vertices=%r"
+             " (and target=%r): number of elements do not match!"
+             % (pv.values(), target.num_vertices, target))
         assert set(pe.keys()) == set(range(source.num_edges))
         assert set(pe.values()) == set(range(target.num_edges))
 
@@ -262,7 +260,7 @@ class Isomorphism(object):
             l = len(self.source.vertices[v])
             # create transformed triple 
             v_ = self.pv[v]
-            i_ = (i + self.rot[v]) % l # XXX: is it `-` or `+`?
+            i_ = (i + self.rot[v]) % l  # XXX: is it `-` or `+`?
             j_ = (j + self.rot[v]) % l
             # ensure the contract is honored, that `j` is the
             # index _following_ `i` in the cyclic order
@@ -272,28 +270,25 @@ class Isomorphism(object):
         return BoundaryCycle(triples)
 
 
-
 class EqualIfIsomorphic(Caching):
     """Instances of this class will compare equal if there is an
     isomorphism mapping one to the other.
     """
 
-    __slots__ = ( 'invariants' )
-
+    __slots__ = ('invariants')
 
     def __init__(self, invariants):
         self.invariants = invariants
         # set this instance's ``persistent id''
         Caching.__init__(self)
 
-    
     @ocache_eq
     def __eq__(self, other):
         """Return `True` if `self` and `other` are isomorphic."""
 
         assert isinstance(other, type(self)), \
-               "EqualIfIsomorphic.__eq__:" \
-               " called with incompatible type arguments: `%s` and` %s`" % (type(self), type(other))
+            "EqualIfIsomorphic.__eq__:" \
+            " called with incompatible type arguments: `%s` and` %s`" % (type(self), type(other))
 
         # shortcuts
         if self is other:
@@ -311,13 +306,11 @@ class EqualIfIsomorphic(Caching):
             # list of morphisms is empty, objects are not equal.
             return False
 
-
     # both `__eq__` and `__ne__` are needed for testing equality of objects;
     # see `<http://www.voidspace.org.uk/python/articles/comparison.shtml>`
     def __ne__(self, other):
         """The opposite of `__eq__` (which see)."""
         return not self.__eq__(other)
-
 
 
 class Fatgraph(EqualIfIsomorphic):
@@ -387,7 +380,7 @@ class Fatgraph(EqualIfIsomorphic):
         'num_edges',
         'num_vertices',
         'vertices',
-        )
+    )
 
     def __init__(self, g_or_vs, **kwargs):
         """Construct a `Fatgraph` instance, taking list of vertices.
@@ -435,7 +428,7 @@ class Fatgraph(EqualIfIsomorphic):
             self.num_vertices = g_or_vs.num_vertices
             self.vertices = g_or_vs.vertices
 
-        else: # initialize *new* instance
+        else:  # initialize *new* instance
 
             #: list of vertices
             self.vertices = g_or_vs
@@ -459,17 +452,17 @@ class Fatgraph(EqualIfIsomorphic):
                 #: vertex and the index of the edge in the vertex.  (The
                 #: vertex index alone is not enough for representing the
                 #: edge arrow for loops.)
-                endpoints = [ [] for dummy in xrange(self.num_edges) ]
+                endpoints = [[] for dummy in xrange(self.num_edges)]
                 for current_vertex_index in xrange(self.num_vertices):
                     for (edge_index_in_vertex, edge) \
                             in enumerate(self.vertices[current_vertex_index]):
                         assert edge in range(self.num_edges), \
-                                   "Fatgraph.__init__:"\
-                                   " edge number %d not in range 0..%d" \
-                                   % (edge, self.num_edges)
-                        endpoints[edge].append( (current_vertex_index, edge_index_in_vertex) )
+                            "Fatgraph.__init__:" \
+                            " edge number %d not in range 0..%d" \
+                            % (edge, self.num_edges)
+                        endpoints[edge].append((current_vertex_index, edge_index_in_vertex))
                 # now wrap endpoints into `Edge` objects
-                self.edges = [ Edge(*e) for e in endpoints ]
+                self.edges = [Edge(*e) for e in endpoints]
 
             ## Orientation is given by an ordering of the edges,
             ## which directly translates into an orientation of the
@@ -477,7 +470,7 @@ class Fatgraph(EqualIfIsomorphic):
             if 'orientation' in kwargs:
                 self.edge_numbering = kwargs.get('orientation')
             else:
-                self.edge_numbering = [ x for x in xrange(self.num_edges) ]
+                self.edge_numbering = [x for x in xrange(self.num_edges)]
 
             self.boundary_cycles = self.compute_boundary_cycles()
             self.num_boundary_cycles = len(self.boundary_cycles)
@@ -495,15 +488,14 @@ class Fatgraph(EqualIfIsomorphic):
             self.num_vertices,
             self.num_edges,
             self.num_boundary_cycles,
-            ))
-
+        ))
 
     def __ok(self):
         """Perform coherency checks on internal state variables of
         `Fatgraph` instance and return `True` if they all pass.
         """
         assert self.num_edges > 0, \
-               "Fatgraph `%s` has 0 edges." % (self)
+            "Fatgraph `%s` has 0 edges." % (self)
         # check edge endpoints
         for (edgeno, edge) in enumerate(self.edges):
             assert len(edge.endpoints) == 2
@@ -518,30 +510,29 @@ class Fatgraph(EqualIfIsomorphic):
             assert (0 <= edge.endpoints[0][1] < len(self.vertices[edge.endpoints[0][0]]))
             assert (0 <= edge.endpoints[1][1] < len(self.vertices[edge.endpoints[1][0]]))
             assert (edgeno in self.vertices[edge.endpoints[0][0]]), \
-                    "Invalid endpoint %s for edge %d of graph `%s`" \
-                    % (edge.endpoints[0], edgeno, self)
+                "Invalid endpoint %s for edge %d of graph `%s`" \
+                % (edge.endpoints[0], edgeno, self)
             assert (edgeno in self.vertices[edge.endpoints[1][0]]), \
-                    "Invalid endpoint %s for edge %d of graph `%s`" \
-                    % (edge.endpoints[1], edgeno, self)
+                "Invalid endpoint %s for edge %d of graph `%s`" \
+                % (edge.endpoints[1], edgeno, self)
         # check that each edge occurs exactly two times in vertices
-        cnt = [ 0 for x in xrange(self.num_edges) ]
+        cnt = [0 for x in xrange(self.num_edges)]
         for v in self.vertices:
             for edgeno in v:
                 cnt[edgeno] += 1
         for edgeno, cnt in enumerate(cnt):
             if edgeno < self.num_edges:
                 assert cnt == 2, \
-                       "Regular edge %d appears in %d vertices" \
-                       % (edgeno, cnt)
+                    "Regular edge %d appears in %d vertices" \
+                    % (edgeno, cnt)
             else:
                 assert cnt == 1, \
-                       "External edge %d appears in %d vertices" \
-                       % (edgeno, cnt)
+                    "External edge %d appears in %d vertices" \
+                    % (edgeno, cnt)
 
         assert self.edge_numbering is not None
-        
-        return True
 
+        return True
 
     def __repr__(self):
         if not hasattr(self, 'vertices'):
@@ -549,10 +540,8 @@ class Fatgraph(EqualIfIsomorphic):
         else:
             return "Fatgraph(%s)" % repr(self.vertices)
 
-    
     def __str__(self):
         return repr(self)
-
 
     def automorphisms(self):
         """Enumerate automorphisms of this `Fatgraph` object.
@@ -562,8 +551,7 @@ class Fatgraph(EqualIfIsomorphic):
         """
         return self.isomorphisms(self)
 
-
-    #@cython.locals(vertices=list, corners=list,
+    # @cython.locals(vertices=list, corners=list,
     #               v=cython.int, i=cython.int, corner=tuple)
     @staticmethod
     def _first_unused_corner(vertices, corners):
@@ -574,7 +562,7 @@ class Fatgraph(EqualIfIsomorphic):
                 if corner is not None:
                     return (v, i, corner)
         return (v, i, None)
-       
+
     def compute_boundary_cycles(self):
         """Return a list of boundary cycles of this `Fatgraph` object.
 
@@ -595,15 +583,15 @@ class Fatgraph(EqualIfIsomorphic):
           [BoundaryCycle([(0, 2, 3), (0, 4, 5), (0, 0, 1)]),
            BoundaryCycle([(0, 1, 2), (0, 3, 4), (0, 5, 0)])]
         """
-        
+
         # Build the collection of "corners" of `graph`,
         # structured just like the set of vertices.
         # By construction, `corners[v][i]` has the the
         # form `(v,i,j)` where `j` is the index following
         # `i` in the cyclic order.
-        corners = [ [ (v, i, (i+1)%len(self.vertices[v]))
-                      for i in xrange(len(self.vertices[v])) ]
-                    for v in xrange(self.num_vertices) ]
+        corners = [[(v, i, (i + 1) % len(self.vertices[v]))
+                    for i in xrange(len(self.vertices[v]))]
+                   for v in xrange(self.num_vertices)]
 
         result = []
         while True:
@@ -617,9 +605,9 @@ class Fatgraph(EqualIfIsomorphic):
             # at the second delimiter of the corner to its other
             # endpoint, and repeat until we come back to the starting
             # point.  
-            start = (v,i)
+            start = (v, i)
             triples = []
-            while (v,i) != start or len(triples) == 0:
+            while (v, i) != start or len(triples) == 0:
                 assert corners[v][i] is not None
                 corner = corners[v][i]
                 corners[v][i] = None
@@ -628,11 +616,10 @@ class Fatgraph(EqualIfIsomorphic):
                 assert i == corner[1]
                 j = corner[2]
                 edgeno = self.vertices[v][j]
-                (v,i) = self.edges[edgeno].other_end(v, j)
+                (v, i) = self.edges[edgeno].other_end(v, j)
             result.append(BoundaryCycle(triples))
 
         return result
-        
 
     def bridge(self, edge1, side1, edge2, side2):
         """Return a new `Fatgraph`, formed by inserting trivalent
@@ -711,13 +698,13 @@ class Fatgraph(EqualIfIsomorphic):
           True
           
         """
-        assert side1 in [0,1], \
-               "Fatgraph.bridge: Invalid value for `side1`: '%s' - should be 0 or 1" % side1
-        assert side2 in [0,1], \
-               "Fatgraph.bridge: Invalid value for `side2`: '%s' - should be 0 or 1" % side2
-        
-        opposite_side1 = 0 if side1==1 else 1
-        opposite_side2 = 0 if side2==1 else 1
+        assert side1 in [0, 1], \
+            "Fatgraph.bridge: Invalid value for `side1`: '%s' - should be 0 or 1" % side1
+        assert side2 in [0, 1], \
+            "Fatgraph.bridge: Invalid value for `side2`: '%s' - should be 0 or 1" % side2
+
+        opposite_side1 = 0 if side1 == 1 else 1
+        opposite_side2 = 0 if side2 == 1 else 1
 
         ## assign edge indices
         connecting_edge = self.num_edges
@@ -744,12 +731,12 @@ class Fatgraph(EqualIfIsomorphic):
 
         if side1 == 1:
             midpoint1 = Vertex([other_half1, one_half1, connecting_edge])
-        else: # side2 == 0
+        else:  # side2 == 0
             midpoint1 = Vertex([one_half1, other_half1, connecting_edge])
 
         if side2 == 1:
             midpoint2 = Vertex([other_half2, one_half2, connecting_edge])
-        else: # side2 == 0
+        else:  # side2 == 0
             midpoint2 = Vertex([one_half2, other_half2, connecting_edge])
 
         ## two new vertices are added: the mid-points of the connected edges.
@@ -757,11 +744,11 @@ class Fatgraph(EqualIfIsomorphic):
 
         ## three new edges are added (constructed below)
         new_edges = self.edges + [
-            None, # new edge: connecting_edge
-            None, # new edge: other_half1
-            None, # new edge: other_half2
-            ]
-        
+            None,  # new edge: connecting_edge
+            None,  # new edge: other_half1
+            None,  # new edge: other_half2
+        ]
+
         ## the connecting edge has endpoints in the mid-points of
         ## `edge1` and `edge2`, and is *always* in third position.
         new_edges[connecting_edge] = Edge((midpoint1_index, 2), (midpoint2_index, 2))
@@ -771,8 +758,8 @@ class Fatgraph(EqualIfIsomorphic):
         if edge1 != edge2:
             # replace `edge1` with new `other_half1` in the second endpoint
             new_vertices[v1b] = Vertex(new_vertices[v1b][:pos1b]
-                                                 + [other_half1]
-                                                 + new_vertices[v1b][pos1b+1:])
+                                       + [other_half1]
+                                       + new_vertices[v1b][pos1b + 1:])
             new_edges[other_half1] = Edge((midpoint1_index, opposite_side1), (v1b, pos1b))
         else:
             # same edge, "other half" ends at the second endpoint
@@ -786,12 +773,12 @@ class Fatgraph(EqualIfIsomorphic):
             new_edges[one_half2] = Edge((v2a, pos2a), (midpoint2_index, side2))
         else:
             # `edge1 == edge2`, so `one_half2 == other_half1`
-            pass # new_edges[one_half2] = new_edges[other_half1]
+            pass  # new_edges[one_half2] = new_edges[other_half1]
         # "other half" of second edge *always* ends at the previous
         # edge endpoint, so replace `edge2` in `v2b`.
         new_vertices[v2b] = Vertex(new_vertices[v2b][:pos2b]
-                                             + [other_half2]
-                                             + new_vertices[v2b][pos2b+1:])
+                                   + [other_half2]
+                                   + new_vertices[v2b][pos2b + 1:])
         new_edges[other_half2] = Edge((midpoint2_index, opposite_side2), (v2b, pos2b))
 
         ## inherit orientation, and add the three new edges in the order they were created
@@ -800,12 +787,11 @@ class Fatgraph(EqualIfIsomorphic):
 
         # build new graph 
         return Fatgraph(new_vertices,
-                        edges = new_edges,
-                        num_edges = self.num_edges + 3,
-                        orientation = new_edge_numbering,
+                        edges=new_edges,
+                        num_edges=self.num_edges + 3,
+                        orientation=new_edge_numbering,
                         )
-    
-    
+
     def bridge2(self, edge1, side1, other, edge2, side2):
         """Return a new `Fatgraph`, formed by connecting the midpoints
         of `edge1` on `self` and `edge2` on `other`.
@@ -847,10 +833,10 @@ class Fatgraph(EqualIfIsomorphic):
         `edge1` on one copy and `edge2` on the other.
          
         """
-        assert side1 in [0,1], \
-               "Fatgraph.bridge2: Invalid value for `side1`: '%s' -- should be 0 or 1" % side1
-        assert side2 in [0,1], \
-               "Fatgraph.bridge2: Invalid value for `side2`: '%s' -- should be 0 or 1" % side2
+        assert side1 in [0, 1], \
+            "Fatgraph.bridge2: Invalid value for `side1`: '%s' -- should be 0 or 1" % side1
+        assert side2 in [0, 1], \
+            "Fatgraph.bridge2: Invalid value for `side2`: '%s' -- should be 0 or 1" % side2
 
         ## First, build a (non-connected) graph from the disjoint
         ## union of `self` and `other`.
@@ -860,7 +846,7 @@ class Fatgraph(EqualIfIsomorphic):
         #   - internal edges in `other` have numbers ranging from 0 to
         #     `other.num_edges`: they get new numbers starting from
         #     `self.num_edges` and counting upwards
-        renumber_other_edges = dict((x, x+self.num_edges)
+        renumber_other_edges = dict((x, x + self.num_edges)
                                     for x in xrange(other.num_edges))
         # Orientation needs the same numbering:
         new_edge_numbering = self.edge_numbering \
@@ -868,23 +854,23 @@ class Fatgraph(EqualIfIsomorphic):
         # Similarly, vertices of `self` retain indices `[0..v]`, while
         # vertices of `other` follow.
         new_vertices = self.vertices \
-                       + [ Vertex(ltranslate(renumber_other_edges, ov))
-                           for ov in other.vertices ]
-        renumber_other_vertices = dict((x, x+self.num_vertices)
+                       + [Vertex(ltranslate(renumber_other_edges, ov))
+                          for ov in other.vertices]
+        renumber_other_vertices = dict((x, x + self.num_vertices)
                                        for x in xrange(other.num_vertices))
         # build new edges: vertex indices need to be shifted for
         # endpoints, but attachment indices are the same; three new
         # edges are added at the tail of the list
         new_edges = self.edges \
-                    + [ Edge((renumber_other_vertices[x.endpoints[0][0]], x.endpoints[0][1]),
-                             (renumber_other_vertices[x.endpoints[1][0]], x.endpoints[1][1]))
-                        for x in other.edges ] \
-                    + [None, # connecting_edge
-                       None, # other_half1
-                       None] # other_half2
+                    + [Edge((renumber_other_vertices[x.endpoints[0][0]], x.endpoints[0][1]),
+                            (renumber_other_vertices[x.endpoints[1][0]], x.endpoints[1][1]))
+                       for x in other.edges] \
+                    + [None,  # connecting_edge
+                       None,  # other_half1
+                       None]  # other_half2
 
-        edge2 = renumber_other_edges[edge2] # index changed in `new_edges`
-        
+        edge2 = renumber_other_edges[edge2]  # index changed in `new_edges`
+
         opposite_side1 = 0 if side1 else 1
         opposite_side2 = 0 if side2 else 1
 
@@ -892,7 +878,7 @@ class Fatgraph(EqualIfIsomorphic):
         connecting_edge = self.num_edges + other.num_edges
         ## break `edge1` in two halves: if `v1a` and `v1b` are the
         ## endpoints of `edge1`, then the "one_half" edge extends from
-         ## the `v1a` endpoint of `edge1` to the new vertex
+        ## the `v1a` endpoint of `edge1` to the new vertex
         ## `midpoint1`; the "other_half" edge extends from the
         ## `midpoint1` new vertex to `v1b`.
         one_half1 = edge1
@@ -925,8 +911,8 @@ class Fatgraph(EqualIfIsomorphic):
         new_edges[one_half1] = Edge((v1a, pos1a), (midpoint1_index, side1))
         # replace `edge1` with new `other_half1` in the second endpoint
         new_vertices[v1b] = Vertex(new_vertices[v1b][:pos1b]
-                                             + [other_half1]
-                                             + new_vertices[v1b][pos1b+1:])
+                                   + [other_half1]
+                                   + new_vertices[v1b][pos1b + 1:])
         new_edges[other_half1] = Edge((midpoint1_index, opposite_side1), (v1b, pos1b))
 
         # replace `edge2` with new `other_half2` in the second
@@ -937,20 +923,19 @@ class Fatgraph(EqualIfIsomorphic):
         # "other half" of second edge *always* ends at the previous
         # edge endpoint, so replace `edge2` in `v2b`.
         new_vertices[v2b] = Vertex(new_vertices[v2b][:pos2b]
-                                             + [other_half2]
-                                             + new_vertices[v2b][pos2b+1:])
+                                   + [other_half2]
+                                   + new_vertices[v2b][pos2b + 1:])
         new_edges[other_half2] = Edge((midpoint2_index, opposite_side2), (v2b, pos2b))
 
         ## inherit orientation, and add the three new edges in the order they were created
-        new_edge_numbering +=  [connecting_edge, other_half1, other_half2]
+        new_edge_numbering += [connecting_edge, other_half1, other_half2]
 
         # build new graph 
         return Fatgraph(new_vertices,
-                        edges = new_edges,
-                        num_edges = self.num_edges + other.num_edges + 3,
-                        orientation = new_edge_numbering,
+                        edges=new_edges,
+                        num_edges=self.num_edges + other.num_edges + 3,
+                        orientation=new_edge_numbering,
                         )
-
 
     @ocache_contract
     def contract(self, edge):
@@ -974,14 +959,14 @@ class Fatgraph(EqualIfIsomorphic):
           Fatgraph([Vertex([1, 0, 1, 0])])
         """
         assert not self.is_loop(edge), \
-               "Fatgraph.contract: cannot contract a loop."
+            "Fatgraph.contract: cannot contract a loop."
         assert (edge >= 0) and (edge < self.num_edges), \
-               "Fatgraph.contract: invalid edge number (%d):"\
-               " must be in range 0..%d" \
-               % (edge, self.num_edges)
+            "Fatgraph.contract: invalid edge number (%d):" \
+            " must be in range 0..%d" \
+            % (edge, self.num_edges)
 
         ## Plug the higher-numbered vertex into the lower-numbered one.
-        
+
         # store endpoints of the edge-to-be-contracted
         ((v1, pos1), (v2, pos2)) = self.edges[edge].endpoints
         assert v1 < v2
@@ -993,14 +978,14 @@ class Fatgraph(EqualIfIsomorphic):
         #     shifting the number down one position;
         #   - edge `edge` is kept intact, will be removed by mating
         #     operation (see below).
-        renumber_edges = dict((i,i)
-                              for i in xrange(0, edge+1))
-        renumber_edges.update(dict((i,i-1)
-                              for i in xrange(edge+1, self.num_edges)))
+        renumber_edges = dict((i, i)
+                              for i in xrange(0, edge + 1))
+        renumber_edges.update(dict((i, i - 1)
+                                   for i in xrange(edge + 1, self.num_edges)))
         # See `itranslate` in utils.py for how this prescription is
         # encoded in the `renumber_edges` mapping.
-        new_vertices = [ Vertex([ renumber_edges[e] for e in V ])
-                         for V in self.vertices ]
+        new_vertices = [Vertex([renumber_edges[e] for e in V])
+                        for V in self.vertices]
 
         # Mate endpoints of contracted edge:
         # 1. Rotate endpoints `v1`, `v2` so that the given edge would
@@ -1014,30 +999,30 @@ class Fatgraph(EqualIfIsomorphic):
             Fatgraph._rotate_and_trim(new_vertices[v1], pos1)
             +
             Fatgraph._rotate_and_trim(new_vertices[v2], pos2)
-            )
+        )
         # 4. Remove second endpoint from list of new vertices:
         del new_vertices[v2]
 
         ## Orientation of the contracted graph.
         cut = self.edge_numbering[edge]
         # edges with index below the contracted one are untouched
-        renumber_edge_numbering = dict((x,x) for x in xrange(cut))
+        renumber_edge_numbering = dict((x, x) for x in xrange(cut))
         # edges with index above the contracted one are shifted down
         # one position
-        renumber_edge_numbering.update(dict((x+1,x)
-                                      for x in xrange(cut, self.num_edges)))
-        new_edge_numbering = [ renumber_edge_numbering[self.edge_numbering[x]]
-                               for x in xrange(self.num_edges)
-                               if x != edge ]
-        
+        renumber_edge_numbering.update(dict((x + 1, x)
+                                            for x in xrange(cut, self.num_edges)))
+        new_edge_numbering = [renumber_edge_numbering[self.edge_numbering[x]]
+                              for x in xrange(self.num_edges)
+                              if x != edge]
+
         # build new graph
         return Fatgraph(
             new_vertices,
-            orientation = new_edge_numbering,
-            )
+            orientation=new_edge_numbering,
+        )
 
-    #@cython.locals(L=list, p=cython.int)
-    #@cython.cfunc(list)
+    # @cython.locals(L=list, p=cython.int)
+    # @cython.cfunc(list)
     @staticmethod
     def _rotate_and_trim(V, p):
         """
@@ -1051,8 +1036,7 @@ class Fatgraph(EqualIfIsomorphic):
           [4, 5, 1, 2]
 
         """
-        return V[p+1:] + V[:p]
-
+        return V[p + 1:] + V[:p]
 
     def contract_boundary_cycle(self, bcy, vi1, vi2):
         """Return a new `BoundaryCycle` instance, image of `bcy` under
@@ -1073,11 +1057,11 @@ class Fatgraph(EqualIfIsomorphic):
                     # skip this corner, keep only one of the
                     # corners limited by the contracted edge
                     continue
-                else: 
+                else:
                     i1 = (corner[1] - pos1 - 1) % l1
                     i2 = (corner[2] - pos1 - 1) % l1
-                    assert (i1+1-i2) % l1 == 0 # i1,i2 denote successive indices
-                    assert i1 != l1-1 # would collide with contracted corners from `v2`
+                    assert (i1 + 1 - i2) % l1 == 0  # i1,i2 denote successive indices
+                    assert i1 != l1 - 1  # would collide with contracted corners from `v2`
                     new_bcy.append((v1, i1, i2))
             elif corner[0] == v2:
                 if pos2 == corner[1]:
@@ -1085,15 +1069,15 @@ class Fatgraph(EqualIfIsomorphic):
                     # corners limited by the contracted edge
                     continue
                 if pos2 == corner[2]:
-                    new_bcy.append((v1, l1+l2-3, 0))
+                    new_bcy.append((v1, l1 + l2 - 3, 0))
                 else:
-                    i1 = l1-1 + ((corner[1] - pos2 - 1) % l2)
-                    i2 = l1-1 + ((corner[2] - pos2 - 1) % l2)
-                    assert (i1+1-i2) % l1 == 0 # i1,i2 denote successive indices
+                    i1 = l1 - 1 + ((corner[1] - pos2 - 1) % l2)
+                    i2 = l1 - 1 + ((corner[2] - pos2 - 1) % l2)
+                    assert (i1 + 1 - i2) % l1 == 0  # i1,i2 denote successive indices
                     new_bcy.append((v1, i1, i2))
             elif corner[0] > v2:
                 # shift vertices after `v2` one position down
-                new_bcy.append((corner[0]-1, corner[1], corner[2]))
+                new_bcy.append((corner[0] - 1, corner[1], corner[2]))
             else:
                 # pass corner unchanged
                 new_bcy.append(corner)
@@ -1106,11 +1090,10 @@ class Fatgraph(EqualIfIsomorphic):
                     cnt[corner] = 1
             for (corner, count) in cnt.iteritems():
                 assert count == 1, \
-                       "BoundaryCycle.contract():" \
-                       " Corner %s appears %d times in contracted boundary cycle %s" \
-                       % (corner, count, new_bcy)
+                    "BoundaryCycle.contract():" \
+                    " Corner %s appears %d times in contracted boundary cycle %s" \
+                    % (corner, count, new_bcy)
         return BoundaryCycle(new_bcy)
-
 
     @ocache0
     def edge_orbits(self):
@@ -1130,7 +1113,7 @@ class Fatgraph(EqualIfIsomorphic):
           {0: set([0, 1, 2])}
           
         """
-        orbits = dict( (x, set([x])) for x in xrange(self.num_edges) )
+        orbits = dict((x, set([x])) for x in xrange(self.num_edges))
         for a in self.automorphisms():
             edge_permutation = a.pe
             for x in xrange(self.num_edges):
@@ -1146,11 +1129,10 @@ class Fatgraph(EqualIfIsomorphic):
                     del orbits[y]
         # check that all elements lie in some orbit
         assert sum(len(set(o)) for o in orbits.itervalues()) == self.num_edges, \
-               "Fatgraph.edge_orbits():" \
-               " Computed orbits `%s` do not exhaust edge set `%s`" \
-               " [%s.edge_orbits() -> %s]" % (orbits, range(self.num_edges), self, orbits)
+            "Fatgraph.edge_orbits():" \
+            " Computed orbits `%s` do not exhaust edge set `%s`" \
+            " [%s.edge_orbits() -> %s]" % (orbits, range(self.num_edges), self, orbits)
         return orbits
-
 
     @ocache0
     def edge_pair_orbits(self):
@@ -1170,10 +1152,10 @@ class Fatgraph(EqualIfIsomorphic):
            (0, 2): set([(1, 0), (0, 2), (2, 1)])}
           
         """
-        edge_pairs = [ (x,y) 
-                       for x in xrange(self.num_edges)
-                       for y in xrange(self.num_edges) ]
-        orbits = dict( (p, set([p])) for p in edge_pairs )
+        edge_pairs = [(x, y)
+                      for x in xrange(self.num_edges)
+                      for y in xrange(self.num_edges)]
+        orbits = dict((p, set([p])) for p in edge_pairs)
         for a in self.automorphisms():
             edge_permutation = a.pe
             for p in edge_pairs:
@@ -1189,11 +1171,10 @@ class Fatgraph(EqualIfIsomorphic):
                     del orbits[q]
         # check that all elements lie in some orbit
         assert sum(len(set(o)) for o in orbits.itervalues()) == len(edge_pairs), \
-               "Fatgraph.edge_pair_orbits():" \
-               " Computed orbits `%s` do not exhaust edge pairs set `%s`" \
-               " [%s.edge_pair_orbits() -> %s]" % (orbits, edge_pairs, self, orbits)
+            "Fatgraph.edge_pair_orbits():" \
+            " Computed orbits `%s` do not exhaust edge pairs set `%s`" \
+            " [%s.edge_pair_orbits() -> %s]" % (orbits, edge_pairs, self, orbits)
         return orbits
-
 
     def endpoints(self, edgeno):
         """Return the endpoints of `edge`, as a pair of `(v, pos)`
@@ -1204,7 +1185,6 @@ class Fatgraph(EqualIfIsomorphic):
         The pair `((v1, pos1), (v2, pos2))` is ordered such that `v1 < v2`.
         """
         return self.edges[edgeno].endpoints
-
 
     def hangcircle(self, edge, side):
         """Return a new `Fatgraph`, formed by attaching a circle with
@@ -1235,13 +1215,13 @@ class Fatgraph(EqualIfIsomorphic):
           True
           
         """
-        assert side in [0,1], \
-               "Fatgraph.hangcircle: Invalid value for `side`: '%s' - should be 0 or 1" % side1
-        
+        assert side in [0, 1], \
+            "Fatgraph.hangcircle: Invalid value for `side`: '%s' - should be 0 or 1" % side
+
         opposite_side = 0 if side else 1
 
         ## assign edge indices
-        
+
         ## break `edge` in two halves: if `v1` and `v2` are the
         ## endpoints of `edge`, then the "one_half" edge extends from
         ## the `v1` endpoint of `edge1` to the new vertex
@@ -1251,7 +1231,7 @@ class Fatgraph(EqualIfIsomorphic):
         other_half = self.num_edges
         connecting_edge = self.num_edges + 1
         circling_edge = self.num_edges + 2
-        
+
         ## assign new indices to new vertices
         midpoint_index = self.num_vertices
         T_index = self.num_vertices + 1
@@ -1260,7 +1240,7 @@ class Fatgraph(EqualIfIsomorphic):
         ## the vertex `T` lying on the circle.
         if side == 1:
             midpoint = Vertex([other_half, one_half, connecting_edge])
-        else: # side == 0
+        else:  # side == 0
             midpoint = Vertex([one_half, other_half, connecting_edge])
         T = Vertex([circling_edge, circling_edge, connecting_edge])
         new_vertices = self.vertices + [midpoint, T]
@@ -1268,18 +1248,18 @@ class Fatgraph(EqualIfIsomorphic):
         ## new edges:
         ## - inherit edges from parent, and add place for three new edges
         new_edges = self.edges + [
-            None, # new edge: other_half
-            None, # new edge: connecting_edge
-            None, # new edge: circling_edge
-            ]
-        
+            None,  # new edge: other_half
+            None,  # new edge: connecting_edge
+            None,  # new edge: circling_edge
+        ]
+
         ## - break `edge` into two edges `one_half` and `other_half`:
         ((v1, pos1), (v2, pos2)) = self.edges[edge].endpoints
         new_edges[one_half] = Edge((v1, pos1), (midpoint_index, side))
         new_edges[other_half] = Edge((midpoint_index, opposite_side), (v2, pos2))
         new_vertices[v2] = Vertex(new_vertices[v2][:pos2]
-                                             + [other_half]
-                                             + new_vertices[v2][pos2+1:])
+                                  + [other_half]
+                                  + new_vertices[v2][pos2 + 1:])
 
         ## - the connecting edge has endpoints in the mid-point of
         ## `edge` and in `T`, and is *always* in third position:
@@ -1295,17 +1275,15 @@ class Fatgraph(EqualIfIsomorphic):
 
         # finally, build new graph 
         return Fatgraph(new_vertices,
-                        edges = new_edges,
-                        num_edges = self.num_edges + 3,
-                        orientation = new_edge_numbering,
+                        edges=new_edges,
+                        num_edges=self.num_edges + 3,
+                        orientation=new_edge_numbering,
                         )
-    
 
     def is_loop(self, edge):
         """Return `True` if `edge` is a loop (i.e., the two endpoint coincide).
         """
         return self.edges[edge].is_loop()
-        
 
     def is_oriented(self):
         """Return `True` if `Fatgraph` is orientable.
@@ -1351,7 +1329,6 @@ class Fatgraph(EqualIfIsomorphic):
                 return False
         # no orientation reversing automorphism found
         return True
-
 
     @ocache_isomorphisms
     def isomorphisms(G1, G2):
@@ -1399,11 +1376,11 @@ class Fatgraph(EqualIfIsomorphic):
         vs1 = G1._valence_spectrum()
         vs2 = G2._valence_spectrum()
         if not set(vs1.keys()) == set(vs2.keys()):
-            return # StopIteration
+            return  # StopIteration
         # if graphs have unequal vertex distribution by valence, no isomorphisms
         for val in G1.vertex_valences():
             if len(vs1[val]) != len(vs2[val]):
-                return # StopIteration
+                return  # StopIteration
 
         (valence, indexes) = G2._starting_vertices()
         v1_index = vs1[valence][0]
@@ -1413,18 +1390,19 @@ class Fatgraph(EqualIfIsomorphic):
                 try:
                     # pass 0: init new (pv, rots, pe) triple
                     pv = Permutation()
-                    rots = [ None for x in xrange(G1.num_vertices) ]
+                    rots = [None for x in xrange(G1.num_vertices)]
                     pe = Permutation()
 
                     # pass 1: map `v1` to `v2` and build map
                     # of neighboring vertices for next pass
-                    if not pe.extend(v1, G2.vertices[v2_index][rot:rot+valence]):
-                        continue # to next `rot`
+                    if not pe.extend(v1, G2.vertices[v2_index][rot:rot + valence]):
+                        continue  # to next `rot`
                     pv[v1_index] = v2_index
                     rots[v1_index] = rot
                     if __debug__:
                         for x in v1:
-                            assert x in pe, "Edge `%d` of vertex `%s` (in graph `%s`) not mapped to any edge of graph `%s` (at line 1740, `pe=%s`)" % (x, v1, G1, G2, pe)
+                            assert x in pe, "Edge `%d` of vertex `%s` (in graph `%s`) not mapped to any edge of graph `%s` (at line 1740, `pe=%s`)" % (
+                            x, v1, G1, G2, pe)
 
                     # pass 2: extend map to neighboring vertices
                     nexts = Fatgraph._neighbors(pv, pe, G1, v1_index, G2, v2_index)
@@ -1434,13 +1412,14 @@ class Fatgraph(EqualIfIsomorphic):
                             (pv, rots, pe) = Fatgraph._extend_map(pv, rots, pe, G1, i1, r, G2, i2)
                             if __debug__:
                                 for x in G1.vertices[i1]:
-                                    assert x in pe, "Edge `%d` of vertex `%s` (in graph `%s`) not mapped to any edge of graph `%s` (at line 1751, `pe=%s`)" % (x, G1.vertices[i1], G1, G2, pe)
+                                    assert x in pe, "Edge `%d` of vertex `%s` (in graph `%s`) not mapped to any edge of graph `%s` (at line 1751, `pe=%s`)" % (
+                                    x, G1.vertices[i1], G1, G2, pe)
                             neighborhood += Fatgraph._neighbors(pv, pe, G1, i1, G2, i2)
                         nexts = neighborhood
 
                 # extension failed in the above block, continue with next candidate
                 except Fatgraph._CannotExtendMap:
-                    continue # to next `rot`
+                    continue  # to next `rot`
 
                 # finally
                 yield Isomorphism(G1, G2, pv, rots, pe)
@@ -1469,15 +1448,15 @@ class Fatgraph(EqualIfIsomorphic):
             result[l].append(index)
         # consistency checks
         assert set(result.keys()) == set(self.vertex_valences()), \
-               "Fatgraph.valence_spectrum:" \
-               "Computed valence spectrum `%s` does not exhaust all " \
-               " vertex valences %s" \
-               % (result, self.vertex_valences())
+            "Fatgraph.valence_spectrum:" \
+            "Computed valence spectrum `%s` does not exhaust all " \
+            " vertex valences %s" \
+            % (result, self.vertex_valences())
         assert set(concat(result.values())) \
                == set(range(self.num_vertices)), \
-               "Fatgraph.valence_spectrum:" \
-               "Computed valence spectrum `%s` does not exhaust all " \
-               " %d vertex indices" % (result, self.num_vertices)
+            "Fatgraph.valence_spectrum:" \
+            "Computed valence spectrum `%s` does not exhaust all " \
+            " %d vertex indices" % (result, self.num_vertices)
         return result
 
     @ocache0
@@ -1498,11 +1477,11 @@ class Fatgraph(EqualIfIsomorphic):
         """
         val = max(self.vertex_valences())
         vs = None
-        n = len(self.vertices)+1
+        n = len(self.vertices) + 1
         for (val_, vs_) in self._valence_spectrum().iteritems():
             n_ = len(vs_)
-            if (n_*val_ < n*val) \
-                   or (n_*val_ == n*val and val_<val):
+            if (n_ * val_ < n * val) \
+                    or (n_ * val_ == n * val and val_ < val):
                 val = val_
                 vs = vs_
                 n = n_
@@ -1567,7 +1546,7 @@ class Fatgraph(EqualIfIsomorphic):
                 return (pv, rots, pe)
 
         i = pv.find(i2)
-        if i is not None: # i.e., i in pv.values()
+        if i is not None:  # i.e., i in pv.values()
             if i != i1 or (rots[i] - r) % len(v2) != 0:
                 raise Fatgraph._CannotExtendMap
             else:
@@ -1575,7 +1554,7 @@ class Fatgraph(EqualIfIsomorphic):
                 return (pv, rots, pe)
 
         # rotating `v1` leftwards is equivalent to rotating `v2` rightwards...
-        v2 = v2[r:r+len(v2)]
+        v2 = v2[r:r + len(v2)]
         if not pe.extend(v1, v2):
             raise Fatgraph._CannotExtendMap
 
@@ -1603,20 +1582,19 @@ class Fatgraph(EqualIfIsomorphic):
         result = []
         for x in G1.vertices[v1]:
             if G1.edges[x].is_loop():
-                continue # with next edge `x`
+                continue  # with next edge `x`
             ((s1, a1), (s2, a2)) = G1.edges[x].endpoints
-            src_v, src_i = (s2,a2) if (s1 == v1) else (s1,a1)
+            src_v, src_i = (s2, a2) if (s1 == v1) else (s1, a1)
             # ignore vertices that are already in the domain of `m`
             if src_v in pv.keys():
-                continue # to next `x`
+                continue  # to next `x`
             ((d1, b1), (d2, b2)) = G2.edges[pe[x]].endpoints
-            dst_v, dst_i = (d2,b2) if (d1 == v2) else (d1,b1)
+            dst_v, dst_i = (d2, b2) if (d1 == v2) else (d1, b1)
             if dst_v in pv.values():
-                continue # to next `x`
+                continue  # to next `x`
             # array of (source vertex index, dest vertex index, rotation)
-            result.append((src_v, dst_v, dst_i-src_i))
+            result.append((src_v, dst_v, dst_i - src_i))
         return result
-
 
     def num_automorphisms(self):
         """Return the cardinality of the automorphism group of this
@@ -1630,14 +1608,12 @@ class Fatgraph(EqualIfIsomorphic):
           2
         """
         return len(list(self.automorphisms()))
-    
 
     @ocache0
     def vertex_valences(self):
         return frozenset(len(v) for v in self.vertices)
 
 
-    
 def MgnTrivalentGraphsRecursiveGenerator(g, n):
     """Return a list of all connected trivalent fatgraphs having the
     prescribed genus `g` and number of boundary cycles `n`.
@@ -1653,25 +1629,25 @@ def MgnTrivalentGraphsRecursiveGenerator(g, n):
 
     """
     # avoid infinite recursion in later statements
-    if n==0 or (g,n)<(0,3):
+    if n == 0 or (g, n) < (0, 3):
         raise StopIteration
 
     # sanity check
     assert n > 0, \
-           "MgnTrivalentGraphsRecursiveGenerator: " \
-           " number of boundary cycles `n` must be positive,"\
-           " but got `%s` instead" % n
+        "MgnTrivalentGraphsRecursiveGenerator: " \
+        " number of boundary cycles `n` must be positive," \
+        " but got `%s` instead" % n
 
-    logging.debug("Starting MgnTrivalentGraphsRecursiveGenerator(%d,%d) ..." % (g,n))
+    logging.debug("Starting MgnTrivalentGraphsRecursiveGenerator(%d,%d) ..." % (g, n))
 
     ## M_{0,3} - induction base
-    if (g,n) == (0,3):
+    if (g, n) == (0, 3):
         yield Fatgraph([Vertex([1, 2, 1]), Vertex([2, 0, 0])])
         yield Fatgraph([Vertex([1, 0, 2]), Vertex([2, 0, 1])])
         logging.debug("  MgnTrivalentGraphsRecursiveGenerator(0,3) done.")
 
     ## M_{1,1} - induction base
-    elif (g,n) == (1,1):
+    elif (g, n) == (1, 1):
         yield Fatgraph([Vertex([1, 0, 2]), Vertex([2, 1, 0])])
         logging.debug("  MgnTrivalentGraphsRecursiveGenerator(1,1) done.")
 
@@ -1700,25 +1676,25 @@ def MgnTrivalentGraphsRecursiveGenerator(g, n):
 
         if unique is None:
             # could not restore from saved state, have to compute
-            unique = [ ]
+            unique = []
             discarded = 0
-            timing.start("MgnTrivalentGraphsRecursiveGenerator(%d,%d)" % (g,n))
-            for G in _MgnTrivalentGraphsRecursiveGenerator_main(g,n):
+            timing.start("MgnTrivalentGraphsRecursiveGenerator(%d,%d)" % (g, n))
+            for G in _MgnTrivalentGraphsRecursiveGenerator_main(g, n):
                 # XXX: should this check be done in  *_main(g,n)?
-                if (G.genus, G.num_boundary_cycles) != (g,n) or (G in unique):
+                if (G.genus, G.num_boundary_cycles) != (g, n) or (G in unique):
                     discarded += 1
                     continue
                 unique.append(G)
                 yield G
-            timing.stop("MgnTrivalentGraphsRecursiveGenerator(%d,%d)" % (g,n))
+            timing.stop("MgnTrivalentGraphsRecursiveGenerator(%d,%d)" % (g, n))
             logging.debug(
-                "  MgnTrivalentGraphsRecursiveGenerator(%d,%d) done: %d unique graphs, discarded %d duplicates. (Elapsed: %.3fs)", 
-                g,n, len(unique), discarded, 
-                timing.get("MgnTrivalentGraphsRecursiveGenerator(%d,%d)" % (g,n)))
+                "  MgnTrivalentGraphsRecursiveGenerator(%d,%d) done: %d unique graphs, discarded %d duplicates. (Elapsed: %.3fs)",
+                g, n, len(unique), discarded,
+                timing.get("MgnTrivalentGraphsRecursiveGenerator(%d,%d)" % (g, n)))
             # clear cached isomorphisms, they will not be needed in the sequel
             for G in unique:
                 try:
-                    G._cache_isomorphisms.clear() # XXX: private impl. detail!
+                    G._cache_isomorphisms.clear()  # XXX: private impl. detail!
                 except AttributeError:
                     pass
             # save to checkpoint file (if defined)
@@ -1730,31 +1706,31 @@ def MgnTrivalentGraphsRecursiveGenerator(g, n):
                 yield G
 
 
-def _MgnTrivalentGraphsRecursiveGenerator_main(g,n):
+def _MgnTrivalentGraphsRecursiveGenerator_main(g, n):
     logging.debug("  MgnTrivalentGraphsRecursiveGenerator(%d,%d): "
-                  "pass 1: hang a circle to all edges of graphs in M_{%d,%d} ..." % (g,n, g,n-1))
-    for G in MgnTrivalentGraphsRecursiveGenerator(g,n-1):
+                  "pass 1: hang a circle to all edges of graphs in M_{%d,%d} ..." % (g, n, g, n - 1))
+    for G in MgnTrivalentGraphsRecursiveGenerator(g, n - 1):
         for x in G.edge_orbits():
-            yield G.hangcircle(x,0)
-            yield G.hangcircle(x,1)
+            yield G.hangcircle(x, 0)
+            yield G.hangcircle(x, 1)
 
     logging.debug("  MgnTrivalentGraphsRecursiveGenerator(%d,%d): "
-                  "pass 2: bridge all edges of a single graph in M_{%d,%d} ..." % (g,n, g,n-1))
-    for G in MgnTrivalentGraphsRecursiveGenerator(g,n-1):
-        for (x,y) in G.edge_pair_orbits():
-                yield G.bridge(x,0, y,0)
-                yield G.bridge(x,0, y,1)
-                yield G.bridge(x,1, y,0)
-                yield G.bridge(x,1, y,1)
+                  "pass 2: bridge all edges of a single graph in M_{%d,%d} ..." % (g, n, g, n - 1))
+    for G in MgnTrivalentGraphsRecursiveGenerator(g, n - 1):
+        for (x, y) in G.edge_pair_orbits():
+            yield G.bridge(x, 0, y, 0)
+            yield G.bridge(x, 0, y, 1)
+            yield G.bridge(x, 1, y, 0)
+            yield G.bridge(x, 1, y, 1)
 
     logging.debug("  MgnTrivalentGraphsRecursiveGenerator(%d,%d): "
-                  "pass 3: bridge all edges of a single graph in M_{%d,%d} ..." % (g,n, g-1,n+1))
-    for G in MgnTrivalentGraphsRecursiveGenerator(g-1,n+1):
-        for (x,y) in G.edge_pair_orbits():
-                yield G.bridge(x,0, y,0)
-                yield G.bridge(x,0, y,1)
-                yield G.bridge(x,1, y,0)
-                yield G.bridge(x,1, y,1)
+                  "pass 3: bridge all edges of a single graph in M_{%d,%d} ..." % (g, n, g - 1, n + 1))
+    for G in MgnTrivalentGraphsRecursiveGenerator(g - 1, n + 1):
+        for (x, y) in G.edge_pair_orbits():
+            yield G.bridge(x, 0, y, 0)
+            yield G.bridge(x, 0, y, 1)
+            yield G.bridge(x, 1, y, 0)
+            yield G.bridge(x, 1, y, 1)
 
     ## logging.debug("  MgnTrivalentGraphsRecursiveGenerator(%d,%d): "
     ##               "pass 4: bridge two graphs of such that g_1+g_2=%d, n_1+n_2=%d ..." % (g,n, g,n+1)) 
@@ -1778,8 +1754,6 @@ def _MgnTrivalentGraphsRecursiveGenerator_main(g,n):
     ##                         yield Fatgraph.bridge2(G1, x1, 1, G2, x2, 1)
 
 
-
-
 class MgnGraphsIterator(BufferingIterator):
     """Iterate over all connected fatgraphs having the
     prescribed genus `g` and number of boundary cycles `n`.
@@ -1799,24 +1773,24 @@ class MgnGraphsIterator(BufferingIterator):
 
     def __init__(self, g, n):
         assert n > 0, \
-               "MgnGraphsIterator: " \
-               " number of boundary cycles `n` must be positive,"\
-               " but got `%s` instead" % n
+            "MgnGraphsIterator: " \
+            " number of boundary cycles `n` must be positive," \
+            " but got `%s` instead" % n
         assert (g > 0) or (g == 0 and n >= 3), \
-               "MgnGraphsIterator: " \
-               " Invalid (g,n) pair (%d,%d): "\
-               " need either g>0 or g==0 and n>2" \
-               % (g,n)
+            "MgnGraphsIterator: " \
+            " Invalid (g,n) pair (%d,%d): " \
+            " need either g>0 or g==0 and n>2" \
+            % (g, n)
 
         #: Prescribed genus of returned graphs
         self.g = g
 
         #: Prescribed number of boundary components
         self.n = n
-        
+
         # Gather all 3-valent graphs.
         timing.start("MgnGraphsIterator: trivalent graphs")
-        trivalent = list(MgnTrivalentGraphsRecursiveGenerator(g,n))
+        trivalent = list(MgnTrivalentGraphsRecursiveGenerator(g, n))
         timing.stop("MgnGraphsIterator: trivalent graphs")
 
         #: Fatgraphs to be contracted at next `.refill()` invocation
@@ -1824,13 +1798,12 @@ class MgnGraphsIterator(BufferingIterator):
 
         #: Graphs returned by next `.refill()` call will have this
         #  number of vertices.
-        self._num_vertices = 4*g + 2*n - 5
-        
+        self._num_vertices = 4 * g + 2 * n - 5
+
         # initialize superclass with list of trivalent graphs
         BufferingIterator.__init__(self, trivalent)
         logging.info("  Found %d distinct unique trivalent fatgraphs. (Elapsed: %.3fs)",
                      len(trivalent), timing.get("MgnGraphsIterator: trivalent graphs"))
-
 
     def refill(self):
         if self._num_vertices == 0:
@@ -1860,7 +1833,7 @@ class MgnGraphsIterator(BufferingIterator):
         if next_batch is None:
             # really compute `next_batch`
             logging.debug("Generating graphs with %d vertices ...",
-                         self._num_vertices)
+                          self._num_vertices)
             discarded = 0
             next_batch = []
             timing.start("MgnGraphsIterator: %d vertices" % self._num_vertices)
@@ -1875,21 +1848,22 @@ class MgnGraphsIterator(BufferingIterator):
                         else:
                             discarded += 1
             timing.stop("MgnGraphsIterator: %d vertices" % self._num_vertices)
-            logging.info("  Found %d distinct unique fatgraphs with %d vertices, discarded %d duplicates. (Elapsed: %.3fs)",
-                         len(self._batch), self._num_vertices, discarded,
-                         timing.get("MgnGraphsIterator: %d vertices" % self._num_vertices))
+            logging.info(
+                "  Found %d distinct unique fatgraphs with %d vertices, discarded %d duplicates. (Elapsed: %.3fs)",
+                len(self._batch), self._num_vertices, discarded,
+                timing.get("MgnGraphsIterator: %d vertices" % self._num_vertices))
             if checkpoint is not None:
                 save(next_batch, checkpoint)
-                
+
         self._batch = next_batch
         self._num_vertices -= 1
         return next_batch
-
 
 
 ## main: run tests
 
 if "__main__" == __name__:
     import doctest
+
     doctest.testmod(name='rg',
                     optionflags=doctest.NORMALIZE_WHITESPACE)
