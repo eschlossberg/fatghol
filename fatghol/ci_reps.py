@@ -64,17 +64,17 @@ def ci_char(ci, n):
 
         # iterate over the basis fatgraphs
         for i in range(len(ci)):
-            fg = ci[i]
+            for fg in ci[i]:
 
-            # create a copy of the fatgraph and permute its numbering
-            g = NumberedFatgraph(fg.underlying, fg.numbering.copy())
-            permute_marked_fatgraph(perm, g)
+                # create a copy of the fatgraph and permute its numbering
+                g = NumberedFatgraph(fg.underlying, fg.numbering.copy())
+                permute_marked_fatgraph(perm, g)
 
-            # check if it is mapped to itself
-            isoms = list(NumberedFatgraph.isomorphisms(g, fg))
-            if len(isoms) > 0:
-                print(len(isoms))
-                char[partition] += isoms[0].compare_orientations()*perm.sign()
+                # check if it is mapped to itself
+                isoms = list(NumberedFatgraph.isomorphisms(g, fg))
+                if len(isoms) > 0:
+                    print(len(isoms))
+                    char[partition] += isoms[0].compare_orientations()*perm.sign()
 
 
 # Verify the computations of the characters of S_n on M_g,n for small g,n
