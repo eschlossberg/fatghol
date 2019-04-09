@@ -5,3 +5,5 @@ fatghol.egg-info
 venv/*
 .idea/*
 fatghol/*.pyc
+fatghol/simplematrix.py
+fatghol/simplematrix._wrap.cpp
