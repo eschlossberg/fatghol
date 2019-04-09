@@ -4,3 +4,4 @@ build/*
 fatghol.egg-info
 venv/*
 .idea/*
+fatghol/*.pyc
