@@ -48,7 +48,7 @@ def cycle_type_to_perm(cycle_type):
     cur = 0
     for k in cycle_type:
         for i in range(0, k):
-            d[i] = cur + (i + 1) % k
+            d[cur + i] = cur + (i + 1) % k
         cur += k
     return Permutation(d)
 
@@ -62,29 +62,29 @@ def ci_char(ci, n):
         perm = cycle_type_to_perm(partition)
         char[partition] = 0
 
-        # iterate over the basis fatgraphs
-        for i in range(len(ci)):
-            print(type(ci[i]))
-            for fg in ci[i]:
+        for fg in ci:
 
-                # create a copy of the fatgraph and permute its numbering
-                g = NumberedFatgraph(fg.underlying, fg.numbering.copy())
-                permute_marked_fatgraph(perm, g)
+            # create a copy of the fatgraph and permute its numbering
+            g = NumberedFatgraph(fg.underlying, fg.numbering.copy())
+            permute_marked_fatgraph(perm, g)
 
-                # check if it is mapped to itself
-                isoms = list(NumberedFatgraph.isomorphisms(g, fg))
-                if len(isoms) > 0:
-                    print(len(isoms))
-                    char[partition] += isoms[0].compare_orientations()*perm.sign()
+            # check if it is mapped to itself
+            isoms = list(NumberedFatgraph.isomorphisms(g, fg))
+            if len(isoms) > 0:
+                char[partition] += isoms[0].compare_orientations()*perm.sign()
+    return char
 
 
 # Verify the computations of the characters of S_n on M_g,n for small g,n
 def ci_char_test():
-    for g in range(0,2):
-        for n in range(3,4):
+    for g in [0,1,2]:
+        for n in [2,3,4,5]:
+            if (g,n) in [(0,2),(1,4),(2,2),(1,5),(2,3),(2,4),(2,5)]:
+                continue
+            print("g:", g, "n:", n)
             C = FatgraphComplex(g, n)
-            for i in range(len(C)):
-                print(ci_char(C[i], n))
+            for i in range(C.length):
+                print(ci_char(C.module[i], n))
 
 if __name__=="__main__":
     ci_char_test()
