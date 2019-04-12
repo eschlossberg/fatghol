@@ -74,6 +74,14 @@ def ci_char(ci, n):
                 char[partition] += isoms[0].compare_orientations()*perm.sign()
     return char
 
+# Compute the characters for each C_i in M_g,n
+def mgn_char(g, n):
+    C = FatgraphComplex(g, n)
+    chars = []
+    for i in range(C.length):
+        chars.append(ci_char(C.module[i], n))
+    return chars
+
 
 # Verify the computations of the characters of S_n on M_g,n for small g,n
 def ci_char_test():
@@ -82,9 +90,9 @@ def ci_char_test():
             if (g,n) in [(0,2),(1,4),(2,2),(1,5),(2,3),(2,4),(2,5)]:
                 continue
             print("g:", g, "n:", n)
-            C = FatgraphComplex(g, n)
-            for i in range(C.length):
-                print(ci_char(C.module[i], n))
+            chars = mgn_char(g, n)
+            for char in chars:
+                print(char)
 
 if __name__=="__main__":
     ci_char_test()
