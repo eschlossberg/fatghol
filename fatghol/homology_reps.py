@@ -42,7 +42,7 @@ def simple_matrix_convert(mat):
 
 # Compute the kernel of the boundary map
 def boundary_map_kernel(boundary_map):
-    return sp.linalg.null_space(M)
+    return numpy.linalg.svd(M)
 
 
 def kernel_comp_tests():
