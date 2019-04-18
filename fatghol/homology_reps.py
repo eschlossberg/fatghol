@@ -24,8 +24,9 @@ __docformat__ = 'reStructuredText'
 # import cython
 import numpy as np
 import scipy as sp
-import sympy
 from scipy.io import mmread
+from scipy.sparse.linalg import svds
+from scipy.linalg import null_space
 import os
 from fatghol.graph_homology import (
         FatgraphComplex,
@@ -40,27 +41,31 @@ def simple_matrix_convert(mat):
     return M
 
 
-# Compute the kernel of the boundary map
-def boundary_map_kernel(boundary_map):
-    return sp.linalg.null_space(M)
+class NullSpaceComplex:
+    def __init__(self, FgComplex):
+        self.complex = FgComplex
+        self.null_spaces = self._compute_null_spaces()
+
+    def _compute_null_spaces():
+        bnds = self.complex.compute_boundary_operators()
+        bases = []
+        for d in range(len(bnds)):
+            M = simple_matrix_convert(bnds[d][0])
+            if(M.shape[0] == 0):
+                continue
+            bases.append((d, null_space(M.todense())))
+        return bases
 
 
 def kernel_comp_tests():
     for g in [0,1,2]:
         for n in [2,3,4,5]:
-            if (g,n) in [(0,2),(1,4),(2,2),(1,5),(2,3),(2,4),(2,5)]:
+            if (g,n) in [(0,2),(1,4),(2,2),(1,5),(2,3),(2,4),(2,5),(0,5)]:
                 continue
             print("g:", g, ", n:", n)
-            bases = []
             C = FatgraphComplex(g, n)
-            bnds = C.compute_boundary_operators()
-            for d in range(len(bnds)):
-                M = simple_matrix_convert(bnds[d][0]).todense()
-                if(M.shape[0] == 0):
-                    continue
-                M = sympy.Matrix(M)
-                bases.append((d, np.matrix(M.nullspace())))
-            print(bases)
+            print(compute_null_spaces(C))
+
 
 if __name__=="__main__":
     kernel_comp_tests()
