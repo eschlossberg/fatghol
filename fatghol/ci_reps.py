@@ -53,34 +53,83 @@ def cycle_type_to_perm(cycle_type):
     return Permutation(d)
 
 
+# Compute the sign of a permutation given its cycle type
+def sign(perm):
+    par = 1
+    for i in perm:
+        if (i % 2 == 0):
+            par *= -1
+    return par
+
+
 # Compute the character of a given degree for M_g,n
-def ci_char(ci, n):
-    partitions = list(PartitionIterator(n, n))
-    char = {}
-    for partition in partitions:
-        # add an entry to the character table for each partition
-        perm = cycle_type_to_perm(partition)
-        char[partition] = 0
+class MgnChars:
+    def __init__(self, g, n):
+        self.g = g
+        self.n = n
+        self.mgn = FatgraphComplex(g, n)
+        self.chars = []
 
-        for fg in ci:
+        self.ci_permutations = self._compute_permutations(n)
+        
+        for i in range(self.mgn.length):
+            self.chars.append(self._ci_char(i))
 
-            # create a copy of the fatgraph and permute its numbering
-            g = NumberedFatgraph(fg.underlying, fg.numbering.copy())
-            permute_marked_fatgraph(perm, g)
 
-            # check if it is mapped to itself
-            isoms = list(NumberedFatgraph.isomorphisms(g, fg))
-            if len(isoms) > 0:
-                char[partition] += isoms[0].compare_orientations()*perm.sign()
-    return char
+    # Computes the action of S_n on the basis of each C_i
+    # Returns a list of the format i->perm_cycle_type->fg->\sigma(fg)
+    # with i being the degree of C_i, perm_cycle_type the cycle type of the
+    # desired permutation, fg the fatgraph being acted on, and \sigma(fg)
+    # the result of the action
+    def _compute_permutations(self, n):
+        partitions = list(PartitionIterator(n, n))
+        
+        # Generate the permutations of all cycle types
+        perms = []
+        for partition in partitions:
+            perms.append((partition, cycle_type_to_perm(partition)))
 
-# Compute the characters for each C_i in M_g,n
-def mgn_char(g, n):
-    C = FatgraphComplex(g, n)
-    chars = []
-    for i in range(C.length):
-        chars.append(ci_char(C.module[i], n))
-    return chars
+        ci_perms = []
+        for i in range(self.mgn.length):
+            ci_fg_perms = {}
+            ci = self.mgn.module[i]
+            
+            for perm in perms:
+                fg_perms = {}
+                j = 0
+                for fg in ci:
+                    g = NumberedFatgraph(fg.underlying, fg.numbering.copy())
+                    permute_marked_fatgraph(perm[1], g)
+                    fg_perms[j] = g
+                    j += 1
+
+                ci_fg_perms[perm[0]] = fg_perms
+            ci_perms.append(ci_fg_perms)
+        return ci_perms
+
+
+    def _ci_char(self, i):
+        ci = self.mgn.module[i]
+        perms = self.get_action(i)
+        chars = {}
+        for perm in perms:
+            chars[perm] = 0
+            sigma = perms[perm]
+            j = 0
+            for fg in ci:
+                # find the image of fg under sigma
+                g = sigma[j]
+
+                # check if it is mapped to itself
+                isoms = list(NumberedFatgraph.isomorphisms(g, fg))
+                if len(isoms) > 0:
+                    chars[perm] += isoms[0].compare_orientations()*sign(perm)
+                j += 1
+        return chars
+
+    # Returns the action of S_n on degree i
+    def get_action(self, i):
+        return self.ci_permutations[i]
 
 
 # Verify the computations of the characters of S_n on M_g,n for small g,n
@@ -90,7 +139,8 @@ def ci_char_test():
             if (g,n) in [(0,2),(1,4),(2,2),(1,5),(2,3),(2,4),(2,5)]:
                 continue
             print("g:", g, "n:", n)
-            chars = mgn_char(g, n)
+            mgn = MgnChars(g, n)
+            chars = mgn.chars
             for char in chars:
                 print(char)
 
