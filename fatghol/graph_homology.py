@@ -162,7 +162,7 @@ class MgnChainComplex(ChainComplex):
                     # for each fatgraph in the pool, check if it is sent to itself
                     # by the permutation, and update the character table accordingly
                     for fg in pool:
-                        (j, a) = pool._index(p.rearranged(fg.numbering))
+                        (j, a) = pool._index(fg.permute_numbering(p))
                         try:
                             if a.is_identity():
                                 character[p.get_cycle_type(self.n)] += 1 * a.compare_orientations() * p.sign()
@@ -174,9 +174,6 @@ class MgnChainComplex(ChainComplex):
             characters.append(character)
         self.characters = characters
 
-
-
-
     def _permute_vector(self, degree, vector, perm):
         assert len(vector) == len(self.module[degree]), \
                 "Vector has smaller length than number of basis elements"
@@ -185,7 +182,7 @@ class MgnChainComplex(ChainComplex):
         index = 0
         for pool in m.iterblocks():
             for fg in pool:
-                (j, a) = pool._index(perm.rearranged(fg.numbering))
+                (j, a) = pool._index(fg.permute_numbering(perm))
                 permuted_vector[j] = vector[index] * a.compare_orientations() * perm.sign()
                 index += 1
         return permuted_vector
@@ -486,6 +483,12 @@ class NumberedFatgraph(Fatgraph):
             if pe_does_not_preserve_bc:
                 continue # to next underlying graph isomorphism
             yield iso
+
+    def permute_numbering(self, permutation):
+        new_numbering = {}
+        for key in self.numbering:
+            new_numbering[key] = permutation[self.numbering[key]]
+        return new_numbering
 
 
 #@cython.cclass
