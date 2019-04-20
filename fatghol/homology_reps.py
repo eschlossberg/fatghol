@@ -66,6 +66,7 @@ def cycle_type_to_perm(cycle_type):
 class NullSpaceComplex:
     def __init__(self, g, n):
         self.complex = FatgraphComplex(g, n)
+        self.boundary_operators = []
         self.null_spaces = self._compute_null_spaces()
         self.n = n
         self.ci_perms = self._compute_permutations(self.n)
@@ -116,7 +117,9 @@ class NullSpaceComplex:
         bases = []
         for d in range(len(bnds)):
             M = simple_matrix_convert(bnds[d][0])
+            self.boundary_operators.append(M)
             if(M.shape[0] == 0):
+                bases.append((d, []))
                 continue
             bases.append((d, null_space(M.todense())))
         return bases
@@ -132,7 +135,7 @@ class NullSpaceComplex:
         return characters
 
     def _permute_vector(self, degree, vector, perm):
-        assert len(vector) == len(self.complex.module[degree]), \
+        assert vector.shape[0] == len(self.complex.module[degree]), \
             "Vector has smaller length than number of basis elements"
         m = self.complex.module[degree]
         permuted_vector = [0 for _ in range(len(vector))]
@@ -151,19 +154,24 @@ class NullSpaceComplex:
 
     # Compute the characters of the null spaces of the boundary map of degree i
     def null_space_character(self, degree):
-        basis = self.null_spaces[degree]
+        basis = self.null_spaces[degree][1]
         char = {}
         partitions = list(PartitionIterator(self.n, self.n))
 
         for perm in partitions:
             char[perm] = 0
-            for x in basis:
+            if(type(basis) == list):
+                continue
+            for i in range(basis.shape[1]):
+                x = basis[:,i]
+                x = np.array(x)
                 x_prime = self._permute_vector(degree, x, perm)
                 char[perm] += np.dot(x, x_prime)
+            char[perm] = int(round(char[perm]))
         return char
 
     # Compute all the null space characters
-    def null_space_characters(self):
+    def compute_null_space_characters(self):
         for i in range(len(self)):
             self.null_space_characters.append(self.null_space_character(i))
 
