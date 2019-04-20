@@ -30,7 +30,13 @@ from scipy.linalg import null_space
 import os
 from fatghol.graph_homology import (
         FatgraphComplex,
+        MgnChainComplex,
+        NumberedFatgraph
         )
+from fatghol.combinatorics import (
+        Permutation,
+        PartitionIterator
+)
 
 
 # Convert SimpleMatrix to Numpy matrix. Returns a sparse scipy matrix
@@ -41,13 +47,31 @@ def simple_matrix_convert(mat):
     return M
 
 
+def permute_marked_fatgraph(fg, perm):
+    for bc in fg.boundary_cycles:
+        if fg.numbering[bc] in perm:
+            fg.numbering[bc] = perm[fg.numbering[bc]]
+
+
+def cycle_type_to_perm(cycle_type):
+    d = {}
+    cur = 0
+    for k in cycle_type:
+        for i in range(0, k):
+            d[cur + i] = cur + (i + 1) % k
+        cur += k
+    return Permutation(d)
+
+
 class NullSpaceComplex:
-    def __init__(self, FgComplex):
-        self.complex = FgComplex
+    def __init__(self, g, n):
+        self.complex = FatgraphComplex(g, n)
         self.null_spaces = self._compute_null_spaces()
+        self.n = n
+        self.ci_characters = []
 
     def _compute_null_spaces(self):
-        bnds = self.complex.compute_boundary_operators()
+        bnds = self.compute_boundary_operators()
         bases = []
         for d in range(len(bnds)):
             M = simple_matrix_convert(bnds[d][0])
@@ -55,6 +79,41 @@ class NullSpaceComplex:
                 continue
             bases.append((d, null_space(M.todense())))
         return bases
+
+    def compute_ci_characters(self):
+        characters = [{} for _ in xrange(len(self))]
+        partitions = list(PartitionIterator(self.n, self.n))
+        for partition in partitions:
+            for i in xrange(len(self)):
+                m = self.module[i]
+                perm = cycle_type_to_perm(partition)
+
+                characters[i][partition] = 0
+
+                for fg in m:
+                    g = NumberedFatgraph(fg.underlying, fg.numbering.copy())
+                    permute_marked_fatgraph(g, perm)
+
+                    isoms = list(NumberedFatgraph.isomorphisms(g, fg))
+                    if (len(isoms) > 0):
+                        characters[i][partition] += isoms[0].compare_orientations() * perm.sign()
+        self.ci_characters = characters
+
+    def _permute_vector(self, degree, vector, perm):
+        assert len(vector) == len(self.module[degree]), \
+            "Vector has smaller length than number of basis elements"
+        m = self.module[degree]
+        permuted_vector = [0 for _ in range(len(vector))]
+        index = 0
+        for pool in m.iterblocks():
+            for k in xrange(len(pool)):
+                (j, a) = pool._index(pool.numberings[k])
+                permuted_vector[j] = vector[index] * a.compare_orientations() * perm.sign()
+                index += 1
+        return permuted_vector
+
+    def compute_boundary_operators(self):
+        return self.complex.compute_boundary_operators()
 
 
 def kernel_comp_tests():
@@ -64,7 +123,6 @@ def kernel_comp_tests():
                 continue
             print("g:", g, ", n:", n)
             C = FatgraphComplex(g, n)
-            print(compute_null_spaces(C))
 
 
 if __name__=="__main__":

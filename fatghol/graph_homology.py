@@ -39,6 +39,7 @@ from fatghol.combinatorics import (
     factorial,
     minus_one_exp,
     Permutation,
+    PartitionIterator
 )
 from fatghol.cache import (
     ocache_contract,
@@ -74,8 +75,6 @@ class MgnChainComplex(ChainComplex):
         ChainComplex.__init__(self, length)
         for i in xrange(length):
             self.module[i] = AggregateList()
-        self.n = 0
-        self.characters = []
 
     # @cython.ccall(DifferentialComplex))
     # @cython.locals(m=list, D=DifferentialComplex,
@@ -137,76 +136,6 @@ class MgnChainComplex(ChainComplex):
             logging.info("  Computed %dx%d matrix D[%d] (elapsed: %.3fs)",
                          p, q, i, timing.get("D[%d]" % i))
         return D
-
-    def compute_ci_characters(self):
-        characters = []
-        for i in xrange(len(self)):
-            m = self.module[i]
-            character = {}
-
-            # Fix a permutation for each conjugacy class
-            seen_conj_classes = {}
-            for pool in m.iterblocks():
-                for p in pool.P:
-                    # If the cycle type of the permutation has been seen, skip it,
-                    # otherwise set the permutation of that cycle type to be p
-                    if (p.get_cycle_type(self.n) not in seen_conj_classes):
-                        seen_conj_classes[p.get_cycle_type(self.n)] = p
-                    elif (p != seen_conj_classes[p.get_cycle_type(self.n)]):
-                        continue
-
-                    # If the cycle type is not in the character table yet, add it
-                    if (p.get_cycle_type(self.n) not in character):
-                        character[p.get_cycle_type(self.n)] = 0
-
-                    # for each fatgraph in the pool, check if it is sent to itself
-                    # by the permutation, and update the character table accordingly
-                    """
-                    for fg1 in pool:
-                        fg2 = NumberedFatgraph(fg1.underlying, fg1.numbering.copy())
-                        permute_marked_fatgraph(fg2, p)
-                        
-                        isoms = list(NumberedFatgraph.isomorphisms(fg1, fg2))
-                        if (len(isoms) > 0):
-                            character[p.get_cycle_type(self.n)] += isoms[0].compare_orientations() * p.sign()
-                    """
-                    for j in xrange(len(pool)):
-                        try:
-                            (k, a) = pool._index(pool.numberings[j])
-                            fg1 = pool[j]
-                            fg2 = NumberedFatgraph(fg1.underlying, fg1.numbering)
-                            permute_marked_fatgraph(fg2, pool.numberings[k])
-
-                            # TODO: this is probably a point of heavy computations, see if you can improve it
-                            isoms = list(NumberedFatgraph.isomorphisms(fg1, fg2))
-                            if (len(isoms) > 0):
-                                character[p.get_cycle_type(self.n)] += 1 * isoms[0].compare_orientations() * p.sign()
-                        except AssertionError:
-                            pass
-            # TODO: this may not have a character table entry for every cycle type if there exists
-            # a cycle type for which none of the fatgraphs of degree i have an automorphism. Need
-            # to fill out the rest of the character table accordingly
-            characters.append(character)
-        self.characters = characters
-
-    def _permute_vector(self, degree, vector, perm):
-        assert len(vector) == len(self.module[degree]), \
-            "Vector has smaller length than number of basis elements"
-        m = self.module[degree]
-        permuted_vector = [0 for _ in range(len(vector))]
-        index = 0
-        for pool in m.iterblocks():
-            for k in xrange(len(pool)):
-                (j, a) = pool._index(pool.numberings[k])
-                permuted_vector[j] = vector[index] * a.compare_orientations() * perm.sign()
-                index += 1
-        return permuted_vector
-
-
-def permute_marked_fatgraph(fg, perm):
-    for bc in fg.boundary_cycles:
-        if fg.numbering[bc] in perm:
-            fg.numbering[bc] = perm[fg.numbering[bc]]
 
 
 # @cython.cclass
@@ -799,7 +728,6 @@ def FatgraphComplex(g, n):
     #: list of primitive graphs, graded by number of edges
     # generators = [ AggregateList() for dummy in xrange(top_dimension) ]
     C = MgnChainComplex(top_dimension)
-    C.n = n
 
     # gather graphs
     chi = Fraction(0)
