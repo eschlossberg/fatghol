@@ -151,13 +151,13 @@ class MgnChainComplex(ChainComplex):
                     # If the cycle type of the permutation has been seen, skip it,
                     # otherwise set the permutation of that cycle type to be p
                     if(p.get_cycle_type(self.n) not in seen_conj_classes):
-                        seen_conj_classes[p.get_cycle_type()] = p
-                    elif(p != seen_conj_classes[p.get_cycle_type()]):
+                        seen_conj_classes[p.get_cycle_type(self.n)] = p
+                    elif(p != seen_conj_classes[p.get_cycle_type(self.n)]):
                         continue
 
                     # If the cycle type is not in the character table yet, add it
                     if(p.get_cycle_type(self.n) not in character):
-                        character[p.get_cycle_type] = 0
+                        character[p.get_cycle_type(self.n)] = 0
 
                     # for each fatgraph in the pool, check if it is sent to itself
                     # by the permutation, and update the character table accordingly
@@ -165,7 +165,7 @@ class MgnChainComplex(ChainComplex):
                         (j, a) = pool._index(p.rearranged(fg.numbering))
                         try:
                             if a.is_identity():
-                                character[p.get_cycle_type] += 1 * a.compare_orientations() * p.sign()
+                                character[p.get_cycle_type(self.n)] += 1 * a.compare_orientations() * p.sign()
                         except AssertionError:
                             pass
             # TODO: this may not have a character table entry for every cycle type if there exists
