@@ -164,7 +164,13 @@ class MgnChainComplex(ChainComplex):
                     for j in xrange(len(pool)):
                         try:
                             (k, a) = pool._index(pool.numberings[j])
-                            character[p.get_cycle_type(self.n)] += 1 * a.compare_orientations() * p.sign()
+                            fg1 = pool[j]
+                            fg2 = MgnChainComplex._permute_marked_fatgraph(fg1, pool.P[k])
+
+                            # TODO: this is probably a point of heavy computations, see if you can improve it
+                            isoms = list(NumberedFatgraph.isomorphisms(fg1, fg2))
+                            if (len(isoms) > 0):
+                                character[p.get_cycle_type(self.n)] += 1 * isoms[0].compare_orientations() * p.sign()
                         except AssertionError:
                             pass
             # TODO: this may not have a character table entry for every cycle type if there exists
@@ -185,6 +191,12 @@ class MgnChainComplex(ChainComplex):
                 permuted_vector[j] = vector[index] * a.compare_orientations() * perm.sign()
                 index += 1
         return permuted_vector
+
+    @staticmethod
+    def _permute_marked_fatgraph(fg, perm):
+        for bc in fg.boundary_cycles:
+            if fg.numbering[bc] in perm:
+                fg.numbering[bc] = perm[fg.numbering[bc]]
 
 
 # @cython.cclass
@@ -478,12 +490,6 @@ class NumberedFatgraph(Fatgraph):
             if pe_does_not_preserve_bc:
                 continue  # to next underlying graph isomorphism
             yield iso
-
-    def permute_numbering(self, permutation):
-        new_numbering = {}
-        for key in self.numbering:
-            new_numbering[key] = permutation[self.numbering[key]]
-        return new_numbering
 
 
 # @cython.cclass
