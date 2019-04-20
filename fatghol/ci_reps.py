@@ -77,10 +77,10 @@ class MgnChars:
 
 
     # Computes the action of S_n on the basis of each C_i
-    # Returns a list of the format i->perm_cycle_type->fg->\sigma(fg)
+    # Returns a list of the format i->perm_cycle_type->j->\sigma(fg)
     # with i being the degree of C_i, perm_cycle_type the cycle type of the
-    # desired permutation, fg the fatgraph being acted on, and \sigma(fg)
-    # the result of the action
+    # desired permutation, j the index of the fatgraph being acted on (as a basis element),
+    # and \sigma(fg) the result of the action
     def _compute_permutations(self, n):
         partitions = list(PartitionIterator(n, n))
         

@@ -46,7 +46,7 @@ class NullSpaceComplex:
         self.complex = FgComplex
         self.null_spaces = self._compute_null_spaces()
 
-    def _compute_null_spaces():
+    def _compute_null_spaces(self):
         bnds = self.complex.compute_boundary_operators()
         bases = []
         for d in range(len(bnds)):

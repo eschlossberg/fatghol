@@ -136,6 +136,14 @@ class MgnChainComplex(ChainComplex):
                          p, q, i, timing.get("D[%d]" % i))
         return D
 
+    def compute_ci_characters(self):
+        characters = []
+        for i in xrange(len(self)):
+            m = self.module[i]
+            for pool in m.iterblocks():
+                for p in pool.P:
+                    print(p)
+
 
 
 #@cython.cclass
