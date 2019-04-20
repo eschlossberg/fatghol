@@ -94,11 +94,17 @@ class NullSpaceComplex:
                     g = NumberedFatgraph(fg.underlying, fg.numbering.copy())
                     permute_marked_fatgraph(g, perm[1])
 
-                    k = ci.index(g.numbering)
-                    isoms = NumberedFatgraph.isomorphisms(g, ci[k])
-                    sign = isoms[0].compare_orientations()
+                    isom = None
+                    for k in range(len(ci)):
+                        isoms = list(NumberedFatgraph.isomorphisms(g, ci[k]))
+                        if len(isoms) > 0:
+                            index = k
+                            isom = isoms[0]
+                            break
+                    assert isom is not None
+                    sign = isom.compare_orientations()
 
-                    fg_perms[j] = k * sign * perm[1].sign()
+                    fg_perms[j] = (k, sign * perm[1].sign())
 
                 ci_fg_perms[perm[0]] = fg_perms
             ci_perms.append(ci_fg_perms)
@@ -118,9 +124,10 @@ class NullSpaceComplex:
         characters = [{} for _ in xrange(len(self))]
         for i in xrange(len(self)):
             for partition in self.ci_perms[i]:
+                characters[i][partition] = 0
                 for j in range(len(self.complex.module[i])):
-                    if j == abs(self.ci_perms[i][partition][j]):
-                        characters[i][partition] += self.ci_perms[i][partition][j]
+                    if j == self.ci_perms[i][partition][j][0]:
+                        characters[i][partition] += 1* self.ci_perms[i][partition][j][1]
         return characters
 
     def _permute_vector(self, degree, vector, perm):
@@ -135,6 +142,12 @@ class NullSpaceComplex:
                 permuted_vector[j + index] = vector[index] * a.compare_orientations() * perm.sign()
             index += len(pool)
         return permuted_vector
+
+    # Returns the tuple (index', sign) of \sigma(C_i[index]) where \sigma is the
+    # representative of its cycle type
+    def _permute_basis_vector(self, degree, index, cycle_type):
+        return self.ci_perms[degree][cycle_type][index]
+
 
     def compute_boundary_operators(self):
         return self.complex.compute_boundary_operators()
