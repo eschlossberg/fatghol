@@ -165,7 +165,8 @@ class MgnChainComplex(ChainComplex):
                         try:
                             (k, a) = pool._index(pool.numberings[j])
                             fg1 = pool[j]
-                            fg2 = MgnChainComplex._permute_marked_fatgraph(fg1, pool.P[k])
+                            fg2 = NumberedFatgraph(fg1.underlying, fg1.numbering)
+                            permute_marked_fatgraph(fg2, pool.P[k])
 
                             # TODO: this is probably a point of heavy computations, see if you can improve it
                             isoms = list(NumberedFatgraph.isomorphisms(fg1, fg2))
@@ -192,11 +193,11 @@ class MgnChainComplex(ChainComplex):
                 index += 1
         return permuted_vector
 
-    @staticmethod
-    def _permute_marked_fatgraph(fg, perm):
-        for bc in fg.boundary_cycles:
-            if fg.numbering[bc] in perm:
-                fg.numbering[bc] = perm[fg.numbering[bc]]
+
+def permute_marked_fatgraph(fg, perm):
+    for bc in fg.boundary_cycles:
+        if fg.numbering[bc] in perm:
+            fg.numbering[bc] = perm[fg.numbering[bc]]
 
 
 # @cython.cclass
