@@ -161,13 +161,28 @@ class MgnChainComplex(ChainComplex):
 
                     # for each fatgraph in the pool, check if it is sent to itself
                     # by the permutation, and update the character table accordingly
+                    """
                     for fg1 in pool:
                         fg2 = NumberedFatgraph(fg1.underlying, fg1.numbering.copy())
                         permute_marked_fatgraph(fg2, p)
-
+                        
                         isoms = list(NumberedFatgraph.isomorphisms(fg1, fg2))
-                        if (len(isoms) > 0)
-                            character[p.get_cycle_type(self.n)] += 1 * isoms[0].compare_orientations() * p.sign()
+                        if (len(isoms) > 0):
+                            character[p.get_cycle_type(self.n)] += isoms[0].compare_orientations() * p.sign()
+                    """
+                    for j in xrange(len(pool)):
+                        try:
+                            (k, a) = pool._index(pool.numberings[j])
+                            fg1 = pool[j]
+                            fg2 = NumberedFatgraph(fg1.underlying, fg1.numbering)
+                            permute_marked_fatgraph(fg2, pool.numberings[k])
+
+                            # TODO: this is probably a point of heavy computations, see if you can improve it
+                            isoms = list(NumberedFatgraph.isomorphisms(fg1, fg2))
+                            if (len(isoms) > 0):
+                                character[p.get_cycle_type(self.n)] += 1 * isoms[0].compare_orientations() * p.sign()
+                        except AssertionError:
+                            pass
             # TODO: this may not have a character table entry for every cycle type if there exists
             # a cycle type for which none of the fatgraphs of degree i have an automorphism. Need
             # to fill out the rest of the character table accordingly
