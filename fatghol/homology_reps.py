@@ -68,7 +68,41 @@ class NullSpaceComplex:
         self.complex = FatgraphComplex(g, n)
         self.null_spaces = self._compute_null_spaces()
         self.n = n
-        self.ci_characters = []
+        self.ci_perms = self._compute_permutations(self.n)
+        self.ci_characters = self._compute_ci_characters()
+
+    def __len__(self):
+        return len(self.complex)
+
+    def _compute_permutations(self, n):
+        partitions = list(PartitionIterator(n, n))
+
+        # Generate the permutations of all cycle types
+        perms = []
+        for partition in partitions:
+            perms.append((partition, cycle_type_to_perm(partition)))
+
+        ci_perms = []
+        for i in range(self.complex.length):
+            ci_fg_perms = {}
+            ci = self.complex.module[i]
+
+            for perm in perms:
+                fg_perms = {}
+                for j in range(len(ci)):
+                    fg = ci[j]
+                    g = NumberedFatgraph(fg.underlying, fg.numbering.copy())
+                    permute_marked_fatgraph(g, perm[1])
+
+                    k = ci.index(g.numbering)
+                    isoms = NumberedFatgraph.isomorphisms(g, ci[k])
+                    sign = isoms[0].compare_orientations()
+
+                    fg_perms[j] = k * sign * perm[1].sign()
+
+                ci_fg_perms[perm[0]] = fg_perms
+            ci_perms.append(ci_fg_perms)
+        return ci_perms
 
     def _compute_null_spaces(self):
         bnds = self.compute_boundary_operators()
@@ -80,36 +114,26 @@ class NullSpaceComplex:
             bases.append((d, null_space(M.todense())))
         return bases
 
-    def compute_ci_characters(self):
+    def _compute_ci_characters(self):
         characters = [{} for _ in xrange(len(self))]
-        partitions = list(PartitionIterator(self.n, self.n))
-        for partition in partitions:
-            for i in xrange(len(self)):
-                m = self.module[i]
-                perm = cycle_type_to_perm(partition)
-
-                characters[i][partition] = 0
-
-                for fg in m:
-                    g = NumberedFatgraph(fg.underlying, fg.numbering.copy())
-                    permute_marked_fatgraph(g, perm)
-
-                    isoms = list(NumberedFatgraph.isomorphisms(g, fg))
-                    if (len(isoms) > 0):
-                        characters[i][partition] += isoms[0].compare_orientations() * perm.sign()
-        self.ci_characters = characters
+        for i in xrange(len(self)):
+            for partition in self.ci_perms[i]:
+                for j in range(len(self.complex.module[i])):
+                    if j == abs(self.ci_perms[i][partition][j]):
+                        characters[i][partition] += self.ci_perms[i][partition][j]
+        return characters
 
     def _permute_vector(self, degree, vector, perm):
-        assert len(vector) == len(self.module[degree]), \
+        assert len(vector) == len(self.complex.module[degree]), \
             "Vector has smaller length than number of basis elements"
-        m = self.module[degree]
+        m = self.complex.module[degree]
         permuted_vector = [0 for _ in range(len(vector))]
         index = 0
         for pool in m.iterblocks():
             for k in xrange(len(pool)):
                 (j, a) = pool._index(pool.numberings[k])
-                permuted_vector[j] = vector[index] * a.compare_orientations() * perm.sign()
-                index += 1
+                permuted_vector[j + index] = vector[index] * a.compare_orientations() * perm.sign()
+            index += len(pool)
         return permuted_vector
 
     def compute_boundary_operators(self):
