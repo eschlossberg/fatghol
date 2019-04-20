@@ -70,6 +70,7 @@ class NullSpaceComplex:
         self.n = n
         self.ci_perms = self._compute_permutations(self.n)
         self.ci_characters = self._compute_ci_characters()
+        self.null_space_characters = []
 
     def __len__(self):
         return len(self.complex)
@@ -135,12 +136,9 @@ class NullSpaceComplex:
             "Vector has smaller length than number of basis elements"
         m = self.complex.module[degree]
         permuted_vector = [0 for _ in range(len(vector))]
-        index = 0
-        for pool in m.iterblocks():
-            for k in xrange(len(pool)):
-                (j, a) = pool._index(pool.numberings[k])
-                permuted_vector[j + index] = vector[index] * a.compare_orientations() * perm.sign()
-            index += len(pool)
+        for i in range(len(vector)):
+            (j, sign) = self._permute_basis_vector(degree, i, perm)
+            permuted_vector[j] = vector[i] * sign
         return permuted_vector
 
     # Returns the tuple (index', sign) of \sigma(C_i[index]) where \sigma is the
@@ -148,9 +146,27 @@ class NullSpaceComplex:
     def _permute_basis_vector(self, degree, index, cycle_type):
         return self.ci_perms[degree][cycle_type][index]
 
-
     def compute_boundary_operators(self):
         return self.complex.compute_boundary_operators()
+
+    # Compute the characters of the null spaces of the boundary map of degree i
+    def null_space_character(self, degree):
+        basis = self.null_spaces[degree]
+        char = {}
+        partitions = list(PartitionIterator(self.n, self.n))
+
+        for perm in partitions:
+            char[perm] = 0
+            for x in basis:
+                x_prime = self._permute_vector(degree, x, perm)
+                char[perm] += np.dot(x, x_prime)
+        return char
+
+    # Compute all the null space characters
+    def null_space_characters(self):
+        for i in range(len(self)):
+            self.null_space_characters.append(self.null_space_character(i))
+
 
 
 def kernel_comp_tests():
