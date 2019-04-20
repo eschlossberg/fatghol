@@ -578,7 +578,6 @@ class Permutation(dict):
             result.append(self[item])
         return result
 
-    
     def extend(self, srcs, dsts):
         """Return `True` if the mapping can be extended by mapping
         elements of `srcs` to corresponding elements of `dsts`.
@@ -600,7 +599,6 @@ class Permutation(dict):
             else:
                 self[src] = dst
         return True
-
     
     def find(self, value):
         """
@@ -620,7 +618,6 @@ class Permutation(dict):
                 return k
         return None
 
-
     def update(self, mappings):
         """Return `True` if the mapping can be extended by mapping each
         key of `mappings` to the corresponding value.  Return `False`
@@ -633,6 +630,24 @@ class Permutation(dict):
             else:
                 self[src] = dst
         return True
+
+    def get_cycle_type(self, length):
+        cycle_type = []
+        seen = []
+        for key in self.keys():
+            if key in seen:
+                continue
+            cur = self[key]
+            count = 1
+            while cur != key:
+                seen.append(cur)
+                cur = self[cur]
+                count += 1
+            cycle_type.append(count)
+        cycle_type.sort(reverse=True)
+        while(sum(cycle_type) < length):
+            cycle_type.append(1)
+        return tuple(cycle_type)
 
 
 class PermutationList(object):

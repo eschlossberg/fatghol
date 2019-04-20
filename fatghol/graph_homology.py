@@ -74,6 +74,8 @@ class MgnChainComplex(ChainComplex):
         ChainComplex.__init__(self, length)
         for i in xrange(length):
             self.module[i] = AggregateList()
+        self.n = 0
+        self.characters = []
 
     #@cython.ccall(DifferentialComplex))
     #@cython.locals(m=list, D=DifferentialComplex,
@@ -140,9 +142,53 @@ class MgnChainComplex(ChainComplex):
         characters = []
         for i in xrange(len(self)):
             m = self.module[i]
+            character = {}
+
+            # Fix a permutation for each conjugacy class
+            seen_conj_classes ={}
             for pool in m.iterblocks():
                 for p in pool.P:
-                    print(p)
+                    # If the cycle type of the permutation has been seen, skip it,
+                    # otherwise set the permutation of that cycle type to be p
+                    if(p.get_cycle_type(self.n) not in seen_conj_classes):
+                        seen_conj_classes[p.get_cycle_type()] = p
+                    elif(p != seen_conj_classes[p.get_cycle_type()]):
+                        continue
+
+                    # If the cycle type is not in the character table yet, add it
+                    if(p.get_cycle_type(self.n) not in character):
+                        character[p.get_cycle_type] = 0
+
+                    # for each fatgraph in the pool, check if it is sent to itself
+                    # by the permutation, and update the character table accordingly
+                    for fg in pool:
+                        (j, a) = pool._index(p.rearranged(fg.numbering))
+                        try:
+                            if a.is_identity():
+                                character[p.get_cycle_type] += 1 * a.compare_orientations() * p.sign()
+                        except AssertionError:
+                            pass
+            # TODO: this may not have a character table entry for every cycle type if there exists
+            # a cycle type for which none of the fatgraphs of degree i have an automorphism. Need
+            # to fill out the rest of the character table accordingly
+            characters.append(character)
+        self.characters = characters
+
+
+
+
+    def _permute_vector(self, degree, vector, perm):
+        assert len(vector) == len(self.module[degree]), \
+                "Vector has smaller length than number of basis elements"
+        m = self.module[degree]
+        permuted_vector = [0 for _ in range(len(vector))]
+        index = 0
+        for pool in m.iterblocks():
+            for fg in pool:
+                (j, a) = pool._index(perm.rearranged(fg.numbering))
+                permuted_vector[j] = vector[index] * a.compare_orientations() * perm.sign()
+                index += 1
+        return permuted_vector
 
 
 
@@ -743,6 +789,7 @@ def FatgraphComplex(g, n):
     #: list of primitive graphs, graded by number of edges
     #generators = [ AggregateList() for dummy in xrange(top_dimension) ]
     C = MgnChainComplex(top_dimension)
+    C.n = n
 
     # gather graphs
     chi = Fraction(0)
