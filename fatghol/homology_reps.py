@@ -185,12 +185,13 @@ class NullSpaceComplex:
             return chi
 
         for cycle_type in chi:
-            chi[cycle_type] -= self.ci_characters[degree - 1] - self.null_space_characters[degree - 1]
+            chi[cycle_type] -= self.ci_characters[degree-1][cycle_type]\
+                    - self.null_space_characters[degree-1][cycle_type]
         return chi
 
     def compute_homology_characters(self):
         for i in range(len(self)):
-            self.compute_homology_character(i)
+            self.homology_characters.append(self.compute_homology_character(i))
 
 
 
