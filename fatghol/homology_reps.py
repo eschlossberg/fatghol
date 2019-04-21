@@ -66,12 +66,15 @@ def cycle_type_to_perm(cycle_type):
 class NullSpaceComplex:
     def __init__(self, g, n):
         self.complex = FatgraphComplex(g, n)
-        self.boundary_operators = []
+        self.boundary_operators = self.compute_boundary_operators()
         self.null_spaces = self._compute_null_spaces()
         self.n = n
         self.ci_perms = self._compute_permutations(self.n)
         self.ci_characters = self._compute_ci_characters()
         self.null_space_characters = []
+        self.compute_null_space_characters()
+        self.homology_characters = []
+        self.compute_homology_characters()
 
     def __len__(self):
         return len(self.complex)
@@ -113,7 +116,7 @@ class NullSpaceComplex:
         return ci_perms
 
     def _compute_null_spaces(self):
-        bnds = self.compute_boundary_operators()
+        bnds = self.boundary_operators
         bases = []
         for d in range(len(bnds)):
             M = simple_matrix_convert(bnds[d][0])
@@ -174,6 +177,21 @@ class NullSpaceComplex:
     def compute_null_space_characters(self):
         for i in range(len(self)):
             self.null_space_characters.append(self.null_space_character(i))
+
+    def compute_homology_character(self, degree):
+        assert degree >= 0
+        chi = self.null_space_characters[degree]
+        if degree == 0:
+            return chi
+
+        for cycle_type in chi:
+            chi[cycle_type] -= self.ci_characters[degree - 1] - self.null_space_characters[degree - 1]
+        return chi
+
+    def compute_homology_characters(self):
+        for i in range(len(self)):
+            self.compute_homology_character(i)
+
 
 
 
