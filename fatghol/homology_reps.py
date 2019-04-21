@@ -66,7 +66,7 @@ def cycle_type_to_perm(cycle_type):
 class NullSpaceComplex:
     def __init__(self, g, n):
         self.complex = FatgraphComplex(g, n)
-        self.boundary_operators = self.compute_boundary_operators()
+        self.boundary_operators = []
         self.null_spaces = self._compute_null_spaces()
         self.n = n
         self.ci_perms = self._compute_permutations(self.n)
@@ -116,7 +116,7 @@ class NullSpaceComplex:
         return ci_perms
 
     def _compute_null_spaces(self):
-        bnds = self.boundary_operators
+        bnds = self.compute_boundary_operators()
         bases = []
         for d in range(len(bnds)):
             M = simple_matrix_convert(bnds[d][0])
