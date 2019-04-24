@@ -122,12 +122,16 @@ class NullSpaceComplex:
             M = simple_matrix_convert(bnds[d][0])
             self.boundary_operators.append(M)
             if(M.shape[0] == 0):
-                bases.append((d, []))
+                if(M.shape[1] == 0):
+                    bases.append((d, []))
+                else:
+                    bases.append((d,np.identity(M.shape[1])))
                 continue
             bases.append((d, null_space(M.todense())))
         return bases
 
     def _compute_ci_characters(self):
+        #print("C_i characters:")
         characters = [{} for _ in xrange(len(self))]
         for i in xrange(len(self)):
             for partition in self.ci_perms[i]:
@@ -135,6 +139,7 @@ class NullSpaceComplex:
                 for j in range(len(self.complex.module[i])):
                     if j == self.ci_perms[i][partition][j][0]:
                         characters[i][partition] += 1* self.ci_perms[i][partition][j][1]
+            #print(i, characters[i])
         return characters
 
     def _permute_vector(self, degree, vector, perm):
@@ -163,7 +168,7 @@ class NullSpaceComplex:
 
         for perm in partitions:
             char[perm] = 0
-            if(type(basis) == list):
+            if(len(basis) == 0):
                 continue
             for i in range(basis.shape[1]):
                 x = basis[:,i]
@@ -171,22 +176,24 @@ class NullSpaceComplex:
                 x_prime = self._permute_vector(degree, x, perm)
                 char[perm] += np.dot(x, x_prime)
             char[perm] = int(round(char[perm]))
+        #print(degree, char)
         return char
 
     # Compute all the null space characters
     def compute_null_space_characters(self):
+        #print("Null space characters:")
         for i in range(len(self)):
             self.null_space_characters.append(self.null_space_character(i))
 
     def compute_homology_character(self, degree):
         assert degree >= 0
         chi = self.null_space_characters[degree]
-        if degree == 0:
+        if degree == len(self)-1:
             return chi
 
         for cycle_type in chi:
-            chi[cycle_type] -= self.ci_characters[degree-1][cycle_type]\
-                    - self.null_space_characters[degree-1][cycle_type]
+            chi[cycle_type] += -self.ci_characters[degree+1][cycle_type]\
+                    + self.null_space_characters[degree+1][cycle_type]
         return chi
 
     def compute_homology_characters(self):
@@ -201,7 +208,7 @@ def kernel_comp_tests():
         for n in [2,3,4,5]:
             if (g,n) in [(0,2),(1,4),(2,2),(1,5),(2,3),(2,4),(2,5),(0,5)]:
                 continue
-            print("g:", g, ", n:", n)
+            #print("g:", g, ", n:", n)
             C = FatgraphComplex(g, n)
 
 
