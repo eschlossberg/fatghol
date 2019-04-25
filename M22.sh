@@ -1,3 +1,3 @@
 #! /bin/sh
 
-python fatghol/test.py
+python fatghol/test.py &
