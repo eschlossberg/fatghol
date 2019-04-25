@@ -131,7 +131,6 @@ class NullSpaceComplex:
         return bases
 
     def _compute_ci_characters(self):
-        #print("C_i characters:")
         characters = [{} for _ in xrange(len(self))]
         for i in xrange(len(self)):
             for partition in self.ci_perms[i]:
@@ -139,7 +138,6 @@ class NullSpaceComplex:
                 for j in range(len(self.complex.module[i])):
                     if j == self.ci_perms[i][partition][j][0]:
                         characters[i][partition] += 1* self.ci_perms[i][partition][j][1]
-            #print(i, characters[i])
         return characters
 
     def _permute_vector(self, degree, vector, perm):
@@ -148,6 +146,8 @@ class NullSpaceComplex:
         m = self.complex.module[degree]
         permuted_vector = [0 for _ in range(len(vector))]
         for i in range(len(vector)):
+            if vector[i] == 0:
+                continue
             (j, sign) = self._permute_basis_vector(degree, i, perm)
             permuted_vector[j] = vector[i] * sign
         return permuted_vector
@@ -176,12 +176,10 @@ class NullSpaceComplex:
                 x_prime = self._permute_vector(degree, x, perm)
                 char[perm] += np.dot(x, x_prime)
             char[perm] = int(round(char[perm]))
-        #print(degree, char)
         return char
 
     # Compute all the null space characters
     def compute_null_space_characters(self):
-        #print("Null space characters:")
         for i in range(len(self)):
             self.null_space_characters.append(self.null_space_character(i))
 
@@ -200,17 +198,3 @@ class NullSpaceComplex:
         for i in range(len(self)):
             self.homology_characters.append(self.compute_homology_character(i))
 
-
-
-
-def kernel_comp_tests():
-    for g in [0,1,2]:
-        for n in [2,3,4,5]:
-            if (g,n) in [(0,2),(1,4),(2,2),(1,5),(2,3),(2,4),(2,5),(0,5)]:
-                continue
-            #print("g:", g, ", n:", n)
-            C = FatgraphComplex(g, n)
-
-
-if __name__=="__main__":
-    kernel_comp_tests()
