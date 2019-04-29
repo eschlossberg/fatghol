@@ -10,3 +10,4 @@ fatghol/simplematrix._wrap.cpp
 fatghol/*.pyo
 fatghol/*.swp
 fatghol/*.so
+*.data/
