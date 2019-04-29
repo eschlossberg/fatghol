@@ -66,15 +66,15 @@ def cycle_type_to_perm(cycle_type):
 class NullSpaceComplex:
     def __init__(self, g, n):
         self.complex = FatgraphComplex(g, n)
-        self.boundary_operators = []
-        self.null_spaces = self._compute_null_spaces()
+        self.boundary_operators = self.compute_boundary_operators()
+        self.null_spaces = [[] for _ in range(len(self))]  # self._compute_null_spaces()
         self.n = n
         self.ci_perms = self._compute_permutations(self.n)
         self.ci_characters = self._compute_ci_characters()
-        self.null_space_characters = []
-        self.compute_null_space_characters()
+        self.null_space_characters = [{} for _ in range(len(self))]
+        # self.compute_null_space_characters()
         self.homology_characters = []
-        self.compute_homology_characters()
+        # self.compute_homology_characters()
 
     def __len__(self):
         return len(self.complex)
@@ -114,6 +114,15 @@ class NullSpaceComplex:
                 ci_fg_perms[perm[0]] = fg_perms
             ci_perms.append(ci_fg_perms)
         return ci_perms
+
+    def compute_null_space(self, degree):
+        M = simple_matrix_convert(self.boundary_operators[degree][0])
+        if(M.shape[0] == 0):
+            if(M.shape[1] == 0):
+                return (degree, [])
+            else:
+                return (degree, np.identity(M.shape[1]))
+        self.null_spaces[degree] = (degree, null_space(M.todense()))
 
     def _compute_null_spaces(self):
         bnds = self.compute_boundary_operators()
@@ -176,6 +185,7 @@ class NullSpaceComplex:
                 x_prime = self._permute_vector(degree, x, perm)
                 char[perm] += np.dot(x, x_prime)
             char[perm] = int(round(char[perm]))
+        self.null_space_characters[i] = char
         return char
 
     # Compute all the null space characters
