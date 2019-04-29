@@ -6,6 +6,8 @@ import os
 
 filename = "M2,2.txt"
 f = open(filename, 'w')
+if os.path.exists(".null_spaces/") is False:
+    os.mkdir(".null_spaces/")
 # to_compute = [(0,3),(0,4),(1,1),(1,2),(1,3),(2,1),(0,5)]
 to_compute = [(2,2)]
 for (g,n) in to_compute:
@@ -14,12 +16,13 @@ for (g,n) in to_compute:
     f.close()
     #print("g:", g, "n:", n)
     for i in range(len(mgn)):
+        print(mgn.boundary_operators[i])
         mgn.compute_null_space(i)
         np.save(".null_spaces/d{}.mat".format(i), mgn.null_spaces[i][1])
     for i in range(len(mgn)):
         mgn.null_space_character(i)
         f = open('.M22nsc.txt', 'a')
-        f.write(mgn.null_space_characters[i])
+        f.write(str(mgn.null_space_characters[i]))
         f.close()
     mgn.compute_homology_characters()
     for i in range(len(mgn)):

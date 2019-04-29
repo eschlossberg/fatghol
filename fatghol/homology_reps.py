@@ -67,7 +67,7 @@ class NullSpaceComplex:
     def __init__(self, g, n):
         self.complex = FatgraphComplex(g, n)
         self.boundary_operators = self.compute_boundary_operators()
-        self.null_spaces = [[] for _ in range(len(self))]  # self._compute_null_spaces()
+        self.null_spaces = [(i,[]) for i in range(len(self))]  # self._compute_null_spaces()
         self.n = n
         self.ci_perms = self._compute_permutations(self.n)
         self.ci_characters = self._compute_ci_characters()
@@ -185,7 +185,7 @@ class NullSpaceComplex:
                 x_prime = self._permute_vector(degree, x, perm)
                 char[perm] += np.dot(x, x_prime)
             char[perm] = int(round(char[perm]))
-        self.null_space_characters[i] = char
+        self.null_space_characters[degree] = char
         return char
 
     # Compute all the null space characters
